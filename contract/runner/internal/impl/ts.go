@@ -86,9 +86,47 @@ func (t *TS) Prepare(sb *sandbox.Sandbox) error {
 	if err := sb.LinkTool("node", t.node); err != nil {
 		return err
 	}
+	if err := linkPresets(sb.Project); err != nil {
+		return err
+	}
 	// bun keeps a transpiler cache under $HOME by default; keep it out of the sandbox HOME.
 	sb.SetEnv("BUN_RUNTIME_TRANSPILER_CACHE_PATH", t.cache)
 	return nil
+}
+
+// linkPresets makes the oracle see a project that uses the new folder name: when
+// `jitso/builds` is a folder and `jitso/presets` does not exist, `jitso/presets` becomes a
+// relative symlink to `builds`. A symlink, not a copy, so a `write` step that adds a build
+// mid-case is seen. Removed together with the oracle.
+func linkPresets(project string) error {
+	dir := filepath.Join(project, "jitso")
+	if info, err := os.Stat(filepath.Join(dir, "builds")); err != nil || !info.IsDir() {
+		return nil
+	}
+	link := filepath.Join(dir, "presets")
+	if _, err := os.Lstat(link); err == nil {
+		return nil
+	}
+	return os.Symlink("builds", link)
+}
+
+// oracleArgs translates the new build vocabulary into the oracle's old one, in that one
+// direction only: every word equal to `--build` becomes `--preset` when the command is
+// `launch`, and a leading `build list` becomes `presets list`. Every other word, the old
+// spellings included, passes through unchanged.
+func oracleArgs(args []string) []string {
+	out := append([]string(nil), args...)
+	switch {
+	case len(out) > 0 && out[0] == "launch":
+		for i, a := range out {
+			if a == "--build" {
+				out[i] = "--preset"
+			}
+		}
+	case len(out) > 1 && out[0] == "build" && out[1] == "list":
+		out[0] = "presets"
+	}
+	return out
 }
 
 // Command runs the sandbox copy. It refuses a script outside the sandbox: the TS code
@@ -99,7 +137,7 @@ func (t *TS) Command(sb *sandbox.Sandbox, args []string) ([]string, error) {
 	if !sb.Inside(script) {
 		return nil, fmt.Errorf("refusing to run %s: not inside the sandbox", script)
 	}
-	return append([]string{filepath.Join(sb.Tools, "bun"), script}, args...), nil
+	return append([]string{filepath.Join(sb.Tools, "bun"), script}, oracleArgs(args)...), nil
 }
 
 // Launcher is `bun <project>/cli/jitso/index.ts`: a bare `bun`, because that is the word
