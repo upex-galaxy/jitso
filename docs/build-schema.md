@@ -24,7 +24,7 @@ A parent's own `jitso/jitso.yaml`, hard rules and `.jitso/` are never read.
 1. A file's id is its `id` value when the file decodes to a mapping with a kebab-case string `id`. A file without one has no id, shadows nothing and is reported invalid.
 2. For each id the build is the file of the nearest layer, in the order `repo`, `parent` (the nearest trusted folder first), `user`, `draft`. Inside one layer the first file by name wins.
 3. The winner is the build of that id whether or not it is valid in this project. If it is invalid, the id is unusable here and the farther files of the same id are not used.
-4. A draft never shadows a saved build. `jitso build draft` and `jitso build new` refuse an id any layer already has.
+4. A draft never shadows a saved build. `jitso build draft` and `jitso build new` refuse an id that any saved build, of any layer, already has. When a saved build with the id of a draft appears later, the saved build is the build of that id and the draft stays on disk, shown as shadowed by `jitso build list --drafts`.
 
 ### What an invalid file does
 
@@ -131,6 +131,21 @@ An entry is expanded (`~/` is HOME), cleaned and resolved through symlinks. A tr
 `jitso build new <id> [--tier worker|conductor|subagent]` writes a draft, `.jitso/drafts/<id>.yaml`, from the embedded template of the tier. A template is a commented draft: `status: draft`, the tier set, and every value that must come from an allowlist left empty, so the validator names each one until the author fills it in. No template names a real model, skill or server. The template stays out of `jitso/builds/` on purpose: an invalid file there would fail every command.
 
 The author fills the empty values, checks the build with `jitso build validate <id>`, tries it with `jitso launch --build <id>`, and asks the owner to run `jitso build save <id>`. `jitso build draft <file.yaml|->` keeps an existing build as a draft after the same checks. `jitso build discard <id>` and `jitso build discard --all` delete drafts.
+
+## Drafts
+
+A draft is a build that is not saved yet: the file `<primary>/.jitso/drafts/<id>.yaml`, a layer of its own (the last one) that no session needs the owner's OK to write to and that launches like any build.
+
+| Aspect | Rule |
+|---|---|
+| folder | `.jitso/drafts/` of the primary checkout, even from a linked worktree. It holds its own `.gitignore` with the single line `*`, created when missing and never rewritten, so a draft is never committed |
+| input of `jitso build draft` | a path ending in `.yaml` or `.yml`, or `-` for standard input; at most 64 KiB; anything else is `JITSO REJECTED: a draft is a .yaml file (or - for stdin) of at most 64 KiB`. A file that cannot be read is `JITSO REJECTED: cannot read <path>: <reason>`; a second word or a flag is `JITSO REJECTED: unknown argument "<x>"` |
+| checks | the rules of this page for the draft layer (`status` exactly `draft`), the launch rules marked L (a worker needs a `budget` and a harness with an adapter, a listed subagent must exist), and an id of at most 64 characters (`id must be at most 64 characters`). A problem is `JITSO REJECTED: draft <path or stdin> is invalid: <problems joined by "; ">`, and nothing is written |
+| id | an id no saved build has: `JITSO REJECTED: build "<id>" already exists (<layer> <path>): a draft needs an id no build has`. An id that already has a draft is replaced |
+| written | the input bytes, unchanged, as `.jitso/drafts/<id>.yaml`; stdout is `drafted <id>: .jitso/drafts/<id>.yaml (launch it with --build <id>; only the owner can save it)` |
+| listing | `jitso build list` never lists a draft (an invalid one is a warning on stderr). `jitso build list --drafts` prints one line per draft file, by file name: the summary line, ` (draft .jitso/drafts/<file>)`, ` shadowed by <layer> <path>` when a saved build has its id, ` invalid here: <problems>` when it is invalid. The dispatcher never offers a draft |
+| launching | `jitso launch --build <id>` launches a draft: the card header ends ` (draft)` and the registry line records `build_layer: draft`, `build_file` and the `build_sha256` of the bytes. A draft is the only file that launches with a status other than `approved`. A draft worker may list draft subagents; a saved worker may list only approved ones |
+| discarding | `jitso build discard <id>` deletes one draft (`discarded <id>`; no draft is `JITSO REJECTED: no draft "<id>"`; an id that is not kebab-case is `JITSO REJECTED: build id must be kebab-case`); `jitso build discard --all` deletes every `*.yaml` of the folder (`discarded <n> drafts`) and leaves the `.gitignore` and any other file. Drafts never expire |
 
 ## Checking builds
 
