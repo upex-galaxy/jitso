@@ -1,0 +1,115 @@
+{
+  "id": "validation/mcp-exclude/effect-on-card",
+  "title": "--mcp-exclude removes servers from the card list; naming a server the preset lacks is harmless",
+  "source": [
+    "cli/jitso/launch.ts: runLaunch (mcp = profile.mcp minus --mcp-exclude)"
+  ],
+  "project": {
+    "files": {
+      ".jitso/briefs/b.md": {
+        "from": "brief.md"
+      }
+    }
+  },
+  "steps": [
+    {
+      "run": [
+        "launch",
+        "--preset",
+        "sonnet-tester",
+        "--brief",
+        "{{PROJECT}}/.jitso/briefs/b.md",
+        "--mode",
+        "direct",
+        "--field",
+        "ticket_key=PRJ-1",
+        "--dry-run"
+      ],
+      "expect": {
+        "exit": 0,
+        "stdout": [
+          {
+            "regex": "\\| MCP dbhub,openapi \\|"
+          }
+        ]
+      }
+    },
+    {
+      "run": [
+        "launch",
+        "--preset",
+        "sonnet-tester",
+        "--brief",
+        "{{PROJECT}}/.jitso/briefs/b.md",
+        "--mode",
+        "direct",
+        "--field",
+        "ticket_key=PRJ-1",
+        "--mcp-exclude",
+        "dbhub",
+        "--dry-run"
+      ],
+      "expect": {
+        "exit": 0,
+        "stdout": [
+          {
+            "regex": "\\| MCP openapi \\|"
+          }
+        ]
+      }
+    },
+    {
+      "run": [
+        "launch",
+        "--preset",
+        "sonnet-tester",
+        "--brief",
+        "{{PROJECT}}/.jitso/briefs/b.md",
+        "--mode",
+        "direct",
+        "--field",
+        "ticket_key=PRJ-1",
+        "--mcp-exclude",
+        "dbhub",
+        "--mcp-exclude",
+        "openapi",
+        "--dry-run"
+      ],
+      "expect": {
+        "exit": 0,
+        "stdout": [
+          {
+            "regex": "\\| MCP none \\|"
+          }
+        ]
+      }
+    },
+    {
+      "run": [
+        "launch",
+        "--preset",
+        "sonnet-tester",
+        "--brief",
+        "{{PROJECT}}/.jitso/briefs/b.md",
+        "--mode",
+        "direct",
+        "--field",
+        "ticket_key=PRJ-1",
+        "--mcp-exclude",
+        "not-a-server",
+        "--dry-run"
+      ],
+      "expect": {
+        "exit": 0,
+        "stdout": [
+          {
+            "regex": "\\| MCP dbhub,openapi \\|"
+          }
+        ],
+        "orca_calls": {
+          "empty": true
+        }
+      }
+    }
+  ]
+}

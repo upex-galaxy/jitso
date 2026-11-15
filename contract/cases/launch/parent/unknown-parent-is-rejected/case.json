@@ -1,0 +1,61 @@
+{
+  "id": "launch/parent/unknown-parent-is-rejected",
+  "title": "a well-formed --parent that is not in the registry exits 2 before any orca call and writes nothing",
+  "source": [
+    "cli/jitso/launch.test.ts: 'a known parent sets root and depth; an unknown parent exits 2'"
+  ],
+  "project": {
+    "files": {
+      ".jitso/briefs/brief.md": {
+        "from": "brief.md"
+      }
+    }
+  },
+  "steps": [
+    {
+      "write": {
+        "project": {
+          ".jitso/launches.jsonl": {
+            "content": "{\"v\": 1, \"event\": \"launch\", \"id\": \"L20261113T142233-a3f9\", \"parent\": null, \"root\": \"L20261113T142233-a3f9\", \"depth\": 0, \"ts\": \"2026-11-13T14:22:33.000Z\", \"mode\": \"direct\", \"preset\": \"haiku-explorer\"}\n"
+          }
+        }
+      }
+    },
+    {
+      "run": [
+        "launch",
+        "--preset",
+        "haiku-explorer",
+        "--brief",
+        "{{PROJECT}}/.jitso/briefs/brief.md",
+        "--mode",
+        "fleet",
+        "--run",
+        "run_1",
+        "--task",
+        "task_1",
+        "--parent",
+        "L20260101T000000-ffff"
+      ],
+      "expect": {
+        "exit": 2,
+        "stdout": [
+          {
+            "empty": true
+          }
+        ],
+        "stderr": [
+          {
+            "contains": "JITSO REJECTED: unknown parent launch L20260101T000000-ffff"
+          }
+        ],
+        "orca_calls": {
+          "empty": true
+        },
+        "registry": {
+          "count": 1
+        }
+      }
+    }
+  ]
+}

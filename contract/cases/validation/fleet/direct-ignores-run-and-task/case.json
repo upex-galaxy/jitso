@@ -1,0 +1,41 @@
+{
+  "id": "validation/fleet/direct-ignores-run-and-task",
+  "title": "in direct mode a --run and --task are accepted and harmless",
+  "source": [
+    "cli/jitso/launch.ts: the fleet check applies only to mode fleet"
+  ],
+  "project": {
+    "files": {
+      ".jitso/briefs/b.md": {
+        "from": "brief.md"
+      }
+    }
+  },
+  "steps": [
+    {
+      "run": [
+        "launch",
+        "--preset",
+        "haiku-explorer",
+        "--brief",
+        "{{PROJECT}}/.jitso/briefs/b.md",
+        "--mode",
+        "direct",
+        "--run",
+        "run_1",
+        "--task",
+        "task_1",
+        "--dry-run"
+      ],
+      "expect": {
+        "exit": 0,
+        "stdout": [
+          "dry run: nothing was written"
+        ],
+        "orca_calls": {
+          "empty": true
+        }
+      }
+    }
+  ]
+}

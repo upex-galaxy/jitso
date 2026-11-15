@@ -1,0 +1,97 @@
+{
+  "id": "registry/launch-event-fields",
+  "title": "a real direct launch writes one launch event with the schema v1 core and the launcher fields",
+  "source": [
+    "cli/jitso/log.test.ts: 'accepts one valid event of each kind'",
+    "cli/jitso/launch.test.ts: real launch logs the launch event"
+  ],
+  "project": {
+    "files": {
+      ".jitso/briefs/explore.md": {
+        "from": "brief.md"
+      }
+    }
+  },
+  "steps": [
+    {
+      "run": [
+        "launch",
+        "--preset",
+        "haiku-explorer",
+        "--brief",
+        "{{PROJECT}}/.jitso/briefs/explore.md",
+        "--mode",
+        "direct"
+      ],
+      "capture": {
+        "LAUNCH_ID": {
+          "from": "stdout",
+          "regex": "JITSO (L\\d{8}T\\d{6}-[0-9a-f]{4})"
+        }
+      },
+      "expect": {
+        "exit": 0,
+        "registry": {
+          "count": 1,
+          "events": [
+            {
+              "at": 0,
+              "event": "launch",
+              "fields": {
+                "v": 1,
+                "id": {
+                  "regex": "^L\\d{8}T\\d{6}-[0-9a-f]{4}$"
+                },
+                "parent": null,
+                "root": "{{LAUNCH_ID}}",
+                "depth": 0,
+                "ts": {
+                  "regex": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d+)?Z$"
+                },
+                "mode": "direct",
+                "role": "operator",
+                "type": "explorer",
+                "preset": "haiku-explorer",
+                "preset_version": 1,
+                "harness": "claude",
+                "model": "claude-haiku-5-5",
+                "effort": "low",
+                "permission": "bypass",
+                "worktree": "primary",
+                "cwd": "{{PROJECT}}",
+                "mcp": [],
+                "mcp_excluded": [],
+                "skills_first": [],
+                "route_scope": [
+                  "none"
+                ],
+                "agents_md": "exclude",
+                "brief_language": "en",
+                "brief_path": "{{PROJECT}}/.jitso/launches/{{LAUNCH_ID}}/brief.md",
+                "brief_sha256": {
+                  "regex": "^[0-9a-f]{64}$"
+                },
+                "core_sha256": {
+                  "regex": "^[0-9a-f]{64}$"
+                },
+                "session_id": {
+                  "regex": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+                },
+                "transcript_path": {
+                  "regex": "/\\.claude/projects/[^/]+/[0-9a-f-]{36}\\.jsonl$"
+                },
+                "trust_dialog": "absent",
+                "orca.run": null,
+                "orca.task": null,
+                "orca.terminal": "term_fake",
+                "orca.title": "[jitso:{{LAUNCH_ID}}] haiku-explorer",
+                "budget.tokens": 250000,
+                "budget.usd_list_cap": 0.5
+              }
+            }
+          ]
+        }
+      }
+    }
+  ]
+}

@@ -1,0 +1,48 @@
+{
+  "id": "brief/paths/existing-paths-accepted",
+  "title": "cited files and a cited folder that exist in the project are accepted",
+  "source": [
+    "cli/jitso/brief.test.ts: 'passes a cited path that exists'"
+  ],
+  "project": {
+    "files": {
+      ".jitso/briefs/brief.md": {
+        "from": "brief.md"
+      }
+    }
+  },
+  "steps": [
+    {
+      "run": [
+        "launch",
+        "--preset",
+        "haiku-explorer",
+        "--brief",
+        "{{PROJECT}}/.jitso/briefs/brief.md",
+        "--mode",
+        "direct",
+        "--dry-run"
+      ],
+      "expect": {
+        "exit": 0,
+        "stderr": [
+          {
+            "empty": true
+          }
+        ],
+        "stdout": [
+          {
+            "regex": "^JITSO L\\d{8}T\\d{6}-[0-9a-f]{4} \\|"
+          },
+          "dry run: nothing was written"
+        ],
+        "orca_calls": {
+          "empty": true
+        },
+        "registry": {
+          "count": 0
+        }
+      }
+    }
+  ]
+}

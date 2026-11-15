@@ -1,0 +1,34 @@
+{
+  "id": "cli/reject-wiring/analyze-malformed-id",
+  "title": "analyze with a malformed launch id exits 2 with JITSO REJECTED",
+  "source": [
+    "cli/jitso/index.test.ts: 'analyze with a malformed id exits 2'"
+  ],
+  "project": {
+    "files": {
+      "jitso/prices.json": "{\n  \"version\": 1,\n  \"verified_on\": \"2026-11-13\",\n  \"models\": {\n    \"sonnet\": {\n      \"input\": 1.0,\n      \"cache_read\": 0.1,\n      \"cache_write_5m\": 1.0,\n      \"cache_write_1h\": 1.0,\n      \"output\": 1.0\n    },\n    \"opus\": {\n      \"input\": 1.0,\n      \"cache_read\": 0.1,\n      \"cache_write_5m\": 1.0,\n      \"cache_write_1h\": 1.0,\n      \"output\": 1.0\n    },\n    \"haiku\": {\n      \"input\": 1.0,\n      \"cache_read\": 0.1,\n      \"cache_write_5m\": 1.0,\n      \"cache_write_1h\": 1.0,\n      \"output\": 1.0\n    }\n  }\n}\n"
+    }
+  },
+  "steps": [
+    {
+      "run": [
+        "analyze",
+        "../x"
+      ],
+      "expect": {
+        "exit": 2,
+        "stdout": [
+          {
+            "empty": true
+          }
+        ],
+        "stderr": [
+          "JITSO REJECTED:"
+        ],
+        "orca_calls": {
+          "empty": true
+        }
+      }
+    }
+  ]
+}

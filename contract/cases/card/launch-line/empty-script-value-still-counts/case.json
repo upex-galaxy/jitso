@@ -1,0 +1,45 @@
+{
+  "id": "card/launch-line/empty-script-value-still-counts",
+  "title": "a jitso script whose value is the empty string still switches the card to 'bun run jitso launch'",
+  "source": [
+    "cli/jitso/launch.test.ts: resolveLaunchCommand checks typeof scripts.jitso === 'string'"
+  ],
+  "project": {
+    "files": {
+      ".jitso/briefs/brief.md": {
+        "from": "brief.md"
+      },
+      "package.json": "{\"scripts\": {\"jitso\": \"\"}}"
+    }
+  },
+  "steps": [
+    {
+      "run": [
+        "launch",
+        "--preset",
+        "haiku-explorer",
+        "--brief",
+        "{{PROJECT}}/.jitso/briefs/brief.md",
+        "--mode",
+        "direct",
+        "--dry-run"
+      ],
+      "expect": {
+        "exit": 0,
+        "stdout": [
+          {
+            "regex": "(?m)^launch:\\ bun\\ run\\ jitso\\ launch$"
+          }
+        ],
+        "stderr": [
+          {
+            "empty": true
+          }
+        ],
+        "orca_calls": {
+          "empty": true
+        }
+      }
+    }
+  ]
+}

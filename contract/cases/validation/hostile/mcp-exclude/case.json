@@ -1,0 +1,73 @@
+{
+  "id": "validation/hostile/mcp-exclude",
+  "title": "--mcp-exclude rejects every hostile value of the escape corpus: exit 2, JITSO REJECTED, orca never called",
+  "source": [
+    "cli/jitso/escape.test.ts: '2b.3: every other model-controlled field' (HOSTILE_VALUES, the NUL one skipped: argv cannot carry NUL)",
+    "cli/jitso/shell.ts: checkLaunchField"
+  ],
+  "for_each": {
+    "var": "v",
+    "values": [
+      "x;ls",
+      "x && ls",
+      "x||ls",
+      "x|ls",
+      "$(ls)",
+      "`ls`",
+      "a b",
+      "a\nb",
+      "a\rb",
+      "'",
+      "\"",
+      "--flag",
+      "-x",
+      "../x",
+      "a/../b",
+      "",
+      "\\",
+      "a*b",
+      "a>b",
+      "a#b",
+      "a=b;"
+    ]
+  },
+  "steps": [
+    {
+      "run": [
+        "launch",
+        "--preset",
+        "haiku-explorer",
+        "--brief",
+        "{{PROJECT}}/.jitso/briefs/b.md",
+        "--mode",
+        "direct",
+        "--mcp-exclude",
+        "{{v}}"
+      ],
+      "expect": {
+        "exit": 2,
+        "stdout": [
+          {
+            "empty": true
+          }
+        ],
+        "stderr": [
+          "JITSO REJECTED:",
+          "invalid value for --mcp-exclude"
+        ],
+        "orca_calls": {
+          "empty": true
+        },
+        "files": [
+          {
+            "path": ".jitso/launches",
+            "exists": false
+          }
+        ],
+        "registry": {
+          "count": 0
+        }
+      }
+    }
+  ]
+}

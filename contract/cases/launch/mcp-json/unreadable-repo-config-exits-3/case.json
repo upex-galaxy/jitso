@@ -1,0 +1,72 @@
+{
+  "id": "launch/mcp-json/unreadable-repo-config-exits-3",
+  "title": "a repo .mcp.json that is not valid JSON, or is missing, stops the launch with exit 3 and no orca call, even for a preset without MCP servers; no launch folder is left behind",
+  "source": [
+    "cli/jitso/launch.ts: launchForReal reads and parses .mcp.json for every preset",
+    "intended: TS-ODDITIES L2 (owner decision 2026-11-15): a failed launch leaves no launch folder; the TS binary leaves it on disk"
+  ],
+  "status": {
+    "ts": "xfail",
+    "go": "pass"
+  },
+  "defect": "N-2",
+  "intent": "INTENDED behavior (TS-ODDITIES L2, owner decision 2026-11-15, defect N-2). A launch that fails before its registry line leaves no launch folder behind: the implementation removes .jitso/launches/<id>/ when the launch fails. The exit code, the stderr text, the empty registry and the orca calls are unchanged. The case seeds one earlier launch folder, so .jitso/launches always exists and the check pins that only the failed launch's own folder is removed, never the whole directory (SPEC 7.2 has no 'absent or empty' check). The TS binary leaves the folder (brief.md, card.txt, core.md, mcp.json, run.sh) on disk with no registry line, so the launch-folder check is the only expectation that FAILS on TS.",
+  "project": {
+    "files": {
+      ".jitso/briefs/brief.md": {
+        "from": "brief.md"
+      },
+      ".mcp.json": "{{mcp}}",
+      ".jitso/launches/L20261113T142233-a3f9/brief.md": "seed"
+    }
+  },
+  "for_each": {
+    "var": "mcp",
+    "values": [
+      "{not json",
+      ""
+    ]
+  },
+  "steps": [
+    {
+      "run": [
+        "launch",
+        "--preset",
+        "haiku-explorer",
+        "--brief",
+        "{{PROJECT}}/.jitso/briefs/brief.md",
+        "--mode",
+        "direct"
+      ],
+      "expect": {
+        "exit": 3,
+        "stdout": [
+          {
+            "empty": true
+          }
+        ],
+        "stderr": [
+          {
+            "regex": "^jitso: "
+          }
+        ],
+        "registry": {
+          "count": 0
+        },
+        "files": [
+          {
+            "path": ".jitso/launches",
+            "entries": [
+              {
+                "equals": "L20261113T142233-a3f9"
+              }
+            ]
+          }
+        ],
+        "orca_calls": {
+          "empty": true
+        }
+      }
+    }
+  ]
+}

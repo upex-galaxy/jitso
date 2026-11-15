@@ -1,0 +1,55 @@
+{
+  "id": "reap/worker-without-a-terminal-handle",
+  "title": "a worker that has no terminal handle at all and no mark is flagged with a \"(no terminal handle)\" evidence",
+  "source": [
+    "cli/jitso/reap.ts: `handle ?? '(no terminal handle)'` (no unit test)"
+  ],
+  "project": {
+    "files": {
+      ".jitso/launches.jsonl": "{\"v\":1,\"event\":\"launch\",\"id\":\"L20261113T142233-a3f9\",\"parent\":null,\"root\":\"L20261113T142233-a3f9\",\"depth\":0,\"ts\":\"2026-11-13T14:22:33.000Z\",\"mode\":\"direct\",\"preset\":\"haiku-explorer\",\"orca\":{\"run\":\"run_1\",\"task\":\"t\",\"terminal\":\"term_logged\",\"title\":\"t [jitso:L20261113T142233-a3f9]\"}}\n"
+    }
+  },
+  "orca": {
+    "listed": [
+      "term_logged"
+    ],
+    "responses": {
+      "orchestration worker-list": {
+        "workers": [
+          {
+            "title": "nameless"
+          }
+        ]
+      }
+    }
+  },
+  "steps": [
+    {
+      "run": [
+        "reap"
+      ],
+      "expect": {
+        "exit": 0,
+        "stdout": [
+          {
+            "regex": "(?m)^jitso reap: 0 launch\\(es\\) marked ended, 1 unlogged worker\\(s\\), 0 analyzed$"
+          }
+        ],
+        "registry": {
+          "count": 2,
+          "events": [
+            {
+              "at": 1,
+              "event": "rule_break",
+              "fields": {
+                "kind": "unlogged_worker",
+                "id": null,
+                "evidence": "worker (no terminal handle) in run run_1 has no launch event"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ]
+}

@@ -1,0 +1,30 @@
+{
+  "id": "validation/unknown-flag-alone",
+  "title": "launch --help is not a help request: it is an unknown argument, exit 2",
+  "source": [
+    "cli/jitso/launch.ts: parseLaunchArgs (`--help` is not in the value flags)"
+  ],
+  "steps": [
+    {
+      "run": [
+        "launch",
+        "--help"
+      ],
+      "expect": {
+        "exit": 2,
+        "stdout": [
+          {
+            "empty": true
+          }
+        ],
+        "stderr": [
+          "JITSO REJECTED:",
+          "unknown argument \"--help\""
+        ],
+        "orca_calls": {
+          "empty": true
+        }
+      }
+    }
+  ]
+}

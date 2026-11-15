@@ -1,0 +1,60 @@
+{
+  "id": "close/orca-close-failure-is-exit-3",
+  "title": "an Orca failure on the close is exit 3 with the message; the end event was already written before the close was tried",
+  "source": [
+    "cli/jitso/close.test.ts: 'an orca failure exits 3 with the message'"
+  ],
+  "project": {
+    "files": {
+      ".jitso/launches.jsonl": "{\"v\":1,\"event\":\"launch\",\"id\":\"L20261113T142233-a3f9\",\"parent\":null,\"root\":\"L20261113T142233-a3f9\",\"depth\":0,\"ts\":\"2026-11-13T14:22:33.000Z\",\"mode\":\"direct\",\"preset\":\"haiku-explorer\",\"orca\":{\"run\":null,\"task\":null,\"terminal\":\"term_fake\",\"title\":\"t [jitso:L20261113T142233-a3f9]\"}}\n"
+    }
+  },
+  "orca": {
+    "screens": [
+      "work done\n  cost footer line"
+    ],
+    "fail_on": [
+      "terminal close"
+    ]
+  },
+  "steps": [
+    {
+      "run": [
+        "close",
+        "L20261113T142233-a3f9"
+      ],
+      "expect": {
+        "exit": 3,
+        "stderr": [
+          {
+            "contains": "terminal close failed"
+          }
+        ],
+        "stdout": [
+          {
+            "empty": true
+          }
+        ],
+        "orca_calls": {
+          "verbs": [
+            "terminal read",
+            "terminal close"
+          ]
+        },
+        "registry": {
+          "count": 2,
+          "events": [
+            {
+              "at": 1,
+              "event": "end",
+              "fields": {
+                "id": "L20261113T142233-a3f9",
+                "source": "jitso_close"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ]
+}

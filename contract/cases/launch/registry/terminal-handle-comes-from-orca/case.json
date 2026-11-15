@@ -1,0 +1,95 @@
+{
+  "id": "launch/registry/terminal-handle-comes-from-orca",
+  "title": "the handle Orca returns is used for every later call and recorded in the registry",
+  "source": [
+    "cli/jitso/orca.test.ts: createTerminal returns the handle"
+  ],
+  "project": {
+    "files": {
+      ".jitso/briefs/brief.md": {
+        "from": "brief.md"
+      }
+    }
+  },
+  "orca": {
+    "handle": "term_other"
+  },
+  "steps": [
+    {
+      "run": [
+        "launch",
+        "--preset",
+        "haiku-explorer",
+        "--brief",
+        "{{PROJECT}}/.jitso/briefs/brief.md",
+        "--mode",
+        "direct"
+      ],
+      "capture": {
+        "LAUNCH_ID": {
+          "from": "stdout",
+          "regex": "JITSO (L\\d{8}T\\d{6}-[0-9a-f]{4})",
+          "group": 1
+        }
+      },
+      "expect": {
+        "exit": 0,
+        "orca_calls": {
+          "verbs": [
+            "terminal create",
+            "terminal wait",
+            "terminal read"
+          ],
+          "calls": [
+            {
+              "at": 0,
+              "argv": [
+                "terminal",
+                "create",
+                "--title",
+                "[jitso:{{LAUNCH_ID}}] haiku-explorer",
+                "--command",
+                "'{{PROJECT}}/.jitso/launches/{{LAUNCH_ID}}/run.sh'"
+              ]
+            },
+            {
+              "at": 1,
+              "argv": [
+                "terminal",
+                "wait",
+                "--terminal",
+                "term_other",
+                "--for",
+                "tui-idle",
+                "--timeout-ms",
+                "90000"
+              ]
+            },
+            {
+              "at": 2,
+              "argv": [
+                "terminal",
+                "read",
+                "--terminal",
+                "term_other",
+                "--screen"
+              ]
+            }
+          ]
+        },
+        "registry": {
+          "count": 1,
+          "events": [
+            {
+              "at": 0,
+              "event": "launch",
+              "fields": {
+                "orca.terminal": "term_other"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ]
+}

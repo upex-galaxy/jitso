@@ -1,0 +1,75 @@
+{
+  "id": "launch/orca-failure/error-message-is-passed-through",
+  "title": "Orca's own error message is shown after 'orca terminal create failed:'; no launch folder is left behind",
+  "source": [
+    "cli/jitso/orca.test.ts: 'an ok:false answer throws an OrcaError that carries the code'",
+    "intended: TS-ODDITIES L2 (owner decision 2026-11-15): a failed launch leaves no launch folder; the TS binary leaves it on disk"
+  ],
+  "status": {
+    "ts": "xfail",
+    "go": "pass"
+  },
+  "defect": "N-2",
+  "intent": "INTENDED behavior (TS-ODDITIES L2, owner decision 2026-11-15, defect N-2). A launch that fails before its registry line leaves no launch folder behind: the implementation removes .jitso/launches/<id>/ when the launch fails. The exit code, the stderr text, the empty registry and the orca calls are unchanged. The TS binary leaves the folder (brief.md, card.txt, core.md, mcp.json, run.sh) on disk with no registry line, so the launch-folder check is the only expectation that FAILS on TS.",
+  "project": {
+    "files": {
+      ".jitso/briefs/brief.md": {
+        "from": "brief.md"
+      }
+    }
+  },
+  "orca": {
+    "errors": {
+      "terminal create": {
+        "code": "not_running",
+        "message": "Orca is not running"
+      }
+    }
+  },
+  "steps": [
+    {
+      "run": [
+        "launch",
+        "--preset",
+        "haiku-explorer",
+        "--brief",
+        "{{PROJECT}}/.jitso/briefs/brief.md",
+        "--mode",
+        "direct"
+      ],
+      "expect": {
+        "exit": 3,
+        "stdout": [
+          {
+            "empty": true
+          }
+        ],
+        "stderr": [
+          {
+            "contains": "jitso: orca terminal create failed: Orca is not running"
+          }
+        ],
+        "registry": {
+          "count": 0
+        },
+        "orca_calls": {
+          "verbs": [
+            "terminal create"
+          ]
+        },
+        "files": [
+          {
+            "path": ".jitso/launches/{{LAUNCH_ID}}",
+            "exists": false
+          }
+        ]
+      },
+      "capture": {
+        "LAUNCH_ID": {
+          "from": "orca_log",
+          "regex": "\\[jitso:(L\\d{8}T\\d{6}-[0-9a-f]{4})\\]"
+        }
+      }
+    }
+  ]
+}

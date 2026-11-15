@@ -1,0 +1,119 @@
+{
+  "id": "close/normal-close",
+  "title": "closing a launch saves the screen footer, writes an end event with source jitso_close, closes that one terminal and checks the list",
+  "source": [
+    "cli/jitso/close.test.ts: 'reads the screen into footer.txt, writes the end event, closes that one terminal'",
+    "cli/jitso/close.test.ts: 'never uses the worktree-wide close'"
+  ],
+  "project": {
+    "files": {
+      ".jitso/briefs/explore.md": {
+        "from": "brief.md"
+      }
+    }
+  },
+  "orca": {
+    "screens": [
+      "work done\n  cost footer line"
+    ]
+  },
+  "steps": [
+    {
+      "run": [
+        "launch",
+        "--preset",
+        "haiku-explorer",
+        "--brief",
+        "{{PROJECT}}/.jitso/briefs/explore.md",
+        "--mode",
+        "direct"
+      ],
+      "capture": {
+        "LAUNCH_ID": {
+          "from": "stdout",
+          "regex": "JITSO (L\\d{8}T\\d{6}-[0-9a-f]{4})"
+        }
+      },
+      "expect": {
+        "exit": 0
+      }
+    },
+    {
+      "run": [
+        "close",
+        "{{LAUNCH_ID}}"
+      ],
+      "expect": {
+        "exit": 0,
+        "stdout": [
+          {
+            "regex": "(?m)^jitso: closed {{LAUNCH_ID}} \\(terminal term_fake\\)$"
+          }
+        ],
+        "stderr": [
+          {
+            "empty": true
+          }
+        ],
+        "orca_calls": {
+          "verbs": [
+            "terminal create",
+            "terminal wait",
+            "terminal read",
+            "terminal read",
+            "terminal close",
+            "terminal list"
+          ],
+          "calls": [
+            {
+              "at": 3,
+              "argv": [
+                "terminal",
+                "read",
+                "--terminal",
+                "term_fake",
+                "--screen"
+              ]
+            },
+            {
+              "at": 4,
+              "argv": [
+                "terminal",
+                "close",
+                "--terminal",
+                "term_fake"
+              ]
+            }
+          ]
+        },
+        "files": [
+          {
+            "path": ".jitso/launches/{{LAUNCH_ID}}/footer.txt",
+            "equals": "work done\n  cost footer line\n"
+          }
+        ],
+        "registry": {
+          "count": 2,
+          "events": [
+            {
+              "at": 1,
+              "event": "end",
+              "fields": {
+                "id": "{{LAUNCH_ID}}",
+                "ts": {
+                  "regex": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d+)?Z$"
+                },
+                "source": "jitso_close",
+                "outcome_reported": "none",
+                "footer_path": "{{PROJECT}}/.jitso/launches/{{LAUNCH_ID}}/footer.txt",
+                "duration_s": {
+                  "regex": "^\\d+$"
+                }
+              }
+            }
+          ]
+        }
+      }
+    }
+  ]
+}

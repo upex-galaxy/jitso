@@ -1,0 +1,56 @@
+{
+  "id": "registry/failed-launch-writes-no-event",
+  "title": "a launch that fails against Orca writes no launch event and starts no worker",
+  "source": [
+    "cli/jitso/launch.test.ts: orca failure closes the terminal",
+    "cli/jitso/orca.test.ts"
+  ],
+  "project": {
+    "files": {
+      ".jitso/briefs/explore.md": {
+        "from": "brief.md"
+      }
+    }
+  },
+  "orca": {
+    "fail_on": [
+      "{{verb}}"
+    ]
+  },
+  "for_each": {
+    "var": "verb",
+    "values": [
+      "terminal create",
+      "terminal wait"
+    ]
+  },
+  "steps": [
+    {
+      "run": [
+        "launch",
+        "--preset",
+        "haiku-explorer",
+        "--brief",
+        "{{PROJECT}}/.jitso/briefs/explore.md",
+        "--mode",
+        "direct"
+      ],
+      "expect": {
+        "exit": 3,
+        "stderr": [
+          {
+            "contains": "jitso:"
+          }
+        ],
+        "registry": {
+          "count": 0
+        },
+        "orca_calls": {
+          "none": [
+            "orchestration worker-start"
+          ]
+        }
+      }
+    }
+  ]
+}

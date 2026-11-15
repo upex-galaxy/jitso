@@ -1,0 +1,36 @@
+{
+  "id": "hooks/guard/mcp-create-worktree-with-agent",
+  "title": "orca-bridge create_worktree with an agent is denied",
+  "source": [
+    ".agents/hooks/jitso-guard.test.ts: 'denies create_worktree with an agent, allows it without'"
+  ],
+  "steps": [
+    {
+      "hook": "guard",
+      "input": {
+        "hook_event_name": "PreToolUse",
+        "tool_name": "mcp__claude_ai_orca-bridge__create_worktree",
+        "tool_input": {
+          "repo": "r",
+          "name": "n",
+          "parent": "none",
+          "agent": "claude",
+          "prompt": "x"
+        },
+        "cwd": "{{PROJECT}}"
+      },
+      "expect": {
+        "exit": 0,
+        "decision": "deny",
+        "reason": [
+          {
+            "regex": "\\(denied: orca-bridge create_worktree with an agent\\)"
+          },
+          {
+            "regex": "launch"
+          }
+        ]
+      }
+    }
+  ]
+}

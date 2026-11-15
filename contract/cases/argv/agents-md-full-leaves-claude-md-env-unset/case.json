@@ -1,0 +1,76 @@
+{
+  "title": "a preset with agents_md: full launches claude without CLAUDE_CODE_DISABLE_CLAUDE_MDS in its environment",
+  "source": [
+    "jitso/presets/sonnet-automator.yaml agents_md: full; PLAN.md defect S2 (the full half passes on TS today: the field is only logged)"
+  ],
+  "tags": [
+    "posix"
+  ],
+  "project": {
+    "files": {
+      ".jitso/briefs/brief.md": {
+        "from": "brief.md"
+      }
+    }
+  },
+  "steps": [
+    {
+      "run": [
+        "launch",
+        "--preset",
+        "sonnet-automator",
+        "--brief",
+        "{{PROJECT}}/.jitso/briefs/brief.md",
+        "--mode",
+        "direct",
+        "--field",
+        "ticket_key=PRJ-1"
+      ],
+      "capture": {
+        "LAUNCH_ID": {
+          "from": "stdout",
+          "regex": "JITSO (L\\d{8}T\\d{6}-[0-9a-f]{4})"
+        }
+      },
+      "expect": {
+        "exit": 0,
+        "registry": {
+          "count": 1,
+          "events": [
+            {
+              "at": 0,
+              "event": "launch",
+              "fields": {
+                "agents_md": "full"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "exec": "run_sh",
+      "launch": "{{LAUNCH_ID}}",
+      "expect": {
+        "exit": 0,
+        "claude": {
+          "ran": true,
+          "env": {
+            "CLAUDE_CODE_DISABLE_CLAUDE_MDS": {
+              "absent": true
+            }
+          },
+          "argv_count": {
+            "--dangerously-skip-permissions": 1
+          },
+          "arg_after": {
+            "--session-id": {
+              "regex": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+            }
+          }
+        }
+      }
+    }
+  ],
+  "id": "argv/agents-md-full-leaves-claude-md-env-unset"
+}

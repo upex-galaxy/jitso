@@ -1,0 +1,44 @@
+{
+  "id": "card/launch-line/default-is-plain-jitso-launch",
+  "title": "without a jitso script in package.json the card prints 'launch: jitso launch'",
+  "source": [
+    "cli/jitso/launch.test.ts: 'falls back to the plain `jitso launch` without the script'"
+  ],
+  "project": {
+    "files": {
+      ".jitso/briefs/brief.md": {
+        "from": "brief.md"
+      }
+    }
+  },
+  "steps": [
+    {
+      "run": [
+        "launch",
+        "--preset",
+        "haiku-explorer",
+        "--brief",
+        "{{PROJECT}}/.jitso/briefs/brief.md",
+        "--mode",
+        "direct",
+        "--dry-run"
+      ],
+      "expect": {
+        "exit": 0,
+        "stdout": [
+          {
+            "regex": "(?m)^launch:\\ jitso\\ launch$"
+          }
+        ],
+        "stderr": [
+          {
+            "empty": true
+          }
+        ],
+        "orca_calls": {
+          "empty": true
+        }
+      }
+    }
+  ]
+}

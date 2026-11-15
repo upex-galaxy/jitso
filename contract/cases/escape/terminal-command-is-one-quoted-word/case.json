@@ -1,0 +1,58 @@
+{
+  "title": "orca receives the generated run.sh as ONE single-quoted word, never a command line built from user text",
+  "source": [
+    "cli/jitso/escape.test.ts: '--command carries one escaped word even when the run.sh folder has hostile characters' (the folder cannot be made hostile from a case; the observable is the exact --command word and the --title mark)"
+  ],
+  "project": {
+    "files": {
+      ".jitso/briefs/brief.md": {
+        "from": "brief.md"
+      }
+    }
+  },
+  "steps": [
+    {
+      "run": [
+        "launch",
+        "--preset",
+        "haiku-explorer",
+        "--brief",
+        "{{PROJECT}}/.jitso/briefs/brief.md",
+        "--mode",
+        "direct"
+      ],
+      "capture": {
+        "LAUNCH_ID": {
+          "from": "stdout",
+          "regex": "JITSO (L\\d{8}T\\d{6}-[0-9a-f]{4})"
+        }
+      },
+      "expect": {
+        "exit": 0,
+        "orca_calls": {
+          "verbs": [
+            "terminal create",
+            "terminal wait",
+            "terminal read"
+          ],
+          "calls": [
+            {
+              "at": 0,
+              "argv": [
+                "terminal",
+                "create",
+                "--title",
+                {
+                  "regex": "^\\[jitso:{{LAUNCH_ID}}\\] haiku-explorer$"
+                },
+                "--command",
+                "'{{PROJECT}}/.jitso/launches/{{LAUNCH_ID}}/run.sh'"
+              ]
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "id": "escape/terminal-command-is-one-quoted-word"
+}

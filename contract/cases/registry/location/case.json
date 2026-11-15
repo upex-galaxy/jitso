@@ -1,0 +1,55 @@
+{
+  "id": "registry/location",
+  "title": "the registry is .jitso/launches.jsonl of the project and the launch keeps its big files under .jitso/launches/<id>/",
+  "source": [
+    "cli/jitso/log.test.ts: header (one JSON event per line, big data under launches/<id>/)"
+  ],
+  "project": {
+    "files": {
+      ".jitso/briefs/explore.md": {
+        "from": "brief.md"
+      }
+    }
+  },
+  "steps": [
+    {
+      "run": [
+        "launch",
+        "--preset",
+        "haiku-explorer",
+        "--brief",
+        "{{PROJECT}}/.jitso/briefs/explore.md",
+        "--mode",
+        "direct"
+      ],
+      "capture": {
+        "LAUNCH_ID": {
+          "from": "stdout",
+          "regex": "JITSO (L\\d{8}T\\d{6}-[0-9a-f]{4})"
+        }
+      },
+      "expect": {
+        "exit": 0,
+        "files": [
+          {
+            "path": ".jitso/launches.jsonl",
+            "exists": true,
+            "contains": [
+              "\"event\":\"launch\"",
+              "{{LAUNCH_ID}}"
+            ]
+          },
+          {
+            "path": ".jitso/launches/{{LAUNCH_ID}}/brief.md",
+            "exists": true
+          },
+          {
+            "path": ".jitso/launches/{{LAUNCH_ID}}/run.sh",
+            "exists": true,
+            "executable": true
+          }
+        ]
+      }
+    }
+  ]
+}

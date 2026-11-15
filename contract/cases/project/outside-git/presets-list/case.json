@@ -1,0 +1,41 @@
+{
+  "id": "project/outside-git/presets-list",
+  "title": "presets list from a cwd outside any git checkout fails, naming the folder",
+  "source": [
+    "cli/jitso/root.test.ts: 'outside a git checkout it throws a message that names the folder'",
+    "intended: project = git root of the cwd (PLAN.md decision), TS resolves from the script folder"
+  ],
+  "tags": [
+    "ts-location"
+  ],
+  "status": {
+    "ts": "xfail",
+    "go": "pass"
+  },
+  "defect": "N-1",
+  "intent": "The project is the git primary checkout of the cwd. A cwd outside any git checkout is an environment error: exit 3, one stderr line `jitso: <cwd> is not inside a git checkout` that names the folder, nothing written, orca never called. The TypeScript binary finds its project from its own script folder (REPO = the folder of index.ts), so it ignores the cwd and succeeds. The exit code 3 is the harvester's choice: it is the code index.ts gives to an environment error in `launch`.",
+  "steps": [
+    {
+      "run": [
+        "presets",
+        "list"
+      ],
+      "cwd": "{{HOME}}",
+      "expect": {
+        "exit": 3,
+        "stdout": [
+          {
+            "empty": true
+          }
+        ],
+        "stderr": [
+          "{{HOME}}",
+          "git"
+        ],
+        "orca_calls": {
+          "empty": true
+        }
+      }
+    }
+  ]
+}

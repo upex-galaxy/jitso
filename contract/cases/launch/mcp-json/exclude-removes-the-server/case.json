@@ -1,0 +1,73 @@
+{
+  "id": "launch/mcp-json/exclude-removes-the-server",
+  "title": "--mcp-exclude dbhub leaves only openapi in mcp.json and records both lists in the registry",
+  "source": [
+    "cli/jitso/launch.test.ts: '--mcp-exclude removes that server from mcp.json and records it in the event'"
+  ],
+  "project": {
+    "files": {
+      ".jitso/briefs/brief.md": {
+        "from": "brief.md"
+      }
+    }
+  },
+  "steps": [
+    {
+      "run": [
+        "launch",
+        "--preset",
+        "sonnet-tester",
+        "--brief",
+        "{{PROJECT}}/.jitso/briefs/brief.md",
+        "--mode",
+        "direct",
+        "--field",
+        "ticket_key=PRJ-123",
+        "--mcp-exclude",
+        "dbhub"
+      ],
+      "capture": {
+        "LAUNCH_ID": {
+          "from": "stdout",
+          "regex": "JITSO (L\\d{8}T\\d{6}-[0-9a-f]{4})",
+          "group": 1
+        }
+      },
+      "expect": {
+        "exit": 0,
+        "files": [
+          {
+            "path": ".jitso/launches/{{LAUNCH_ID}}/mcp.json",
+            "json": [
+              {
+                "path": "mcpServers.dbhub",
+                "absent": true
+              },
+              {
+                "path": "mcpServers.openapi.command",
+                "equals": "fixture-openapi"
+              }
+            ]
+          }
+        ],
+        "registry": {
+          "count": 1,
+          "events": [
+            {
+              "at": 0,
+              "event": "launch",
+              "fields": {
+                "mcp": [
+                  "openapi"
+                ],
+                "mcp_excluded": [
+                  "dbhub"
+                ]
+              }
+            }
+          ]
+        }
+      }
+    }
+  ]
+}

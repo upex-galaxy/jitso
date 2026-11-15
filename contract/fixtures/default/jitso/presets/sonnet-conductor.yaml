@@ -1,0 +1,21 @@
+# Approved preset (ADR-0027). Shape and fields: .session/jitso ARQ section 6.3.
+id: sonnet-conductor
+version: 1
+status: approved
+role: conductor
+type: conductor
+work_kind: automation-batch
+description: Coordinate a module-driven automation batch with orca-orchestration and test-automation. It runs the TC source gate, splits the work by module, creates the Orca Run and Tasks, launches each sonnet-automator worker only with jitso launch in fleet mode, supervises through the mailbox, integrates and closes the workers.
+harness: claude
+model: claude-sonnet-5-5
+effort: medium
+mode_default: direct
+agents_md: full
+route_scope: [code-quickref, ticket-work, orchestration-detail]
+skills_first: [orca-orchestration, test-automation]
+mcp: []
+requires: []
+budget: { tokens: 600000, usd_list_cap: 15.00 }
+success:
+  - { check: answer_delivered }
+  - { check: no_rule_breaks }

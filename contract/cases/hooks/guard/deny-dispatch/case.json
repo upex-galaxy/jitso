@@ -1,0 +1,32 @@
+{
+  "id": "hooks/guard/deny-dispatch",
+  "title": "orchestration dispatch is denied and the reason names the dispatch verb",
+  "source": [
+    ".agents/hooks/jitso-guard.test.ts: 'denies dispatch'"
+  ],
+  "steps": [
+    {
+      "hook": "guard",
+      "input": {
+        "hook_event_name": "PreToolUse",
+        "tool_name": "Bash",
+        "tool_input": {
+          "command": "orca orchestration dispatch --task t1 --to term_1"
+        },
+        "cwd": "{{PROJECT}}"
+      },
+      "expect": {
+        "exit": 0,
+        "decision": "deny",
+        "reason": [
+          {
+            "regex": "\\(denied: orchestration dispatch\\)"
+          },
+          {
+            "regex": "launch"
+          }
+        ]
+      }
+    }
+  ]
+}

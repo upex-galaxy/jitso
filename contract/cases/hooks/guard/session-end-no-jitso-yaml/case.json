@@ -1,0 +1,30 @@
+{
+  "id": "hooks/guard/session-end-no-jitso-yaml",
+  "title": "without jitso/jitso.yaml a SessionEnd writes nothing even when the registry holds the matching launch",
+  "source": [
+    ".agents/hooks/jitso-guard.test.ts: 'a repo without jitso/jitso.yaml writes nothing'"
+  ],
+  "project": {
+    "files": {
+      "jitso/jitso.yaml": null,
+      ".jitso/launches.jsonl": "{\"v\":1,\"event\":\"launch\",\"id\":\"L20261113T142233-a3f9\",\"parent\":null,\"root\":\"L20261113T142233-a3f9\",\"depth\":0,\"ts\":\"2026-11-13T14:22:33.000Z\",\"mode\":\"direct\",\"preset\":\"haiku-explorer\",\"session_id\":\"sess-1\"}\n"
+    }
+  },
+  "steps": [
+    {
+      "hook": "guard",
+      "input": {
+        "hook_event_name": "SessionEnd",
+        "session_id": "sess-1",
+        "reason": "other",
+        "cwd": "{{PROJECT}}"
+      },
+      "expect": {
+        "exit": 0,
+        "registry": {
+          "count": 1
+        }
+      }
+    }
+  ]
+}

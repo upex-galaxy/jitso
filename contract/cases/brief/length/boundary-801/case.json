@@ -1,0 +1,50 @@
+{
+  "id": "brief/length/boundary-801",
+  "title": "a brief of exactly 801 words is rejected with the exact count",
+  "source": [
+    "cli/jitso/brief.test.ts: 'fails a brief under 40 words and one over 800' (boundary)"
+  ],
+  "project": {
+    "files": {
+      ".jitso/briefs/brief.md": {
+        "from": "brief.md"
+      }
+    }
+  },
+  "steps": [
+    {
+      "run": [
+        "launch",
+        "--preset",
+        "haiku-explorer",
+        "--brief",
+        "{{PROJECT}}/.jitso/briefs/brief.md",
+        "--mode",
+        "direct"
+      ],
+      "expect": {
+        "exit": 2,
+        "stdout": [
+          {
+            "empty": true
+          }
+        ],
+        "stderr": [
+          "length (801 words, expected 40 to 800)"
+        ],
+        "orca_calls": {
+          "empty": true
+        },
+        "registry": {
+          "count": 0
+        },
+        "files": [
+          {
+            "path": ".jitso/launches",
+            "exists": false
+          }
+        ]
+      }
+    }
+  ]
+}

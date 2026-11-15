@@ -1,0 +1,43 @@
+{
+  "title": "the dry-run card of haiku-explorer carries ROUTE-SCOPE: none, which parses to an empty list",
+  "source": [
+    "intended: PLAN.md defect S1 (route_scope: [none] in jitso/presets/haiku-explorer.yaml)"
+  ],
+  "status": {
+    "ts": "xfail",
+    "go": "pass"
+  },
+  "defect": "S1",
+  "intent": "INTENDED behavior (defect S1, route_scope). The router reads a scope with the regex (?:^|[.!?])[ \\t>*-]*ROUTE-SCOPE:([^\\n]*), so the card line must start with ROUTE-SCOPE: (with the colon, at a line start or after . ! ?) and list the preset ids comma separated. On the TS binary today the card writes 'ROUTE-SCOPE <ids>' with no colon, after a '|' separator, so the matcher finds nothing and this case FAILS on TS. Here the preset says [none], so the line must exist and name only none: route_scope [] (a missing line fails even []).",
+  "project": {
+    "files": {
+      ".jitso/briefs/brief.md": {
+        "from": "brief.md"
+      }
+    }
+  },
+  "steps": [
+    {
+      "run": [
+        "launch",
+        "--preset",
+        "haiku-explorer",
+        "--brief",
+        "{{PROJECT}}/.jitso/briefs/brief.md",
+        "--mode",
+        "direct",
+        "--dry-run"
+      ],
+      "expect": {
+        "exit": 0,
+        "stdout": [
+          {
+            "route_scope": []
+          },
+          "dry run: nothing was written"
+        ]
+      }
+    }
+  ],
+  "id": "defects/s1b-card-route-scope-none"
+}

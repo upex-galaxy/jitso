@@ -1,0 +1,45 @@
+{
+  "id": "card/launch-line/no-package-json",
+  "title": "without any package.json the card prints 'launch: jitso launch'",
+  "source": [
+    "cli/jitso/launch.test.ts: 'falls back to the plain `jitso launch` ... without package.json'"
+  ],
+  "project": {
+    "files": {
+      ".jitso/briefs/brief.md": {
+        "from": "brief.md"
+      },
+      "package.json": null
+    }
+  },
+  "steps": [
+    {
+      "run": [
+        "launch",
+        "--preset",
+        "haiku-explorer",
+        "--brief",
+        "{{PROJECT}}/.jitso/briefs/brief.md",
+        "--mode",
+        "direct",
+        "--dry-run"
+      ],
+      "expect": {
+        "exit": 0,
+        "stdout": [
+          {
+            "regex": "(?m)^launch:\\ jitso\\ launch$"
+          }
+        ],
+        "stderr": [
+          {
+            "empty": true
+          }
+        ],
+        "orca_calls": {
+          "empty": true
+        }
+      }
+    }
+  ]
+}

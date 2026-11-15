@@ -1,0 +1,50 @@
+{
+  "id": "brief/length/accented-letters-stay-one-word",
+  "title": "a word with an accented letter counts once: 38 plain words plus 'señal' is 39 words, too short",
+  "source": [
+    "cli/jitso/brief.test.ts: words() = text.toLowerCase().match(/\\\\p{L}+/gu)"
+  ],
+  "project": {
+    "files": {
+      ".jitso/briefs/brief.md": {
+        "from": "brief.md"
+      }
+    }
+  },
+  "steps": [
+    {
+      "run": [
+        "launch",
+        "--preset",
+        "haiku-explorer",
+        "--brief",
+        "{{PROJECT}}/.jitso/briefs/brief.md",
+        "--mode",
+        "direct"
+      ],
+      "expect": {
+        "exit": 2,
+        "stdout": [
+          {
+            "empty": true
+          }
+        ],
+        "stderr": [
+          "length (39 words, expected 40 to 800)"
+        ],
+        "orca_calls": {
+          "empty": true
+        },
+        "registry": {
+          "count": 0
+        },
+        "files": [
+          {
+            "path": ".jitso/launches",
+            "exists": false
+          }
+        ]
+      }
+    }
+  ]
+}

@@ -1,0 +1,58 @@
+{
+  "id": "launch/registry/records-the-brief-language",
+  "title": "the launch line records the --brief-language value that let the brief through",
+  "source": [
+    "cli/jitso/launch.test.ts: '--brief-language es accepts it and the log event records the value'"
+  ],
+  "project": {
+    "files": {
+      ".jitso/briefs/brief.md": {
+        "from": "brief.md"
+      }
+    }
+  },
+  "for_each": {
+    "var": "lang",
+    "values": [
+      "es",
+      "any"
+    ]
+  },
+  "steps": [
+    {
+      "run": [
+        "launch",
+        "--preset",
+        "haiku-explorer",
+        "--brief",
+        "{{PROJECT}}/.jitso/briefs/brief.md",
+        "--mode",
+        "direct",
+        "--brief-language",
+        "{{lang}}"
+      ],
+      "capture": {
+        "LAUNCH_ID": {
+          "from": "stdout",
+          "regex": "JITSO (L\\d{8}T\\d{6}-[0-9a-f]{4})",
+          "group": 1
+        }
+      },
+      "expect": {
+        "exit": 0,
+        "registry": {
+          "count": 1,
+          "events": [
+            {
+              "at": 0,
+              "event": "launch",
+              "fields": {
+                "brief_language": "{{lang}}"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ]
+}

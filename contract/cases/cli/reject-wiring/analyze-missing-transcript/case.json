@@ -1,0 +1,35 @@
+{
+  "id": "cli/reject-wiring/analyze-missing-transcript",
+  "title": "analyze --transcript of a file that does not exist exits 2 with JITSO REJECTED and an empty stdout",
+  "source": [
+    "cli/jitso/index.test.ts: 'analyze --transcript of a missing file exits 2 and says nothing but the reason'"
+  ],
+  "project": {
+    "files": {
+      "jitso/prices.json": "{\n  \"version\": 1,\n  \"verified_on\": \"2026-11-13\",\n  \"models\": {\n    \"sonnet\": {\n      \"input\": 1.0,\n      \"cache_read\": 0.1,\n      \"cache_write_5m\": 1.0,\n      \"cache_write_1h\": 1.0,\n      \"output\": 1.0\n    },\n    \"opus\": {\n      \"input\": 1.0,\n      \"cache_read\": 0.1,\n      \"cache_write_5m\": 1.0,\n      \"cache_write_1h\": 1.0,\n      \"output\": 1.0\n    },\n    \"haiku\": {\n      \"input\": 1.0,\n      \"cache_read\": 0.1,\n      \"cache_write_5m\": 1.0,\n      \"cache_write_1h\": 1.0,\n      \"output\": 1.0\n    }\n  }\n}\n"
+    }
+  },
+  "steps": [
+    {
+      "run": [
+        "analyze",
+        "--transcript",
+        "/nonexistent/x.jsonl"
+      ],
+      "expect": {
+        "exit": 2,
+        "stdout": [
+          {
+            "empty": true
+          }
+        ],
+        "stderr": [
+          "JITSO REJECTED:"
+        ],
+        "orca_calls": {
+          "empty": true
+        }
+      }
+    }
+  ]
+}

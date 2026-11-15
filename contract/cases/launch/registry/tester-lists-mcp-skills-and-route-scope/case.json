@@ -1,0 +1,69 @@
+{
+  "id": "launch/registry/tester-lists-mcp-skills-and-route-scope",
+  "title": "the launch line of sonnet-tester records its mcp servers, skills_first, route_scope and budget",
+  "source": [
+    "cli/jitso/launch.test.ts: 'sonnet-tester with its key launches with the MCP file'"
+  ],
+  "project": {
+    "files": {
+      ".jitso/briefs/brief.md": {
+        "from": "brief.md"
+      }
+    }
+  },
+  "steps": [
+    {
+      "run": [
+        "launch",
+        "--preset",
+        "sonnet-tester",
+        "--brief",
+        "{{PROJECT}}/.jitso/briefs/brief.md",
+        "--mode",
+        "direct",
+        "--field",
+        "ticket_key=PRJ-123"
+      ],
+      "capture": {
+        "LAUNCH_ID": {
+          "from": "stdout",
+          "regex": "JITSO (L\\d{8}T\\d{6}-[0-9a-f]{4})",
+          "group": 1
+        }
+      },
+      "expect": {
+        "exit": 0,
+        "registry": {
+          "count": 1,
+          "events": [
+            {
+              "at": 0,
+              "event": "launch",
+              "fields": {
+                "role": "operator",
+                "type": "tester",
+                "model": "claude-sonnet-5-5",
+                "effort": "medium",
+                "agents_md": "full",
+                "mcp": [
+                  "dbhub",
+                  "openapi"
+                ],
+                "mcp_excluded": [],
+                "skills_first": [
+                  "sprint-testing"
+                ],
+                "route_scope": [
+                  "ticket-work",
+                  "local-context-pbi"
+                ],
+                "budget.tokens": 250000,
+                "budget.usd_list_cap": 3
+              }
+            }
+          ]
+        }
+      }
+    }
+  ]
+}

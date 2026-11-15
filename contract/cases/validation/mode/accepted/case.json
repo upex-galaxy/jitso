@@ -1,0 +1,56 @@
+{
+  "id": "validation/mode/accepted",
+  "title": "direct and fleet are accepted and the card names the mode (a fleet dry run carries its run and task)",
+  "source": [
+    "cli/jitso/launch.test.ts: 'the English modes are accepted as they are'"
+  ],
+  "project": {
+    "files": {
+      ".jitso/briefs/b.md": {
+        "from": "brief.md"
+      }
+    }
+  },
+  "for_each": {
+    "var": "mode",
+    "values": [
+      "direct",
+      "fleet"
+    ]
+  },
+  "steps": [
+    {
+      "run": [
+        "launch",
+        "--preset",
+        "haiku-explorer",
+        "--brief",
+        "{{PROJECT}}/.jitso/briefs/b.md",
+        "--mode",
+        "{{mode}}",
+        "--run",
+        "run_1",
+        "--task",
+        "task_1",
+        "--dry-run"
+      ],
+      "expect": {
+        "exit": 0,
+        "stdout": [
+          {
+            "regex": "\\| mode {{mode}} \\("
+          },
+          "dry run: nothing was written"
+        ],
+        "stderr": [
+          {
+            "empty": true
+          }
+        ],
+        "orca_calls": {
+          "empty": true
+        }
+      }
+    }
+  ]
+}

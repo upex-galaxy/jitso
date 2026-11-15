@@ -1,0 +1,57 @@
+{
+  "id": "brief/language/override-accepts-spanish",
+  "title": "--brief-language es and --brief-language any accept a Spanish brief",
+  "source": [
+    "cli/jitso/launch.test.ts: '--brief-language es accepts it'"
+  ],
+  "project": {
+    "files": {
+      ".jitso/briefs/brief.md": {
+        "from": "brief.md"
+      }
+    }
+  },
+  "for_each": {
+    "var": "lang",
+    "values": [
+      "es",
+      "any"
+    ]
+  },
+  "steps": [
+    {
+      "run": [
+        "launch",
+        "--preset",
+        "haiku-explorer",
+        "--brief",
+        "{{PROJECT}}/.jitso/briefs/brief.md",
+        "--mode",
+        "direct",
+        "--brief-language",
+        "{{lang}}",
+        "--dry-run"
+      ],
+      "expect": {
+        "exit": 0,
+        "stderr": [
+          {
+            "empty": true
+          }
+        ],
+        "stdout": [
+          {
+            "regex": "^JITSO L\\d{8}T\\d{6}-[0-9a-f]{4} \\|"
+          },
+          "dry run: nothing was written"
+        ],
+        "orca_calls": {
+          "empty": true
+        },
+        "registry": {
+          "count": 0
+        }
+      }
+    }
+  ]
+}

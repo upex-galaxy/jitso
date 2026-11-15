@@ -1,0 +1,29 @@
+{
+  "id": "cli/reject-wiring/close-malformed-id",
+  "title": "close with a malformed launch id exits 2 with JITSO REJECTED before any orca call",
+  "source": [
+    "cli/jitso/index.test.ts: 'close with a malformed id exits 2 without touching Orca (task 3.6 wiring)'"
+  ],
+  "steps": [
+    {
+      "run": [
+        "close",
+        "../x"
+      ],
+      "expect": {
+        "exit": 2,
+        "stdout": [
+          {
+            "empty": true
+          }
+        ],
+        "stderr": [
+          "JITSO REJECTED:"
+        ],
+        "orca_calls": {
+          "empty": true
+        }
+      }
+    }
+  ]
+}

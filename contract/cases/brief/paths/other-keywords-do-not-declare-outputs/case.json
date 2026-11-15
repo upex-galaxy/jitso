@@ -1,0 +1,59 @@
+{
+  "id": "brief/paths/other-keywords-do-not-declare-outputs",
+  "title": "only Output, Outputs, Create and Creates lines exempt a path: Writes, Result and Output to do not",
+  "source": [
+    "cli/jitso/brief.test.ts: declaredOutputs regex /^\\\\s*(?:[-*]\\\\s*)?(?:outputs?|creates?)\\\\s*:/i"
+  ],
+  "project": {
+    "files": {
+      ".jitso/briefs/brief.md": {
+        "from": "brief.md"
+      }
+    }
+  },
+  "for_each": {
+    "var": "kw",
+    "values": [
+      "Writes",
+      "Result",
+      "Output to",
+      "Outputting"
+    ]
+  },
+  "steps": [
+    {
+      "run": [
+        "launch",
+        "--preset",
+        "haiku-explorer",
+        "--brief",
+        "{{PROJECT}}/.jitso/briefs/brief.md",
+        "--mode",
+        "direct"
+      ],
+      "expect": {
+        "exit": 2,
+        "stdout": [
+          {
+            "empty": true
+          }
+        ],
+        "stderr": [
+          "paths (cited path does not exist: new/out/result.md)"
+        ],
+        "orca_calls": {
+          "empty": true
+        },
+        "registry": {
+          "count": 0
+        },
+        "files": [
+          {
+            "path": ".jitso/launches",
+            "exists": false
+          }
+        ]
+      }
+    }
+  ]
+}

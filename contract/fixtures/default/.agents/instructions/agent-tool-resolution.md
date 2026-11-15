@@ -1,0 +1,5 @@
+---
+id: tool-resolution
+---
+
+# stub

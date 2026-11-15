@@ -1,0 +1,48 @@
+{
+  "id": "reap/terminal-list-failure-is-exit-3",
+  "title": "an Orca failure on the terminal list is exit 3 and nothing is written or audited",
+  "source": [
+    "cli/jitso/reap.test.ts: 'an Orca failure on the terminal list exits 3 and writes nothing'"
+  ],
+  "project": {
+    "files": {
+      ".jitso/launches.jsonl": "{\"v\":1,\"event\":\"launch\",\"id\":\"L20261113T142233-a3f9\",\"parent\":null,\"root\":\"L20261113T142233-a3f9\",\"depth\":0,\"ts\":\"2026-11-13T14:22:33.000Z\",\"mode\":\"direct\",\"preset\":\"haiku-explorer\",\"orca\":{\"run\":\"run_1\",\"task\":\"t\",\"terminal\":\"term_a\",\"title\":\"t [jitso:L20261113T142233-a3f9]\"}}\n"
+    }
+  },
+  "orca": {
+    "fail_on": [
+      "terminal list"
+    ]
+  },
+  "steps": [
+    {
+      "run": [
+        "reap"
+      ],
+      "expect": {
+        "exit": 3,
+        "stderr": [
+          {
+            "contains": "jitso:"
+          },
+          {
+            "contains": "terminal list failed"
+          }
+        ],
+        "stdout": [
+          {
+            "empty": true
+          }
+        ],
+        "orca_calls": {
+          "verbs": [
+            "terminal list"
+          ]
+        },
+        "registry": {
+          "count": 1
+        }
+      }
+    }
+  ]
+}

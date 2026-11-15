@@ -1,0 +1,32 @@
+{
+  "id": "cli/no-arguments",
+  "title": "no arguments print the usage and exit 0",
+  "source": [
+    "cli/jitso/index.test.ts: 'no arguments prints the usage and exits 0'"
+  ],
+  "steps": [
+    {
+      "run": [],
+      "expect": {
+        "exit": 0,
+        "stdout": [
+          "Usage",
+          "launch",
+          "close",
+          "reap",
+          "tree",
+          "analyze",
+          "presets"
+        ],
+        "stderr": [
+          {
+            "empty": true
+          }
+        ],
+        "orca_calls": {
+          "empty": true
+        }
+      }
+    }
+  ]
+}

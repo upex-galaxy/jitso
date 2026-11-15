@@ -1,0 +1,32 @@
+{
+  "id": "cli/presets-list/requires-text",
+  "title": "each preset line ends with what it requires: the field names, or the word nothing",
+  "source": [
+    "cli/jitso/index.test.ts: 'prints every approved preset with what it requires and exits 0'"
+  ],
+  "steps": [
+    {
+      "run": [
+        "presets",
+        "list"
+      ],
+      "expect": {
+        "exit": 0,
+        "stdout": [
+          {
+            "regex": "(?m)^- haiku-explorer: .* requires: nothing$"
+          },
+          {
+            "regex": "(?m)^- sonnet-tester: .* requires: ticket_key$"
+          },
+          {
+            "regex": "(?m)^- sonnet-automator: .* requires: ticket_key$"
+          },
+          {
+            "regex": "(?m)^- sonnet-conductor: .* requires: nothing$"
+          }
+        ]
+      }
+    }
+  ]
+}

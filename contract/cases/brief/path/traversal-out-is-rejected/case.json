@@ -1,0 +1,54 @@
+{
+  "id": "brief/path/traversal-out-is-rejected",
+  "title": "a path that climbs out of .jitso/briefs with .. is rejected",
+  "source": [
+    "cli/jitso/brief.test.ts: 'rejects path traversal out of the allowed folder'",
+    "cli/jitso/escape.test.ts: 'a path outside the brief folder is rejected'"
+  ],
+  "project": {
+    "files": {
+      ".jitso/briefs/brief.md": {
+        "from": "brief.md"
+      },
+      ".jitso/secret.md": {
+        "from": "brief.md"
+      }
+    }
+  },
+  "steps": [
+    {
+      "run": [
+        "launch",
+        "--preset",
+        "haiku-explorer",
+        "--brief",
+        "{{PROJECT}}/.jitso/briefs/../secret.md",
+        "--mode",
+        "direct"
+      ],
+      "expect": {
+        "exit": 2,
+        "stdout": [
+          {
+            "empty": true
+          }
+        ],
+        "stderr": [
+          "JITSO REJECTED: brief file is outside the allowed folders"
+        ],
+        "orca_calls": {
+          "empty": true
+        },
+        "registry": {
+          "count": 0
+        },
+        "files": [
+          {
+            "path": ".jitso/launches",
+            "exists": false
+          }
+        ]
+      }
+    }
+  ]
+}

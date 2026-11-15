@@ -1,0 +1,56 @@
+{
+  "id": "registry/corrupt-lines-skipped",
+  "title": "a line that is not JSON and an event of an unknown kind are skipped on read and left in the file; the valid launch still works",
+  "source": [
+    "cli/jitso/log.test.ts: 'skips a corrupt or invalid line and keeps the valid ones'"
+  ],
+  "project": {
+    "files": {
+      ".jitso/launches.jsonl": "{\"v\":1,\"event\":\"launch\",\"id\":\"L20261113T142233-a3f9\",\"parent\":null,\"root\":\"L20261113T142233-a3f9\",\"depth\":0,\"ts\":\"2026-11-13T14:22:33.000Z\",\"mode\":\"direct\",\"preset\":\"haiku-explorer\",\"orca\":{\"run\":null,\"task\":null,\"terminal\":\"term_fake\",\"title\":\"t [jitso:L20261113T142233-a3f9]\"}}\n{ this is not json\n{\"v\":1,\"event\":\"bogus\",\"id\":\"X\",\"ts\":\"2026-11-13T14:22:33.000Z\"}\n\n"
+    }
+  },
+  "steps": [
+    {
+      "run": [
+        "close",
+        "L20261113T142233-a3f9"
+      ],
+      "expect": {
+        "exit": 0,
+        "stdout": [
+          "jitso: closed L20261113T142233-a3f9"
+        ],
+        "files": [
+          {
+            "path": ".jitso/launches.jsonl",
+            "contains": [
+              "{ this is not json",
+              "\"event\":\"bogus\"",
+              "jitso_close"
+            ]
+          }
+        ],
+        "registry": {
+          "count": 4,
+          "events": [
+            {
+              "at": 0,
+              "event": "launch",
+              "fields": {
+                "id": "L20261113T142233-a3f9"
+              }
+            },
+            {
+              "at": 3,
+              "event": "end",
+              "fields": {
+                "id": "L20261113T142233-a3f9",
+                "source": "jitso_close"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ]
+}

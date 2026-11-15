@@ -1,0 +1,47 @@
+{
+  "id": "registry/duplicate-launch-id-first-wins",
+  "title": "when two launch lines share an id the first one defines the launch (its terminal is the one closed)",
+  "source": [
+    "cli/jitso/log.test.ts: readLaunches (`if (!byId.has(event.id))`)"
+  ],
+  "project": {
+    "files": {
+      ".jitso/launches.jsonl": "{\"v\":1,\"event\":\"launch\",\"id\":\"L20261113T142233-a3f9\",\"parent\":null,\"root\":\"L20261113T142233-a3f9\",\"depth\":0,\"ts\":\"2026-11-13T14:22:33.000Z\",\"mode\":\"direct\",\"preset\":\"haiku-explorer\",\"orca\":{\"run\":null,\"task\":null,\"terminal\":\"term_first\",\"title\":\"t [jitso:L20261113T142233-a3f9]\"}}\n{\"v\":1,\"event\":\"launch\",\"id\":\"L20261113T142233-a3f9\",\"parent\":null,\"root\":\"L20261113T142233-a3f9\",\"depth\":0,\"ts\":\"2026-11-13T14:23:00.000Z\",\"mode\":\"direct\",\"preset\":\"haiku-explorer\",\"orca\":{\"run\":null,\"task\":null,\"terminal\":\"term_second\",\"title\":\"t [jitso:L20261113T142233-a3f9]\"}}\n"
+    }
+  },
+  "orca": {
+    "listed": [
+      "term_first",
+      "term_second"
+    ]
+  },
+  "steps": [
+    {
+      "run": [
+        "close",
+        "L20261113T142233-a3f9"
+      ],
+      "expect": {
+        "exit": 0,
+        "orca_calls": {
+          "verbs": [
+            "terminal read",
+            "terminal close",
+            "terminal list"
+          ],
+          "calls": [
+            {
+              "at": 1,
+              "argv": [
+                "terminal",
+                "close",
+                "--terminal",
+                "term_first"
+              ]
+            }
+          ]
+        }
+      }
+    }
+  ]
+}

@@ -1,0 +1,29 @@
+{
+  "id": "hooks/guard/allow-launcher-path",
+  "title": "the implementation launcher itself, followed by launch, passes",
+  "source": [
+    ".agents/hooks/jitso-guard.test.ts: 'lets jitso launch by path pass' (the launcher is spelled {{JITSO}} so each implementation is judged on its own)"
+  ],
+  "steps": [
+    {
+      "hook": "guard",
+      "input": {
+        "hook_event_name": "PreToolUse",
+        "tool_name": "Bash",
+        "tool_input": {
+          "command": "{{JITSO}} launch --preset haiku-explorer --brief /x/b.md --mode direct"
+        },
+        "cwd": "{{PROJECT}}"
+      },
+      "expect": {
+        "exit": 0,
+        "decision": "none",
+        "stdout": [
+          {
+            "empty": true
+          }
+        ]
+      }
+    }
+  ]
+}

@@ -1,0 +1,45 @@
+{
+  "id": "validation/preset/unknown",
+  "title": "a well-formed preset id that is not in the catalog is rejected by name",
+  "source": [
+    "cli/jitso/profile.test.ts: '1. an unknown preset'"
+  ],
+  "for_each": {
+    "var": "p",
+    "values": [
+      "wizard",
+      "haiku",
+      "a",
+      "sonnet-tester-2",
+      "haiku-explorer-"
+    ]
+  },
+  "steps": [
+    {
+      "run": [
+        "launch",
+        "--preset",
+        "{{p}}",
+        "--brief",
+        "{{PROJECT}}/.jitso/briefs/b.md",
+        "--mode",
+        "direct"
+      ],
+      "expect": {
+        "exit": 2,
+        "stdout": [
+          {
+            "empty": true
+          }
+        ],
+        "stderr": [
+          "JITSO REJECTED:",
+          "unknown preset \"{{p}}\""
+        ],
+        "orca_calls": {
+          "empty": true
+        }
+      }
+    }
+  ]
+}

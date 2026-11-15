@@ -1,0 +1,51 @@
+{
+  "title": "the dry-run card of sonnet-automator carries ROUTE-SCOPE: with the colon and the preset ids",
+  "source": [
+    "intended: PLAN.md defect S1 (route_scope); the TS card prints 'ROUTE-SCOPE' without a colon (cli/jitso/card.ts)"
+  ],
+  "status": {
+    "ts": "xfail",
+    "go": "pass"
+  },
+  "defect": "S1",
+  "intent": "INTENDED behavior (defect S1, route_scope). The router reads a scope with the regex (?:^|[.!?])[ \\t>*-]*ROUTE-SCOPE:([^\\n]*), so the card line must start with ROUTE-SCOPE: (with the colon, at a line start or after . ! ?) and list the preset ids comma separated. On the TS binary today the card writes 'ROUTE-SCOPE <ids>' with no colon, after a '|' separator, so the matcher finds nothing and this case FAILS on TS.",
+  "project": {
+    "files": {
+      ".jitso/briefs/brief.md": {
+        "from": "brief.md"
+      }
+    }
+  },
+  "steps": [
+    {
+      "run": [
+        "launch",
+        "--preset",
+        "sonnet-automator",
+        "--brief",
+        "{{PROJECT}}/.jitso/briefs/brief.md",
+        "--mode",
+        "direct",
+        "--dry-run",
+        "--field",
+        "ticket_key=PRJ-1"
+      ],
+      "expect": {
+        "exit": 0,
+        "stdout": [
+          {
+            "route_scope": [
+              "code-quickref",
+              "ticket-work"
+            ]
+          },
+          "dry run: nothing was written"
+        ],
+        "orca_calls": {
+          "empty": true
+        }
+      }
+    }
+  ],
+  "id": "defects/s1a-card-route-scope-automator"
+}

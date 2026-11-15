@@ -1,0 +1,66 @@
+{
+  "id": "launch/run-sh/direct-starts-claude-with-the-brief-prompt",
+  "title": "executing run.sh of a direct launch starts claude with bypass, the preset model and effort, the launch folder files and a last argument that points at brief.md",
+  "source": [
+    "cli/jitso/launch.test.ts: 'the generated run.sh execs claude with the adapter argv, bit for bit'"
+  ],
+  "tags": [
+    "posix"
+  ],
+  "project": {
+    "files": {
+      ".jitso/briefs/brief.md": {
+        "from": "brief.md"
+      }
+    }
+  },
+  "steps": [
+    {
+      "run": [
+        "launch",
+        "--preset",
+        "haiku-explorer",
+        "--brief",
+        "{{PROJECT}}/.jitso/briefs/brief.md",
+        "--mode",
+        "direct"
+      ],
+      "capture": {
+        "LAUNCH_ID": {
+          "from": "stdout",
+          "regex": "JITSO (L\\d{8}T\\d{6}-[0-9a-f]{4})",
+          "group": 1
+        }
+      },
+      "expect": {}
+    },
+    {
+      "exec": "run_sh",
+      "launch": "{{LAUNCH_ID}}",
+      "expect": {
+        "exit": 0,
+        "claude": {
+          "ran": true,
+          "argv_contains": [
+            "--dangerously-skip-permissions",
+            "--strict-mcp-config",
+            "--tools=Read,Glob,Grep,Bash"
+          ],
+          "arg_after": {
+            "--setting-sources": "project",
+            "--model": "claude-haiku-5-5",
+            "--effort": "low",
+            "--mcp-config": "{{PROJECT}}/.jitso/launches/{{LAUNCH_ID}}/mcp.json",
+            "--append-system-prompt-file": "{{PROJECT}}/.jitso/launches/{{LAUNCH_ID}}/core.md"
+          },
+          "last_arg": [
+            {
+              "regex": "Read {{PROJECT}}/.jitso/launches/{{LAUNCH_ID}}/brief\\.md and follow it exactly\\."
+            }
+          ],
+          "cwd": "{{PROJECT}}"
+        }
+      }
+    }
+  ]
+}

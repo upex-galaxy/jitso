@@ -1,0 +1,44 @@
+{
+  "id": "validation/parent/unknown-launch",
+  "title": "a well-formed --parent that no registry line carries is rejected as an unknown parent launch",
+  "source": [
+    "cli/jitso/launch.ts: runLaunch (`unknown parent launch`)"
+  ],
+  "project": {
+    "files": {
+      ".jitso/briefs/b.md": {
+        "from": "brief.md"
+      }
+    }
+  },
+  "steps": [
+    {
+      "run": [
+        "launch",
+        "--preset",
+        "haiku-explorer",
+        "--brief",
+        "{{PROJECT}}/.jitso/briefs/b.md",
+        "--mode",
+        "direct",
+        "--parent",
+        "L20261115T005309-e8f8"
+      ],
+      "expect": {
+        "exit": 2,
+        "stdout": [
+          {
+            "empty": true
+          }
+        ],
+        "stderr": [
+          "JITSO REJECTED:",
+          "unknown parent launch L20261115T005309-e8f8"
+        ],
+        "orca_calls": {
+          "empty": true
+        }
+      }
+    }
+  ]
+}

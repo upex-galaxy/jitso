@@ -1,0 +1,81 @@
+{
+  "id": "launch/fleet/worker-start-failure-survives-a-failing-close",
+  "title": "if closing the terminal also fails, the launch still exits 3 with the worker-start error; no launch folder is left behind",
+  "source": [
+    "cli/jitso/launch.test.ts: launchForReal abandon() swallows a close error",
+    "intended: TS-ODDITIES L2 (owner decision 2026-11-15): a failed launch leaves no launch folder; the TS binary leaves it on disk"
+  ],
+  "status": {
+    "ts": "xfail",
+    "go": "pass"
+  },
+  "defect": "N-2",
+  "intent": "INTENDED behavior (TS-ODDITIES L2, owner decision 2026-11-15, defect N-2). A launch that fails before its registry line leaves no launch folder behind: the implementation removes .jitso/launches/<id>/ when the launch fails. The exit code, the stderr text, the empty registry and the orca calls are unchanged. The TS binary leaves the folder (brief.md, card.txt, core.md, mcp.json, run.sh) on disk with no registry line, so the launch-folder check is the only expectation that FAILS on TS.",
+  "project": {
+    "files": {
+      ".jitso/briefs/brief.md": {
+        "from": "brief.md"
+      }
+    }
+  },
+  "orca": {
+    "fail_on": [
+      "orchestration worker-start",
+      "terminal close"
+    ]
+  },
+  "steps": [
+    {
+      "run": [
+        "launch",
+        "--preset",
+        "haiku-explorer",
+        "--brief",
+        "{{PROJECT}}/.jitso/briefs/brief.md",
+        "--mode",
+        "fleet",
+        "--run",
+        "run_1",
+        "--task",
+        "task_1"
+      ],
+      "expect": {
+        "exit": 3,
+        "stdout": [
+          {
+            "empty": true
+          }
+        ],
+        "stderr": [
+          {
+            "contains": "jitso: orca orchestration worker-start failed"
+          }
+        ],
+        "registry": {
+          "count": 0
+        },
+        "orca_calls": {
+          "verbs": [
+            "terminal create",
+            "terminal wait",
+            "terminal read",
+            "orchestration worker-start",
+            "terminal close"
+          ]
+        },
+        "files": [
+          {
+            "path": ".jitso/launches/{{LAUNCH_ID}}",
+            "exists": false
+          }
+        ]
+      },
+      "capture": {
+        "LAUNCH_ID": {
+          "from": "orca_log",
+          "regex": "\\[jitso:(L\\d{8}T\\d{6}-[0-9a-f]{4})\\]"
+        }
+      }
+    }
+  ]
+}

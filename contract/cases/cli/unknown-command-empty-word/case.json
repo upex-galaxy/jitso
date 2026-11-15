@@ -1,0 +1,29 @@
+{
+  "id": "cli/unknown-command-empty-word",
+  "title": "an empty first argument is an unknown command, not the usage",
+  "source": [
+    "intended: pinned from cli/jitso/index.ts main(): `\"\"` is neither undefined nor a subcommand and has no whitespace"
+  ],
+  "steps": [
+    {
+      "run": [
+        ""
+      ],
+      "expect": {
+        "exit": 2,
+        "stdout": [
+          {
+            "empty": true
+          }
+        ],
+        "stderr": [
+          "unknown command",
+          "Usage"
+        ],
+        "orca_calls": {
+          "empty": true
+        }
+      }
+    }
+  ]
+}

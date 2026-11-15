@@ -1,0 +1,48 @@
+{
+  "id": "dispatch/hostile-request-is-one-literal-argument",
+  "title": "a request carrying shell metacharacters or newlines reaches claude as one literal last argument and nothing is executed",
+  "source": [
+    "intended: the request is data (cli/jitso/dispatch.ts passes it as one argv element, no shell)"
+  ],
+  "for_each": {
+    "var": "request",
+    "values": [
+      "look at this; touch canary; echo done",
+      "look at $(touch canary) and `touch canary` please",
+      "a | b && c || d > canary",
+      "line one\nline two\nline three",
+      "it's a \"quoted\" request with \\ backslash and * glob"
+    ]
+  },
+  "steps": [
+    {
+      "run": [
+        "{{request}}"
+      ],
+      "expect": {
+        "exit": 0,
+        "claude": {
+          "ran": true,
+          "last_arg": [
+            {
+              "equals": "{{request}}"
+            }
+          ],
+          "argv_not_contains": [
+            "--dangerously-skip-permissions"
+          ]
+        },
+        "files": [
+          {
+            "path": "canary",
+            "exists": false
+          },
+          {
+            "path": "{{HOME}}/canary",
+            "exists": false
+          }
+        ]
+      }
+    }
+  ]
+}

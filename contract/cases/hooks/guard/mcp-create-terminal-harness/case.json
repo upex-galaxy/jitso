@@ -1,0 +1,42 @@
+{
+  "id": "hooks/guard/mcp-create-terminal-harness",
+  "title": "orca-bridge create_terminal with a harness agent (claude, codex, opencode, pi) is denied",
+  "source": [
+    ".agents/hooks/jitso-guard.test.ts: 'denies create_terminal for a harness'"
+  ],
+  "for_each": {
+    "var": "agent",
+    "values": [
+      "claude",
+      "codex",
+      "opencode",
+      "pi"
+    ]
+  },
+  "steps": [
+    {
+      "hook": "guard",
+      "input": {
+        "hook_event_name": "PreToolUse",
+        "tool_name": "mcp__claude_ai_orca-bridge__create_terminal",
+        "tool_input": {
+          "worktree": "w",
+          "agent": "{{agent}}"
+        },
+        "cwd": "{{PROJECT}}"
+      },
+      "expect": {
+        "exit": 0,
+        "decision": "deny",
+        "reason": [
+          {
+            "regex": "\\(denied: orca-bridge create_terminal with a harness\\)"
+          },
+          {
+            "regex": "launch"
+          }
+        ]
+      }
+    }
+  ]
+}

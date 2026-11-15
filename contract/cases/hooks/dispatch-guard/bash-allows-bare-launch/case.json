@@ -1,0 +1,30 @@
+{
+  "id": "hooks/dispatch-guard/bash-allows-bare-launch",
+  "title": "the launcher with no flag at all is allowed by the guard (the launcher itself rejects it later)",
+  "source": [
+    "intended: measured on the TypeScript hook (flags are validated one by one, an empty list passes)"
+  ],
+  "home": {
+    "files": {
+      ".jitso/dispatch-cwd/briefs/.keep": "",
+      "outside/target.md": "x"
+    }
+  },
+  "steps": [
+    {
+      "hook": "dispatch-guard",
+      "input": {
+        "hook_event_name": "PreToolUse",
+        "tool_name": "Bash",
+        "tool_input": {
+          "command": "{{JITSO}} launch"
+        },
+        "cwd": "{{HOME}}/.jitso/dispatch-cwd"
+      },
+      "expect": {
+        "exit": 0,
+        "decision": "allow"
+      }
+    }
+  ]
+}

@@ -1,0 +1,60 @@
+{
+  "id": "brief/section-heading/malformed",
+  "title": "a heading that is not a markdown heading of exactly the section name does not count",
+  "source": [
+    "cli/jitso/brief.test.ts: hasSection regex '^#{1,6}\\\\s*<name>\\\\s*:?\\\\s*$' (im)"
+  ],
+  "project": {
+    "files": {
+      ".jitso/briefs/brief.md": {
+        "from": "brief.md"
+      }
+    }
+  },
+  "for_each": {
+    "var": "heading",
+    "values": [
+      "Goal",
+      "####### Goal",
+      "## Goal and more",
+      "## Goals",
+      "- Goal"
+    ]
+  },
+  "steps": [
+    {
+      "run": [
+        "launch",
+        "--preset",
+        "haiku-explorer",
+        "--brief",
+        "{{PROJECT}}/.jitso/briefs/brief.md",
+        "--mode",
+        "direct"
+      ],
+      "expect": {
+        "exit": 2,
+        "stdout": [
+          {
+            "empty": true
+          }
+        ],
+        "stderr": [
+          "sections (missing section: Goal)"
+        ],
+        "orca_calls": {
+          "empty": true
+        },
+        "registry": {
+          "count": 0
+        },
+        "files": [
+          {
+            "path": ".jitso/launches",
+            "exists": false
+          }
+        ]
+      }
+    }
+  ]
+}

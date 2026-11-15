@@ -1,0 +1,35 @@
+{
+  "id": "reap/running-launch-left-alone",
+  "title": "a launch whose terminal is still listed is not touched and the summary counts zero",
+  "source": [
+    "cli/jitso/reap.test.ts: first test (b.status stays running)"
+  ],
+  "project": {
+    "files": {
+      ".jitso/launches.jsonl": "{\"v\":1,\"event\":\"launch\",\"id\":\"L20261113T142233-a3f9\",\"parent\":null,\"root\":\"L20261113T142233-a3f9\",\"depth\":0,\"ts\":\"2026-11-13T14:22:33.000Z\",\"mode\":\"direct\",\"preset\":\"haiku-explorer\",\"orca\":{\"run\":null,\"task\":null,\"terminal\":\"term_a\",\"title\":\"t [jitso:L20261113T142233-a3f9]\"}}\n"
+    }
+  },
+  "orca": {
+    "listed": [
+      "term_a"
+    ]
+  },
+  "steps": [
+    {
+      "run": [
+        "reap"
+      ],
+      "expect": {
+        "exit": 0,
+        "stdout": [
+          {
+            "regex": "(?m)^jitso reap: 0 launch\\(es\\) marked ended, 0 unlogged worker\\(s\\), 0 analyzed$"
+          }
+        ],
+        "registry": {
+          "count": 1
+        }
+      }
+    }
+  ]
+}

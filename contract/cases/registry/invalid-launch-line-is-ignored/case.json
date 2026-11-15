@@ -1,0 +1,43 @@
+{
+  "id": "registry/invalid-launch-line-is-ignored",
+  "title": "a launch line that breaks the schema is ignored, so close reports the launch as unknown",
+  "source": [
+    "cli/jitso/log.test.ts: 'rejects ${name}' table",
+    "cli/jitso/log.test.ts: 'skips a corrupt or invalid line and keeps the valid ones'"
+  ],
+  "project": {
+    "files": {
+      ".jitso/launches.jsonl": "{\"v\":1,\"event\":\"launch\",\"id\":\"L20261113T142233-a3f9\",\"parent\":null,\"root\":\"L20261113T142233-a3f9\",\"depth\":0,\"ts\":\"2026-11-13T14:22:33.000Z\",\"mode\":\"direct\",\"preset\":\"haiku-explorer\",\"orca\":{\"run\":null,\"task\":null,\"terminal\":\"term_fake\",\"title\":\"t [jitso:L20261113T142233-a3f9]\"},{{override}}}\n"
+    }
+  },
+  "for_each": {
+    "var": "override",
+    "values": [
+      "\"mode\":\"weird\"",
+      "\"depth\":-1",
+      "\"preset\":\"\"",
+      "\"v\":2",
+      "\"ts\":\"not a date\""
+    ]
+  },
+  "steps": [
+    {
+      "run": [
+        "close",
+        "L20261113T142233-a3f9"
+      ],
+      "expect": {
+        "exit": 2,
+        "stderr": [
+          "JITSO REJECTED: unknown launch L20261113T142233-a3f9"
+        ],
+        "orca_calls": {
+          "empty": true
+        },
+        "registry": {
+          "count": 1
+        }
+      }
+    }
+  ]
+}

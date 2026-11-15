@@ -1,0 +1,65 @@
+{
+  "title": "in direct mode the first prompt passed to claude carries the ROUTE-SCOPE: line of the preset",
+  "source": [
+    "intended: PLAN.md defect S1 (the first prompt is what the router can read in time); the TS prompt is only 'Read <brief> and follow it exactly.'"
+  ],
+  "tags": [
+    "posix"
+  ],
+  "status": {
+    "ts": "xfail",
+    "go": "pass"
+  },
+  "defect": "S1",
+  "intent": "INTENDED behavior (defect S1, route_scope). The router reads a scope with the regex (?:^|[.!?])[ \\t>*-]*ROUTE-SCOPE:([^\\n]*), so the card line must start with ROUTE-SCOPE: (with the colon, at a line start or after . ! ?) and list the preset ids comma separated. On the TS binary today the card writes 'ROUTE-SCOPE <ids>' with no colon, after a '|' separator, so the matcher finds nothing and this case FAILS on TS. In direct mode the LAST claude argument is the first prompt, and it must carry the same scope; on TS it is only 'Read <brief> and follow it exactly.', so last_arg has no ROUTE-SCOPE line and this case FAILS on TS.",
+  "project": {
+    "files": {
+      ".jitso/briefs/brief.md": {
+        "from": "brief.md"
+      }
+    }
+  },
+  "steps": [
+    {
+      "run": [
+        "launch",
+        "--preset",
+        "sonnet-automator",
+        "--brief",
+        "{{PROJECT}}/.jitso/briefs/brief.md",
+        "--mode",
+        "direct",
+        "--field",
+        "ticket_key=PRJ-1"
+      ],
+      "capture": {
+        "LAUNCH_ID": {
+          "from": "stdout",
+          "regex": "JITSO (L\\d{8}T\\d{6}-[0-9a-f]{4})"
+        }
+      },
+      "expect": {
+        "exit": 0
+      }
+    },
+    {
+      "exec": "run_sh",
+      "launch": "{{LAUNCH_ID}}",
+      "expect": {
+        "exit": 0,
+        "claude": {
+          "ran": true,
+          "last_arg": [
+            {
+              "route_scope": [
+                "code-quickref",
+                "ticket-work"
+              ]
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "id": "defects/s1c-direct-first-prompt-carries-route-scope"
+}

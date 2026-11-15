@@ -1,0 +1,48 @@
+{
+  "id": "validation/format/run-rejected",
+  "title": "--run must start with a letter or digit, hold only word characters . : - and be at most 64 long",
+  "source": [
+    "cli/jitso/shell.ts: FIELD_PATTERNS.run (ORCA_ID)"
+  ],
+  "for_each": {
+    "var": "v",
+    "values": [
+      "_run",
+      ".run",
+      "-run",
+      "run..1",
+      "a b",
+      "rrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrr"
+    ]
+  },
+  "steps": [
+    {
+      "run": [
+        "launch",
+        "--preset",
+        "haiku-explorer",
+        "--brief",
+        "{{PROJECT}}/.jitso/briefs/b.md",
+        "--mode",
+        "direct",
+        "--run",
+        "{{v}}"
+      ],
+      "expect": {
+        "exit": 2,
+        "stdout": [
+          {
+            "empty": true
+          }
+        ],
+        "stderr": [
+          "JITSO REJECTED:",
+          "invalid value for --run"
+        ],
+        "orca_calls": {
+          "empty": true
+        }
+      }
+    }
+  ]
+}

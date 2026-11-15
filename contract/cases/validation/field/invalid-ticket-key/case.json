@@ -1,0 +1,57 @@
+{
+  "id": "validation/field/invalid-ticket-key",
+  "title": "a ticket_key that is not <PROJECT>-<number> is rejected, including a trailing newline",
+  "source": [
+    "cli/jitso/profile.test.ts: 'a field value must match its pattern (no shell syntax in a ticket key)'",
+    "cli/jitso/profile.ts: FIELD_PATTERNS.ticket_key"
+  ],
+  "for_each": {
+    "var": "v",
+    "values": [
+      "PRJ-1; ls",
+      "bk-1",
+      "BK1",
+      "BK-",
+      "-1",
+      "PRJ-1 ",
+      "PRJ-1\n",
+      "PRJ-1\nx",
+      "",
+      "$(ls)",
+      "PRJ-1a",
+      "PRJ-1=2",
+      "1PRJ-1",
+      "B K-1"
+    ]
+  },
+  "steps": [
+    {
+      "run": [
+        "launch",
+        "--preset",
+        "sonnet-tester",
+        "--brief",
+        "{{PROJECT}}/.jitso/briefs/b.md",
+        "--mode",
+        "direct",
+        "--field",
+        "ticket_key={{v}}"
+      ],
+      "expect": {
+        "exit": 2,
+        "stdout": [
+          {
+            "empty": true
+          }
+        ],
+        "stderr": [
+          "JITSO REJECTED:",
+          "field ticket_key has an invalid value"
+        ],
+        "orca_calls": {
+          "empty": true
+        }
+      }
+    }
+  ]
+}

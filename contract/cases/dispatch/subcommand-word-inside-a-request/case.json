@@ -1,0 +1,36 @@
+{
+  "id": "dispatch/subcommand-word-inside-a-request",
+  "title": "a request that merely starts with a subcommand word is a request, not that subcommand",
+  "source": [
+    "intended: measured on the TypeScript CLI (only an exact subcommand word, with no whitespace, routes to the CLI)"
+  ],
+  "for_each": {
+    "var": "request",
+    "values": [
+      "launch the rocket now",
+      "close the loop please",
+      "analyze this repo please"
+    ]
+  },
+  "steps": [
+    {
+      "run": [
+        "{{request}}"
+      ],
+      "expect": {
+        "exit": 0,
+        "claude": {
+          "ran": true,
+          "last_arg": [
+            {
+              "equals": "{{request}}"
+            }
+          ]
+        },
+        "registry": {
+          "count": 0
+        }
+      }
+    }
+  ]
+}

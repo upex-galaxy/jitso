@@ -1,0 +1,57 @@
+{
+  "title": "a brief reached through a symlinked SUBFOLDER that points outside the brief folders is refused",
+  "source": [
+    "cli/jitso/escape.test.ts: 'a symlink that leaves the brief folder never becomes an argument' (folder symlink variant; intended from resolveBriefPath resolving the real path)"
+  ],
+  "project": {
+    "files": {
+      ".jitso/briefs/linked": {
+        "symlink": "{{HOME}}/elsewhere"
+      }
+    }
+  },
+  "steps": [
+    {
+      "run": [
+        "launch",
+        "--preset",
+        "haiku-explorer",
+        "--brief",
+        "{{PROJECT}}/.jitso/briefs/linked/brief.md",
+        "--mode",
+        "direct"
+      ],
+      "expect": {
+        "exit": 2,
+        "stderr": [
+          "JITSO REJECTED:"
+        ],
+        "stdout": [
+          {
+            "empty": true
+          }
+        ],
+        "orca_calls": {
+          "empty": true
+        },
+        "registry": {
+          "count": 0
+        },
+        "files": [
+          {
+            "path": ".jitso/launches",
+            "exists": false
+          }
+        ]
+      }
+    }
+  ],
+  "home": {
+    "files": {
+      "elsewhere/brief.md": {
+        "from": "brief.md"
+      }
+    }
+  },
+  "id": "escape/symlinked-folder-leaves-brief-folder"
+}

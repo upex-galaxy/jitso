@@ -1,0 +1,192 @@
+{
+  "id": "defects/s3-subagents-agents-flag-fleet",
+  "title": "sonnet-automator in fleet mode starts claude with --agents built from its plan, code and verifier subagent builds",
+  "source": [
+    "intended: PLAN.md defect S3 (subagents); the adapter supports --agents (adapters/claude.test.ts '--agents appears only when the preset has subagents') but launch.ts passes null",
+    "intended: docs/decisions.md (a subagent is a build with tier: subagent; the worker lists them by name)"
+  ],
+  "tags": [
+    "posix"
+  ],
+  "status": {
+    "ts": "xfail",
+    "go": "pass"
+  },
+  "defect": "S3",
+  "intent": "INTENDED behavior (defect S3, subagents; docs/decisions.md, owner 2026-11-15). A subagent is a build with `tier: subagent`. sonnet-automator is a worker build that lists `subagents: [plan, code, verifier]`; each name resolves to the build jitso/presets/<name>.yaml (tier subagent), which supplies `description`, `prompt`, `model` and `tools`. The launcher must pass `--agents <json>` to claude where the JSON object has EXACTLY the keys plan, code and verifier, and each entry carries the description, the prompt, the model and the tools of its build, byte for byte as the fixture writes them. On TS the launcher passes no subagents to the adapter, so --agents never appears and this case FAILS on TS (the argv_contains check and every json check).",
+  "project": {
+    "files": {
+      ".jitso/briefs/brief.md": {
+        "from": "brief.md"
+      }
+    }
+  },
+  "steps": [
+    {
+      "run": [
+        "launch",
+        "--preset",
+        "sonnet-automator",
+        "--brief",
+        "{{PROJECT}}/.jitso/briefs/brief.md",
+        "--mode",
+        "fleet",
+        "--field",
+        "ticket_key=PRJ-1",
+        "--run",
+        "run_1a2b",
+        "--task",
+        "task_9f"
+      ],
+      "capture": {
+        "LAUNCH_ID": {
+          "from": "stdout",
+          "regex": "JITSO (L\\d{8}T\\d{6}-[0-9a-f]{4})"
+        }
+      },
+      "expect": {
+        "exit": 0
+      }
+    },
+    {
+      "exec": "run_sh",
+      "launch": "{{LAUNCH_ID}}",
+      "expect": {
+        "exit": 0,
+        "claude": {
+          "ran": true,
+          "argv_contains": [
+            "--agents"
+          ],
+          "json_arg_after": {
+            "--agents": [
+              {
+                "path": "",
+                "keys_exact": [
+                  "plan",
+                  "code",
+                  "verifier"
+                ]
+              },
+              {
+                "path": "plan",
+                "keys_include": [
+                  "description",
+                  "prompt",
+                  "model",
+                  "tools"
+                ]
+              },
+              {
+                "path": "plan.description",
+                "regex": "\\S"
+              },
+              {
+                "path": "plan.description",
+                "equals": "Read-only planner that turns one user story into an ordered list of automation steps and returns it without editing anything."
+              },
+              {
+                "path": "plan.prompt",
+                "regex": "\\S"
+              },
+              {
+                "path": "plan.prompt",
+                "equals": "You are the planner of this session. Read the approved test plan and the code it touches, then return a short numbered list of the steps to automate, each naming the file it changes. Never edit, create or delete a file."
+              },
+              {
+                "path": "plan.model",
+                "equals": "claude-haiku-5-5"
+              },
+              {
+                "path": "plan.tools",
+                "equals": [
+                  "Read",
+                  "Glob",
+                  "Grep"
+                ]
+              },
+              {
+                "path": "code",
+                "keys_include": [
+                  "description",
+                  "prompt",
+                  "model",
+                  "tools"
+                ]
+              },
+              {
+                "path": "code.description",
+                "regex": "\\S"
+              },
+              {
+                "path": "code.description",
+                "equals": "Implementer that writes or edits the test code of one step of the plan and reports the files it changed."
+              },
+              {
+                "path": "code.prompt",
+                "regex": "\\S"
+              },
+              {
+                "path": "code.prompt",
+                "equals": "You are the implementer of this session. Take one step of the plan, write or edit only the files that step names, run nothing outside the repo and report the paths you changed in one line."
+              },
+              {
+                "path": "code.model",
+                "equals": "claude-sonnet-5-5"
+              },
+              {
+                "path": "code.tools",
+                "equals": [
+                  "Read",
+                  "Glob",
+                  "Grep",
+                  "Edit",
+                  "Write",
+                  "Bash"
+                ]
+              },
+              {
+                "path": "verifier",
+                "keys_include": [
+                  "description",
+                  "prompt",
+                  "model",
+                  "tools"
+                ]
+              },
+              {
+                "path": "verifier.description",
+                "regex": "\\S"
+              },
+              {
+                "path": "verifier.description",
+                "equals": "Verifier that runs the checks of the repo against the changed files and reports pass or fail with the failing output."
+              },
+              {
+                "path": "verifier.prompt",
+                "regex": "\\S"
+              },
+              {
+                "path": "verifier.prompt",
+                "equals": "You are the verifier of this session. Run the repo checks that cover the changed files, in the order tests then types then lint, and report each result as pass or fail with the first failing line. Never edit a file."
+              },
+              {
+                "path": "verifier.model",
+                "equals": "claude-haiku-5-5"
+              },
+              {
+                "path": "verifier.tools",
+                "equals": [
+                  "Read",
+                  "Glob",
+                  "Grep",
+                  "Bash"
+                ]
+              }
+            ]
+          }
+        }
+      }
+    }
+  ]
+}

@@ -1,0 +1,48 @@
+{
+  "id": "launch/parent/unknown-parent-without-a-registry",
+  "title": "--parent is rejected the same way when no registry file exists yet",
+  "source": [
+    "cli/jitso/launch.test.ts: 'a known parent sets root and depth; an unknown parent exits 2'"
+  ],
+  "project": {
+    "files": {
+      ".jitso/briefs/brief.md": {
+        "from": "brief.md"
+      }
+    }
+  },
+  "steps": [
+    {
+      "run": [
+        "launch",
+        "--preset",
+        "haiku-explorer",
+        "--brief",
+        "{{PROJECT}}/.jitso/briefs/brief.md",
+        "--mode",
+        "direct",
+        "--parent",
+        "L20261113T142233-a3f9"
+      ],
+      "expect": {
+        "exit": 2,
+        "stdout": [
+          {
+            "empty": true
+          }
+        ],
+        "stderr": [
+          {
+            "contains": "JITSO REJECTED: unknown parent launch L20261113T142233-a3f9"
+          }
+        ],
+        "orca_calls": {
+          "empty": true
+        },
+        "registry": {
+          "count": 0
+        }
+      }
+    }
+  ]
+}

@@ -1,0 +1,61 @@
+{
+  "id": "brief/paths/ignored-tokens",
+  "title": "backticked tokens that are URLs, home or env paths, globs, placeholders or have no slash are not checked as paths",
+  "source": [
+    "cli/jitso/brief.test.ts: 'ignores URLs, home paths and globs when checking paths'",
+    "cli/jitso/brief.test.ts: GOOD cites `package.json` (no slash)"
+  ],
+  "project": {
+    "files": {
+      ".jitso/briefs/brief.md": {
+        "from": "brief.md"
+      }
+    }
+  },
+  "for_each": {
+    "var": "token",
+    "values": [
+      "https://example.test/a/b",
+      "~/x/y",
+      "$HOME/a/b",
+      "src/**/*.ts",
+      "<dir>/file.ts",
+      "{a}/b.ts",
+      "ghost.ts"
+    ]
+  },
+  "steps": [
+    {
+      "run": [
+        "launch",
+        "--preset",
+        "haiku-explorer",
+        "--brief",
+        "{{PROJECT}}/.jitso/briefs/brief.md",
+        "--mode",
+        "direct",
+        "--dry-run"
+      ],
+      "expect": {
+        "exit": 0,
+        "stderr": [
+          {
+            "empty": true
+          }
+        ],
+        "stdout": [
+          {
+            "regex": "^JITSO L\\d{8}T\\d{6}-[0-9a-f]{4} \\|"
+          },
+          "dry run: nothing was written"
+        ],
+        "orca_calls": {
+          "empty": true
+        },
+        "registry": {
+          "count": 0
+        }
+      }
+    }
+  ]
+}

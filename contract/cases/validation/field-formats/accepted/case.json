@@ -1,0 +1,58 @@
+{
+  "id": "validation/field-formats/accepted",
+  "title": "worktree, run and task values of the allowed alphabet are accepted (dry run ignores the worktree)",
+  "source": [
+    "cli/jitso/shell.ts: FIELD_PATTERNS"
+  ],
+  "project": {
+    "files": {
+      ".jitso/briefs/b.md": {
+        "from": "brief.md"
+      }
+    }
+  },
+  "for_each": {
+    "var": "wt",
+    "values": [
+      "wt",
+      "id:fake-uuid::/fake/cwd",
+      "feature/x-1",
+      "A.b",
+      "9"
+    ]
+  },
+  "steps": [
+    {
+      "run": [
+        "launch",
+        "--preset",
+        "haiku-explorer",
+        "--brief",
+        "{{PROJECT}}/.jitso/briefs/b.md",
+        "--mode",
+        "direct",
+        "--worktree",
+        "{{wt}}",
+        "--run",
+        "Run_1.2:x-y",
+        "--task",
+        "T0",
+        "--dry-run"
+      ],
+      "expect": {
+        "exit": 0,
+        "stdout": [
+          "dry run: nothing was written"
+        ],
+        "stderr": [
+          {
+            "empty": true
+          }
+        ],
+        "orca_calls": {
+          "empty": true
+        }
+      }
+    }
+  ]
+}

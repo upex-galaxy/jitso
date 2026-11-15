@@ -1,0 +1,66 @@
+{
+  "id": "launch/mcp-json/only-command-and-args-are-copied",
+  "title": "keys of a repo MCP server other than command and args are not copied",
+  "source": [
+    "cli/jitso/adapters/claude.ts: buildMcpConfig copies command and args by server name"
+  ],
+  "project": {
+    "files": {
+      ".jitso/briefs/brief.md": {
+        "from": "brief.md"
+      },
+      ".mcp.json": "{\"mcpServers\": {\"dbhub\": {\"command\": \"x-dbhub\", \"args\": [\"a\"], \"type\": \"stdio\", \"cwd\": \"/somewhere\", \"env\": {\"K\": \"should-not-travel\"}}, \"openapi\": {\"command\": \"x-openapi\", \"args\": []}}}"
+    }
+  },
+  "steps": [
+    {
+      "run": [
+        "launch",
+        "--preset",
+        "sonnet-tester",
+        "--brief",
+        "{{PROJECT}}/.jitso/briefs/brief.md",
+        "--mode",
+        "direct",
+        "--field",
+        "ticket_key=PRJ-123"
+      ],
+      "capture": {
+        "LAUNCH_ID": {
+          "from": "stdout",
+          "regex": "JITSO (L\\d{8}T\\d{6}-[0-9a-f]{4})",
+          "group": 1
+        }
+      },
+      "expect": {
+        "exit": 0,
+        "files": [
+          {
+            "path": ".jitso/launches/{{LAUNCH_ID}}/mcp.json",
+            "json": [
+              {
+                "path": "mcpServers.dbhub.command",
+                "equals": "x-dbhub"
+              },
+              {
+                "path": "mcpServers.dbhub.type",
+                "absent": true
+              },
+              {
+                "path": "mcpServers.dbhub.cwd",
+                "absent": true
+              },
+              {
+                "path": "mcpServers.dbhub.env",
+                "absent": true
+              }
+            ],
+            "not_contains": [
+              "should-not-travel"
+            ]
+          }
+        ]
+      }
+    }
+  ]
+}

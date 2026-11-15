@@ -1,0 +1,49 @@
+{
+  "id": "brief/path/allowed/dispatch-briefs-folder",
+  "title": "a brief in {{HOME}}/.jitso/dispatch-cwd/briefs is accepted",
+  "source": [
+    "cli/jitso/brief.test.ts: 'accepts a file in the second of several allowed folders'",
+    "cli/jitso/launch.test.ts: allowedBriefDirs"
+  ],
+  "home": {
+    "files": {
+      ".jitso/dispatch-cwd/briefs/brief.md": {
+        "from": "brief.md"
+      }
+    }
+  },
+  "steps": [
+    {
+      "run": [
+        "launch",
+        "--preset",
+        "haiku-explorer",
+        "--brief",
+        "{{HOME}}/.jitso/dispatch-cwd/briefs/brief.md",
+        "--mode",
+        "direct",
+        "--dry-run"
+      ],
+      "expect": {
+        "exit": 0,
+        "stderr": [
+          {
+            "empty": true
+          }
+        ],
+        "stdout": [
+          {
+            "regex": "^JITSO L\\d{8}T\\d{6}-[0-9a-f]{4} \\|"
+          },
+          "dry run: nothing was written"
+        ],
+        "orca_calls": {
+          "empty": true
+        },
+        "registry": {
+          "count": 0
+        }
+      }
+    }
+  ]
+}

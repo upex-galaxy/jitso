@@ -1,0 +1,35 @@
+{
+  "id": "close/duration-never-negative",
+  "title": "a launch stamped in the future gets duration_s 0 in its end event, never a negative number",
+  "source": [
+    "cli/jitso/close.test.ts: 'reads the screen into footer.txt...' (duration_s) and close.ts Math.max(0, ...)"
+  ],
+  "project": {
+    "files": {
+      ".jitso/launches.jsonl": "{\"v\":1,\"event\":\"launch\",\"id\":\"L20261113T142233-a3f9\",\"parent\":null,\"root\":\"L20261113T142233-a3f9\",\"depth\":0,\"ts\":\"2999-01-01T00:00:00.000Z\",\"mode\":\"direct\",\"preset\":\"haiku-explorer\",\"orca\":{\"run\":null,\"task\":null,\"terminal\":\"term_fake\",\"title\":\"t [jitso:L20261113T142233-a3f9]\"}}\n"
+    }
+  },
+  "steps": [
+    {
+      "run": [
+        "close",
+        "L20261113T142233-a3f9"
+      ],
+      "expect": {
+        "exit": 0,
+        "registry": {
+          "count": 2,
+          "events": [
+            {
+              "at": 1,
+              "event": "end",
+              "fields": {
+                "duration_s": 0
+              }
+            }
+          ]
+        }
+      }
+    }
+  ]
+}

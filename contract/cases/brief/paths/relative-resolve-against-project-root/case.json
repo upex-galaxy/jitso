@@ -1,0 +1,49 @@
+{
+  "id": "brief/paths/relative-resolve-against-project-root",
+  "title": "a relative cited path is checked against the project root, not the folder the command runs in",
+  "source": [
+    "cli/jitso/brief.test.ts: checkBrief context.root"
+  ],
+  "project": {
+    "files": {
+      ".jitso/briefs/brief.md": {
+        "from": "brief.md"
+      }
+    }
+  },
+  "steps": [
+    {
+      "run": [
+        "launch",
+        "--preset",
+        "haiku-explorer",
+        "--brief",
+        "{{PROJECT}}/.jitso/briefs/brief.md",
+        "--mode",
+        "direct",
+        "--dry-run"
+      ],
+      "expect": {
+        "exit": 0,
+        "stderr": [
+          {
+            "empty": true
+          }
+        ],
+        "stdout": [
+          {
+            "regex": "^JITSO L\\d{8}T\\d{6}-[0-9a-f]{4} \\|"
+          },
+          "dry run: nothing was written"
+        ],
+        "orca_calls": {
+          "empty": true
+        },
+        "registry": {
+          "count": 0
+        }
+      },
+      "cwd": "docs"
+    }
+  ]
+}

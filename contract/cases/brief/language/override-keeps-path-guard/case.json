@@ -1,0 +1,52 @@
+{
+  "id": "brief/language/override-keeps-path-guard",
+  "title": "--brief-language es does not relax the allowed-folder rule",
+  "source": [
+    "cli/jitso/launch.test.ts: 'the other checks and the path guard still apply with the override'"
+  ],
+  "home": {
+    "files": {
+      "outside/brief.md": {
+        "from": "brief.md"
+      }
+    }
+  },
+  "steps": [
+    {
+      "run": [
+        "launch",
+        "--preset",
+        "haiku-explorer",
+        "--brief",
+        "{{HOME}}/outside/brief.md",
+        "--mode",
+        "direct",
+        "--brief-language",
+        "es"
+      ],
+      "expect": {
+        "exit": 2,
+        "stdout": [
+          {
+            "empty": true
+          }
+        ],
+        "stderr": [
+          "JITSO REJECTED: brief file is outside the allowed folders"
+        ],
+        "orca_calls": {
+          "empty": true
+        },
+        "registry": {
+          "count": 0
+        },
+        "files": [
+          {
+            "path": ".jitso/launches",
+            "exists": false
+          }
+        ]
+      }
+    }
+  ]
+}

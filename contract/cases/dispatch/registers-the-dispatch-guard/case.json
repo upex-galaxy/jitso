@@ -1,0 +1,44 @@
+{
+  "id": "dispatch/registers-the-dispatch-guard",
+  "title": "the --settings argument registers the dispatch guard as a PreToolUse command hook on Bash and Write, and nothing else",
+  "source": [
+    "cli/jitso/dispatch.test.ts: 'registers the dispatch guard on Bash and Write through --settings'"
+  ],
+  "steps": [
+    {
+      "run": [
+        "explain how the Jira sync works"
+      ],
+      "expect": {
+        "exit": 0,
+        "claude": {
+          "ran": true,
+          "json_arg_after": {
+            "--settings": [
+              {
+                "path": "hooks.PreToolUse.0.matcher",
+                "equals": "Bash|Write"
+              },
+              {
+                "path": "hooks.PreToolUse.0.hooks.0.type",
+                "equals": "command"
+              },
+              {
+                "path": "hooks.PreToolUse.0.hooks.0.command",
+                "regex": "dispatch-guard"
+              },
+              {
+                "path": "hooks.PreToolUse.0.hooks.1",
+                "absent": true
+              },
+              {
+                "path": "hooks.PreToolUse.1",
+                "absent": true
+              }
+            ]
+          }
+        }
+      }
+    }
+  ]
+}

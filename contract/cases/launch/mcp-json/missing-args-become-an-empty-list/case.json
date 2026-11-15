@@ -1,0 +1,51 @@
+{
+  "id": "launch/mcp-json/missing-args-become-an-empty-list",
+  "title": "a server without an args key gets args: [] in mcp.json",
+  "source": [
+    "cli/jitso/adapters/claude.ts: args: Array.isArray(server.args) ? ... : []"
+  ],
+  "project": {
+    "files": {
+      ".jitso/briefs/brief.md": {
+        "from": "brief.md"
+      },
+      ".mcp.json": "{\"mcpServers\": {\"dbhub\": {\"command\": \"x-dbhub\"}, \"openapi\": {\"command\": \"x-openapi\", \"args\": [\"--a\"]}}}"
+    }
+  },
+  "steps": [
+    {
+      "run": [
+        "launch",
+        "--preset",
+        "sonnet-tester",
+        "--brief",
+        "{{PROJECT}}/.jitso/briefs/brief.md",
+        "--mode",
+        "direct",
+        "--field",
+        "ticket_key=PRJ-123"
+      ],
+      "capture": {
+        "LAUNCH_ID": {
+          "from": "stdout",
+          "regex": "JITSO (L\\d{8}T\\d{6}-[0-9a-f]{4})",
+          "group": 1
+        }
+      },
+      "expect": {
+        "exit": 0,
+        "files": [
+          {
+            "path": ".jitso/launches/{{LAUNCH_ID}}/mcp.json",
+            "json": [
+              {
+                "path": "mcpServers.dbhub.args",
+                "equals": []
+              }
+            ]
+          }
+        ]
+      }
+    }
+  ]
+}

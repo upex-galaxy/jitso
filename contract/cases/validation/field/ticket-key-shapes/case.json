@@ -1,0 +1,48 @@
+{
+  "id": "validation/field/ticket-key-shapes",
+  "title": "ticket keys with digits in the project part, one digit or many are accepted",
+  "source": [
+    "cli/jitso/profile.ts: FIELD_PATTERNS.ticket_key = ^[A-Z][A-Z0-9]*-\\d+$"
+  ],
+  "project": {
+    "files": {
+      ".jitso/briefs/b.md": {
+        "from": "brief.md"
+      }
+    }
+  },
+  "for_each": {
+    "var": "v",
+    "values": [
+      "A-1",
+      "A1-9",
+      "PROJ-1783",
+      "UPEX2-000"
+    ]
+  },
+  "steps": [
+    {
+      "run": [
+        "launch",
+        "--preset",
+        "sonnet-tester",
+        "--brief",
+        "{{PROJECT}}/.jitso/briefs/b.md",
+        "--mode",
+        "direct",
+        "--field",
+        "ticket_key={{v}}",
+        "--dry-run"
+      ],
+      "expect": {
+        "exit": 0,
+        "stdout": [
+          "dry run: nothing was written"
+        ],
+        "orca_calls": {
+          "empty": true
+        }
+      }
+    }
+  ]
+}

@@ -1,0 +1,54 @@
+{
+  "id": "brief/path/symlink-to-system-file-rejected",
+  "title": "a symlink inside .jitso/briefs that points to a system file is rejected",
+  "source": [
+    "cli/jitso/brief.test.ts: 'rejects a symlink that points to /etc/passwd'",
+    "cli/jitso/escape.test.ts: 'a symlink that leaves the brief folder never becomes an argument'"
+  ],
+  "project": {
+    "files": {
+      ".jitso/briefs/brief.md": {
+        "from": "brief.md"
+      },
+      ".jitso/briefs/link.md": {
+        "symlink": "/etc/passwd"
+      }
+    }
+  },
+  "steps": [
+    {
+      "run": [
+        "launch",
+        "--preset",
+        "haiku-explorer",
+        "--brief",
+        "{{PROJECT}}/.jitso/briefs/link.md",
+        "--mode",
+        "direct"
+      ],
+      "expect": {
+        "exit": 2,
+        "stdout": [
+          {
+            "empty": true
+          }
+        ],
+        "stderr": [
+          "JITSO REJECTED: brief file is outside the allowed folders"
+        ],
+        "orca_calls": {
+          "empty": true
+        },
+        "registry": {
+          "count": 0
+        },
+        "files": [
+          {
+            "path": ".jitso/launches",
+            "exists": false
+          }
+        ]
+      }
+    }
+  ]
+}

@@ -1,0 +1,23 @@
+{
+  "id": "smoke/launch-dry-run",
+  "title": "a valid haiku-explorer dry run prints the card, writes nothing and never calls orca",
+  "source": ["cli/jitso/launch.test.ts: '--dry-run prints the card and calls no orca, writes no file and no event'"],
+  "project": {
+    "files": { ".jitso/briefs/explore.md": { "from": "brief.md" } }
+  },
+  "steps": [
+    {
+      "run": ["launch", "--preset", "haiku-explorer", "--brief", "{{PROJECT}}/.jitso/briefs/explore.md", "--mode", "direct", "--dry-run"],
+      "expect": {
+        "exit": 0,
+        "stdout": [
+          { "regex": "^JITSO L\\d{8}T\\d{6}-[0-9a-f]{4} \\|" },
+          "dry run: nothing was written"
+        ],
+        "orca_calls": { "empty": true },
+        "registry": { "count": 0 },
+        "files": [{ "path": ".jitso/launches", "exists": false }]
+      }
+    }
+  ]
+}

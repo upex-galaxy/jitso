@@ -1,0 +1,69 @@
+{
+  "id": "launch/trust/screens-that-are-not-the-dialog",
+  "title": "a screen needs both the word trust (any case) and 'No, exit' to count as the dialog",
+  "source": [
+    "cli/jitso/adapters/claude.ts: detect = /trust/i.test(screen) && screen.includes('No, exit')"
+  ],
+  "project": {
+    "files": {
+      ".jitso/briefs/brief.md": {
+        "from": "brief.md"
+      }
+    }
+  },
+  "orca": {
+    "screens": [
+      "{{screen}}"
+    ]
+  },
+  "for_each": {
+    "var": "screen",
+    "values": [
+      "Do you trust the author of this repository?",
+      "2. No, exit",
+      "Is this a project you trust?\n no, exit",
+      "Yes, I trust\nNo exit"
+    ]
+  },
+  "steps": [
+    {
+      "run": [
+        "launch",
+        "--preset",
+        "haiku-explorer",
+        "--brief",
+        "{{PROJECT}}/.jitso/briefs/brief.md",
+        "--mode",
+        "direct"
+      ],
+      "capture": {
+        "LAUNCH_ID": {
+          "from": "stdout",
+          "regex": "JITSO (L\\d{8}T\\d{6}-[0-9a-f]{4})",
+          "group": 1
+        }
+      },
+      "expect": {
+        "exit": 0,
+        "orca_calls": {
+          "none": [
+            "terminal send"
+          ],
+          "count": 3
+        },
+        "registry": {
+          "count": 1,
+          "events": [
+            {
+              "at": 0,
+              "event": "launch",
+              "fields": {
+                "trust_dialog": "absent"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ]
+}

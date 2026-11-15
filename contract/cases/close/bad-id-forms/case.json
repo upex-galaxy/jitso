@@ -1,0 +1,51 @@
+{
+  "id": "close/bad-id-forms",
+  "title": "a launch id that is not exactly L<date>T<time>-<4 hex> is rejected with exit 2 before orca or the registry is touched",
+  "source": [
+    "cli/jitso/close.test.ts: 'a malformed id exits 2'"
+  ],
+  "project": {
+    "files": {
+      ".jitso/launches.jsonl": "{\"v\":1,\"event\":\"launch\",\"id\":\"L20261113T142233-a3f9\",\"parent\":null,\"root\":\"L20261113T142233-a3f9\",\"depth\":0,\"ts\":\"2026-11-13T14:22:33.000Z\",\"mode\":\"direct\",\"preset\":\"haiku-explorer\",\"orca\":{\"run\":null,\"task\":null,\"terminal\":\"term_fake\",\"title\":\"t [jitso:L20261113T142233-a3f9]\"}}\n"
+    }
+  },
+  "for_each": {
+    "var": "id",
+    "values": [
+      "../../etc",
+      "L1",
+      "l20261113t142233-a3f9",
+      "L20261113T142233-A3F9",
+      "L20261113T142233-a3f9\n",
+      "L20261113T142233-a3f9;ls",
+      "$(id)",
+      "--help",
+      ""
+    ]
+  },
+  "steps": [
+    {
+      "run": [
+        "close",
+        "{{id}}"
+      ],
+      "expect": {
+        "exit": 2,
+        "stderr": [
+          "JITSO REJECTED:"
+        ],
+        "stdout": [
+          {
+            "empty": true
+          }
+        ],
+        "orca_calls": {
+          "empty": true
+        },
+        "registry": {
+          "count": 1
+        }
+      }
+    }
+  ]
+}

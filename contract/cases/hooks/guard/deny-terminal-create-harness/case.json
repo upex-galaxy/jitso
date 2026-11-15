@@ -1,0 +1,42 @@
+{
+  "id": "hooks/guard/deny-terminal-create-harness",
+  "title": "orca terminal create whose --command starts a harness (claude, codex by path, opencode, pi) is denied",
+  "source": [
+    ".agents/hooks/jitso-guard.test.ts: 'denies terminal create running claude' and 'running codex by path'"
+  ],
+  "for_each": {
+    "var": "tail",
+    "values": [
+      "--worktree w --command \"claude --model x\"",
+      "--command /usr/local/bin/codex",
+      "--worktree w --command opencode",
+      "--worktree w --command pi",
+      "--worktree w --command=claude"
+    ]
+  },
+  "steps": [
+    {
+      "hook": "guard",
+      "input": {
+        "hook_event_name": "PreToolUse",
+        "tool_name": "Bash",
+        "tool_input": {
+          "command": "orca terminal create {{tail}}"
+        },
+        "cwd": "{{PROJECT}}"
+      },
+      "expect": {
+        "exit": 0,
+        "decision": "deny",
+        "reason": [
+          {
+            "regex": "\\(denied: terminal create --command <harness>\\)"
+          },
+          {
+            "regex": "launch"
+          }
+        ]
+      }
+    }
+  ]
+}

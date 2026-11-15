@@ -1,0 +1,53 @@
+{
+  "id": "validation/brief-language/accepted",
+  "title": "--brief-language en, es and any are accepted for an English brief",
+  "source": [
+    "cli/jitso/launch.test.ts: 'parse: default is en, es and any are accepted, anything else is rejected'",
+    "cli/jitso/brief.ts: only `en` enforces the English heuristic"
+  ],
+  "project": {
+    "files": {
+      ".jitso/briefs/b.md": {
+        "from": "brief.md"
+      }
+    }
+  },
+  "for_each": {
+    "var": "lang",
+    "values": [
+      "en",
+      "es",
+      "any"
+    ]
+  },
+  "steps": [
+    {
+      "run": [
+        "launch",
+        "--preset",
+        "haiku-explorer",
+        "--brief",
+        "{{PROJECT}}/.jitso/briefs/b.md",
+        "--mode",
+        "direct",
+        "--brief-language",
+        "{{lang}}",
+        "--dry-run"
+      ],
+      "expect": {
+        "exit": 0,
+        "stdout": [
+          "dry run: nothing was written"
+        ],
+        "stderr": [
+          {
+            "empty": true
+          }
+        ],
+        "orca_calls": {
+          "empty": true
+        }
+      }
+    }
+  ]
+}

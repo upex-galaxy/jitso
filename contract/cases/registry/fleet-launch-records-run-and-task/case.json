@@ -1,0 +1,78 @@
+{
+  "id": "registry/fleet-launch-records-run-and-task",
+  "title": "a fleet launch adopts the terminal as a worker and records mode fleet with the run and task in the orca object",
+  "source": [
+    "cli/jitso/launch.test.ts: fleet mode adopts the worker"
+  ],
+  "project": {
+    "files": {
+      ".jitso/briefs/explore.md": {
+        "from": "brief.md"
+      }
+    }
+  },
+  "steps": [
+    {
+      "run": [
+        "launch",
+        "--preset",
+        "haiku-explorer",
+        "--brief",
+        "{{PROJECT}}/.jitso/briefs/explore.md",
+        "--mode",
+        "fleet",
+        "--run",
+        "run_1",
+        "--task",
+        "task_1"
+      ],
+      "capture": {
+        "LAUNCH_ID": {
+          "from": "stdout",
+          "regex": "JITSO (L\\d{8}T\\d{6}-[0-9a-f]{4})"
+        }
+      },
+      "expect": {
+        "exit": 0,
+        "orca_calls": {
+          "verbs": [
+            "terminal create",
+            "terminal wait",
+            "terminal read",
+            "orchestration worker-start"
+          ],
+          "calls": [
+            {
+              "at": 3,
+              "argv": [
+                "orchestration",
+                "worker-start",
+                "--run",
+                "run_1",
+                "--task",
+                "task_1",
+                "--terminal",
+                "term_fake"
+              ]
+            }
+          ]
+        },
+        "registry": {
+          "count": 1,
+          "events": [
+            {
+              "at": 0,
+              "event": "launch",
+              "fields": {
+                "mode": "fleet",
+                "orca.run": "run_1",
+                "orca.task": "task_1",
+                "orca.terminal": "term_fake"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ]
+}

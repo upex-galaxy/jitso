@@ -1,0 +1,45 @@
+{
+  "id": "dispatch/claude-exit-status-is-propagated",
+  "title": "the dispatcher returns the exit status of the claude session it opened, and adds nothing to its output",
+  "source": [
+    "cli/jitso/dispatch.test.ts: 'creates the briefs folder, runs claude there and returns its status'"
+  ],
+  "claude": {
+    "exit": 7
+  },
+  "steps": [
+    {
+      "run": [
+        "explain how the Jira sync works"
+      ],
+      "expect": {
+        "exit": 7,
+        "stdout": [
+          {
+            "empty": true
+          }
+        ],
+        "stderr": [
+          {
+            "empty": true
+          }
+        ],
+        "claude": {
+          "ran": true,
+          "cwd": "{{HOME}}/.jitso/dispatch-cwd",
+          "last_arg": [
+            {
+              "equals": "explain how the Jira sync works"
+            }
+          ]
+        },
+        "files": [
+          {
+            "path": "{{HOME}}/.jitso/dispatch-cwd/briefs",
+            "exists": true
+          }
+        ]
+      }
+    }
+  ]
+}

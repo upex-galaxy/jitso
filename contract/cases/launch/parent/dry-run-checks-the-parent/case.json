@@ -1,0 +1,78 @@
+{
+  "id": "launch/parent/dry-run-checks-the-parent",
+  "title": "a dry run validates --parent too: unknown exits 2, known prints the card and changes nothing",
+  "source": [
+    "cli/jitso/launch.test.ts: runLaunch resolves --parent before the dry-run return"
+  ],
+  "project": {
+    "files": {
+      ".jitso/briefs/brief.md": {
+        "from": "brief.md"
+      }
+    }
+  },
+  "steps": [
+    {
+      "write": {
+        "project": {
+          ".jitso/launches.jsonl": {
+            "content": "{\"v\": 1, \"event\": \"launch\", \"id\": \"L20261113T142233-a3f9\", \"parent\": null, \"root\": \"L20261113T142233-a3f9\", \"depth\": 0, \"ts\": \"2026-11-13T14:22:33.000Z\", \"mode\": \"direct\", \"preset\": \"haiku-explorer\"}\n"
+          }
+        }
+      }
+    },
+    {
+      "run": [
+        "launch",
+        "--preset",
+        "haiku-explorer",
+        "--brief",
+        "{{PROJECT}}/.jitso/briefs/brief.md",
+        "--mode",
+        "direct",
+        "--parent",
+        "L20260101T000000-ffff",
+        "--dry-run"
+      ],
+      "expect": {
+        "exit": 2,
+        "stderr": [
+          {
+            "contains": "unknown parent launch"
+          }
+        ],
+        "orca_calls": {
+          "empty": true
+        }
+      }
+    },
+    {
+      "run": [
+        "launch",
+        "--preset",
+        "haiku-explorer",
+        "--brief",
+        "{{PROJECT}}/.jitso/briefs/brief.md",
+        "--mode",
+        "direct",
+        "--parent",
+        "L20261113T142233-a3f9",
+        "--dry-run"
+      ],
+      "expect": {
+        "exit": 0,
+        "stdout": [
+          {
+            "contains": "dry run: nothing was written"
+          }
+        ],
+        "orca_calls": {
+          "empty": true
+        },
+        "registry": {
+          "count": 1
+        }
+      }
+    }
+  ]
+}

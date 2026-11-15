@@ -1,0 +1,46 @@
+{
+  "id": "validation/format/mcp-exclude-rejected",
+  "title": "--mcp-exclude must start with a letter or digit, hold only word characters and dashes, at most 64 long",
+  "source": [
+    "cli/jitso/shell.ts: FIELD_PATTERNS['mcp-exclude']"
+  ],
+  "for_each": {
+    "var": "v",
+    "values": [
+      "_dbhub",
+      "db.hub",
+      "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "db/hub"
+    ]
+  },
+  "steps": [
+    {
+      "run": [
+        "launch",
+        "--preset",
+        "haiku-explorer",
+        "--brief",
+        "{{PROJECT}}/.jitso/briefs/b.md",
+        "--mode",
+        "direct",
+        "--mcp-exclude",
+        "{{v}}"
+      ],
+      "expect": {
+        "exit": 2,
+        "stdout": [
+          {
+            "empty": true
+          }
+        ],
+        "stderr": [
+          "JITSO REJECTED:",
+          "invalid value for --mcp-exclude"
+        ],
+        "orca_calls": {
+          "empty": true
+        }
+      }
+    }
+  ]
+}

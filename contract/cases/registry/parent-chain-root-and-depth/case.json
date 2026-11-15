@@ -1,0 +1,110 @@
+{
+  "id": "registry/parent-chain-root-and-depth",
+  "title": "a launch with --parent records the parent, keeps the root of the chain and adds one to the depth",
+  "source": [
+    "cli/jitso/launch.test.ts: parent launches (depth and root)"
+  ],
+  "project": {
+    "files": {
+      ".jitso/briefs/explore.md": {
+        "from": "brief.md"
+      }
+    }
+  },
+  "steps": [
+    {
+      "run": [
+        "launch",
+        "--preset",
+        "haiku-explorer",
+        "--brief",
+        "{{PROJECT}}/.jitso/briefs/explore.md",
+        "--mode",
+        "direct"
+      ],
+      "capture": {
+        "ROOT_ID": {
+          "from": "stdout",
+          "regex": "JITSO (L\\d{8}T\\d{6}-[0-9a-f]{4})"
+        }
+      },
+      "expect": {
+        "exit": 0
+      }
+    },
+    {
+      "run": [
+        "launch",
+        "--preset",
+        "haiku-explorer",
+        "--brief",
+        "{{PROJECT}}/.jitso/briefs/explore.md",
+        "--mode",
+        "direct",
+        "--parent",
+        "{{ROOT_ID}}"
+      ],
+      "capture": {
+        "CHILD_ID": {
+          "from": "stdout",
+          "regex": "JITSO (L\\d{8}T\\d{6}-[0-9a-f]{4})"
+        }
+      },
+      "expect": {
+        "exit": 0,
+        "registry": {
+          "count": 2,
+          "events": [
+            {
+              "at": 1,
+              "event": "launch",
+              "fields": {
+                "id": "{{CHILD_ID}}",
+                "parent": "{{ROOT_ID}}",
+                "root": "{{ROOT_ID}}",
+                "depth": 1
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "run": [
+        "launch",
+        "--preset",
+        "haiku-explorer",
+        "--brief",
+        "{{PROJECT}}/.jitso/briefs/explore.md",
+        "--mode",
+        "direct",
+        "--parent",
+        "{{CHILD_ID}}"
+      ],
+      "capture": {
+        "GRANDCHILD_ID": {
+          "from": "stdout",
+          "regex": "JITSO (L\\d{8}T\\d{6}-[0-9a-f]{4})"
+        }
+      },
+      "expect": {
+        "exit": 0,
+        "registry": {
+          "count": 3,
+          "events": [
+            {
+              "at": 2,
+              "event": "launch",
+              "fields": {
+                "id": "{{GRANDCHILD_ID}}",
+                "parent": "{{CHILD_ID}}",
+                "root": "{{ROOT_ID}}",
+                "depth": 2
+              }
+            }
+          ]
+        }
+      }
+    }
+  ]
+}

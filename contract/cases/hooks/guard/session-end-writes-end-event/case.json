@@ -1,0 +1,60 @@
+{
+  "id": "hooks/guard/session-end-writes-end-event",
+  "title": "SessionEnd appends one end event (source session_end_hook) for the launch whose session matches, and leaves the others running",
+  "source": [
+    ".agents/hooks/jitso-guard.test.ts: 'writes one end event with source session_end_hook for the matching session, within 1.5 s'"
+  ],
+  "project": {
+    "files": {
+      ".jitso/launches.jsonl": "{\"v\":1,\"event\":\"launch\",\"id\":\"L20261113T142233-a3f9\",\"parent\":null,\"root\":\"L20261113T142233-a3f9\",\"depth\":0,\"ts\":\"2026-11-13T14:22:33.000Z\",\"mode\":\"direct\",\"preset\":\"haiku-explorer\",\"session_id\":\"sess-1\"}\n{\"v\":1,\"event\":\"launch\",\"id\":\"L20261113T142233-b4a0\",\"parent\":null,\"root\":\"L20261113T142233-b4a0\",\"depth\":0,\"ts\":\"2026-11-13T14:22:33.000Z\",\"mode\":\"direct\",\"preset\":\"haiku-explorer\",\"session_id\":\"sess-2\"}\n"
+    }
+  },
+  "steps": [
+    {
+      "hook": "guard",
+      "input": {
+        "hook_event_name": "SessionEnd",
+        "session_id": "sess-1",
+        "reason": "other",
+        "cwd": "{{PROJECT}}"
+      },
+      "expect": {
+        "exit": 0,
+        "stdout": [
+          {
+            "empty": true
+          }
+        ],
+        "elapsed_ms_lt": 1500,
+        "registry": {
+          "count": 3,
+          "events": [
+            {
+              "at": 2,
+              "event": "end",
+              "fields": {
+                "v": 1,
+                "id": "L20261113T142233-a3f9",
+                "source": "session_end_hook",
+                "outcome_reported": "none",
+                "footer_path": null,
+                "ts": {
+                  "regex": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d+)?Z$"
+                },
+                "duration_s": {
+                  "regex": "^\\d+$"
+                }
+              }
+            }
+          ]
+        },
+        "files": [
+          {
+            "path": ".jitso/launches.lock",
+            "exists": false
+          }
+        ]
+      }
+    }
+  ]
+}

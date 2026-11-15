@@ -1,0 +1,49 @@
+{
+  "id": "validation/mode/rejected",
+  "title": "any --mode other than direct or fleet is rejected, case-sensitively",
+  "source": [
+    "cli/jitso/launch.test.ts: 'any other mode is rejected'",
+    "cli/jitso/launch.test.ts: 'an unknown --mode exits 2'"
+  ],
+  "for_each": {
+    "var": "mode",
+    "values": [
+      "Direct",
+      "FLEET",
+      "directos",
+      "",
+      "x",
+      "solo",
+      "directo ",
+      "flotas"
+    ]
+  },
+  "steps": [
+    {
+      "run": [
+        "launch",
+        "--preset",
+        "haiku-explorer",
+        "--brief",
+        "{{PROJECT}}/.jitso/briefs/b.md",
+        "--mode",
+        "{{mode}}"
+      ],
+      "expect": {
+        "exit": 2,
+        "stdout": [
+          {
+            "empty": true
+          }
+        ],
+        "stderr": [
+          "JITSO REJECTED:",
+          "--mode must be direct or fleet"
+        ],
+        "orca_calls": {
+          "empty": true
+        }
+      }
+    }
+  ]
+}

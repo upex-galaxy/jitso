@@ -1,0 +1,38 @@
+{
+  "id": "hooks/guard/malformed-input-fails-open",
+  "title": "input the hook cannot read (not JSON, empty, not an object, missing or mistyped fields) never blocks: exit 0 and no output",
+  "source": [
+    ".agents/hooks/jitso-guard.test.ts: 'malformed input never blocks the session'"
+  ],
+  "for_each": {
+    "var": "raw",
+    "values": [
+      "not json",
+      "",
+      "{",
+      "null",
+      "42",
+      "[]",
+      "{\"hook_event_name\":\"PreToolUse\",\"tool_name\":\"Bash\"}",
+      "{\"hook_event_name\":\"PreToolUse\",\"tool_name\":\"Bash\",\"tool_input\":null}",
+      "{\"hook_event_name\":\"PreToolUse\",\"tool_name\":\"Bash\",\"tool_input\":{\"command\":42}}",
+      "{\"hook_event_name\":\"PreToolUse\",\"tool_name\":\"Bash\",\"tool_input\":{\"command\":[\"orca\",\"orchestration\",\"worker-start\"]}}",
+      "{\"hook_event_name\":\"PreToolUse\",\"tool_input\":{\"command\":\"orca orchestration worker-start --run r1\"}}"
+    ]
+  },
+  "steps": [
+    {
+      "hook": "guard",
+      "input": "{{raw}}",
+      "expect": {
+        "exit": 0,
+        "decision": "none",
+        "stdout": [
+          {
+            "empty": true
+          }
+        ]
+      }
+    }
+  ]
+}

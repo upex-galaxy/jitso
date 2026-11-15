@@ -1,0 +1,41 @@
+{
+  "id": "registry/unknown-parent-writes-nothing",
+  "title": "a launch whose --parent is not in the registry is rejected with exit 2, calls no orca and writes no event",
+  "source": [
+    "cli/jitso/launch.test.ts: unknown parent launch"
+  ],
+  "project": {
+    "files": {
+      ".jitso/briefs/explore.md": {
+        "from": "brief.md"
+      }
+    }
+  },
+  "steps": [
+    {
+      "run": [
+        "launch",
+        "--preset",
+        "haiku-explorer",
+        "--brief",
+        "{{PROJECT}}/.jitso/briefs/explore.md",
+        "--mode",
+        "direct",
+        "--parent",
+        "L20261113T142233-a3f9"
+      ],
+      "expect": {
+        "exit": 2,
+        "stderr": [
+          "JITSO REJECTED:"
+        ],
+        "orca_calls": {
+          "empty": true
+        },
+        "registry": {
+          "count": 0
+        }
+      }
+    }
+  ]
+}

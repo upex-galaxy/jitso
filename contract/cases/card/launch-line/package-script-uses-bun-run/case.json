@@ -1,0 +1,45 @@
+{
+  "id": "card/launch-line/package-script-uses-bun-run",
+  "title": "when package.json declares a jitso script the card prints 'launch: bun run jitso launch'",
+  "source": [
+    "cli/jitso/launch.test.ts: 'uses the package script when the target repo declares a `jitso` script'"
+  ],
+  "project": {
+    "files": {
+      ".jitso/briefs/brief.md": {
+        "from": "brief.md"
+      },
+      "package.json": "{\"name\": \"x\", \"scripts\": {\"jitso\": \"bun cli/jitso/index.ts\"}}"
+    }
+  },
+  "steps": [
+    {
+      "run": [
+        "launch",
+        "--preset",
+        "haiku-explorer",
+        "--brief",
+        "{{PROJECT}}/.jitso/briefs/brief.md",
+        "--mode",
+        "direct",
+        "--dry-run"
+      ],
+      "expect": {
+        "exit": 0,
+        "stdout": [
+          {
+            "regex": "(?m)^launch:\\ bun\\ run\\ jitso\\ launch$"
+          }
+        ],
+        "stderr": [
+          {
+            "empty": true
+          }
+        ],
+        "orca_calls": {
+          "empty": true
+        }
+      }
+    }
+  ]
+}

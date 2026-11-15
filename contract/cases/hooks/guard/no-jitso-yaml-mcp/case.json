@@ -1,0 +1,34 @@
+{
+  "id": "hooks/guard/no-jitso-yaml-mcp",
+  "title": "in a project without jitso/jitso.yaml the guard is a no-op for orca-bridge tools",
+  "source": [
+    ".agents/hooks/jitso-guard.test.ts: 'a repo without jitso/jitso.yaml is a no-op'"
+  ],
+  "project": {
+    "files": {
+      "jitso/jitso.yaml": null
+    }
+  },
+  "steps": [
+    {
+      "hook": "guard",
+      "input": {
+        "hook_event_name": "PreToolUse",
+        "tool_name": "mcp__claude_ai_orca-bridge__start_worker",
+        "tool_input": {
+          "agent": "claude"
+        },
+        "cwd": "{{PROJECT}}"
+      },
+      "expect": {
+        "exit": 0,
+        "decision": "none",
+        "stdout": [
+          {
+            "empty": true
+          }
+        ]
+      }
+    }
+  ]
+}

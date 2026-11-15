@@ -1,0 +1,52 @@
+{
+  "id": "launch/direct/card-txt-equals-stdout-card",
+  "title": "card.txt holds exactly the card printed on stdout plus a newline, and the launch folder is named by the card's id",
+  "source": [
+    "cli/jitso/launch.test.ts: launchForReal writes card + '\\n' to card.txt and prints card"
+  ],
+  "project": {
+    "files": {
+      ".jitso/briefs/brief.md": {
+        "from": "brief.md"
+      }
+    }
+  },
+  "steps": [
+    {
+      "run": [
+        "launch",
+        "--preset",
+        "haiku-explorer",
+        "--brief",
+        "{{PROJECT}}/.jitso/briefs/brief.md",
+        "--mode",
+        "direct"
+      ],
+      "capture": {
+        "LAUNCH_ID": {
+          "from": "stdout",
+          "regex": "JITSO (L\\d{8}T\\d{6}-[0-9a-f]{4})",
+          "group": 1
+        },
+        "CARD": {
+          "from": "stdout",
+          "regex": "(?s)^(.*)\\n$",
+          "group": 1
+        }
+      },
+      "expect": {
+        "exit": 0,
+        "files": [
+          {
+            "path": ".jitso/launches/{{LAUNCH_ID}}/card.txt",
+            "equals": "{{CARD}}\n"
+          },
+          {
+            "path": ".jitso/launches/{{LAUNCH_ID}}",
+            "exists": true
+          }
+        ]
+      }
+    }
+  ]
+}

@@ -1,0 +1,43 @@
+{
+  "id": "validation/field/missing-required",
+  "title": "a preset that requires ticket_key and gets no --field is rejected before any orca call",
+  "source": [
+    "cli/jitso/profile.test.ts: '7. a missing required field: the tester without ticket_key'",
+    "cli/jitso/launch.test.ts: 'a preset that requires a field and a request without it exit 2 before any orca call'"
+  ],
+  "for_each": {
+    "var": "preset",
+    "values": [
+      "sonnet-tester",
+      "sonnet-automator"
+    ]
+  },
+  "steps": [
+    {
+      "run": [
+        "launch",
+        "--preset",
+        "{{preset}}",
+        "--brief",
+        "{{PROJECT}}/.jitso/briefs/b.md",
+        "--mode",
+        "direct"
+      ],
+      "expect": {
+        "exit": 2,
+        "stdout": [
+          {
+            "empty": true
+          }
+        ],
+        "stderr": [
+          "JITSO REJECTED:",
+          "missing ticket_key"
+        ],
+        "orca_calls": {
+          "empty": true
+        }
+      }
+    }
+  ]
+}

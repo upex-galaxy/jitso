@@ -1,0 +1,56 @@
+{
+  "id": "card/launch-line/not-a-usable-package-json",
+  "title": "a package.json that is broken, has no jitso script or a non-string one leaves the card at 'launch: jitso launch'",
+  "source": [
+    "cli/jitso/launch.test.ts: 'falls back to the plain `jitso launch` without the script, without package.json or on a broken one'"
+  ],
+  "project": {
+    "files": {
+      ".jitso/briefs/brief.md": {
+        "from": "brief.md"
+      },
+      "package.json": "{{pkg}}"
+    }
+  },
+  "for_each": {
+    "var": "pkg",
+    "values": [
+      "{not json",
+      "{\"scripts\": {\"test\": \"x\"}}",
+      "{\"scripts\": {\"jitso\": 5}}",
+      "[]",
+      "{\"scripts\": null}",
+      ""
+    ]
+  },
+  "steps": [
+    {
+      "run": [
+        "launch",
+        "--preset",
+        "haiku-explorer",
+        "--brief",
+        "{{PROJECT}}/.jitso/briefs/brief.md",
+        "--mode",
+        "direct",
+        "--dry-run"
+      ],
+      "expect": {
+        "exit": 0,
+        "stdout": [
+          {
+            "regex": "(?m)^launch:\\ jitso\\ launch$"
+          }
+        ],
+        "stderr": [
+          {
+            "empty": true
+          }
+        ],
+        "orca_calls": {
+          "empty": true
+        }
+      }
+    }
+  ]
+}

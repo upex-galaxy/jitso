@@ -1,0 +1,35 @@
+{
+  "id": "reap/empty-registry",
+  "title": "with no registry reap lists the terminals once, calls nothing else and prints the zero summary",
+  "source": [
+    "cli/jitso/reap.test.ts: '--run adds a run the registry has never seen; no run at all means no worker-list call'"
+  ],
+  "steps": [
+    {
+      "run": [
+        "reap"
+      ],
+      "expect": {
+        "exit": 0,
+        "stdout": [
+          {
+            "regex": "(?m)^jitso reap: 0 launch\\(es\\) marked ended, 0 unlogged worker\\(s\\), 0 analyzed$"
+          }
+        ],
+        "stderr": [
+          {
+            "empty": true
+          }
+        ],
+        "orca_calls": {
+          "verbs": [
+            "terminal list"
+          ]
+        },
+        "registry": {
+          "count": 0
+        }
+      }
+    }
+  ]
+}

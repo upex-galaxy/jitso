@@ -1,0 +1,54 @@
+{
+  "id": "reap/bad-run-values",
+  "title": "a --run value outside the plain allowlist is rejected with exit 2; nothing is called and nothing is written",
+  "source": [
+    "cli/jitso/reap.test.ts: 'a bad --run value exits 2 without calling orca'"
+  ],
+  "project": {
+    "files": {
+      ".jitso/launches.jsonl": "{\"v\":1,\"event\":\"launch\",\"id\":\"L20261113T142233-a3f9\",\"parent\":null,\"root\":\"L20261113T142233-a3f9\",\"depth\":0,\"ts\":\"2026-11-13T14:22:33.000Z\",\"mode\":\"direct\",\"preset\":\"haiku-explorer\",\"orca\":{\"run\":null,\"task\":null,\"terminal\":\"term_fake\",\"title\":\"t [jitso:L20261113T142233-a3f9]\"}}\n"
+    }
+  },
+  "orca": {
+    "listed": []
+  },
+  "for_each": {
+    "var": "value",
+    "values": [
+      "a b; ls",
+      "$(id)",
+      "../x",
+      "-x",
+      "run_1;ls",
+      "a..b",
+      "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      ""
+    ]
+  },
+  "steps": [
+    {
+      "run": [
+        "reap",
+        "--run",
+        "{{value}}"
+      ],
+      "expect": {
+        "exit": 2,
+        "stderr": [
+          "JITSO REJECTED: usage: jitso reap [--run <run_id>]..."
+        ],
+        "stdout": [
+          {
+            "empty": true
+          }
+        ],
+        "orca_calls": {
+          "empty": true
+        },
+        "registry": {
+          "count": 1
+        }
+      }
+    }
+  ]
+}

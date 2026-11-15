@@ -1,0 +1,88 @@
+{
+  "id": "launch/mcp-json/lists-servers-with-command-and-args-only",
+  "title": "mcp.json for sonnet-tester has dbhub and openapi with their command and args and never an env key",
+  "source": [
+    "cli/jitso/launch.test.ts: 'sonnet-tester with its key launches with the MCP file'",
+    "cli/jitso/adapters/claude.ts: buildMcpConfig drops env on purpose"
+  ],
+  "project": {
+    "files": {
+      ".jitso/briefs/brief.md": {
+        "from": "brief.md"
+      }
+    }
+  },
+  "steps": [
+    {
+      "run": [
+        "launch",
+        "--preset",
+        "sonnet-tester",
+        "--brief",
+        "{{PROJECT}}/.jitso/briefs/brief.md",
+        "--mode",
+        "direct",
+        "--field",
+        "ticket_key=PRJ-123"
+      ],
+      "capture": {
+        "LAUNCH_ID": {
+          "from": "stdout",
+          "regex": "JITSO (L\\d{8}T\\d{6}-[0-9a-f]{4})",
+          "group": 1
+        }
+      },
+      "expect": {
+        "exit": 0,
+        "files": [
+          {
+            "path": ".jitso/launches/{{LAUNCH_ID}}/mcp.json",
+            "json": [
+              {
+                "path": "mcpServers.dbhub.command",
+                "equals": "fixture-dbhub"
+              },
+              {
+                "path": "mcpServers.dbhub.args",
+                "equals": [
+                  "--transport",
+                  "stdio"
+                ]
+              },
+              {
+                "path": "mcpServers.dbhub.env",
+                "absent": true
+              },
+              {
+                "path": "mcpServers.openapi.command",
+                "equals": "fixture-openapi"
+              },
+              {
+                "path": "mcpServers.openapi.args",
+                "equals": [
+                  "--spec",
+                  "api/openapi.json"
+                ]
+              },
+              {
+                "path": "mcpServers.openapi.env",
+                "absent": true
+              },
+              {
+                "path": "mcpServers.unlisted",
+                "absent": true
+              }
+            ],
+            "not_contains": [
+              "fixture-secret-must-never-travel",
+              "DB_PASSWORD",
+              "API_TOKEN",
+              "\"env\"",
+              "fixture-unlisted"
+            ]
+          }
+        ]
+      }
+    }
+  ]
+}

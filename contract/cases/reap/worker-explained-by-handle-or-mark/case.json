@@ -1,0 +1,73 @@
+{
+  "id": "reap/worker-explained-by-handle-or-mark",
+  "title": "a worker is explained by its terminal handle, by a nested terminal handle, or by the [jitso:<id>] mark of a known launch in any field at any depth",
+  "source": [
+    "cli/jitso/reap.test.ts: 'a worker is logged by its terminal handle or by the [jitso:<id>] mark in its title'"
+  ],
+  "project": {
+    "files": {
+      ".jitso/launches.jsonl": "{\"v\":1,\"event\":\"launch\",\"id\":\"L20261113T142233-a3f9\",\"parent\":null,\"root\":\"L20261113T142233-a3f9\",\"depth\":0,\"ts\":\"2026-11-13T14:22:33.000Z\",\"mode\":\"direct\",\"preset\":\"haiku-explorer\",\"orca\":{\"run\":\"run_1\",\"task\":\"t\",\"terminal\":\"term_logged\",\"title\":\"t [jitso:L20261113T142233-a3f9]\"}}\n"
+    }
+  },
+  "orca": {
+    "listed": [
+      "term_logged",
+      "term_x",
+      "term_y",
+      "term_z"
+    ],
+    "responses": {
+      "orchestration worker-list": {
+        "workers": [
+          {
+            "agentTerminalHandle": "term_logged"
+          },
+          {
+            "resource": {
+              "terminalHandle": "term_logged"
+            }
+          },
+          {
+            "resource": {
+              "terminalHandle": "term_x"
+            },
+            "title": "a [jitso:L20261113T142233-a3f9]"
+          },
+          {
+            "agentTerminalHandle": "term_y",
+            "meta": {
+              "tags": [
+                "x",
+                "owned [jitso:L20261113T142233-a3f9]"
+              ]
+            }
+          }
+        ]
+      }
+    }
+  },
+  "steps": [
+    {
+      "run": [
+        "reap"
+      ],
+      "expect": {
+        "exit": 0,
+        "stdout": [
+          {
+            "regex": "(?m)^jitso reap: 0 launch\\(es\\) marked ended, 0 unlogged worker\\(s\\), 0 analyzed$"
+          }
+        ],
+        "orca_calls": {
+          "verbs": [
+            "terminal list",
+            "orchestration worker-list"
+          ]
+        },
+        "registry": {
+          "count": 1
+        }
+      }
+    }
+  ]
+}

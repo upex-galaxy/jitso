@@ -1,0 +1,35 @@
+{
+  "id": "hooks/guard/session-end-without-registry",
+  "title": "a SessionEnd in a project with no launch registry creates none",
+  "source": [
+    "intended: measured on the TypeScript hook (no registry file, nothing to end)"
+  ],
+  "steps": [
+    {
+      "hook": "guard",
+      "input": {
+        "hook_event_name": "SessionEnd",
+        "session_id": "sess-1",
+        "reason": "other",
+        "cwd": "{{PROJECT}}"
+      },
+      "expect": {
+        "exit": 0,
+        "stdout": [
+          {
+            "empty": true
+          }
+        ],
+        "registry": {
+          "count": 0
+        },
+        "files": [
+          {
+            "path": ".jitso/launches.jsonl",
+            "exists": false
+          }
+        ]
+      }
+    }
+  ]
+}

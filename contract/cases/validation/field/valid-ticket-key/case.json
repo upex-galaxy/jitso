@@ -1,0 +1,53 @@
+{
+  "id": "validation/field/valid-ticket-key",
+  "title": "a well-formed ticket_key is accepted by sonnet-tester and sonnet-automator",
+  "source": [
+    "cli/jitso/profile.test.ts: 'the tester with its key and overrides inside the allowlists'",
+    "cli/jitso/launch.test.ts: 'sonnet-tester with its key launches with the MCP file and no tools flag'"
+  ],
+  "project": {
+    "files": {
+      ".jitso/briefs/b.md": {
+        "from": "brief.md"
+      }
+    }
+  },
+  "for_each": {
+    "var": "preset",
+    "values": [
+      "sonnet-tester",
+      "sonnet-automator"
+    ]
+  },
+  "steps": [
+    {
+      "run": [
+        "launch",
+        "--preset",
+        "{{preset}}",
+        "--brief",
+        "{{PROJECT}}/.jitso/briefs/b.md",
+        "--mode",
+        "direct",
+        "--field",
+        "ticket_key=PRJ-1783",
+        "--dry-run"
+      ],
+      "expect": {
+        "exit": 0,
+        "stdout": [
+          "preset {{preset}} v1",
+          "dry run: nothing was written"
+        ],
+        "stderr": [
+          {
+            "empty": true
+          }
+        ],
+        "orca_calls": {
+          "empty": true
+        }
+      }
+    }
+  ]
+}

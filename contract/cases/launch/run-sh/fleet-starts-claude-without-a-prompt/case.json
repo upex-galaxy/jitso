@@ -1,0 +1,63 @@
+{
+  "id": "launch/run-sh/fleet-starts-claude-without-a-prompt",
+  "title": "executing run.sh of a fleet launch starts claude with no first prompt: the last argument is the tools flag",
+  "source": [
+    "cli/jitso/launch.test.ts: 'adopts the terminal with worker-start --terminal --worktree and carries no prompt in argv'"
+  ],
+  "tags": [
+    "posix"
+  ],
+  "project": {
+    "files": {
+      ".jitso/briefs/brief.md": {
+        "from": "brief.md"
+      }
+    }
+  },
+  "steps": [
+    {
+      "run": [
+        "launch",
+        "--preset",
+        "haiku-explorer",
+        "--brief",
+        "{{PROJECT}}/.jitso/briefs/brief.md",
+        "--mode",
+        "fleet",
+        "--run",
+        "run_1",
+        "--task",
+        "task_1"
+      ],
+      "capture": {
+        "LAUNCH_ID": {
+          "from": "stdout",
+          "regex": "JITSO (L\\d{8}T\\d{6}-[0-9a-f]{4})",
+          "group": 1
+        }
+      },
+      "expect": {}
+    },
+    {
+      "exec": "run_sh",
+      "launch": "{{LAUNCH_ID}}",
+      "expect": {
+        "exit": 0,
+        "claude": {
+          "ran": true,
+          "argv_contains": [
+            "--dangerously-skip-permissions"
+          ],
+          "arg_after": {
+            "--model": "claude-haiku-5-5"
+          },
+          "last_arg": [
+            {
+              "equals": "--tools=Read,Glob,Grep,Bash"
+            }
+          ]
+        }
+      }
+    }
+  ]
+}

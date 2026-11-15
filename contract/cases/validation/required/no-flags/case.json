@@ -1,0 +1,29 @@
+{
+  "id": "validation/required/no-flags",
+  "title": "launch with no flags is rejected with JITSO REJECTED, exit 2",
+  "source": [
+    "cli/jitso/index.test.ts: 'launch without its required flags exits 2 with a JITSO REJECTED line (task 3.3 wiring)'"
+  ],
+  "steps": [
+    {
+      "run": [
+        "launch"
+      ],
+      "expect": {
+        "exit": 2,
+        "stdout": [
+          {
+            "empty": true
+          }
+        ],
+        "stderr": [
+          "JITSO REJECTED:",
+          "--preset is required"
+        ],
+        "orca_calls": {
+          "empty": true
+        }
+      }
+    }
+  ]
+}

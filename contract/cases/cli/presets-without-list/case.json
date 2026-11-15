@@ -1,0 +1,55 @@
+{
+  "id": "cli/presets-without-list",
+  "title": "presets with no 'list' word (or another word) is answered as not implemented, exit 0",
+  "source": [
+    "cli/jitso/index.ts main(): only `presets list` is wired, any other `presets ...` falls to the 'not implemented yet' line"
+  ],
+  "steps": [
+    {
+      "run": [
+        "presets"
+      ],
+      "expect": {
+        "exit": 0,
+        "stdout": [
+          {
+            "regex": "(?i)not implemented"
+          }
+        ],
+        "stderr": [
+          {
+            "empty": true
+          }
+        ],
+        "orca_calls": {
+          "empty": true
+        }
+      }
+    },
+    {
+      "run": [
+        "presets",
+        "show"
+      ],
+      "expect": {
+        "exit": 0,
+        "stdout": [
+          {
+            "regex": "(?i)not implemented"
+          },
+          {
+            "not_contains": "haiku-explorer"
+          }
+        ],
+        "stderr": [
+          {
+            "empty": true
+          }
+        ],
+        "orca_calls": {
+          "empty": true
+        }
+      }
+    }
+  ]
+}

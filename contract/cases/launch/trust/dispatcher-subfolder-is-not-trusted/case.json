@@ -1,0 +1,112 @@
+{
+  "id": "launch/trust/dispatcher-subfolder-is-not-trusted",
+  "title": "a subfolder of the dispatcher folder is not trusted",
+  "source": [
+    "cli/jitso/trust.test.ts: isTrustedDir compares exact real paths"
+  ],
+  "project": {
+    "files": {
+      ".jitso/briefs/brief.md": {
+        "from": "brief.md"
+      }
+    }
+  },
+  "orca": {
+    "screens": [
+      "Is this a project you created or one you trust?\n 1. Yes, I trust this folder\n 2. No, exit"
+    ],
+    "cwd": "{{HOME}}/.jitso/dispatch-cwd/sub"
+  },
+  "steps": [
+    {
+      "run": [
+        "launch",
+        "--preset",
+        "haiku-explorer",
+        "--brief",
+        "{{PROJECT}}/.jitso/briefs/brief.md",
+        "--mode",
+        "direct"
+      ],
+      "expect": {
+        "exit": 2,
+        "stdout": [
+          {
+            "empty": true
+          }
+        ],
+        "stderr": [
+          {
+            "contains": "JITSO REJECTED: untrusted folder {{HOME}}/.jitso/dispatch-cwd/sub"
+          },
+          {
+            "contains": "the terminal was closed"
+          }
+        ],
+        "orca_calls": {
+          "verbs": [
+            "terminal create",
+            "terminal wait",
+            "terminal read",
+            "terminal close"
+          ],
+          "calls": [
+            {
+              "at": 0,
+              "argv": [
+                "terminal",
+                "create",
+                "--title",
+                {
+                  "regex": "^\\[jitso:L\\d{8}T\\d{6}-[0-9a-f]{4}\\] haiku-explorer$"
+                },
+                "--command",
+                {
+                  "regex": "^'/.*/\\.jitso/launches/L\\d{8}T\\d{6}-[0-9a-f]{4}/run\\.sh'$"
+                }
+              ]
+            },
+            {
+              "at": 1,
+              "argv": [
+                "terminal",
+                "wait",
+                "--terminal",
+                "term_fake",
+                "--for",
+                "tui-idle",
+                "--timeout-ms",
+                "90000"
+              ]
+            },
+            {
+              "at": 2,
+              "argv": [
+                "terminal",
+                "read",
+                "--terminal",
+                "term_fake",
+                "--screen"
+              ]
+            },
+            {
+              "at": 3,
+              "argv": [
+                "terminal",
+                "close",
+                "--terminal",
+                "term_fake"
+              ]
+            }
+          ],
+          "none": [
+            "terminal send"
+          ]
+        },
+        "registry": {
+          "count": 0
+        }
+      }
+    }
+  ]
+}

@@ -1,0 +1,57 @@
+{
+  "id": "launch/run-sh/tester-uses-its-own-model-and-effort",
+  "title": "executing run.sh of sonnet-tester starts claude with that preset's model and effort and not the explorer tool list",
+  "source": [
+    "cli/jitso/launch.test.ts: 'sonnet-tester with its key launches with the MCP file and no tools flag'"
+  ],
+  "tags": [
+    "posix"
+  ],
+  "project": {
+    "files": {
+      ".jitso/briefs/brief.md": {
+        "from": "brief.md"
+      }
+    }
+  },
+  "steps": [
+    {
+      "run": [
+        "launch",
+        "--preset",
+        "sonnet-tester",
+        "--brief",
+        "{{PROJECT}}/.jitso/briefs/brief.md",
+        "--mode",
+        "direct",
+        "--field",
+        "ticket_key=PRJ-123"
+      ],
+      "capture": {
+        "LAUNCH_ID": {
+          "from": "stdout",
+          "regex": "JITSO (L\\d{8}T\\d{6}-[0-9a-f]{4})",
+          "group": 1
+        }
+      },
+      "expect": {}
+    },
+    {
+      "exec": "run_sh",
+      "launch": "{{LAUNCH_ID}}",
+      "expect": {
+        "exit": 0,
+        "claude": {
+          "ran": true,
+          "arg_after": {
+            "--model": "claude-sonnet-5-5",
+            "--effort": "medium"
+          },
+          "argv_not_contains": [
+            "--tools=Read,Glob,Grep,Bash"
+          ]
+        }
+      }
+    }
+  ]
+}

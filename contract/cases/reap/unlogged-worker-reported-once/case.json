@@ -1,0 +1,61 @@
+{
+  "id": "reap/unlogged-worker-reported-once",
+  "title": "reaping twice repeats the count in the summary but never repeats the rule_break line",
+  "source": [
+    "cli/jitso/reap.test.ts: 'reaping twice does not repeat the same rule_break'"
+  ],
+  "project": {
+    "files": {
+      ".jitso/launches.jsonl": "{\"v\":1,\"event\":\"launch\",\"id\":\"L20261113T142233-a3f9\",\"parent\":null,\"root\":\"L20261113T142233-a3f9\",\"depth\":0,\"ts\":\"2026-11-13T14:22:33.000Z\",\"mode\":\"direct\",\"preset\":\"haiku-explorer\",\"orca\":{\"run\":\"run_1\",\"task\":\"t\",\"terminal\":\"term_logged\",\"title\":\"t [jitso:L20261113T142233-a3f9]\"}}\n"
+    }
+  },
+  "orca": {
+    "listed": [
+      "term_logged",
+      "term_rogue"
+    ],
+    "responses": {
+      "orchestration worker-list": {
+        "workers": [
+          {
+            "agentTerminalHandle": "term_rogue"
+          }
+        ]
+      }
+    }
+  },
+  "steps": [
+    {
+      "run": [
+        "reap"
+      ],
+      "expect": {
+        "exit": 0,
+        "stdout": [
+          {
+            "regex": "(?m)^jitso reap: 0 launch\\(es\\) marked ended, 1 unlogged worker\\(s\\), 0 analyzed$"
+          }
+        ],
+        "registry": {
+          "count": 2
+        }
+      }
+    },
+    {
+      "run": [
+        "reap"
+      ],
+      "expect": {
+        "exit": 0,
+        "stdout": [
+          {
+            "regex": "(?m)^jitso reap: 0 launch\\(es\\) marked ended, 1 unlogged worker\\(s\\), 0 analyzed$"
+          }
+        ],
+        "registry": {
+          "count": 2
+        }
+      }
+    }
+  ]
+}

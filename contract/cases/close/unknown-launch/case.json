@@ -1,0 +1,27 @@
+{
+  "id": "close/unknown-launch",
+  "title": "a well formed id that is not in the registry exits 2 with \"unknown launch\" and calls no orca",
+  "source": [
+    "cli/jitso/close.test.ts: 'an unknown launch id exits 2 and calls no orca'"
+  ],
+  "steps": [
+    {
+      "run": [
+        "close",
+        "L20261113T142233-a3f9"
+      ],
+      "expect": {
+        "exit": 2,
+        "stderr": [
+          "JITSO REJECTED: unknown launch L20261113T142233-a3f9"
+        ],
+        "orca_calls": {
+          "empty": true
+        },
+        "registry": {
+          "count": 0
+        }
+      }
+    }
+  ]
+}

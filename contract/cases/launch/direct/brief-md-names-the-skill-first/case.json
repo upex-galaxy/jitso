@@ -1,0 +1,52 @@
+{
+  "id": "launch/direct/brief-md-names-the-skill-first",
+  "title": "brief.md carries a 'Load first: <skills>' line between the card and the brief when the preset lists skills",
+  "source": [
+    "cli/jitso/launch.test.ts: 'sonnet-tester with its key launches with the MCP file and no tools flag'"
+  ],
+  "project": {
+    "files": {
+      ".jitso/briefs/brief.md": {
+        "from": "brief.md"
+      }
+    }
+  },
+  "steps": [
+    {
+      "run": [
+        "launch",
+        "--preset",
+        "sonnet-tester",
+        "--brief",
+        "{{PROJECT}}/.jitso/briefs/brief.md",
+        "--mode",
+        "direct",
+        "--field",
+        "ticket_key=PRJ-123"
+      ],
+      "capture": {
+        "LAUNCH_ID": {
+          "from": "stdout",
+          "regex": "JITSO (L\\d{8}T\\d{6}-[0-9a-f]{4})",
+          "group": 1
+        },
+        "CARD": {
+          "from": "stdout",
+          "regex": "(?s)^(.*)\\n$",
+          "group": 1
+        }
+      },
+      "expect": {
+        "exit": 0,
+        "files": [
+          {
+            "path": ".jitso/launches/{{LAUNCH_ID}}/brief.md",
+            "contains": [
+              "{{CARD}}\n\nLoad first: sprint-testing\n\n## Goal"
+            ]
+          }
+        ]
+      }
+    }
+  ]
+}

@@ -1,0 +1,33 @@
+{
+  "id": "reap/ended-launch-left-alone",
+  "title": "a launch that already has an end event does not get a second one",
+  "source": [
+    "cli/jitso/reap.test.ts: 'a launch that already ended is left alone'"
+  ],
+  "project": {
+    "files": {
+      ".jitso/launches.jsonl": "{\"v\":1,\"event\":\"launch\",\"id\":\"L20261113T142233-a3f9\",\"parent\":null,\"root\":\"L20261113T142233-a3f9\",\"depth\":0,\"ts\":\"2026-11-13T14:22:33.000Z\",\"mode\":\"direct\",\"preset\":\"haiku-explorer\",\"orca\":{\"run\":null,\"task\":null,\"terminal\":\"term_a\",\"title\":\"t [jitso:L20261113T142233-a3f9]\"}}\n{\"v\":1,\"event\":\"end\",\"id\":\"L20261113T142233-a3f9\",\"ts\":\"2026-11-13T14:30:00.000Z\",\"source\":\"jitso_close\",\"outcome_reported\":\"none\",\"footer_path\":null}\n"
+    }
+  },
+  "orca": {
+    "listed": []
+  },
+  "steps": [
+    {
+      "run": [
+        "reap"
+      ],
+      "expect": {
+        "exit": 0,
+        "stdout": [
+          {
+            "regex": "(?m)^jitso reap: 0 launch\\(es\\) marked ended, 0 unlogged worker\\(s\\), 0 analyzed$"
+          }
+        ],
+        "registry": {
+          "count": 2
+        }
+      }
+    }
+  ]
+}

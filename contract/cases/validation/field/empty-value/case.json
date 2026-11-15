@@ -1,0 +1,38 @@
+{
+  "id": "validation/field/empty-value",
+  "title": "ticket_key= with an empty value is an invalid value, not a missing field",
+  "source": [
+    "cli/jitso/launch.ts: parseLaunchArgs (`at < 1` only rejects an empty name)",
+    "cli/jitso/profile.ts: resolveRequest"
+  ],
+  "steps": [
+    {
+      "run": [
+        "launch",
+        "--preset",
+        "sonnet-tester",
+        "--brief",
+        "{{PROJECT}}/.jitso/briefs/b.md",
+        "--mode",
+        "direct",
+        "--field",
+        "ticket_key="
+      ],
+      "expect": {
+        "exit": 2,
+        "stdout": [
+          {
+            "empty": true
+          }
+        ],
+        "stderr": [
+          "JITSO REJECTED:",
+          "field ticket_key has an invalid value"
+        ],
+        "orca_calls": {
+          "empty": true
+        }
+      }
+    }
+  ]
+}

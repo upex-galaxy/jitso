@@ -1,0 +1,26 @@
+{
+  "id": "reap/bad-argument-after-a-good-run",
+  "title": "a bad argument after a valid --run pair still rejects the whole call before orca is touched",
+  "source": [
+    "cli/jitso/reap.test.ts: 'a bad --run value exits 2 without calling orca'"
+  ],
+  "steps": [
+    {
+      "run": [
+        "reap",
+        "--run",
+        "run_1",
+        "--bogus"
+      ],
+      "expect": {
+        "exit": 2,
+        "stderr": [
+          "JITSO REJECTED: usage: jitso reap [--run <run_id>]..."
+        ],
+        "orca_calls": {
+          "empty": true
+        }
+      }
+    }
+  ]
+}

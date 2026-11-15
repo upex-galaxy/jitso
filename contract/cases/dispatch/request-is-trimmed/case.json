@@ -1,0 +1,25 @@
+{
+  "id": "dispatch/request-is-trimmed",
+  "title": "leading and trailing whitespace of the request is removed, inner whitespace is kept",
+  "source": [
+    "cli/jitso/dispatch.test.ts: 'buildDispatchPlan' (text = request.trim())"
+  ],
+  "steps": [
+    {
+      "run": [
+        "   padded  request here \n"
+      ],
+      "expect": {
+        "exit": 0,
+        "claude": {
+          "ran": true,
+          "last_arg": [
+            {
+              "equals": "padded  request here"
+            }
+          ]
+        }
+      }
+    }
+  ]
+}

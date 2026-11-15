@@ -1,0 +1,47 @@
+{
+  "id": "validation/format/task-rejected",
+  "title": "--task follows the same id format as --run",
+  "source": [
+    "cli/jitso/shell.ts: FIELD_PATTERNS.task (ORCA_ID)"
+  ],
+  "for_each": {
+    "var": "v",
+    "values": [
+      "_task",
+      ".task",
+      "-task",
+      "task..1",
+      "ttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttt"
+    ]
+  },
+  "steps": [
+    {
+      "run": [
+        "launch",
+        "--preset",
+        "haiku-explorer",
+        "--brief",
+        "{{PROJECT}}/.jitso/briefs/b.md",
+        "--mode",
+        "direct",
+        "--task",
+        "{{v}}"
+      ],
+      "expect": {
+        "exit": 2,
+        "stdout": [
+          {
+            "empty": true
+          }
+        ],
+        "stderr": [
+          "JITSO REJECTED:",
+          "invalid value for --task"
+        ],
+        "orca_calls": {
+          "empty": true
+        }
+      }
+    }
+  ]
+}

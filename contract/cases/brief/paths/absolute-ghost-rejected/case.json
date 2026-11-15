@@ -1,0 +1,52 @@
+{
+  "id": "brief/paths/absolute-ghost-rejected",
+  "title": "an absolute cited path that does not exist is rejected",
+  "source": [
+    "cli/jitso/brief.test.ts: checkBrief citedPaths (isAbsolute)"
+  ],
+  "project": {
+    "files": {
+      ".jitso/briefs/brief.md": {
+        "from": "brief.md"
+      }
+    }
+  },
+  "steps": [
+    {
+      "run": [
+        "launch",
+        "--preset",
+        "haiku-explorer",
+        "--brief",
+        "{{PROJECT}}/.jitso/briefs/brief.md",
+        "--mode",
+        "direct"
+      ],
+      "expect": {
+        "exit": 2,
+        "stdout": [
+          {
+            "empty": true
+          }
+        ],
+        "stderr": [
+          {
+            "regex": "paths \\(cited path does not exist: .*/src/nowhere/ghost\\.ts\\)"
+          }
+        ],
+        "orca_calls": {
+          "empty": true
+        },
+        "registry": {
+          "count": 0
+        },
+        "files": [
+          {
+            "path": ".jitso/launches",
+            "exists": false
+          }
+        ]
+      }
+    }
+  ]
+}

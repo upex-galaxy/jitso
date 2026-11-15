@@ -1,0 +1,50 @@
+{
+  "id": "brief/paths/several-ghosts-listed-once",
+  "title": "several missing paths are listed once each, in order of first citation, joined by a comma and a space",
+  "source": [
+    "cli/jitso/brief.test.ts: checkBrief paths (de-duplicated, joined by ', ')"
+  ],
+  "project": {
+    "files": {
+      ".jitso/briefs/brief.md": {
+        "from": "brief.md"
+      }
+    }
+  },
+  "steps": [
+    {
+      "run": [
+        "launch",
+        "--preset",
+        "haiku-explorer",
+        "--brief",
+        "{{PROJECT}}/.jitso/briefs/brief.md",
+        "--mode",
+        "direct"
+      ],
+      "expect": {
+        "exit": 2,
+        "stdout": [
+          {
+            "empty": true
+          }
+        ],
+        "stderr": [
+          "paths (cited path does not exist: src/ghost-a.ts, src/ghost-b.ts)"
+        ],
+        "orca_calls": {
+          "empty": true
+        },
+        "registry": {
+          "count": 0
+        },
+        "files": [
+          {
+            "path": ".jitso/launches",
+            "exists": false
+          }
+        ]
+      }
+    }
+  ]
+}

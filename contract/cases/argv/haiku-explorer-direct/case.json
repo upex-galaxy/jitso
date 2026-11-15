@@ -1,0 +1,132 @@
+{
+  "title": "haiku-explorer in direct mode: claude starts with the exact flags of the adapter",
+  "source": [
+    "cli/jitso/adapters/claude.test.ts: 'claude adapter argv (task 3.2 snapshot)' (sonnet-tester direct, haiku-explorer fleet, '--tools is variadic', 'never wraps with env -u')",
+    "cli/jitso/launch.ts launchForReal (direct: the prompt is the last argument; fleet: no prompt)",
+    "the registered flag list is exactly this one, in this order, with no --agents and a single --tools=<list> word"
+  ],
+  "tags": [
+    "posix"
+  ],
+  "project": {
+    "files": {
+      ".jitso/briefs/brief.md": {
+        "from": "brief.md"
+      }
+    }
+  },
+  "steps": [
+    {
+      "run": [
+        "launch",
+        "--preset",
+        "haiku-explorer",
+        "--brief",
+        "{{PROJECT}}/.jitso/briefs/brief.md",
+        "--mode",
+        "direct"
+      ],
+      "capture": {
+        "LAUNCH_ID": {
+          "from": "stdout",
+          "regex": "JITSO (L\\d{8}T\\d{6}-[0-9a-f]{4})"
+        }
+      },
+      "expect": {
+        "exit": 0,
+        "registry": {
+          "count": 1,
+          "events": [
+            {
+              "at": 0,
+              "event": "launch",
+              "fields": {
+                "flags": {
+                  "regex": "^\\[\"--dangerously-skip-permissions\",\"--setting-sources\",\"project\",\"--settings\",\"\\{\\\\\"skipDangerousModePermissionPrompt\\\\\":true,\\\\\"promptSuggestionEnabled\\\\\":false\\}\",\"--strict-mcp-config\",\"--mcp-config\",\"{{PROJECT}}/.jitso/launches/{{LAUNCH_ID}}/mcp\\.json\",\"--model\",\"claude-haiku-5-5\",\"--effort\",\"low\",\"--session-id\",\"[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\",\"--append-system-prompt-file\",\"{{PROJECT}}/.jitso/launches/{{LAUNCH_ID}}/core\\.md\",\"--tools=Read,Glob,Grep,Bash\"\\]$"
+                },
+                "session_id": {
+                  "regex": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+                }
+              }
+            }
+          ]
+        },
+        "orca_calls": {
+          "verbs": [
+            "terminal create",
+            "terminal wait",
+            "terminal read"
+          ]
+        },
+        "files": [
+          {
+            "path": ".jitso/launches/{{LAUNCH_ID}}/run.sh",
+            "exists": true,
+            "executable": true
+          }
+        ]
+      }
+    },
+    {
+      "exec": "run_sh",
+      "launch": "{{LAUNCH_ID}}",
+      "expect": {
+        "exit": 0,
+        "claude": {
+          "ran": true,
+          "argv_contains": [
+            "--dangerously-skip-permissions",
+            "--strict-mcp-config",
+            "--session-id",
+            "--tools=Read,Glob,Grep,Bash"
+          ],
+          "argv_not_contains": [
+            "--tools",
+            "env"
+          ],
+          "arg_after": {
+            "--setting-sources": "project",
+            "--mcp-config": "{{PROJECT}}/.jitso/launches/{{LAUNCH_ID}}/mcp.json",
+            "--model": "claude-haiku-5-5",
+            "--effort": "low",
+            "--append-system-prompt-file": "{{PROJECT}}/.jitso/launches/{{LAUNCH_ID}}/core.md",
+            "--session-id": {
+              "regex": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+            }
+          },
+          "json_arg_after": {
+            "--settings": [
+              {
+                "path": "skipDangerousModePermissionPrompt",
+                "equals": true
+              },
+              {
+                "path": "promptSuggestionEnabled",
+                "equals": false
+              }
+            ]
+          },
+          "last_arg": [
+            {
+              "contains": ".jitso/launches/{{LAUNCH_ID}}/brief.md"
+            }
+          ],
+          "argv_count": {
+            "--dangerously-skip-permissions": 1
+          }
+        },
+        "stdout": [
+          {
+            "empty": true
+          }
+        ],
+        "stderr": [
+          {
+            "empty": true
+          }
+        ]
+      }
+    }
+  ],
+  "id": "argv/haiku-explorer-direct"
+}

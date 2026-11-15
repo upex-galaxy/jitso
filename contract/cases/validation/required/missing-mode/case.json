@@ -1,0 +1,33 @@
+{
+  "id": "validation/required/missing-mode",
+  "title": "launch without --mode is rejected: the mode has no default",
+  "source": [
+    "cli/jitso/launch.test.ts: 'preset, brief and a valid mode are required; unknown flags are rejected'"
+  ],
+  "steps": [
+    {
+      "run": [
+        "launch",
+        "--preset",
+        "haiku-explorer",
+        "--brief",
+        "{{PROJECT}}/.jitso/briefs/b.md"
+      ],
+      "expect": {
+        "exit": 2,
+        "stdout": [
+          {
+            "empty": true
+          }
+        ],
+        "stderr": [
+          "JITSO REJECTED:",
+          "--mode must be direct or fleet"
+        ],
+        "orca_calls": {
+          "empty": true
+        }
+      }
+    }
+  ]
+}

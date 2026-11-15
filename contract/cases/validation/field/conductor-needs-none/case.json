@@ -1,0 +1,38 @@
+{
+  "id": "validation/field/conductor-needs-none",
+  "title": "a preset that requires nothing launches (dry run) with no --field at all",
+  "source": [
+    "cli/jitso/profile.test.ts: 'the conductor resolves with no required field'"
+  ],
+  "project": {
+    "files": {
+      ".jitso/briefs/b.md": {
+        "from": "brief.md"
+      }
+    }
+  },
+  "steps": [
+    {
+      "run": [
+        "launch",
+        "--preset",
+        "sonnet-conductor",
+        "--brief",
+        "{{PROJECT}}/.jitso/briefs/b.md",
+        "--mode",
+        "direct",
+        "--dry-run"
+      ],
+      "expect": {
+        "exit": 0,
+        "stdout": [
+          "preset sonnet-conductor v1",
+          "dry run: nothing was written"
+        ],
+        "orca_calls": {
+          "empty": true
+        }
+      }
+    }
+  ]
+}

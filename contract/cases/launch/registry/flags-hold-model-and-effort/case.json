@@ -1,0 +1,51 @@
+{
+  "id": "launch/registry/flags-hold-model-and-effort",
+  "title": "the registry flags list holds the model and effort flags the session was started with",
+  "source": [
+    "cli/jitso/launch.test.ts: launchForReal event.flags = argv.slice(1)"
+  ],
+  "project": {
+    "files": {
+      ".jitso/briefs/brief.md": {
+        "from": "brief.md"
+      }
+    }
+  },
+  "steps": [
+    {
+      "run": [
+        "launch",
+        "--preset",
+        "haiku-explorer",
+        "--brief",
+        "{{PROJECT}}/.jitso/briefs/brief.md",
+        "--mode",
+        "direct"
+      ],
+      "capture": {
+        "LAUNCH_ID": {
+          "from": "stdout",
+          "regex": "JITSO (L\\d{8}T\\d{6}-[0-9a-f]{4})",
+          "group": 1
+        }
+      },
+      "expect": {
+        "exit": 0,
+        "registry": {
+          "count": 1,
+          "events": [
+            {
+              "at": 0,
+              "event": "launch",
+              "fields": {
+                "flags": {
+                  "regex": "\"--model\",\"claude-haiku-5-5\""
+                }
+              }
+            }
+          ]
+        }
+      }
+    }
+  ]
+}

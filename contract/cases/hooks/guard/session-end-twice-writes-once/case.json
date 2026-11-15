@@ -1,0 +1,53 @@
+{
+  "id": "hooks/guard/session-end-twice-writes-once",
+  "title": "a second SessionEnd for the same session adds no second end event",
+  "source": [
+    ".agents/hooks/jitso-guard.test.ts: 'a launch that already ended gets no second end event'"
+  ],
+  "project": {
+    "files": {
+      ".jitso/launches.jsonl": "{\"v\":1,\"event\":\"launch\",\"id\":\"L20261113T142233-a3f9\",\"parent\":null,\"root\":\"L20261113T142233-a3f9\",\"depth\":0,\"ts\":\"2026-11-13T14:22:33.000Z\",\"mode\":\"direct\",\"preset\":\"haiku-explorer\",\"session_id\":\"sess-1\"}\n"
+    }
+  },
+  "steps": [
+    {
+      "hook": "guard",
+      "input": {
+        "hook_event_name": "SessionEnd",
+        "session_id": "sess-1",
+        "reason": "other",
+        "cwd": "{{PROJECT}}"
+      },
+      "expect": {
+        "exit": 0,
+        "registry": {
+          "count": 2,
+          "events": [
+            {
+              "at": 1,
+              "event": "end",
+              "fields": {
+                "id": "L20261113T142233-a3f9"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "hook": "guard",
+      "input": {
+        "hook_event_name": "SessionEnd",
+        "session_id": "sess-1",
+        "reason": "other",
+        "cwd": "{{PROJECT}}"
+      },
+      "expect": {
+        "exit": 0,
+        "registry": {
+          "count": 2
+        }
+      }
+    }
+  ]
+}

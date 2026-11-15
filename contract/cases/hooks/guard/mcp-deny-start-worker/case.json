@@ -1,0 +1,35 @@
+{
+  "id": "hooks/guard/mcp-deny-start-worker",
+  "title": "the orca-bridge start_worker tool is denied",
+  "source": [
+    ".agents/hooks/jitso-guard.test.ts: 'denies start_worker'"
+  ],
+  "steps": [
+    {
+      "hook": "guard",
+      "input": {
+        "hook_event_name": "PreToolUse",
+        "tool_name": "mcp__claude_ai_orca-bridge__start_worker",
+        "tool_input": {
+          "runId": "r",
+          "spec": "s",
+          "placement": "p",
+          "agent": "claude"
+        },
+        "cwd": "{{PROJECT}}"
+      },
+      "expect": {
+        "exit": 0,
+        "decision": "deny",
+        "reason": [
+          {
+            "regex": "\\(denied: orca-bridge start_worker\\)"
+          },
+          {
+            "regex": "launch"
+          }
+        ]
+      }
+    }
+  ]
+}

@@ -1,0 +1,23 @@
+# Subagent-tier build (tier: subagent): not launchable alone, a worker lists it by name in subagents.
+id: verifier
+version: 1
+status: approved
+tier: subagent
+role: operator
+type: verifier
+work_kind: verification
+description: Verifier that runs the checks of the repo against the changed files and reports pass or fail with the failing output.
+prompt: You are the verifier of this session. Run the repo checks that cover the changed files, in the order tests then types then lint, and report each result as pass or fail with the first failing line. Never edit a file.
+harness: claude
+model: claude-haiku-5-5
+effort: low
+mode_default: direct
+agents_md: exclude
+route_scope: [none]
+skills_first: []
+tools: [Read, Glob, Grep, Bash]
+mcp: []
+requires: []
+budget: { tokens: 100000, usd_list_cap: 0.50 }
+success:
+  - { check: answer_delivered }

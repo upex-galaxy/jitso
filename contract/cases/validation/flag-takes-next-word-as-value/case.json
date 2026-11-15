@@ -1,0 +1,35 @@
+{
+  "id": "validation/flag-takes-next-word-as-value",
+  "title": "a value flag takes the next word as its value even when it looks like a flag",
+  "source": [
+    "cli/jitso/launch.ts: parseLaunchArgs (the value is argv[i+1], whatever it is)"
+  ],
+  "steps": [
+    {
+      "run": [
+        "launch",
+        "--preset",
+        "--dry-run",
+        "--brief",
+        "{{PROJECT}}/.jitso/briefs/b.md",
+        "--mode",
+        "direct"
+      ],
+      "expect": {
+        "exit": 2,
+        "stdout": [
+          {
+            "empty": true
+          }
+        ],
+        "stderr": [
+          "JITSO REJECTED:",
+          "invalid value for --preset"
+        ],
+        "orca_calls": {
+          "empty": true
+        }
+      }
+    }
+  ]
+}

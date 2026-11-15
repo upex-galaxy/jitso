@@ -1,0 +1,60 @@
+{
+  "id": "project/subfolder-state-at-root",
+  "title": "a real launch from a sub-folder writes its state to the project root, never to the cwd",
+  "source": [
+    "cli/jitso/root.ts: jitsoDir (the .jitso folder of the primary checkout)",
+    "cli/jitso/root.test.ts: 'is the .jitso folder of the primary checkout, also from a worktree'"
+  ],
+  "project": {
+    "files": {
+      ".jitso/briefs/b.md": {
+        "from": "brief.md"
+      }
+    }
+  },
+  "steps": [
+    {
+      "run": [
+        "launch",
+        "--preset",
+        "haiku-explorer",
+        "--brief",
+        "{{PROJECT}}/.jitso/briefs/b.md",
+        "--mode",
+        "direct"
+      ],
+      "cwd": "src",
+      "expect": {
+        "exit": 0,
+        "stdout": [
+          {
+            "regex": "^JITSO L\\d{8}T\\d{6}-[0-9a-f]{4} \\|"
+          }
+        ],
+        "registry": {
+          "count": 1,
+          "events": [
+            {
+              "at": 0,
+              "event": "launch",
+              "fields": {
+                "preset": "haiku-explorer",
+                "mode": "direct"
+              }
+            }
+          ]
+        },
+        "files": [
+          {
+            "path": "src/.jitso",
+            "exists": false
+          },
+          {
+            "path": ".jitso/launches.jsonl",
+            "exists": true
+          }
+        ]
+      }
+    }
+  ]
+}

@@ -1,0 +1,36 @@
+{
+  "id": "validation/flag-value-after-valid-flags",
+  "title": "a value flag at the end of an otherwise complete command is still rejected",
+  "source": [
+    "cli/jitso/launch.ts: parseLaunchArgs (`--<name> needs a value`)"
+  ],
+  "steps": [
+    {
+      "run": [
+        "launch",
+        "--preset",
+        "haiku-explorer",
+        "--brief",
+        "{{PROJECT}}/.jitso/briefs/b.md",
+        "--mode",
+        "direct",
+        "--worktree"
+      ],
+      "expect": {
+        "exit": 2,
+        "stdout": [
+          {
+            "empty": true
+          }
+        ],
+        "stderr": [
+          "JITSO REJECTED:",
+          "--worktree needs a value"
+        ],
+        "orca_calls": {
+          "empty": true
+        }
+      }
+    }
+  ]
+}

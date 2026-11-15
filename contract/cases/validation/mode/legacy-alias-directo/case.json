@@ -1,0 +1,98 @@
+{
+  "id": "validation/mode/legacy-alias-directo",
+  "title": "the old Spanish alias directo is rejected like any other unknown mode, with or without --dry-run, and nothing is written",
+  "source": [
+    "cli/jitso/launch.test.ts: 'the old Spanish values stay accepted and normalize to the English ones'",
+    "cli/jitso/launch.test.ts: '--mode directo launches in direct mode and logs and prints the English value'",
+    "intended: TS-ODDITIES L8 (owner decision 2026-11-15): directo and flota are not accepted; the TS binary accepts and normalizes them"
+  ],
+  "tags": [
+    "legacy-alias"
+  ],
+  "status": {
+    "ts": "xfail",
+    "go": "pass"
+  },
+  "defect": "N-4",
+  "intent": "INTENDED behavior (TS-ODDITIES L8, owner decision 2026-11-15, defect N-4). The implementation knows only the modes direct and fleet, everywhere: the legacy Spanish aliases directo and flota are neither accepted on the command line nor read from registry lines. launch --mode directo exits 2 with JITSO REJECTED: and '--mode must be direct or fleet', writes nothing and never calls orca, with or without --dry-run. The TS binary accepts the alias and runs the launch in direct mode (the dry run prints 'mode direct'), so the exit code is the first expectation that FAILS on TS.",
+  "project": {
+    "files": {
+      ".jitso/briefs/b.md": {
+        "from": "brief.md"
+      }
+    }
+  },
+  "steps": [
+    {
+      "run": [
+        "launch",
+        "--preset",
+        "haiku-explorer",
+        "--brief",
+        "{{PROJECT}}/.jitso/briefs/b.md",
+        "--mode",
+        "directo"
+      ],
+      "expect": {
+        "exit": 2,
+        "stdout": [
+          {
+            "empty": true
+          }
+        ],
+        "stderr": [
+          "JITSO REJECTED:",
+          "--mode must be direct or fleet"
+        ],
+        "orca_calls": {
+          "empty": true
+        },
+        "registry": {
+          "count": 0
+        },
+        "files": [
+          {
+            "path": ".jitso/launches",
+            "exists": false
+          }
+        ]
+      }
+    },
+    {
+      "run": [
+        "launch",
+        "--preset",
+        "haiku-explorer",
+        "--brief",
+        "{{PROJECT}}/.jitso/briefs/b.md",
+        "--mode",
+        "directo",
+        "--dry-run"
+      ],
+      "expect": {
+        "exit": 2,
+        "stdout": [
+          {
+            "empty": true
+          }
+        ],
+        "stderr": [
+          "JITSO REJECTED:",
+          "--mode must be direct or fleet"
+        ],
+        "orca_calls": {
+          "empty": true
+        },
+        "registry": {
+          "count": 0
+        },
+        "files": [
+          {
+            "path": ".jitso/launches",
+            "exists": false
+          }
+        ]
+      }
+    }
+  ]
+}

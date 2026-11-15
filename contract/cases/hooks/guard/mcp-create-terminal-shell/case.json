@@ -1,0 +1,30 @@
+{
+  "id": "hooks/guard/mcp-create-terminal-shell",
+  "title": "orca-bridge create_terminal with the shell agent passes",
+  "source": [
+    ".agents/hooks/jitso-guard.test.ts: 'denies create_terminal for a harness, allows a shell'"
+  ],
+  "steps": [
+    {
+      "hook": "guard",
+      "input": {
+        "hook_event_name": "PreToolUse",
+        "tool_name": "mcp__claude_ai_orca-bridge__create_terminal",
+        "tool_input": {
+          "worktree": "w",
+          "agent": "shell"
+        },
+        "cwd": "{{PROJECT}}"
+      },
+      "expect": {
+        "exit": 0,
+        "decision": "none",
+        "stdout": [
+          {
+            "empty": true
+          }
+        ]
+      }
+    }
+  ]
+}

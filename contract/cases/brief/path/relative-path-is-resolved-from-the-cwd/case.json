@@ -1,0 +1,49 @@
+{
+  "id": "brief/path/relative-path-is-resolved-from-the-cwd",
+  "title": "a relative --brief path is read relative to the folder the command runs in",
+  "source": [
+    "cli/jitso/brief.test.ts: resolveBriefPath uses realpath of the given path"
+  ],
+  "project": {
+    "files": {
+      ".jitso/briefs/brief.md": {
+        "from": "brief.md"
+      }
+    }
+  },
+  "steps": [
+    {
+      "run": [
+        "launch",
+        "--preset",
+        "haiku-explorer",
+        "--brief",
+        "briefs/brief.md",
+        "--mode",
+        "direct",
+        "--dry-run"
+      ],
+      "cwd": ".jitso",
+      "expect": {
+        "exit": 0,
+        "stderr": [
+          {
+            "empty": true
+          }
+        ],
+        "stdout": [
+          {
+            "regex": "^JITSO L\\d{8}T\\d{6}-[0-9a-f]{4} \\|"
+          },
+          "dry run: nothing was written"
+        ],
+        "orca_calls": {
+          "empty": true
+        },
+        "registry": {
+          "count": 0
+        }
+      }
+    }
+  ]
+}

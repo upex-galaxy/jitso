@@ -1,0 +1,18 @@
+{
+  "mcpServers": {
+    "dbhub": {
+      "command": "fixture-dbhub",
+      "args": ["--transport", "stdio"],
+      "env": { "DB_PASSWORD": "fixture-secret-must-never-travel" }
+    },
+    "openapi": {
+      "command": "fixture-openapi",
+      "args": ["--spec", "api/openapi.json"],
+      "env": { "API_TOKEN": "fixture-secret-must-never-travel" }
+    },
+    "unlisted": {
+      "command": "fixture-unlisted",
+      "args": []
+    }
+  }
+}

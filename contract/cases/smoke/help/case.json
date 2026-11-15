@@ -1,0 +1,16 @@
+{
+  "id": "smoke/help",
+  "title": "--help exits 0 and lists every subcommand",
+  "source": ["cli/jitso/index.test.ts: '--help lists every subcommand and exits 0'"],
+  "steps": [
+    {
+      "run": ["--help"],
+      "expect": {
+        "exit": 0,
+        "stdout": ["launch", "close", "reap", "tree", "analyze", "presets"],
+        "stderr": [{ "empty": true }],
+        "orca_calls": { "empty": true }
+      }
+    }
+  ]
+}

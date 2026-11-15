@@ -1,0 +1,40 @@
+{
+  "id": "hooks/dispatch-guard/bash-allows-the-launcher",
+  "title": "the one launcher line, with a known flag set, is allowed explicitly (decision allow, never none)",
+  "source": [
+    ".agents/hooks/jitso-dispatch-guard.test.ts: 'lets the launcher through, alone', 'with a required field', 'lets a dry run through'"
+  ],
+  "home": {
+    "files": {
+      ".jitso/dispatch-cwd/briefs/.keep": "",
+      "outside/target.md": "x"
+    }
+  },
+  "for_each": {
+    "var": "tail",
+    "values": [
+      "--preset haiku-explorer --brief /h/b/a.md --mode direct",
+      "--preset sonnet-tester --brief /h/b/a.md --mode direct --field ticket_key=PRJ-120",
+      "--preset haiku-explorer --brief /h/b/a.md --mode direct --dry-run",
+      "--preset haiku-explorer --brief /h/b/a.md --mode direct --worktree wt-1 --mcp-exclude dbhub",
+      "--preset haiku-explorer --brief /h/b/a.md --mode direct --field ticket_key=PRJ-1 --field env=staging"
+    ]
+  },
+  "steps": [
+    {
+      "hook": "dispatch-guard",
+      "input": {
+        "hook_event_name": "PreToolUse",
+        "tool_name": "Bash",
+        "tool_input": {
+          "command": "{{JITSO}} launch {{tail}}"
+        },
+        "cwd": "{{HOME}}/.jitso/dispatch-cwd"
+      },
+      "expect": {
+        "exit": 0,
+        "decision": "allow"
+      }
+    }
+  ]
+}

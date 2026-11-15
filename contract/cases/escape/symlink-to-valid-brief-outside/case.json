@@ -1,0 +1,57 @@
+{
+  "title": "a brief symlink whose target is a VALID brief outside the brief folders is refused (the folder guard, not the brief checks, says no)",
+  "source": [
+    "cli/jitso/escape.test.ts: 'a symlink that leaves the brief folder never becomes an argument'"
+  ],
+  "project": {
+    "files": {
+      ".jitso/briefs/brief.md": {
+        "symlink": "{{HOME}}/outside-brief.md"
+      }
+    }
+  },
+  "steps": [
+    {
+      "run": [
+        "launch",
+        "--preset",
+        "haiku-explorer",
+        "--brief",
+        "{{PROJECT}}/.jitso/briefs/brief.md",
+        "--mode",
+        "direct"
+      ],
+      "expect": {
+        "exit": 2,
+        "stderr": [
+          "JITSO REJECTED:"
+        ],
+        "stdout": [
+          {
+            "empty": true
+          }
+        ],
+        "orca_calls": {
+          "empty": true
+        },
+        "registry": {
+          "count": 0
+        },
+        "files": [
+          {
+            "path": ".jitso/launches",
+            "exists": false
+          }
+        ]
+      }
+    }
+  ],
+  "home": {
+    "files": {
+      "outside-brief.md": {
+        "from": "brief.md"
+      }
+    }
+  },
+  "id": "escape/symlink-to-valid-brief-outside"
+}

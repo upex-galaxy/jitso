@@ -1,0 +1,20 @@
+{
+  "id": "dispatch/empty-string-argument-is-not-a-request",
+  "title": "an empty-string argument opens no dispatcher: exit 2 and no claude",
+  "source": [
+    "intended: measured on the TypeScript CLI (no whitespace, not a subcommand: an unknown command)"
+  ],
+  "steps": [
+    {
+      "run": [
+        ""
+      ],
+      "expect": {
+        "exit": 2,
+        "claude": {
+          "ran": false
+        }
+      }
+    }
+  ]
+}

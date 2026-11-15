@@ -1,0 +1,69 @@
+{
+  "id": "dispatch/opens-the-dispatcher",
+  "title": "a first argument with whitespace opens one interactive Haiku session in the fixed dispatcher folder, with the request as the last argument and no permission bypass",
+  "source": [
+    "cli/jitso/dispatch.test.ts: 'buildDispatchPlan opens the interactive Haiku 5.5 session', 'never carries a permission bypass', 'runs from the fixed directory...'",
+    "cli/jitso/dispatch.test.ts: 'runDispatch creates the briefs folder, runs claude there'"
+  ],
+  "steps": [
+    {
+      "run": [
+        "explain how the Jira sync works"
+      ],
+      "expect": {
+        "exit": 0,
+        "stdout": [
+          {
+            "empty": true
+          }
+        ],
+        "claude": {
+          "ran": true,
+          "cwd": "{{HOME}}/.jitso/dispatch-cwd",
+          "last_arg": [
+            {
+              "equals": "explain how the Jira sync works"
+            }
+          ],
+          "arg_after": {
+            "--model": "claude-haiku-5-5",
+            "--effort": "medium",
+            "--setting-sources": "project"
+          },
+          "argv_contains": [
+            "--strict-mcp-config",
+            "--tools=Bash,Write"
+          ],
+          "argv_not_contains": [
+            "--dangerously-skip-permissions",
+            "--allow-dangerously-skip-permissions",
+            "--permission-mode",
+            "-p",
+            "--print",
+            "--tools"
+          ],
+          "json_arg_after": {
+            "--mcp-config": [
+              {
+                "path": "mcpServers",
+                "equals": {}
+              }
+            ]
+          }
+        },
+        "files": [
+          {
+            "path": "{{HOME}}/.jitso/dispatch-cwd/briefs",
+            "exists": true
+          }
+        ],
+        "registry": {
+          "count": 0
+        },
+        "orca_calls": {
+          "empty": true
+        }
+      }
+    }
+  ]
+}

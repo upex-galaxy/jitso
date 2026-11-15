@@ -1,0 +1,42 @@
+{
+  "id": "hooks/guard/allow-bash",
+  "title": "launches through jitso, read verbs, a plain terminal, unrelated git and a worktree without an agent pass without a decision",
+  "source": [
+    ".agents/hooks/jitso-guard.test.ts: 'lets jitso launch itself pass', 'an orca read verb', 'terminal create with a plain shell', 'unrelated git', 'worktree create without an agent'"
+  ],
+  "for_each": {
+    "var": "command",
+    "values": [
+      "bun run jitso launch --preset sonnet-tester --brief /x/brief.md --mode fleet --run r1 --task t1",
+      "jitso launch --preset p --brief b --mode direct",
+      "orca orchestration worker-list --run r1 --json",
+      "orca terminal create --worktree w --title t",
+      "orca terminal create --worktree w --command bash",
+      "git status && ls",
+      "orca worktree create --name x",
+      "echo claude"
+    ]
+  },
+  "steps": [
+    {
+      "hook": "guard",
+      "input": {
+        "hook_event_name": "PreToolUse",
+        "tool_name": "Bash",
+        "tool_input": {
+          "command": "{{command}}"
+        },
+        "cwd": "{{PROJECT}}"
+      },
+      "expect": {
+        "exit": 0,
+        "decision": "none",
+        "stdout": [
+          {
+            "empty": true
+          }
+        ]
+      }
+    }
+  ]
+}

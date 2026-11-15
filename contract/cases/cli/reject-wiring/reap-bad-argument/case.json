@@ -1,0 +1,30 @@
+{
+  "id": "cli/reject-wiring/reap-bad-argument",
+  "title": "reap with an argument that is not a safe value exits 2 with JITSO REJECTED before any orca call",
+  "source": [
+    "cli/jitso/index.test.ts: 'reap with a bad argument exits 2 before touching Orca'"
+  ],
+  "steps": [
+    {
+      "run": [
+        "reap",
+        "--run",
+        "a b; ls"
+      ],
+      "expect": {
+        "exit": 2,
+        "stdout": [
+          {
+            "empty": true
+          }
+        ],
+        "stderr": [
+          "JITSO REJECTED:"
+        ],
+        "orca_calls": {
+          "empty": true
+        }
+      }
+    }
+  ]
+}

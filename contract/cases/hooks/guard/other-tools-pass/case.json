@@ -1,0 +1,41 @@
+{
+  "id": "hooks/guard/other-tools-pass",
+  "title": "a tool that is neither Bash nor an orca MCP tool passes, whatever its input says",
+  "source": [
+    "intended: measured on the TypeScript hook (only Bash and orca MCP tools are inspected)"
+  ],
+  "for_each": {
+    "var": "tool",
+    "values": [
+      "Read",
+      "Write",
+      "Edit",
+      "Task",
+      "bash"
+    ]
+  },
+  "steps": [
+    {
+      "hook": "guard",
+      "input": {
+        "hook_event_name": "PreToolUse",
+        "tool_name": "{{tool}}",
+        "tool_input": {
+          "command": "orca orchestration worker-start --run r1",
+          "file_path": "/x",
+          "content": "orca orchestration worker-start --run r1"
+        },
+        "cwd": "{{PROJECT}}"
+      },
+      "expect": {
+        "exit": 0,
+        "decision": "none",
+        "stdout": [
+          {
+            "empty": true
+          }
+        ]
+      }
+    }
+  ]
+}

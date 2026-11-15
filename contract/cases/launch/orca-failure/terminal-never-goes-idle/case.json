@@ -1,0 +1,84 @@
+{
+  "id": "launch/orca-failure/terminal-never-goes-idle",
+  "title": "when the terminal does not reach idle the launch exits 3, closes that terminal and writes no registry line; no launch folder is left behind",
+  "source": [
+    "cli/jitso/launch.test.ts: 'the terminal never goes idle: exit 3 and the terminal is closed'",
+    "cli/jitso/orca.test.ts: 'waitIdle is true on ok and false on a timeout answer'",
+    "intended: TS-ODDITIES L2 (owner decision 2026-11-15): a failed launch leaves no launch folder; the TS binary leaves it on disk"
+  ],
+  "status": {
+    "ts": "xfail",
+    "go": "pass"
+  },
+  "defect": "N-2",
+  "intent": "INTENDED behavior (TS-ODDITIES L2, owner decision 2026-11-15, defect N-2). A launch that fails before its registry line leaves no launch folder behind: the implementation removes .jitso/launches/<id>/ when the launch fails. The exit code, the stderr text, the empty registry and the orca calls are unchanged. The TS binary leaves the folder (brief.md, card.txt, core.md, mcp.json, run.sh) on disk with no registry line, so the launch-folder check is the only expectation that FAILS on TS.",
+  "project": {
+    "files": {
+      ".jitso/briefs/brief.md": {
+        "from": "brief.md"
+      }
+    }
+  },
+  "orca": {
+    "wait_times_out": true
+  },
+  "steps": [
+    {
+      "run": [
+        "launch",
+        "--preset",
+        "haiku-explorer",
+        "--brief",
+        "{{PROJECT}}/.jitso/briefs/brief.md",
+        "--mode",
+        "direct"
+      ],
+      "expect": {
+        "exit": 3,
+        "stdout": [
+          {
+            "empty": true
+          }
+        ],
+        "stderr": [
+          {
+            "contains": "jitso: terminal term_fake did not reach tui-idle in 90 s; it was closed"
+          }
+        ],
+        "registry": {
+          "count": 0
+        },
+        "orca_calls": {
+          "verbs": [
+            "terminal create",
+            "terminal wait",
+            "terminal close"
+          ],
+          "calls": [
+            {
+              "at": 2,
+              "argv": [
+                "terminal",
+                "close",
+                "--terminal",
+                "term_fake"
+              ]
+            }
+          ]
+        },
+        "files": [
+          {
+            "path": ".jitso/launches/{{LAUNCH_ID}}",
+            "exists": false
+          }
+        ]
+      },
+      "capture": {
+        "LAUNCH_ID": {
+          "from": "orca_log",
+          "regex": "\\[jitso:(L\\d{8}T\\d{6}-[0-9a-f]{4})\\]"
+        }
+      }
+    }
+  ]
+}

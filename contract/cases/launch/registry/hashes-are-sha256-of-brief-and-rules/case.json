@@ -1,0 +1,52 @@
+{
+  "id": "launch/registry/hashes-are-sha256-of-brief-and-rules",
+  "title": "brief_sha256 is the SHA-256 of the brief file text as given (without the card) and core_sha256 that of the joined hard rules",
+  "source": [
+    "cli/jitso/launch.test.ts: launchForReal sha256(p.briefText), sha256(rules)"
+  ],
+  "project": {
+    "files": {
+      ".jitso/briefs/brief.md": {
+        "from": "brief.md"
+      },
+      "jitso/hard-rules/core.md": "CORE-RULE-LINE\n",
+      "jitso/hard-rules/style.md": "STYLE-RULE-LINE\n"
+    }
+  },
+  "steps": [
+    {
+      "run": [
+        "launch",
+        "--preset",
+        "haiku-explorer",
+        "--brief",
+        "{{PROJECT}}/.jitso/briefs/brief.md",
+        "--mode",
+        "direct"
+      ],
+      "capture": {
+        "LAUNCH_ID": {
+          "from": "stdout",
+          "regex": "JITSO (L\\d{8}T\\d{6}-[0-9a-f]{4})",
+          "group": 1
+        }
+      },
+      "expect": {
+        "exit": 0,
+        "registry": {
+          "count": 1,
+          "events": [
+            {
+              "at": 0,
+              "event": "launch",
+              "fields": {
+                "brief_sha256": "0a518dc169e3a5a1730e6219fce15b0b6bc16035d743c7138406e8fcc2aa13f8",
+                "core_sha256": "fd373877f753aab3dd3431b7c4096a5299a38b6e507f99ba51b18279cbd3f76f"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ]
+}

@@ -1,0 +1,48 @@
+{
+  "id": "validation/brief-language/rejected",
+  "title": "--brief-language accepts only en, es or any, exactly",
+  "source": [
+    "cli/jitso/launch.test.ts: 'parse: default is en, es and any are accepted, anything else is rejected'"
+  ],
+  "for_each": {
+    "var": "lang",
+    "values": [
+      "fr",
+      "EN",
+      "Es",
+      "",
+      "spanish",
+      "en,es"
+    ]
+  },
+  "steps": [
+    {
+      "run": [
+        "launch",
+        "--preset",
+        "haiku-explorer",
+        "--brief",
+        "{{PROJECT}}/.jitso/briefs/b.md",
+        "--mode",
+        "direct",
+        "--brief-language",
+        "{{lang}}"
+      ],
+      "expect": {
+        "exit": 2,
+        "stdout": [
+          {
+            "empty": true
+          }
+        ],
+        "stderr": [
+          "JITSO REJECTED:",
+          "--brief-language must be en, es or any"
+        ],
+        "orca_calls": {
+          "empty": true
+        }
+      }
+    }
+  ]
+}

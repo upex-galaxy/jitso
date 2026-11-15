@@ -1,0 +1,53 @@
+{
+  "id": "brief/failures-in-fixed-order",
+  "title": "when a brief fails several checks they are reported as one line in the order sections, length, language, paths",
+  "source": [
+    "cli/jitso/brief.test.ts: checkBrief order of checks",
+    "cli/jitso/launch.test.ts: runLaunch joins failures with '; '"
+  ],
+  "project": {
+    "files": {
+      ".jitso/briefs/brief.md": {
+        "from": "brief.md"
+      }
+    }
+  },
+  "steps": [
+    {
+      "run": [
+        "launch",
+        "--preset",
+        "haiku-explorer",
+        "--brief",
+        "{{PROJECT}}/.jitso/briefs/brief.md",
+        "--mode",
+        "direct"
+      ],
+      "expect": {
+        "exit": 2,
+        "stdout": [
+          {
+            "empty": true
+          }
+        ],
+        "stderr": [
+          {
+            "regex": "JITSO REJECTED: brief failed: sections \\(missing section: Scope, Done when, Report format\\); length \\(\\d+ words, expected 40 to 800\\); language \\(the brief must be written in English\\); paths \\(cited path does not exist: src/ghost/x\\.ts\\)"
+          }
+        ],
+        "orca_calls": {
+          "empty": true
+        },
+        "registry": {
+          "count": 0
+        },
+        "files": [
+          {
+            "path": ".jitso/launches",
+            "exists": false
+          }
+        ]
+      }
+    }
+  ]
+}

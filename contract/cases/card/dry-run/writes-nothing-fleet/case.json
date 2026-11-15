@@ -1,0 +1,58 @@
+{
+  "id": "card/dry-run/writes-nothing-fleet",
+  "title": "a fleet dry run calls no orchestration verb and writes nothing either",
+  "source": [
+    "cli/jitso/launch.test.ts: '--dry-run prints the card and calls no orca' (fleet)"
+  ],
+  "project": {
+    "files": {
+      ".jitso/briefs/brief.md": {
+        "from": "brief.md"
+      }
+    }
+  },
+  "steps": [
+    {
+      "run": [
+        "launch",
+        "--preset",
+        "sonnet-automator",
+        "--brief",
+        "{{PROJECT}}/.jitso/briefs/brief.md",
+        "--mode",
+        "fleet",
+        "--field",
+        "ticket_key=PRJ-123",
+        "--run",
+        "run_1",
+        "--task",
+        "task_1",
+        "--dry-run"
+      ],
+      "expect": {
+        "exit": 0,
+        "stdout": [
+          {
+            "regex": "dry run: nothing was written and Orca was not called"
+          }
+        ],
+        "orca_calls": {
+          "empty": true
+        },
+        "registry": {
+          "count": 0
+        },
+        "files": [
+          {
+            "path": ".jitso/launches",
+            "exists": false
+          },
+          {
+            "path": ".jitso/launches.jsonl",
+            "exists": false
+          }
+        ]
+      }
+    }
+  ]
+}

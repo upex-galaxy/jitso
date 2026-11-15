@@ -1,0 +1,60 @@
+{
+  "id": "brief/path/symlinked-folder-leading-outside-rejected",
+  "title": "a symlinked subfolder of .jitso/briefs that leads outside is rejected",
+  "source": [
+    "cli/jitso/brief.test.ts: 'rejects a symlinked folder that leads outside'"
+  ],
+  "project": {
+    "files": {
+      ".jitso/briefs/brief.md": {
+        "from": "brief.md"
+      },
+      ".jitso/briefs/sub": {
+        "symlink": "{{HOME}}/outside"
+      }
+    }
+  },
+  "home": {
+    "files": {
+      "outside/brief.md": {
+        "from": "brief.md"
+      }
+    }
+  },
+  "steps": [
+    {
+      "run": [
+        "launch",
+        "--preset",
+        "haiku-explorer",
+        "--brief",
+        "{{PROJECT}}/.jitso/briefs/sub/brief.md",
+        "--mode",
+        "direct"
+      ],
+      "expect": {
+        "exit": 2,
+        "stdout": [
+          {
+            "empty": true
+          }
+        ],
+        "stderr": [
+          "JITSO REJECTED: brief file is outside the allowed folders"
+        ],
+        "orca_calls": {
+          "empty": true
+        },
+        "registry": {
+          "count": 0
+        },
+        "files": [
+          {
+            "path": ".jitso/launches",
+            "exists": false
+          }
+        ]
+      }
+    }
+  ]
+}

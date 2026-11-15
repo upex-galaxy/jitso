@@ -1,0 +1,88 @@
+{
+  "id": "registry/append-only-second-launch",
+  "title": "a second launch appends a second line; the first line keeps its launch id and fields",
+  "source": [
+    "cli/jitso/log.test.ts: header (append-only)",
+    "cli/jitso/log.test.ts: 'writes one JSON line ending in a newline'"
+  ],
+  "project": {
+    "files": {
+      ".jitso/briefs/explore.md": {
+        "from": "brief.md"
+      }
+    }
+  },
+  "steps": [
+    {
+      "run": [
+        "launch",
+        "--preset",
+        "haiku-explorer",
+        "--brief",
+        "{{PROJECT}}/.jitso/briefs/explore.md",
+        "--mode",
+        "direct"
+      ],
+      "capture": {
+        "FIRST_ID": {
+          "from": "stdout",
+          "regex": "JITSO (L\\d{8}T\\d{6}-[0-9a-f]{4})"
+        }
+      },
+      "expect": {
+        "exit": 0
+      }
+    },
+    {
+      "run": [
+        "launch",
+        "--preset",
+        "haiku-explorer",
+        "--brief",
+        "{{PROJECT}}/.jitso/briefs/explore.md",
+        "--mode",
+        "direct"
+      ],
+      "capture": {
+        "SECOND_ID": {
+          "from": "stdout",
+          "regex": "JITSO (L\\d{8}T\\d{6}-[0-9a-f]{4})"
+        }
+      },
+      "expect": {
+        "exit": 0,
+        "registry": {
+          "count": 2,
+          "events": [
+            {
+              "at": 0,
+              "event": "launch",
+              "fields": {
+                "id": "{{FIRST_ID}}",
+                "preset": "haiku-explorer",
+                "orca.title": "[jitso:{{FIRST_ID}}] haiku-explorer"
+              }
+            },
+            {
+              "at": 1,
+              "event": "launch",
+              "fields": {
+                "id": "{{SECOND_ID}}",
+                "preset": "haiku-explorer"
+              }
+            }
+          ]
+        },
+        "files": [
+          {
+            "path": ".jitso/launches.jsonl",
+            "contains": [
+              "{{FIRST_ID}}",
+              "{{SECOND_ID}}"
+            ]
+          }
+        ]
+      }
+    }
+  ]
+}

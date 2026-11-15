@@ -1,0 +1,63 @@
+{
+  "id": "reap/ended-when-terminal-is-gone",
+  "title": "a running launch whose terminal is no longer listed gets an end event with source reap; one whose terminal is still listed is left running",
+  "source": [
+    "cli/jitso/reap.test.ts: 'a running launch whose terminal is gone gets an end event with source reap'"
+  ],
+  "project": {
+    "files": {
+      ".jitso/launches.jsonl": "{\"v\":1,\"event\":\"launch\",\"id\":\"L20261113T142233-a3f9\",\"parent\":null,\"root\":\"L20261113T142233-a3f9\",\"depth\":0,\"ts\":\"2026-11-13T14:22:33.000Z\",\"mode\":\"direct\",\"preset\":\"haiku-explorer\",\"orca\":{\"run\":null,\"task\":null,\"terminal\":\"term_a\",\"title\":\"t [jitso:L20261113T142233-a3f9]\"}}\n{\"v\":1,\"event\":\"launch\",\"id\":\"L20261113T142300-b4a0\",\"parent\":null,\"root\":\"L20261113T142300-b4a0\",\"depth\":0,\"ts\":\"2026-11-13T14:23:00.000Z\",\"mode\":\"direct\",\"preset\":\"haiku-explorer\",\"orca\":{\"run\":null,\"task\":null,\"terminal\":\"term_b\",\"title\":\"t [jitso:L20261113T142300-b4a0]\"}}\n"
+    }
+  },
+  "orca": {
+    "listed": [
+      "term_b"
+    ]
+  },
+  "steps": [
+    {
+      "run": [
+        "reap"
+      ],
+      "expect": {
+        "exit": 0,
+        "stdout": [
+          {
+            "regex": "(?m)^jitso reap: 1 launch\\(es\\) marked ended, 0 unlogged worker\\(s\\), 0 analyzed$"
+          }
+        ],
+        "stderr": [
+          {
+            "empty": true
+          }
+        ],
+        "orca_calls": {
+          "verbs": [
+            "terminal list"
+          ]
+        },
+        "registry": {
+          "count": 3,
+          "events": [
+            {
+              "at": 2,
+              "event": "end",
+              "fields": {
+                "id": "L20261113T142233-a3f9",
+                "ts": {
+                  "regex": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d+)?Z$"
+                },
+                "source": "reap",
+                "outcome_reported": "none",
+                "footer_path": null,
+                "duration_s": {
+                  "regex": "^\\d+$"
+                }
+              }
+            }
+          ]
+        }
+      }
+    }
+  ]
+}

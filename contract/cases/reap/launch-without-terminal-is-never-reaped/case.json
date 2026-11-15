@@ -1,0 +1,33 @@
+{
+  "id": "reap/launch-without-terminal-is-never-reaped",
+  "title": "a launch with no terminal handle cannot be matched against the terminal list, so reap leaves it running forever",
+  "source": [
+    "cli/jitso/reap.ts: `typeof terminal !== 'string' || live.includes(terminal)` (no unit test)"
+  ],
+  "project": {
+    "files": {
+      ".jitso/launches.jsonl": "{\"v\":1,\"event\":\"launch\",\"id\":\"L20261113T142233-a3f9\",\"parent\":null,\"root\":\"L20261113T142233-a3f9\",\"depth\":0,\"ts\":\"2026-11-13T14:22:33.000Z\",\"mode\":\"direct\",\"preset\":\"haiku-explorer\",\"orca\":{\"run\":null,\"task\":null,\"terminal\":null,\"title\":\"t\"}}\n"
+    }
+  },
+  "orca": {
+    "listed": []
+  },
+  "steps": [
+    {
+      "run": [
+        "reap"
+      ],
+      "expect": {
+        "exit": 0,
+        "stdout": [
+          {
+            "regex": "(?m)^jitso reap: 0 launch\\(es\\) marked ended, 0 unlogged worker\\(s\\), 0 analyzed$"
+          }
+        ],
+        "registry": {
+          "count": 1
+        }
+      }
+    }
+  ]
+}

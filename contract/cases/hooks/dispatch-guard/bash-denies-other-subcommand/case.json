@@ -1,0 +1,35 @@
+{
+  "id": "hooks/dispatch-guard/bash-denies-other-subcommand",
+  "title": "another subcommand of the launcher (close) is denied",
+  "source": [
+    ".agents/hooks/jitso-dispatch-guard.test.ts: 'denies another subcommand'"
+  ],
+  "home": {
+    "files": {
+      ".jitso/dispatch-cwd/briefs/.keep": "",
+      "outside/target.md": "x"
+    }
+  },
+  "steps": [
+    {
+      "hook": "dispatch-guard",
+      "input": {
+        "hook_event_name": "PreToolUse",
+        "tool_name": "Bash",
+        "tool_input": {
+          "command": "{{JITSO}} close L20261113T010101-abcd"
+        },
+        "cwd": "{{HOME}}/.jitso/dispatch-cwd"
+      },
+      "expect": {
+        "exit": 0,
+        "decision": "deny",
+        "reason": [
+          {
+            "regex": "(?i)jitso"
+          }
+        ]
+      }
+    }
+  ]
+}

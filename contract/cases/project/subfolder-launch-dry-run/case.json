@@ -1,0 +1,39 @@
+{
+  "id": "project/subfolder-launch-dry-run",
+  "title": "a launch dry run from a sub-folder resolves the same project",
+  "source": [
+    "cli/jitso/root.test.ts: 'from a subfolder of the primary checkout it is still the checkout root'"
+  ],
+  "project": {
+    "files": {
+      ".jitso/briefs/b.md": {
+        "from": "brief.md"
+      }
+    }
+  },
+  "steps": [
+    {
+      "run": [
+        "launch",
+        "--preset",
+        "haiku-explorer",
+        "--brief",
+        "{{PROJECT}}/.jitso/briefs/b.md",
+        "--mode",
+        "direct",
+        "--dry-run"
+      ],
+      "cwd": "src",
+      "expect": {
+        "exit": 0,
+        "stdout": [
+          "preset haiku-explorer v1",
+          "dry run: nothing was written"
+        ],
+        "orca_calls": {
+          "empty": true
+        }
+      }
+    }
+  ]
+}

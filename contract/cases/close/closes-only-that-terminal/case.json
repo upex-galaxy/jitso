@@ -1,0 +1,69 @@
+{
+  "id": "close/closes-only-that-terminal",
+  "title": "with two running launches, closing one closes only its own handle, never the worktree, and leaves the other launch running",
+  "source": [
+    "cli/jitso/close.test.ts: 'never uses the worktree-wide close'"
+  ],
+  "project": {
+    "files": {
+      ".jitso/launches.jsonl": "{\"v\":1,\"event\":\"launch\",\"id\":\"L20261113T142233-a3f9\",\"parent\":null,\"root\":\"L20261113T142233-a3f9\",\"depth\":0,\"ts\":\"2026-11-13T14:22:33.000Z\",\"mode\":\"direct\",\"preset\":\"haiku-explorer\",\"orca\":{\"run\":null,\"task\":null,\"terminal\":\"term_a\",\"title\":\"t [jitso:L20261113T142233-a3f9]\"}}\n{\"v\":1,\"event\":\"launch\",\"id\":\"L20261113T142300-b4a0\",\"parent\":null,\"root\":\"L20261113T142300-b4a0\",\"depth\":0,\"ts\":\"2026-11-13T14:23:00.000Z\",\"mode\":\"direct\",\"preset\":\"haiku-explorer\",\"orca\":{\"run\":null,\"task\":null,\"terminal\":\"term_b\",\"title\":\"t [jitso:L20261113T142300-b4a0]\"}}\n"
+    }
+  },
+  "orca": {
+    "listed": [
+      "term_a",
+      "term_b"
+    ]
+  },
+  "steps": [
+    {
+      "run": [
+        "close",
+        "L20261113T142233-a3f9"
+      ],
+      "expect": {
+        "exit": 0,
+        "orca_calls": {
+          "verbs": [
+            "terminal read",
+            "terminal close",
+            "terminal list"
+          ],
+          "calls": [
+            {
+              "at": 0,
+              "argv": [
+                "terminal",
+                "read",
+                "--terminal",
+                "term_a",
+                "--screen"
+              ]
+            },
+            {
+              "at": 1,
+              "argv": [
+                "terminal",
+                "close",
+                "--terminal",
+                "term_a"
+              ]
+            }
+          ]
+        },
+        "registry": {
+          "count": 3,
+          "events": [
+            {
+              "at": 2,
+              "event": "end",
+              "fields": {
+                "id": "L20261113T142233-a3f9"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ]
+}

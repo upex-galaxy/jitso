@@ -1,0 +1,41 @@
+{
+  "id": "cli/presets-list/entry",
+  "title": "presets list prints one line per approved preset: id, model, effort, description",
+  "source": [
+    "cli/jitso/index.test.ts: 'prints every approved preset with what it requires and exits 0'",
+    "cli/jitso/dispatch.ts: summarizeCatalog"
+  ],
+  "for_each": {
+    "var": "id",
+    "values": [
+      "haiku-explorer",
+      "sonnet-automator",
+      "sonnet-conductor",
+      "sonnet-tester"
+    ]
+  },
+  "steps": [
+    {
+      "run": [
+        "presets",
+        "list"
+      ],
+      "expect": {
+        "exit": 0,
+        "stderr": [
+          {
+            "empty": true
+          }
+        ],
+        "orca_calls": {
+          "empty": true
+        },
+        "stdout": [
+          {
+            "regex": "(?m)^- {{id}}: claude-[a-z0-9-]+ (low|medium|high)\\. .+ requires: .+$"
+          }
+        ]
+      }
+    }
+  ]
+}

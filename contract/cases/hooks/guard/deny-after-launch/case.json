@@ -1,0 +1,41 @@
+{
+  "id": "hooks/guard/deny-after-launch",
+  "title": "a jitso launch line does not shield a direct verb chained after it",
+  "source": [
+    ".agents/hooks/jitso-guard.test.ts: 'jitso launch followed by a direct verb is still denied'"
+  ],
+  "for_each": {
+    "var": "joiner",
+    "values": [
+      "; ",
+      " && ",
+      " | ",
+      "\n"
+    ]
+  },
+  "steps": [
+    {
+      "hook": "guard",
+      "input": {
+        "hook_event_name": "PreToolUse",
+        "tool_name": "Bash",
+        "tool_input": {
+          "command": "{{JITSO}} launch --preset p --brief b --mode direct{{joiner}}orca orchestration worker-start --run r1"
+        },
+        "cwd": "{{PROJECT}}"
+      },
+      "expect": {
+        "exit": 0,
+        "decision": "deny",
+        "reason": [
+          {
+            "regex": "\\(denied: orchestration worker-start\\)"
+          },
+          {
+            "regex": "launch"
+          }
+        ]
+      }
+    }
+  ]
+}

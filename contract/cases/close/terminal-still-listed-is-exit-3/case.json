@@ -1,0 +1,64 @@
+{
+  "id": "close/terminal-still-listed-is-exit-3",
+  "title": "a terminal that Orca still lists after the close is an error: exit 3, \"still open\", nothing on stdout",
+  "source": [
+    "cli/jitso/close.test.ts: 'the terminal still listed after close is an error (a success code is not the outcome)'"
+  ],
+  "project": {
+    "files": {
+      ".jitso/launches.jsonl": "{\"v\":1,\"event\":\"launch\",\"id\":\"L20261113T142233-a3f9\",\"parent\":null,\"root\":\"L20261113T142233-a3f9\",\"depth\":0,\"ts\":\"2026-11-13T14:22:33.000Z\",\"mode\":\"direct\",\"preset\":\"haiku-explorer\",\"orca\":{\"run\":null,\"task\":null,\"terminal\":\"term_fake\",\"title\":\"t [jitso:L20261113T142233-a3f9]\"}}\n"
+    }
+  },
+  "orca": {
+    "screens": [
+      "work done\n  cost footer line"
+    ],
+    "close_keeps_listed": true
+  },
+  "steps": [
+    {
+      "run": [
+        "close",
+        "L20261113T142233-a3f9"
+      ],
+      "expect": {
+        "exit": 3,
+        "stderr": [
+          {
+            "contains": "terminal term_fake is still open after close"
+          }
+        ],
+        "stdout": [
+          {
+            "empty": true
+          }
+        ],
+        "orca_calls": {
+          "verbs": [
+            "terminal read",
+            "terminal close",
+            "terminal list"
+          ],
+          "calls": [
+            {
+              "at": 1,
+              "argv": [
+                "terminal",
+                "close",
+                "--terminal",
+                "term_fake"
+              ]
+            },
+            {
+              "at": 2,
+              "argv": [
+                "terminal",
+                "list"
+              ]
+            }
+          ]
+        }
+      }
+    }
+  ]
+}

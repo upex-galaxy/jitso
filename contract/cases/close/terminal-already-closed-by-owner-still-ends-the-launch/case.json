@@ -1,0 +1,62 @@
+{
+  "id": "close/terminal-already-closed-by-owner-still-ends-the-launch",
+  "title": "a terminal whose read fails as stale still ends the launch: end event with no footer, no footer file, exit 0",
+  "source": [
+    "cli/jitso/close.test.ts: (stale-handle branch of close.ts; the unit test file has no case for it)"
+  ],
+  "project": {
+    "files": {
+      ".jitso/launches.jsonl": "{\"v\":1,\"event\":\"launch\",\"id\":\"L20261113T142233-a3f9\",\"parent\":null,\"root\":\"L20261113T142233-a3f9\",\"depth\":0,\"ts\":\"2026-11-13T14:22:33.000Z\",\"mode\":\"direct\",\"preset\":\"haiku-explorer\",\"orca\":{\"run\":null,\"task\":null,\"terminal\":\"term_fake\",\"title\":\"t [jitso:L20261113T142233-a3f9]\"}}\n"
+    }
+  },
+  "orca": {
+    "errors": {
+      "terminal read": {
+        "code": "terminal_handle_stale",
+        "message": "terminal handle is stale"
+      }
+    }
+  },
+  "steps": [
+    {
+      "run": [
+        "close",
+        "L20261113T142233-a3f9"
+      ],
+      "expect": {
+        "exit": 0,
+        "stdout": [
+          "jitso: closed L20261113T142233-a3f9"
+        ],
+        "files": [
+          {
+            "path": ".jitso/launches/L20261113T142233-a3f9/footer.txt",
+            "exists": false
+          }
+        ],
+        "orca_calls": {
+          "verbs": [
+            "terminal read",
+            "terminal close",
+            "terminal list"
+          ]
+        },
+        "registry": {
+          "count": 2,
+          "events": [
+            {
+              "at": 1,
+              "event": "end",
+              "fields": {
+                "id": "L20261113T142233-a3f9",
+                "source": "jitso_close",
+                "outcome_reported": "none",
+                "footer_path": null
+              }
+            }
+          ]
+        }
+      }
+    }
+  ]
+}

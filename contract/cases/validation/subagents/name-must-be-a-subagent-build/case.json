@@ -1,0 +1,79 @@
+{
+  "id": "validation/subagents/name-must-be-a-subagent-build",
+  "title": "a worker build whose subagents list names a build that does not exist, or one that is not subagent tier, is a catalog error: exit 3, the subagent named",
+  "source": [
+    "intended: docs/decisions.md (a worker lists subagents by name; each name resolves to a build with tier: subagent)"
+  ],
+  "status": {
+    "ts": "xfail",
+    "go": "pass"
+  },
+  "defect": "N-6",
+  "intent": "INTENDED behavior (defect N-6, tiers; docs/decisions.md, owner 2026-11-15). Every name in a worker's `subagents` must resolve to a build with `tier: subagent`. The overlay jitso/presets/broken-team.yaml lists `plan` (valid) and a second name that is either missing from the catalog (nonexistent-helper) or the name of a worker-tier build (haiku-explorer). That is an invalid catalog entry, like any invalid preset (validation/preset/invalid-catalog-entry): exit 3, nothing on stdout, one stderr line that names the file and the subagent, orca never called. The catalog is validated as a whole, so a launch of an unrelated valid build and `presets list` fail the same way. The TS binary only checks that each name is kebab-case, so the launch exits 0 and `presets list` prints the catalog.",
+  "for_each": {
+    "var": "sub",
+    "values": [
+      "nonexistent-helper",
+      "haiku-explorer"
+    ],
+    "ids": [
+      "unknown-build",
+      "worker-tier-build"
+    ]
+  },
+  "project": {
+    "files": {
+      "jitso/presets/broken-team.yaml": "id: broken-team\nversion: 1\nstatus: approved\ntier: worker\nrole: operator\ntype: explorer\nwork_kind: repo-exploration\ndescription: Worker used by a contract case, its subagents list is broken.\nharness: claude\nmodel: claude-haiku-5-5\neffort: low\nmode_default: direct\nagents_md: exclude\nroute_scope: [none]\nskills_first: []\ntools: [Read, Glob, Grep, Bash]\nsubagents: [plan, {{sub}}]\nmcp: []\nrequires: []\nbudget: { tokens: 250000, usd_list_cap: 0.50 }\nsuccess:\n  - { check: answer_delivered }\n",
+      ".jitso/briefs/b.md": {
+        "from": "brief.md"
+      }
+    }
+  },
+  "steps": [
+    {
+      "run": [
+        "launch",
+        "--preset",
+        "haiku-explorer",
+        "--brief",
+        "{{PROJECT}}/.jitso/briefs/b.md",
+        "--mode",
+        "direct",
+        "--dry-run"
+      ],
+      "expect": {
+        "exit": 3,
+        "stdout": [
+          {
+            "empty": true
+          }
+        ],
+        "stderr": [
+          "broken-team.yaml",
+          "{{sub}}"
+        ],
+        "orca_calls": {
+          "empty": true
+        }
+      }
+    },
+    {
+      "run": [
+        "presets",
+        "list"
+      ],
+      "expect": {
+        "exit": 3,
+        "stdout": [
+          {
+            "empty": true
+          }
+        ],
+        "stderr": [
+          "broken-team.yaml",
+          "{{sub}}"
+        ]
+      }
+    }
+  ]
+}

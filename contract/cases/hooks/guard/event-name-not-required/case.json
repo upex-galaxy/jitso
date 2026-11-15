@@ -1,0 +1,30 @@
+{
+  "id": "hooks/guard/event-name-not-required",
+  "title": "a PreToolUse payload without hook_event_name is still judged by its tool and command",
+  "source": [
+    "intended: measured on the TypeScript hook (only SessionEnd is selected by event name)"
+  ],
+  "steps": [
+    {
+      "hook": "guard",
+      "input": {
+        "tool_name": "Bash",
+        "tool_input": {
+          "command": "orca orchestration worker-start --run r1"
+        }
+      },
+      "expect": {
+        "exit": 0,
+        "decision": "deny",
+        "reason": [
+          {
+            "regex": "\\(denied: orchestration worker-start\\)"
+          },
+          {
+            "regex": "launch"
+          }
+        ]
+      }
+    }
+  ]
+}

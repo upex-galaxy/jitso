@@ -1,0 +1,34 @@
+{
+  "id": "hooks/guard/no-jitso-yaml-bash",
+  "title": "in a project without jitso/jitso.yaml the guard is a no-op for Bash",
+  "source": [
+    ".agents/hooks/jitso-guard.test.ts: 'a repo without jitso/jitso.yaml is a no-op'"
+  ],
+  "project": {
+    "files": {
+      "jitso/jitso.yaml": null
+    }
+  },
+  "steps": [
+    {
+      "hook": "guard",
+      "input": {
+        "hook_event_name": "PreToolUse",
+        "tool_name": "Bash",
+        "tool_input": {
+          "command": "orca orchestration worker-start --run r1"
+        },
+        "cwd": "{{PROJECT}}"
+      },
+      "expect": {
+        "exit": 0,
+        "decision": "none",
+        "stdout": [
+          {
+            "empty": true
+          }
+        ]
+      }
+    }
+  ]
+}

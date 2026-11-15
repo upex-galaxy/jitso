@@ -1,0 +1,50 @@
+{
+  "id": "validation/unknown-flag",
+  "title": "an argument that is not a launcher flag is rejected by name",
+  "source": [
+    "cli/jitso/launch.test.ts: 'preset, brief and a valid mode are required; unknown flags are rejected'",
+    "cli/jitso/launch.ts: parseLaunchArgs (`unknown argument`)"
+  ],
+  "for_each": {
+    "var": "arg",
+    "values": [
+      "--bogus",
+      "--help",
+      "-h",
+      "--dry-runs",
+      "--Preset",
+      "-p",
+      "positional"
+    ]
+  },
+  "steps": [
+    {
+      "run": [
+        "launch",
+        "--preset",
+        "haiku-explorer",
+        "--brief",
+        "{{PROJECT}}/.jitso/briefs/b.md",
+        "--mode",
+        "direct",
+        "{{arg}}",
+        "1"
+      ],
+      "expect": {
+        "exit": 2,
+        "stdout": [
+          {
+            "empty": true
+          }
+        ],
+        "stderr": [
+          "JITSO REJECTED:",
+          "unknown argument \"{{arg}}\""
+        ],
+        "orca_calls": {
+          "empty": true
+        }
+      }
+    }
+  ]
+}

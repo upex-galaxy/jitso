@@ -1,0 +1,32 @@
+{
+  "id": "hooks/guard/deny-agent-launch",
+  "title": "orca agent launch is denied and the reason names the verb",
+  "source": [
+    ".agents/hooks/jitso-guard.test.ts: 'denies agent launch'"
+  ],
+  "steps": [
+    {
+      "hook": "guard",
+      "input": {
+        "hook_event_name": "PreToolUse",
+        "tool_name": "Bash",
+        "tool_input": {
+          "command": "orca agent launch --agent claude --worktree w"
+        },
+        "cwd": "{{PROJECT}}"
+      },
+      "expect": {
+        "exit": 0,
+        "decision": "deny",
+        "reason": [
+          {
+            "regex": "\\(denied: agent launch\\)"
+          },
+          {
+            "regex": "launch"
+          }
+        ]
+      }
+    }
+  ]
+}

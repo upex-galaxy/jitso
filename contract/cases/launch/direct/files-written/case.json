@@ -1,0 +1,102 @@
+{
+  "id": "launch/direct/files-written",
+  "title": "a real launch writes brief.md (card then brief), core.md, mcp.json, an executable run.sh and card.txt under .jitso/launches/<id>/",
+  "source": [
+    "cli/jitso/launch.test.ts: 'calls terminal create, wait and the trust read, never worker-start, and writes the artifacts'",
+    "intended: docs/architecture.md section 7 (S1): the card grows from five lines to six"
+  ],
+  "status": {
+    "ts": "xfail",
+    "go": "pass"
+  },
+  "defect": "S1",
+  "intent": "INTENDED behavior (defect S1, route_scope; docs/architecture.md section 7). The card printed by a real launch has six lines (header, model, subagents, a `ROUTE-SCOPE: <ids>` line of its own, launch, budget). The TS binary prints five, so the stdout line count is the only expectation that FAILS on TS; the header regex, the brief.md card prefix, core.md, mcp.json, run.sh and card.txt (equal to stdout) hold on both.",
+  "project": {
+    "files": {
+      ".jitso/briefs/brief.md": {
+        "from": "brief.md"
+      }
+    }
+  },
+  "steps": [
+    {
+      "run": [
+        "launch",
+        "--preset",
+        "haiku-explorer",
+        "--brief",
+        "{{PROJECT}}/.jitso/briefs/brief.md",
+        "--mode",
+        "direct"
+      ],
+      "capture": {
+        "LAUNCH_ID": {
+          "from": "stdout",
+          "regex": "JITSO (L\\d{8}T\\d{6}-[0-9a-f]{4})",
+          "group": 1
+        },
+        "CARD": {
+          "from": "stdout",
+          "regex": "(?s)^(.*)\\n$",
+          "group": 1
+        }
+      },
+      "expect": {
+        "exit": 0,
+        "stdout": [
+          {
+            "line_count": 6
+          },
+          {
+            "regex": "^JITSO L\\d{8}T\\d{6}-[0-9a-f]{4} \\| operator/explorer \\| mode direct"
+          }
+        ],
+        "stderr": [
+          {
+            "empty": true
+          }
+        ],
+        "files": [
+          {
+            "path": ".jitso/launches/{{LAUNCH_ID}}/brief.md",
+            "regex": [
+              "^JITSO {{LAUNCH_ID}} \\| operator/explorer \\| mode direct \\(asks you\\) \\| preset haiku-explorer v1\\n"
+            ],
+            "contains": [
+              "{{CARD}}\n\n## Goal",
+              "## Report format"
+            ],
+            "not_contains": [
+              "Load first"
+            ]
+          },
+          {
+            "path": ".jitso/launches/{{LAUNCH_ID}}/core.md",
+            "exists": true,
+            "contains": [
+              "JITSO hard rules",
+              "JITSO reply style"
+            ]
+          },
+          {
+            "path": ".jitso/launches/{{LAUNCH_ID}}/mcp.json",
+            "equals": "{\n  \"mcpServers\": {}\n}\n"
+          },
+          {
+            "path": ".jitso/launches/{{LAUNCH_ID}}/run.sh",
+            "exists": true,
+            "executable": true,
+            "regex": [
+              "^#!/bin/sh\\n",
+              "\\nexec "
+            ]
+          },
+          {
+            "path": ".jitso/launches/{{LAUNCH_ID}}/card.txt",
+            "equals": "{{CARD}}\n"
+          }
+        ]
+      }
+    }
+  ]
+}

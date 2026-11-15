@@ -1,0 +1,51 @@
+{
+  "id": "hooks/guard/deny-worker-start-forms",
+  "title": "a direct worker-start is denied however the shell reaches it: plain, after a separator, nested, quoted or padded",
+  "source": [
+    ".agents/hooks/jitso-guard.test.ts: 'denies worker-start' and the separator, whitespace and \"every segment separator splits\" tests"
+  ],
+  "for_each": {
+    "var": "command",
+    "values": [
+      "orca orchestration worker-start --run r1 --task t1 --terminal term_1",
+      "ls; orca orchestration worker-start --run r1",
+      "cd x && orca orchestration worker-start --run r1",
+      "bash -c 'orca orchestration worker-start --run r1'",
+      "echo $(orca orchestration worker-start --run r1)",
+      "echo x | orca orchestration worker-start --run r1",
+      "orca   orchestration    worker-start --run r1",
+      "ls\norca orchestration worker-start --run r1",
+      "echo `orca orchestration worker-start --run r1`",
+      "ls & orca orchestration worker-start --run r1",
+      "(orca orchestration worker-start --run r1)",
+      "FOO= orca orchestration worker-start --run r1",
+      "orca \"orchestration\" worker-start --run r1",
+      "orca orchestration\tworker-start --run r1"
+    ]
+  },
+  "steps": [
+    {
+      "hook": "guard",
+      "input": {
+        "hook_event_name": "PreToolUse",
+        "tool_name": "Bash",
+        "tool_input": {
+          "command": "{{command}}"
+        },
+        "cwd": "{{PROJECT}}"
+      },
+      "expect": {
+        "exit": 0,
+        "decision": "deny",
+        "reason": [
+          {
+            "regex": "\\(denied: orchestration worker-start\\)"
+          },
+          {
+            "regex": "launch"
+          }
+        ]
+      }
+    }
+  ]
+}

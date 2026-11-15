@@ -1,0 +1,110 @@
+{
+  "id": "reap/unlogged-worker-after-a-real-fleet-launch",
+  "title": "after a real fleet launch, a worker of the same run that no launch event explains is flagged as an unlogged_worker rule_break",
+  "source": [
+    "cli/jitso/reap.test.ts: 'a worker in a known run that no launch event explains is an unlogged_worker rule_break'"
+  ],
+  "project": {
+    "files": {
+      ".jitso/briefs/explore.md": {
+        "from": "brief.md"
+      }
+    }
+  },
+  "orca": {
+    "listed": [
+      "term_fake",
+      "term_rogue"
+    ],
+    "responses": {
+      "orchestration worker-list": {
+        "workers": [
+          {
+            "agentTerminalHandle": "term_fake",
+            "title": "ok"
+          },
+          {
+            "agentTerminalHandle": "term_rogue",
+            "title": "worker-task_9"
+          }
+        ]
+      }
+    }
+  },
+  "steps": [
+    {
+      "run": [
+        "launch",
+        "--preset",
+        "haiku-explorer",
+        "--brief",
+        "{{PROJECT}}/.jitso/briefs/explore.md",
+        "--mode",
+        "fleet",
+        "--run",
+        "run_1",
+        "--task",
+        "task_1"
+      ],
+      "capture": {
+        "LAUNCH_ID": {
+          "from": "stdout",
+          "regex": "JITSO (L\\d{8}T\\d{6}-[0-9a-f]{4})"
+        }
+      },
+      "expect": {
+        "exit": 0
+      }
+    },
+    {
+      "run": [
+        "reap"
+      ],
+      "expect": {
+        "exit": 0,
+        "stdout": [
+          {
+            "regex": "(?m)^jitso reap: 0 launch\\(es\\) marked ended, 1 unlogged worker\\(s\\), 0 analyzed$"
+          }
+        ],
+        "orca_calls": {
+          "calls": [
+            {
+              "at": 4,
+              "argv": [
+                "terminal",
+                "list"
+              ]
+            },
+            {
+              "at": 5,
+              "argv": [
+                "orchestration",
+                "worker-list",
+                "--run",
+                "run_1"
+              ]
+            }
+          ]
+        },
+        "registry": {
+          "count": 2,
+          "events": [
+            {
+              "at": 1,
+              "event": "rule_break",
+              "fields": {
+                "id": null,
+                "kind": "unlogged_worker",
+                "ts": {
+                  "regex": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d+)?Z$"
+                },
+                "evidence": "worker term_rogue in run run_1 has no launch event"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ]
+}

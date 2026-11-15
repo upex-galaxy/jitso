@@ -1,0 +1,45 @@
+{
+  "id": "validation/flag-without-value",
+  "title": "a value flag given as the last argument is rejected: it needs a value",
+  "source": [
+    "cli/jitso/launch.ts: parseLaunchArgs (`--<name> needs a value`)"
+  ],
+  "for_each": {
+    "var": "flag",
+    "values": [
+      "preset",
+      "brief",
+      "mode",
+      "run",
+      "task",
+      "parent",
+      "worktree",
+      "mcp-exclude",
+      "field",
+      "brief-language"
+    ]
+  },
+  "steps": [
+    {
+      "run": [
+        "launch",
+        "--{{flag}}"
+      ],
+      "expect": {
+        "exit": 2,
+        "stdout": [
+          {
+            "empty": true
+          }
+        ],
+        "stderr": [
+          "JITSO REJECTED:",
+          "--{{flag}} needs a value"
+        ],
+        "orca_calls": {
+          "empty": true
+        }
+      }
+    }
+  ]
+}

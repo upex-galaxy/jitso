@@ -1,0 +1,57 @@
+{
+  "id": "close/already-ended-closes-again-without-second-end",
+  "title": "closing an ended launch exits 0, writes no second end event and asks Orca to close the terminal again",
+  "source": [
+    "cli/jitso/close.test.ts: 'an already ended launch closes the terminal again without a second end event'"
+  ],
+  "project": {
+    "files": {
+      ".jitso/launches.jsonl": "{\"v\":1,\"event\":\"launch\",\"id\":\"L20261113T142233-a3f9\",\"parent\":null,\"root\":\"L20261113T142233-a3f9\",\"depth\":0,\"ts\":\"2026-11-13T14:22:33.000Z\",\"mode\":\"direct\",\"preset\":\"haiku-explorer\",\"orca\":{\"run\":null,\"task\":null,\"terminal\":\"term_fake\",\"title\":\"t [jitso:L20261113T142233-a3f9]\"}}\n{\"v\":1,\"event\":\"end\",\"id\":\"L20261113T142233-a3f9\",\"ts\":\"2026-11-13T14:30:00.000Z\",\"source\":\"worker_done\",\"outcome_reported\":\"none\",\"footer_path\":null}\n"
+    }
+  },
+  "orca": {
+    "screens": [
+      "work done\n  cost footer line"
+    ]
+  },
+  "steps": [
+    {
+      "run": [
+        "close",
+        "L20261113T142233-a3f9"
+      ],
+      "expect": {
+        "exit": 0,
+        "registry": {
+          "count": 2
+        }
+      }
+    },
+    {
+      "run": [
+        "close",
+        "L20261113T142233-a3f9"
+      ],
+      "expect": {
+        "exit": 0,
+        "stdout": [
+          "jitso: closed L20261113T142233-a3f9"
+        ],
+        "registry": {
+          "count": 2
+        },
+        "orca_calls": {
+          "verbs": [
+            "terminal close",
+            "terminal list",
+            "terminal close",
+            "terminal list"
+          ],
+          "none": [
+            "terminal read"
+          ]
+        }
+      }
+    }
+  ]
+}

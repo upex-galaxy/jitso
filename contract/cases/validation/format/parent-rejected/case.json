@@ -1,0 +1,48 @@
+{
+  "id": "validation/format/parent-rejected",
+  "title": "--parent must be exactly a launch id: L, 8 digits, T, 6 digits, a dash and 4 lowercase hex",
+  "source": [
+    "cli/jitso/shell.ts: FIELD_PATTERNS.parent (LAUNCH_ID)"
+  ],
+  "for_each": {
+    "var": "v",
+    "values": [
+      "L2026",
+      "l20261115t005309-e8f8",
+      "L20261115T005309-E8F8",
+      "L20261115T005309-e8f",
+      "L20261115T005309-e8f89",
+      " L20261115T005309-e8f8"
+    ]
+  },
+  "steps": [
+    {
+      "run": [
+        "launch",
+        "--preset",
+        "haiku-explorer",
+        "--brief",
+        "{{PROJECT}}/.jitso/briefs/b.md",
+        "--mode",
+        "direct",
+        "--parent",
+        "{{v}}"
+      ],
+      "expect": {
+        "exit": 2,
+        "stdout": [
+          {
+            "empty": true
+          }
+        ],
+        "stderr": [
+          "JITSO REJECTED:",
+          "invalid value for --parent"
+        ],
+        "orca_calls": {
+          "empty": true
+        }
+      }
+    }
+  ]
+}

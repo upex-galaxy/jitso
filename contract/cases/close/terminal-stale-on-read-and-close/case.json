@@ -1,0 +1,64 @@
+{
+  "id": "close/terminal-stale-on-read-and-close",
+  "title": "when Orca answers stale for both the read and the close and the list is empty, close still ends the launch and exits 0",
+  "source": [
+    "cli/jitso/close.test.ts: (stale-handle branches of close.ts)"
+  ],
+  "project": {
+    "files": {
+      ".jitso/launches.jsonl": "{\"v\":1,\"event\":\"launch\",\"id\":\"L20261113T142233-a3f9\",\"parent\":null,\"root\":\"L20261113T142233-a3f9\",\"depth\":0,\"ts\":\"2026-11-13T14:22:33.000Z\",\"mode\":\"direct\",\"preset\":\"haiku-explorer\",\"orca\":{\"run\":null,\"task\":null,\"terminal\":\"term_fake\",\"title\":\"t [jitso:L20261113T142233-a3f9]\"}}\n"
+    }
+  },
+  "orca": {
+    "errors": {
+      "terminal read": {
+        "code": "terminal_handle_stale",
+        "message": "terminal handle is stale"
+      },
+      "terminal close": {
+        "code": "terminal_handle_stale",
+        "message": "terminal handle is stale"
+      }
+    },
+    "listed": []
+  },
+  "steps": [
+    {
+      "run": [
+        "close",
+        "L20261113T142233-a3f9"
+      ],
+      "expect": {
+        "exit": 0,
+        "stdout": [
+          "jitso: closed L20261113T142233-a3f9"
+        ],
+        "stderr": [
+          {
+            "empty": true
+          }
+        ],
+        "orca_calls": {
+          "verbs": [
+            "terminal read",
+            "terminal close",
+            "terminal list"
+          ]
+        },
+        "registry": {
+          "count": 2,
+          "events": [
+            {
+              "at": 1,
+              "event": "end",
+              "fields": {
+                "id": "L20261113T142233-a3f9",
+                "footer_path": null
+              }
+            }
+          ]
+        }
+      }
+    }
+  ]
+}

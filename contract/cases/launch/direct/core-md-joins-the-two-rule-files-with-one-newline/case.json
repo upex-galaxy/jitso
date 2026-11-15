@@ -1,0 +1,45 @@
+{
+  "id": "launch/direct/core-md-joins-the-two-rule-files-with-one-newline",
+  "title": "core.md is jitso/hard-rules/core.md, a newline, then jitso/hard-rules/style.md",
+  "source": [
+    "cli/jitso/launch.test.ts: launchForReal rules = ['core.md','style.md'].map(read).join('\\n')"
+  ],
+  "project": {
+    "files": {
+      ".jitso/briefs/brief.md": {
+        "from": "brief.md"
+      },
+      "jitso/hard-rules/core.md": "CORE-RULE-LINE\n",
+      "jitso/hard-rules/style.md": "STYLE-RULE-LINE\n"
+    }
+  },
+  "steps": [
+    {
+      "run": [
+        "launch",
+        "--preset",
+        "haiku-explorer",
+        "--brief",
+        "{{PROJECT}}/.jitso/briefs/brief.md",
+        "--mode",
+        "direct"
+      ],
+      "capture": {
+        "LAUNCH_ID": {
+          "from": "stdout",
+          "regex": "JITSO (L\\d{8}T\\d{6}-[0-9a-f]{4})",
+          "group": 1
+        }
+      },
+      "expect": {
+        "exit": 0,
+        "files": [
+          {
+            "path": ".jitso/launches/{{LAUNCH_ID}}/core.md",
+            "equals": "CORE-RULE-LINE\n\nSTYLE-RULE-LINE\n"
+          }
+        ]
+      }
+    }
+  ]
+}

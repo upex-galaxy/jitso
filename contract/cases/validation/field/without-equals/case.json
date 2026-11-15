@@ -1,0 +1,47 @@
+{
+  "id": "validation/field/without-equals",
+  "title": "--field must look like name=value: no equals sign, or nothing before it, is rejected",
+  "source": [
+    "cli/jitso/launch.ts: parseLaunchArgs (`--field must look like name=value`)"
+  ],
+  "for_each": {
+    "var": "v",
+    "values": [
+      "ticket_key",
+      "ticket_key:PRJ-1",
+      "=PRJ-1",
+      "PRJ-1",
+      ""
+    ]
+  },
+  "steps": [
+    {
+      "run": [
+        "launch",
+        "--preset",
+        "haiku-explorer",
+        "--brief",
+        "{{PROJECT}}/.jitso/briefs/b.md",
+        "--mode",
+        "direct",
+        "--field",
+        "{{v}}"
+      ],
+      "expect": {
+        "exit": 2,
+        "stdout": [
+          {
+            "empty": true
+          }
+        ],
+        "stderr": [
+          "JITSO REJECTED:",
+          "--field must look like name=value"
+        ],
+        "orca_calls": {
+          "empty": true
+        }
+      }
+    }
+  ]
+}

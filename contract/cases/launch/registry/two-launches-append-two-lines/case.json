@@ -1,0 +1,95 @@
+{
+  "id": "launch/registry/two-launches-append-two-lines",
+  "title": "two launches in a row append two lines with different ids and each gets its own folder",
+  "source": [
+    "cli/jitso/launch.test.ts: launchForReal appendEvent"
+  ],
+  "project": {
+    "files": {
+      ".jitso/briefs/brief.md": {
+        "from": "brief.md"
+      }
+    }
+  },
+  "steps": [
+    {
+      "run": [
+        "launch",
+        "--preset",
+        "haiku-explorer",
+        "--brief",
+        "{{PROJECT}}/.jitso/briefs/brief.md",
+        "--mode",
+        "direct"
+      ],
+      "capture": {
+        "ID1": {
+          "from": "stdout",
+          "regex": "JITSO (L\\d{8}T\\d{6}-[0-9a-f]{4})",
+          "group": 1
+        }
+      },
+      "expect": {
+        "exit": 0,
+        "registry": {
+          "count": 1
+        }
+      }
+    },
+    {
+      "run": [
+        "launch",
+        "--preset",
+        "haiku-explorer",
+        "--brief",
+        "{{PROJECT}}/.jitso/briefs/brief.md",
+        "--mode",
+        "direct"
+      ],
+      "capture": {
+        "ID2": {
+          "from": "stdout",
+          "regex": "JITSO (L\\d{8}T\\d{6}-[0-9a-f]{4})",
+          "group": 1
+        }
+      },
+      "expect": {
+        "exit": 0,
+        "registry": {
+          "count": 2,
+          "events": [
+            {
+              "at": 0,
+              "event": "launch",
+              "fields": {
+                "id": "{{ID1}}",
+                "parent": null
+              }
+            },
+            {
+              "at": 1,
+              "event": "launch",
+              "fields": {
+                "id": "{{ID2}}",
+                "parent": null
+              }
+            }
+          ]
+        },
+        "files": [
+          {
+            "path": ".jitso/launches/{{ID1}}/run.sh",
+            "exists": true
+          },
+          {
+            "path": ".jitso/launches/{{ID2}}/run.sh",
+            "exists": true
+          }
+        ],
+        "orca_calls": {
+          "count": 6
+        }
+      }
+    }
+  ]
+}

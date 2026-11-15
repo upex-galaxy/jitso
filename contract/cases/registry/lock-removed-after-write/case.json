@@ -1,0 +1,60 @@
+{
+  "id": "registry/lock-removed-after-write",
+  "title": "the launches.lock folder is gone after the launch event and after the end event are written",
+  "source": [
+    "cli/jitso/log.test.ts: 'releases the lock after writing'"
+  ],
+  "project": {
+    "files": {
+      ".jitso/briefs/explore.md": {
+        "from": "brief.md"
+      }
+    }
+  },
+  "steps": [
+    {
+      "run": [
+        "launch",
+        "--preset",
+        "haiku-explorer",
+        "--brief",
+        "{{PROJECT}}/.jitso/briefs/explore.md",
+        "--mode",
+        "direct"
+      ],
+      "capture": {
+        "LAUNCH_ID": {
+          "from": "stdout",
+          "regex": "JITSO (L\\d{8}T\\d{6}-[0-9a-f]{4})"
+        }
+      },
+      "expect": {
+        "exit": 0,
+        "files": [
+          {
+            "path": ".jitso/launches.lock",
+            "exists": false
+          }
+        ]
+      }
+    },
+    {
+      "run": [
+        "close",
+        "{{LAUNCH_ID}}"
+      ],
+      "expect": {
+        "exit": 0,
+        "registry": {
+          "count": 2
+        },
+        "files": [
+          {
+            "path": ".jitso/launches.lock",
+            "exists": false
+          }
+        ]
+      }
+    }
+  ]
+}

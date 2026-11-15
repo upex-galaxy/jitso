@@ -1,0 +1,43 @@
+{
+  "id": "hooks/dispatch-guard/cwd-must-be-the-dispatcher-folder",
+  "title": "the launcher line is denied when the session cwd is not the dispatcher folder",
+  "source": [
+    ".agents/hooks/jitso-dispatch-guard.test.ts: 'denies another cwd'"
+  ],
+  "home": {
+    "files": {
+      ".jitso/dispatch-cwd/briefs/.keep": "",
+      "outside/target.md": "x"
+    }
+  },
+  "for_each": {
+    "var": "rel",
+    "values": [
+      "outside",
+      ".jitso/dispatch-cwd/briefs",
+      ".jitso"
+    ]
+  },
+  "steps": [
+    {
+      "hook": "dispatch-guard",
+      "input": {
+        "hook_event_name": "PreToolUse",
+        "tool_name": "Bash",
+        "tool_input": {
+          "command": "{{JITSO}} launch --preset haiku-explorer --brief /h/b/a.md --mode direct"
+        },
+        "cwd": "{{HOME}}/{{rel}}"
+      },
+      "expect": {
+        "exit": 0,
+        "decision": "deny",
+        "reason": [
+          {
+            "regex": "(?i)jitso"
+          }
+        ]
+      }
+    }
+  ]
+}

@@ -1,0 +1,113 @@
+{
+  "id": "launch/trust/untrusted-folder-with-dialog-is-refused",
+  "title": "a dialog in a folder outside the repo and the dispatcher folder exits 2 with 'untrusted folder', sends no key and closes the terminal",
+  "source": [
+    "cli/jitso/launch.test.ts: 'dialog in an untrusted folder: stops with exit 2, an explicit message, closes the terminal, no event'",
+    "cli/jitso/trust.test.ts: 'an untrusted folder with the dialog sends nothing and reports refused'"
+  ],
+  "project": {
+    "files": {
+      ".jitso/briefs/brief.md": {
+        "from": "brief.md"
+      }
+    }
+  },
+  "orca": {
+    "screens": [
+      "Is this a project you created or one you trust?\n 1. Yes, I trust this folder\n 2. No, exit"
+    ],
+    "cwd": "{{HOME}}/elsewhere"
+  },
+  "steps": [
+    {
+      "run": [
+        "launch",
+        "--preset",
+        "haiku-explorer",
+        "--brief",
+        "{{PROJECT}}/.jitso/briefs/brief.md",
+        "--mode",
+        "direct"
+      ],
+      "expect": {
+        "exit": 2,
+        "stdout": [
+          {
+            "empty": true
+          }
+        ],
+        "stderr": [
+          {
+            "contains": "JITSO REJECTED: untrusted folder {{HOME}}/elsewhere"
+          },
+          {
+            "contains": "the terminal was closed"
+          }
+        ],
+        "orca_calls": {
+          "verbs": [
+            "terminal create",
+            "terminal wait",
+            "terminal read",
+            "terminal close"
+          ],
+          "calls": [
+            {
+              "at": 0,
+              "argv": [
+                "terminal",
+                "create",
+                "--title",
+                {
+                  "regex": "^\\[jitso:L\\d{8}T\\d{6}-[0-9a-f]{4}\\] haiku-explorer$"
+                },
+                "--command",
+                {
+                  "regex": "^'/.*/\\.jitso/launches/L\\d{8}T\\d{6}-[0-9a-f]{4}/run\\.sh'$"
+                }
+              ]
+            },
+            {
+              "at": 1,
+              "argv": [
+                "terminal",
+                "wait",
+                "--terminal",
+                "term_fake",
+                "--for",
+                "tui-idle",
+                "--timeout-ms",
+                "90000"
+              ]
+            },
+            {
+              "at": 2,
+              "argv": [
+                "terminal",
+                "read",
+                "--terminal",
+                "term_fake",
+                "--screen"
+              ]
+            },
+            {
+              "at": 3,
+              "argv": [
+                "terminal",
+                "close",
+                "--terminal",
+                "term_fake"
+              ]
+            }
+          ],
+          "none": [
+            "terminal send"
+          ]
+        },
+        "registry": {
+          "count": 0
+        }
+      }
+    }
+  ]
+}

@@ -1,0 +1,43 @@
+{
+  "id": "cli/help-flags",
+  "title": "--help and -h print the usage and exit 0 with nothing on stderr",
+  "source": [
+    "cli/jitso/index.test.ts: '--help lists every subcommand and exits 0'",
+    "cli/jitso/index.ts: main (`--help` and `-h` branch)"
+  ],
+  "for_each": {
+    "var": "flag",
+    "values": [
+      "--help",
+      "-h"
+    ]
+  },
+  "steps": [
+    {
+      "run": [
+        "{{flag}}"
+      ],
+      "expect": {
+        "exit": 0,
+        "stdout": [
+          "Usage",
+          "launch",
+          "close",
+          "reap",
+          "tree",
+          "analyze",
+          "presets",
+          "--help"
+        ],
+        "stderr": [
+          {
+            "empty": true
+          }
+        ],
+        "orca_calls": {
+          "empty": true
+        }
+      }
+    }
+  ]
+}

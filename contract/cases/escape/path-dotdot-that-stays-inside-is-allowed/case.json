@@ -1,0 +1,48 @@
+{
+  "title": "a .. that stays inside the brief folder is fine: the guard checks the real path, not the spelling",
+  "source": [
+    "cli/jitso/brief.ts resolveBriefPath (real path inside an allowed folder); control for the traversal cases"
+  ],
+  "project": {
+    "files": {
+      ".jitso/briefs/sub/keep.txt": "x",
+      ".jitso/briefs/brief.md": {
+        "from": "brief.md"
+      }
+    }
+  },
+  "steps": [
+    {
+      "run": [
+        "launch",
+        "--preset",
+        "haiku-explorer",
+        "--brief",
+        "{{PROJECT}}/.jitso/briefs/sub/../brief.md",
+        "--mode",
+        "direct"
+      ],
+      "capture": {
+        "LAUNCH_ID": {
+          "from": "stdout",
+          "regex": "JITSO (L\\d{8}T\\d{6}-[0-9a-f]{4})"
+        }
+      },
+      "expect": {
+        "exit": 0,
+        "registry": {
+          "count": 1
+        },
+        "files": [
+          {
+            "path": ".jitso/launches/{{LAUNCH_ID}}/brief.md",
+            "contains": [
+              "## Goal"
+            ]
+          }
+        ]
+      }
+    }
+  ],
+  "id": "escape/path-dotdot-that-stays-inside-is-allowed"
+}

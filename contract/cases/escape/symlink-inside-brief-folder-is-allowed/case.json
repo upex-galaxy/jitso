@@ -1,0 +1,50 @@
+{
+  "title": "a symlink whose real target is another file inside the brief folder is fine",
+  "source": [
+    "cli/jitso/brief.ts resolveBriefPath (real path inside an allowed folder); control for the symlink cases"
+  ],
+  "project": {
+    "files": {
+      ".jitso/briefs/real.md": {
+        "from": "brief.md"
+      },
+      ".jitso/briefs/alias.md": {
+        "symlink": "{{PROJECT}}/.jitso/briefs/real.md"
+      }
+    }
+  },
+  "steps": [
+    {
+      "run": [
+        "launch",
+        "--preset",
+        "haiku-explorer",
+        "--brief",
+        "{{PROJECT}}/.jitso/briefs/alias.md",
+        "--mode",
+        "direct"
+      ],
+      "capture": {
+        "LAUNCH_ID": {
+          "from": "stdout",
+          "regex": "JITSO (L\\d{8}T\\d{6}-[0-9a-f]{4})"
+        }
+      },
+      "expect": {
+        "exit": 0,
+        "registry": {
+          "count": 1
+        },
+        "files": [
+          {
+            "path": ".jitso/launches/{{LAUNCH_ID}}/brief.md",
+            "contains": [
+              "## Goal"
+            ]
+          }
+        ]
+      }
+    }
+  ],
+  "id": "escape/symlink-inside-brief-folder-is-allowed"
+}

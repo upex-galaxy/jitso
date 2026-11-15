@@ -1,0 +1,44 @@
+{
+  "id": "card/dry-run/launch-id-is-fresh-each-time",
+  "title": "two dry runs print two cards and neither writes the launch folder of its id",
+  "source": [
+    "cli/jitso/launch.test.ts: launchId(now, randomHex)"
+  ],
+  "project": {
+    "files": {
+      ".jitso/briefs/brief.md": {
+        "from": "brief.md"
+      }
+    }
+  },
+  "steps": [
+    {
+      "run": [
+        "launch",
+        "--preset",
+        "haiku-explorer",
+        "--brief",
+        "{{PROJECT}}/.jitso/briefs/brief.md",
+        "--mode",
+        "direct",
+        "--dry-run"
+      ],
+      "capture": {
+        "ID1": {
+          "from": "stdout",
+          "regex": "JITSO (L\\d{8}T\\d{6}-[0-9a-f]{4})",
+          "group": 1
+        }
+      },
+      "expect": {
+        "exit": 0,
+        "files": [
+          {
+            "path": ".jitso/launches/{{ID1}}",
+            "exists": false
+          }
+        ]
+      }
+    }
+  ]
+}

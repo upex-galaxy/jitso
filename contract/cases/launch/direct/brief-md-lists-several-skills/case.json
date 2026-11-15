@@ -1,0 +1,50 @@
+{
+  "id": "launch/direct/brief-md-lists-several-skills",
+  "title": "several skills are joined with a comma and a space on the 'Load first' line",
+  "source": [
+    "cli/jitso/launch.test.ts: launchForReal builds `Load first: ${profile.skillsFirst.join(', ')}`"
+  ],
+  "project": {
+    "files": {
+      ".jitso/briefs/brief.md": {
+        "from": "brief.md"
+      }
+    }
+  },
+  "steps": [
+    {
+      "run": [
+        "launch",
+        "--preset",
+        "sonnet-conductor",
+        "--brief",
+        "{{PROJECT}}/.jitso/briefs/brief.md",
+        "--mode",
+        "direct"
+      ],
+      "capture": {
+        "LAUNCH_ID": {
+          "from": "stdout",
+          "regex": "JITSO (L\\d{8}T\\d{6}-[0-9a-f]{4})",
+          "group": 1
+        },
+        "CARD": {
+          "from": "stdout",
+          "regex": "(?s)^(.*)\\n$",
+          "group": 1
+        }
+      },
+      "expect": {
+        "exit": 0,
+        "files": [
+          {
+            "path": ".jitso/launches/{{LAUNCH_ID}}/brief.md",
+            "contains": [
+              "{{CARD}}\n\nLoad first: orca-orchestration, test-automation\n\n## Goal"
+            ]
+          }
+        ]
+      }
+    }
+  ]
+}

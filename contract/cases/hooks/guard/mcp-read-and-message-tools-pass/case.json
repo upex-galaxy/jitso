@@ -1,0 +1,38 @@
+{
+  "id": "hooks/guard/mcp-read-and-message-tools-pass",
+  "title": "orca-bridge tools that only read or talk to an existing terminal pass",
+  "source": [
+    ".agents/hooks/jitso-guard.test.ts: 'read-only orca-bridge tools pass'"
+  ],
+  "for_each": {
+    "var": "tool",
+    "values": [
+      "snapshot",
+      "read_terminal",
+      "send_instruction"
+    ]
+  },
+  "steps": [
+    {
+      "hook": "guard",
+      "input": {
+        "hook_event_name": "PreToolUse",
+        "tool_name": "mcp__claude_ai_orca-bridge__{{tool}}",
+        "tool_input": {
+          "terminal": "t",
+          "text": "x"
+        },
+        "cwd": "{{PROJECT}}"
+      },
+      "expect": {
+        "exit": 0,
+        "decision": "none",
+        "stdout": [
+          {
+            "empty": true
+          }
+        ]
+      }
+    }
+  ]
+}

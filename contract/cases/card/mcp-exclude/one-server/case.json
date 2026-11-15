@@ -1,0 +1,48 @@
+{
+  "id": "card/mcp-exclude/one-server",
+  "title": "--mcp-exclude dbhub removes dbhub from the MCP part of the card",
+  "source": [
+    "cli/jitso/launch.test.ts: '--mcp-exclude removes that server from mcp.json and records it in the event' (card side)"
+  ],
+  "project": {
+    "files": {
+      ".jitso/briefs/brief.md": {
+        "from": "brief.md"
+      }
+    }
+  },
+  "steps": [
+    {
+      "run": [
+        "launch",
+        "--preset",
+        "sonnet-tester",
+        "--brief",
+        "{{PROJECT}}/.jitso/briefs/brief.md",
+        "--mode",
+        "direct",
+        "--field",
+        "ticket_key=PRJ-123",
+        "--mcp-exclude",
+        "dbhub",
+        "--dry-run"
+      ],
+      "expect": {
+        "exit": 0,
+        "stdout": [
+          {
+            "regex": "(?m)^model\\ claude\\-sonnet\\-5\\-5\\ effort\\ medium\\ \\|\\ bypass\\ \\|\\ MCP\\ openapi\\ \\|\\ skill\\ sprint\\-testing$"
+          }
+        ],
+        "stderr": [
+          {
+            "empty": true
+          }
+        ],
+        "orca_calls": {
+          "empty": true
+        }
+      }
+    }
+  ]
+}

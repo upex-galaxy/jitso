@@ -1,0 +1,39 @@
+{
+  "id": "hooks/dispatch-guard/unreadable-input-fails-closed",
+  "title": "input that is not JSON, empty or not an object is denied (exit 0, a deny decision), the opposite of the guard hook",
+  "source": [
+    ".agents/hooks/jitso-dispatch-guard.test.ts: 'denies, and never crashes, on input that is not JSON'"
+  ],
+  "home": {
+    "files": {
+      ".jitso/dispatch-cwd/briefs/.keep": "",
+      "outside/target.md": "x"
+    }
+  },
+  "for_each": {
+    "var": "raw",
+    "values": [
+      "not json",
+      "",
+      "{",
+      "null",
+      "42",
+      "[]"
+    ]
+  },
+  "steps": [
+    {
+      "hook": "dispatch-guard",
+      "input": "{{raw}}",
+      "expect": {
+        "exit": 0,
+        "decision": "deny",
+        "reason": [
+          {
+            "regex": "(?i)jitso"
+          }
+        ]
+      }
+    }
+  ]
+}

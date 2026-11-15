@@ -1,0 +1,125 @@
+{
+  "id": "launch/fleet/adopts-the-terminal-with-worker-start",
+  "title": "a fleet launch calls orchestration worker-start with --run, --task and --terminal right after the trust read",
+  "source": [
+    "cli/jitso/launch.test.ts: 'adopts the terminal with worker-start --terminal --worktree and carries no prompt in argv'",
+    "cli/jitso/launch.test.ts: 'a conductor launched in fleet mode never gets a raw orca launch verb'"
+  ],
+  "project": {
+    "files": {
+      ".jitso/briefs/brief.md": {
+        "from": "brief.md"
+      }
+    }
+  },
+  "steps": [
+    {
+      "run": [
+        "launch",
+        "--preset",
+        "haiku-explorer",
+        "--brief",
+        "{{PROJECT}}/.jitso/briefs/brief.md",
+        "--mode",
+        "fleet",
+        "--run",
+        "run_1",
+        "--task",
+        "task_1"
+      ],
+      "capture": {
+        "LAUNCH_ID": {
+          "from": "stdout",
+          "regex": "JITSO (L\\d{8}T\\d{6}-[0-9a-f]{4})",
+          "group": 1
+        }
+      },
+      "expect": {
+        "exit": 0,
+        "stdout": [
+          {
+            "regex": "mode fleet \\(asks your conductor\\)"
+          }
+        ],
+        "stderr": [
+          {
+            "empty": true
+          }
+        ],
+        "orca_calls": {
+          "verbs": [
+            "terminal create",
+            "terminal wait",
+            "terminal read",
+            "orchestration worker-start"
+          ],
+          "calls": [
+            {
+              "at": 0,
+              "argv": [
+                "terminal",
+                "create",
+                "--title",
+                "[jitso:{{LAUNCH_ID}}] haiku-explorer",
+                "--command",
+                "'{{PROJECT}}/.jitso/launches/{{LAUNCH_ID}}/run.sh'"
+              ]
+            },
+            {
+              "at": 1,
+              "argv": [
+                "terminal",
+                "wait",
+                "--terminal",
+                "term_fake",
+                "--for",
+                "tui-idle",
+                "--timeout-ms",
+                "90000"
+              ]
+            },
+            {
+              "at": 2,
+              "argv": [
+                "terminal",
+                "read",
+                "--terminal",
+                "term_fake",
+                "--screen"
+              ]
+            },
+            {
+              "at": 3,
+              "argv": [
+                "orchestration",
+                "worker-start",
+                "--run",
+                "run_1",
+                "--task",
+                "task_1",
+                "--terminal",
+                "term_fake"
+              ]
+            }
+          ]
+        },
+        "registry": {
+          "count": 1,
+          "events": [
+            {
+              "at": 0,
+              "event": "launch",
+              "fields": {
+                "mode": "fleet",
+                "orca.run": "run_1",
+                "orca.task": "task_1",
+                "orca.terminal": "term_fake",
+                "orca.title": "[jitso:{{LAUNCH_ID}}] haiku-explorer"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ]
+}

@@ -1,0 +1,50 @@
+{
+  "id": "cli/unknown-command",
+  "title": "a one-word unknown command exits 2, names itself on stderr and prints the usage there",
+  "source": [
+    "cli/jitso/index.test.ts: 'an unknown subcommand exits 2 and names the problem on stderr'",
+    "cli/jitso/index.test.ts: 'a one-word unknown command is still an unknown command'"
+  ],
+  "for_each": {
+    "var": "word",
+    "values": [
+      "frobnicate",
+      "Launch",
+      "LAUNCH",
+      "launchx",
+      "--bogus",
+      "-x",
+      "analyse",
+      "preset"
+    ]
+  },
+  "steps": [
+    {
+      "run": [
+        "{{word}}"
+      ],
+      "expect": {
+        "exit": 2,
+        "stdout": [
+          {
+            "empty": true
+          }
+        ],
+        "stderr": [
+          "unknown command",
+          "{{word}}",
+          "Usage"
+        ],
+        "orca_calls": {
+          "empty": true
+        },
+        "files": [
+          {
+            "path": ".jitso",
+            "exists": false
+          }
+        ]
+      }
+    }
+  ]
+}

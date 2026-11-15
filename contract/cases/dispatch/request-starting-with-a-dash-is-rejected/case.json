@@ -1,0 +1,34 @@
+{
+  "id": "dispatch/request-starting-with-a-dash-is-rejected",
+  "title": "a request that could pass for a flag is rejected with exit 2 and starts no claude",
+  "source": [
+    "cli/jitso/dispatch.test.ts: 'a request that could pass for a flag is rejected before anything is built', 'a rejected request exits 2 and starts nothing'"
+  ],
+  "for_each": {
+    "var": "request",
+    "values": [
+      "-rf now",
+      "--dangerously-skip-permissions please",
+      "  --evil flag",
+      "--help me"
+    ]
+  },
+  "steps": [
+    {
+      "run": [
+        "{{request}}"
+      ],
+      "expect": {
+        "exit": 2,
+        "stderr": [
+          {
+            "contains": "JITSO REJECTED:"
+          }
+        ],
+        "claude": {
+          "ran": false
+        }
+      }
+    }
+  ]
+}

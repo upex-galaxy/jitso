@@ -1,0 +1,67 @@
+{
+  "id": "launch/parent/inherits-the-root-and-adds-one-to-the-depth",
+  "title": "a child of a depth-2 launch gets that launch's root and depth 3, in fleet mode too",
+  "source": [
+    "cli/jitso/launch.test.ts: 'a known parent sets root and depth'"
+  ],
+  "project": {
+    "files": {
+      ".jitso/briefs/brief.md": {
+        "from": "brief.md"
+      }
+    }
+  },
+  "steps": [
+    {
+      "write": {
+        "project": {
+          ".jitso/launches.jsonl": {
+            "content": "{\"v\": 1, \"event\": \"launch\", \"id\": \"L20261113T142233-a3f9\", \"parent\": \"L20261113T000100-0001\", \"root\": \"L20261113T000000-0000\", \"depth\": 2, \"ts\": \"2026-11-13T14:22:33.000Z\", \"mode\": \"fleet\", \"preset\": \"haiku-explorer\"}\n"
+          }
+        }
+      }
+    },
+    {
+      "run": [
+        "launch",
+        "--preset",
+        "haiku-explorer",
+        "--brief",
+        "{{PROJECT}}/.jitso/briefs/brief.md",
+        "--mode",
+        "fleet",
+        "--run",
+        "run_1",
+        "--task",
+        "task_1",
+        "--parent",
+        "L20261113T142233-a3f9"
+      ],
+      "capture": {
+        "LAUNCH_ID": {
+          "from": "stdout",
+          "regex": "JITSO (L\\d{8}T\\d{6}-[0-9a-f]{4})",
+          "group": 1
+        }
+      },
+      "expect": {
+        "exit": 0,
+        "registry": {
+          "count": 2,
+          "events": [
+            {
+              "at": 1,
+              "event": "launch",
+              "fields": {
+                "parent": "L20261113T142233-a3f9",
+                "root": "L20261113T000000-0000",
+                "depth": 3,
+                "mode": "fleet"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ]
+}

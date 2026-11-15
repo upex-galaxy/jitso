@@ -1,0 +1,56 @@
+{
+  "id": "hooks/dispatch-guard/write-denies-missing-file-path",
+  "title": "Write is denied when file_path is missing or not a string",
+  "source": [
+    "intended: measured on the TypeScript hook"
+  ],
+  "home": {
+    "files": {
+      ".jitso/dispatch-cwd/briefs/.keep": "",
+      "outside/target.md": "x"
+    }
+  },
+  "steps": [
+    {
+      "hook": "dispatch-guard",
+      "input": {
+        "hook_event_name": "PreToolUse",
+        "tool_name": "Write",
+        "tool_input": {
+          "content": "x"
+        },
+        "cwd": "{{HOME}}/.jitso/dispatch-cwd"
+      },
+      "expect": {
+        "exit": 0,
+        "decision": "deny",
+        "reason": [
+          {
+            "regex": "(?i)jitso"
+          }
+        ]
+      }
+    },
+    {
+      "hook": "dispatch-guard",
+      "input": {
+        "hook_event_name": "PreToolUse",
+        "tool_name": "Write",
+        "tool_input": {
+          "file_path": 7,
+          "content": "x"
+        },
+        "cwd": "{{HOME}}/.jitso/dispatch-cwd"
+      },
+      "expect": {
+        "exit": 0,
+        "decision": "deny",
+        "reason": [
+          {
+            "regex": "(?i)jitso"
+          }
+        ]
+      }
+    }
+  ]
+}

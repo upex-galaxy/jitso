@@ -1,0 +1,90 @@
+{
+  "id": "reap/run-flag-audits-a-run-the-registry-never-saw",
+  "title": "every --run is audited in the order given, before the runs the registry knows; a run named twice is listed once; the same rogue worker is flagged once per run",
+  "source": [
+    "cli/jitso/reap.test.ts: '--run adds a run the registry has never seen; no run at all means no worker-list call'"
+  ],
+  "project": {
+    "files": {
+      ".jitso/launches.jsonl": "{\"v\":1,\"event\":\"launch\",\"id\":\"L20261113T142233-a3f9\",\"parent\":null,\"root\":\"L20261113T142233-a3f9\",\"depth\":0,\"ts\":\"2026-11-13T14:22:33.000Z\",\"mode\":\"direct\",\"preset\":\"haiku-explorer\",\"orca\":{\"run\":\"run_1\",\"task\":\"t\",\"terminal\":\"term_logged\",\"title\":\"t [jitso:L20261113T142233-a3f9]\"}}\n"
+    }
+  },
+  "orca": {
+    "listed": [
+      "term_logged",
+      "term_rogue"
+    ],
+    "responses": {
+      "orchestration worker-list": {
+        "workers": [
+          {
+            "agentTerminalHandle": "term_logged"
+          },
+          {
+            "agentTerminalHandle": "term_rogue"
+          }
+        ]
+      }
+    }
+  },
+  "steps": [
+    {
+      "run": [
+        "reap",
+        "--run",
+        "run_9",
+        "--run",
+        "run_8",
+        "--run",
+        "run_9",
+        "--run",
+        "run_1"
+      ],
+      "expect": {
+        "exit": 0,
+        "stdout": [
+          {
+            "regex": "(?m)^jitso reap: 0 launch\\(es\\) marked ended, 3 unlogged worker\\(s\\), 0 analyzed$"
+          }
+        ],
+        "orca_calls": {
+          "verbs": [
+            "terminal list",
+            "orchestration worker-list",
+            "orchestration worker-list",
+            "orchestration worker-list"
+          ],
+          "calls": [
+            {
+              "at": 1,
+              "argv": [
+                "orchestration",
+                "worker-list",
+                "--run",
+                "run_9"
+              ]
+            },
+            {
+              "at": 2,
+              "argv": [
+                "orchestration",
+                "worker-list",
+                "--run",
+                "run_8"
+              ]
+            },
+            {
+              "at": 3,
+              "argv": [
+                "orchestration",
+                "worker-list",
+                "--run",
+                "run_1"
+              ]
+            }
+          ]
+        }
+      }
+    }
+  ]
+}

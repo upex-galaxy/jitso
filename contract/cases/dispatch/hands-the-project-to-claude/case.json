@@ -1,0 +1,41 @@
+{
+  "id": "dispatch/hands-the-project-to-claude",
+  "title": "the dispatcher starts claude with JITSO_PROJECT set to the primary checkout of the project, from the root or from a subfolder",
+  "source": [
+    "intended: docs/architecture.md section 6 (project root, the dispatcher handoff)"
+  ],
+  "status": {
+    "ts": "xfail",
+    "go": "pass"
+  },
+  "defect": "N-7",
+  "intent": "INTENDED behavior (defect N-7, dispatcher project handoff; docs/architecture.md section 6). Before it starts the dispatcher, jitso resolves the project (the git primary checkout of its cwd) and puts it in the environment of the claude it starts as JITSO_PROJECT, because that claude runs from a folder outside git and its one `jitso launch` could not find the project otherwise. The TS binary sets no such variable (it finds its project from its script folder), so the env expectation FAILS on TS. That Claude Code passes its own environment on to the processes its Bash tool starts is a prediction no case can prove: the fake claude runs no tool.",
+  "for_each": {
+    "var": "dir",
+    "values": [
+      ".",
+      "src"
+    ],
+    "ids": [
+      "root",
+      "subfolder"
+    ]
+  },
+  "steps": [
+    {
+      "run": [
+        "explain how the Jira sync works"
+      ],
+      "cwd": "{{dir}}",
+      "expect": {
+        "exit": 0,
+        "claude": {
+          "ran": true,
+          "env": {
+            "JITSO_PROJECT": "{{PROJECT}}"
+          }
+        }
+      }
+    }
+  ]
+}

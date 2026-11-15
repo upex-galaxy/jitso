@@ -1,0 +1,50 @@
+{
+  "title": "a brief path that is a folder, not a regular file, is refused",
+  "source": [
+    "cli/jitso/brief.ts resolveBriefPath: 'brief path is not a regular file' (no source test; measured on the TS binary)"
+  ],
+  "project": {
+    "files": {
+      ".jitso/briefs/brief.md": {
+        "from": "brief.md"
+      }
+    }
+  },
+  "steps": [
+    {
+      "run": [
+        "launch",
+        "--preset",
+        "haiku-explorer",
+        "--brief",
+        "{{PROJECT}}/.jitso/briefs",
+        "--mode",
+        "direct"
+      ],
+      "expect": {
+        "exit": 2,
+        "stderr": [
+          "JITSO REJECTED:"
+        ],
+        "stdout": [
+          {
+            "empty": true
+          }
+        ],
+        "orca_calls": {
+          "empty": true
+        },
+        "registry": {
+          "count": 0
+        },
+        "files": [
+          {
+            "path": ".jitso/launches",
+            "exists": false
+          }
+        ]
+      }
+    }
+  ],
+  "id": "escape/brief-is-a-directory"
+}
