@@ -1,0 +1,86 @@
+{
+  "id": "setup/hook/absolute-flag",
+  "title": "setup hook --absolute writes the quoted real path of the binary instead of the word jitso, and is idempotent",
+  "source": [
+    "intended: docs/decisions.md D8 (setup hook, defect N-17): jitso registers its guard in the project's .claude/settings.json without clobbering anything"
+  ],
+  "status": {
+    "ts": "xfail",
+    "go": "pass"
+  },
+  "defect": "N-17",
+  "intent": "INTENDED behavior (defect N-17, setup hook). `--absolute` writes `'<real path>' hook guard` (the dispatcher's quoting) in the three handlers and prints no PATH warning (the command is not the bare word). A second `--absolute` run is `nothing to do`; a plain run then rewrites the handlers to the bare word. The oracle has no `setup` command: it answers `unknown command \"setup\"` on stderr with exit 2 and prints nothing on stdout, so every expectation that needs this output or file effect FAILS on it.",
+  "steps": [
+    {
+      "run": [
+        "setup",
+        "hook",
+        "--absolute",
+        "--yes"
+      ],
+      "expect": {
+        "exit": 0,
+        "stderr": [
+          {
+            "not_contains": "unknown command"
+          },
+          {
+            "not_contains": "not on PATH"
+          }
+        ],
+        "files": [
+          {
+            "path": ".claude/settings.json",
+            "json": [
+              {
+                "path": "hooks.PreToolUse.0.hooks.0.command",
+                "regex": "^(?:'/.*' hook guard|/\\S+ hook guard)$"
+              },
+              {
+                "path": "hooks.PreToolUse.1.hooks.0.command",
+                "regex": "^(?:'/.*' hook guard|/\\S+ hook guard)$"
+              },
+              {
+                "path": "hooks.SessionEnd.0.hooks.0.command",
+                "regex": "^(?:'/.*' hook guard|/\\S+ hook guard)$"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "run": [
+        "setup",
+        "hook",
+        "--absolute",
+        "--yes"
+      ],
+      "expect": {
+        "exit": 0,
+        "stdout": [
+          "nothing to do (the guard is already registered in .claude/settings.json)"
+        ]
+      }
+    },
+    {
+      "run": [
+        "setup",
+        "hook",
+        "--yes"
+      ],
+      "expect": {
+        "exit": 0,
+        "stdout": [
+          "wrote .claude/settings.json"
+        ],
+        "files": [
+          {
+            "path": ".claude/settings.json",
+            "equals": "{\n  \"hooks\": {\n    \"PreToolUse\": [\n      {\n        \"matcher\": \"Bash\",\n        \"hooks\": [\n          {\n            \"type\": \"command\",\n            \"command\": \"jitso hook guard\"\n          }\n        ]\n      },\n      {\n        \"matcher\": \"mcp__.*orca.*__.*\",\n        \"hooks\": [\n          {\n            \"type\": \"command\",\n            \"command\": \"jitso hook guard\"\n          }\n        ]\n      }\n    ],\n    \"SessionEnd\": [\n      {\n        \"hooks\": [\n          {\n            \"type\": \"command\",\n            \"command\": \"jitso hook guard\"\n          }\n        ]\n      }\n    ]\n  }\n}\n"
+          }
+        ]
+      }
+    }
+  ]
+}

@@ -1,0 +1,60 @@
+{
+  "id": "setup/hook/second-run-is-nothing-to-do",
+  "title": "a second setup hook run answers nothing to do, leaves the file byte for byte and makes no backup",
+  "source": [
+    "intended: docs/decisions.md D8 (setup hook, defect N-17): jitso registers its guard in the project's .claude/settings.json without clobbering anything"
+  ],
+  "status": {
+    "ts": "xfail",
+    "go": "pass"
+  },
+  "defect": "N-17",
+  "intent": "INTENDED behavior (defect N-17, setup hook). After the file holds exactly the desired state, a second `jitso setup hook --yes` prints `jitso setup hook: nothing to do (the guard is already registered in .claude/settings.json)`, exit 0, writes nothing and creates no `.jitso/backups`. The oracle has no `setup` command: it answers `unknown command \"setup\"` on stderr with exit 2 and prints nothing on stdout, so every expectation that needs this output or file effect FAILS on it.",
+  "steps": [
+    {
+      "run": [
+        "setup",
+        "hook",
+        "--yes"
+      ],
+      "capture": {
+        "FIRST": {
+          "from": "file",
+          "path": ".claude/settings.json",
+          "regex": "(?s)^(.*)$"
+        }
+      },
+      "expect": {
+        "exit": 0,
+        "stdout": [
+          "created .claude/settings.json"
+        ]
+      }
+    },
+    {
+      "run": [
+        "setup",
+        "hook",
+        "--yes"
+      ],
+      "expect": {
+        "exit": 0,
+        "stdout": [
+          {
+            "regex": "^jitso setup hook: nothing to do \\(the guard is already registered in \\.claude/settings\\.json\\)\\n$"
+          }
+        ],
+        "files": [
+          {
+            "path": ".claude/settings.json",
+            "equals": "{{FIRST}}"
+          },
+          {
+            "path": ".jitso/backups",
+            "exists": false
+          }
+        ]
+      }
+    }
+  ]
+}

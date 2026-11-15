@@ -1,0 +1,50 @@
+{
+  "id": "setup/hook/merges-and-keeps-order",
+  "title": "setup hook keeps every key and group of the user's file in place and appends the JITSO groups after the user's",
+  "source": [
+    "intended: docs/decisions.md D8 (setup hook, defect N-17): jitso registers its guard in the project's .claude/settings.json without clobbering anything"
+  ],
+  "status": {
+    "ts": "xfail",
+    "go": "pass"
+  },
+  "defect": "N-17",
+  "intent": "INTENDED behavior (defect N-17, setup hook). A canonical 2-space file with `$schema`, `permissions`, a user `Bash` group under `hooks.PreToolUse`, `hooks.Stop` and `env` last. The result keeps every user key and group where it was; the two JITSO groups follow the user's PreToolUse group, and `SessionEnd` is added at the end of `hooks`, before `env`. The oracle has no `setup` command: it answers `unknown command \"setup\"` on stderr with exit 2 and prints nothing on stdout, so every expectation that needs this output or file effect FAILS on it.",
+  "project": {
+    "files": {
+      ".claude/settings.json": {
+        "from": "seed.json"
+      }
+    }
+  },
+  "steps": [
+    {
+      "run": [
+        "setup",
+        "hook",
+        "--yes"
+      ],
+      "expect": {
+        "exit": 0,
+        "stdout": [
+          "backed up .claude/settings.json to ",
+          "wrote .claude/settings.json",
+          {
+            "regex": "jitso setup hook: done\\n$"
+          }
+        ],
+        "stderr": [
+          {
+            "not_contains": "unknown command"
+          }
+        ],
+        "files": [
+          {
+            "path": ".claude/settings.json",
+            "equals": "{\n  \"$schema\": \"https://json.schemastore.org/claude-code-settings.json\",\n  \"permissions\": {\n    \"allow\": [\n      \"Bash(git status)\"\n    ]\n  },\n  \"hooks\": {\n    \"PreToolUse\": [\n      {\n        \"matcher\": \"Bash\",\n        \"hooks\": [\n          {\n            \"type\": \"command\",\n            \"command\": \"./check.sh\"\n          }\n        ]\n      },\n      {\n        \"matcher\": \"Bash\",\n        \"hooks\": [\n          {\n            \"type\": \"command\",\n            \"command\": \"jitso hook guard\"\n          }\n        ]\n      },\n      {\n        \"matcher\": \"mcp__.*orca.*__.*\",\n        \"hooks\": [\n          {\n            \"type\": \"command\",\n            \"command\": \"jitso hook guard\"\n          }\n        ]\n      }\n    ],\n    \"Stop\": [\n      {\n        \"hooks\": [\n          {\n            \"type\": \"command\",\n            \"command\": \"./notify.sh\"\n          }\n        ]\n      }\n    ],\n    \"SessionEnd\": [\n      {\n        \"hooks\": [\n          {\n            \"type\": \"command\",\n            \"command\": \"jitso hook guard\"\n          }\n        ]\n      }\n    ]\n  },\n  \"env\": {\n    \"FOO\": \"bar\"\n  }\n}\n"
+          }
+        ]
+      }
+    }
+  ]
+}

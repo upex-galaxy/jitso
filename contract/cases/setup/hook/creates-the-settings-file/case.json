@@ -1,0 +1,49 @@
+{
+  "id": "setup/hook/creates-the-settings-file",
+  "title": "setup hook --yes creates .claude/settings.json with the JITSO guard on PreToolUse (Bash and the orca MCP tools) and SessionEnd",
+  "source": [
+    "intended: docs/decisions.md D8 (setup hook, defect N-17): jitso registers its guard in the project's .claude/settings.json without clobbering anything"
+  ],
+  "status": {
+    "ts": "xfail",
+    "go": "pass"
+  },
+  "defect": "N-17",
+  "intent": "INTENDED behavior (defect N-17, setup hook). In a project with no `.claude/settings.json`, `jitso setup hook --yes` writes the canonical file (2-space indent, trailing newline): two JITSO groups under PreToolUse (matchers `Bash` and `mcp__.*orca.*__.*`) and one without matcher under SessionEnd, each with the bare command `jitso hook guard`. stdout prints the preview, `created .claude/settings.json`, a `note:` that the untracked file must be committed, and `jitso setup hook: done`. The bare word is not on the sandbox PATH, so a warning goes to stderr; the write still happens. The oracle has no `setup` command: it answers `unknown command \"setup\"` on stderr with exit 2 and prints nothing on stdout, so every expectation that needs this output or file effect FAILS on it.",
+  "steps": [
+    {
+      "run": [
+        "setup",
+        "hook",
+        "--yes"
+      ],
+      "expect": {
+        "exit": 0,
+        "stdout": [
+          "--- /dev/null",
+          "+++ b/.claude/settings.json",
+          "created .claude/settings.json",
+          "note: commit .claude/settings.json so linked worktrees and other clones get the guard",
+          {
+            "regex": "jitso setup hook: done\\n$"
+          }
+        ],
+        "stderr": [
+          {
+            "not_contains": "unknown command"
+          },
+          "jitso: warning: jitso is not on PATH, so the hook cannot start until it is (the guard then lets every call through)"
+        ],
+        "files": [
+          {
+            "path": ".claude/settings.json",
+            "equals": "{\n  \"hooks\": {\n    \"PreToolUse\": [\n      {\n        \"matcher\": \"Bash\",\n        \"hooks\": [\n          {\n            \"type\": \"command\",\n            \"command\": \"jitso hook guard\"\n          }\n        ]\n      },\n      {\n        \"matcher\": \"mcp__.*orca.*__.*\",\n        \"hooks\": [\n          {\n            \"type\": \"command\",\n            \"command\": \"jitso hook guard\"\n          }\n        ]\n      }\n    ],\n    \"SessionEnd\": [\n      {\n        \"hooks\": [\n          {\n            \"type\": \"command\",\n            \"command\": \"jitso hook guard\"\n          }\n        ]\n      }\n    ]\n  }\n}\n"
+          }
+        ],
+        "orca_calls": {
+          "empty": true
+        }
+      }
+    }
+  ]
+}

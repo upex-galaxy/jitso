@@ -63,9 +63,9 @@ func withMissing(g Group, text string) Group {
 
 func TestGroupCommand(t *testing.T) {
 	ran := false
-	g := Group{Name: "setup", Usage: "u", Subs: []GroupSub{{Name: "hook", Run: func(*Context, []string) error { ran = true; return nil }}}}
+	g := Group{Name: "sample", Usage: "u", Subs: []GroupSub{{Name: "hook", Run: func(*Context, []string) error { ran = true; return nil }}}}
 	c := g.Command(82, "set things up")
-	if c.Name != "setup" || c.Order != 82 || c.Summary != "set things up" || c.Run == nil {
+	if c.Name != "sample" || c.Order != 82 || c.Summary != "set things up" || c.Run == nil {
 		t.Fatalf("command = %+v", c)
 	}
 	if err := c.Run(&Context{}, []string{"hook"}); err != nil || !ran {
@@ -74,7 +74,7 @@ func TestGroupCommand(t *testing.T) {
 	if err := c.Run(&Context{}, nil); fail.Code(err) != 2 {
 		t.Errorf("err = %v", err)
 	}
-	if _, ok := Lookup("setup"); ok {
+	if _, ok := Lookup("sample"); ok {
 		t.Error("Command must not register")
 	}
 }

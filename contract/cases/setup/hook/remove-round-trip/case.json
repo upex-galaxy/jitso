@@ -1,0 +1,98 @@
+{
+  "id": "setup/hook/remove-round-trip",
+  "title": "setup hook then setup hook --remove gives the original bytes back, in the file's own indent",
+  "source": [
+    "intended: docs/decisions.md D8 (setup hook, defect N-17): jitso registers its guard in the project's .claude/settings.json without clobbering anything"
+  ],
+  "status": {
+    "ts": "xfail",
+    "go": "pass"
+  },
+  "defect": "N-17",
+  "intent": "INTENDED behavior (defect N-17, setup hook). For a file that re-encodes to its own bytes (2 spaces, 4 spaces, a tab, compact, numbers such as `1.50`, non-ASCII text, a missing trailing newline), `setup hook --yes` followed by `setup hook --remove --yes` leaves the original bytes: the edit goes through an order-preserving JSON tree and the file's own indent, and `--remove` drops only what jitso added and any container that became empty. The oracle has no `setup` command: it answers `unknown command \"setup\"` on stderr with exit 2 and prints nothing on stdout, so every expectation that needs this output or file effect FAILS on it.",
+  "project": {
+    "files": {
+      ".claude/settings.json": "{{seed}}"
+    }
+  },
+  "for_each": {
+    "vars": [
+      "seed"
+    ],
+    "rows": [
+      [
+        "{\n  \"$schema\": \"https://json.schemastore.org/claude-code-settings.json\",\n  \"permissions\": {\n    \"allow\": [\n      \"Bash(git status)\"\n    ]\n  },\n  \"hooks\": {\n    \"PreToolUse\": [\n      {\n        \"matcher\": \"Bash\",\n        \"hooks\": [\n          {\n            \"type\": \"command\",\n            \"command\": \"./check.sh\"\n          }\n        ]\n      }\n    ],\n    \"Stop\": [\n      {\n        \"hooks\": [\n          {\n            \"type\": \"command\",\n            \"command\": \"./notify.sh\"\n          }\n        ]\n      }\n    ]\n  },\n  \"env\": {\n    \"FOO\": \"bar\"\n  }\n}\n"
+      ],
+      [
+        "{\n  \"hooks\": {\n    \"Stop\": [\n      {\n        \"hooks\": [\n          {\n            \"type\": \"command\",\n            \"command\": \"./notify.sh\"\n          }\n        ]\n      }\n    ]\n  }\n}\n"
+      ],
+      [
+        "{\n    \"permissions\": {\n        \"allow\": [\n            \"Bash(git status)\"\n        ]\n    },\n    \"hooks\": {\n        \"PreToolUse\": [\n            {\n                \"matcher\": \"Edit\",\n                \"hooks\": [\n                    {\n                        \"type\": \"command\",\n                        \"command\": \"./fmt.sh\"\n                    }\n                ]\n            }\n        ]\n    }\n}\n"
+      ],
+      [
+        "{\n\t\"model\": \"opus\",\n\t\"hooks\": {\n\t\t\"PostToolUse\": [\n\t\t\t{\n\t\t\t\t\"matcher\": \"Write\",\n\t\t\t\t\"hooks\": [\n\t\t\t\t\t{\n\t\t\t\t\t\t\"type\": \"command\",\n\t\t\t\t\t\t\"command\": \"./lint.sh\"\n\t\t\t\t\t}\n\t\t\t\t]\n\t\t\t}\n\t\t]\n\t}\n}\n"
+      ],
+      [
+        "{\"permissions\":{\"deny\":[\"Bash(rm *)\"]},\"hooks\":{\"Stop\":[{\"hooks\":[{\"type\":\"command\",\"command\":\"./n.sh\"}]}]}}\n"
+      ],
+      [
+        "{\n  \"cleanupPeriodDays\": 30,\n  \"ratio\": 1.50,\n  \"name\": \"café → ok\",\n  \"hooks\": {\n    \"Stop\": [\n      {\n        \"hooks\": [\n          {\n            \"type\": \"command\",\n            \"command\": \"./n.sh\"\n          }\n        ]\n      }\n    ]\n  }\n}\n"
+      ],
+      [
+        "{\n  \"hooks\": {\n    \"Stop\": [\n      {\n        \"hooks\": [\n          {\n            \"type\": \"command\",\n            \"command\": \"./n.sh\"\n          }\n        ]\n      }\n    ]\n  }\n}"
+      ]
+    ],
+    "ids": [
+      "canonical-with-user-hooks",
+      "hooks-only",
+      "four-space-indent",
+      "tab-indent",
+      "compact",
+      "numbers-and-unicode",
+      "no-trailing-newline"
+    ]
+  },
+  "steps": [
+    {
+      "run": [
+        "setup",
+        "hook",
+        "--yes"
+      ],
+      "expect": {
+        "exit": 0,
+        "stdout": [
+          "wrote .claude/settings.json"
+        ]
+      }
+    },
+    {
+      "run": [
+        "setup",
+        "hook",
+        "--remove",
+        "--yes"
+      ],
+      "expect": {
+        "exit": 0,
+        "stdout": [
+          "wrote .claude/settings.json",
+          {
+            "regex": "jitso setup hook: done\\n$"
+          }
+        ],
+        "stderr": [
+          {
+            "not_contains": "unknown command"
+          }
+        ],
+        "files": [
+          {
+            "path": ".claude/settings.json",
+            "equals": "{{seed}}"
+          }
+        ]
+      }
+    }
+  ]
+}

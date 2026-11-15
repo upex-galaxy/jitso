@@ -1,0 +1,90 @@
+{
+  "id": "setup/hook/never-reads-settings-local",
+  "title": "setup hook never opens .claude/settings.local.json",
+  "source": [
+    "intended: docs/decisions.md D8 (setup hook, defect N-17): jitso registers its guard in the project's .claude/settings.json without clobbering anything"
+  ],
+  "status": {
+    "ts": "xfail",
+    "go": "pass"
+  },
+  "defect": "N-17",
+  "intent": "INTENDED behavior (defect N-17, setup hook). `.claude/settings.local.json` holds the owner's private settings (AGENTS.md rule 1): jitso never reads, edits or names it, even when it is not valid JSON. The command succeeds, neither stream mentions the file or its content, and the file is as it was. The oracle has no `setup` command: it answers `unknown command \"setup\"` on stderr with exit 2 and prints nothing on stdout, so every expectation that needs this output or file effect FAILS on it.",
+  "project": {
+    "files": {
+      ".claude/settings.local.json": "not json SECRET_VALUE"
+    }
+  },
+  "steps": [
+    {
+      "run": [
+        "setup",
+        "hook",
+        "--yes"
+      ],
+      "expect": {
+        "exit": 0,
+        "stdout": [
+          "created .claude/settings.json",
+          {
+            "not_contains": "SECRET_VALUE"
+          },
+          {
+            "not_contains": "settings.local"
+          }
+        ],
+        "stderr": [
+          {
+            "not_contains": "unknown command"
+          },
+          {
+            "not_contains": "SECRET_VALUE"
+          },
+          {
+            "not_contains": "settings.local"
+          }
+        ],
+        "files": [
+          {
+            "path": ".claude/settings.local.json",
+            "equals": "not json SECRET_VALUE"
+          }
+        ]
+      }
+    },
+    {
+      "run": [
+        "setup",
+        "hook",
+        "--remove",
+        "--yes"
+      ],
+      "expect": {
+        "exit": 0,
+        "stdout": [
+          {
+            "not_contains": "SECRET_VALUE"
+          },
+          {
+            "not_contains": "settings.local"
+          },
+          "removed .claude/settings.json"
+        ],
+        "stderr": [
+          {
+            "not_contains": "SECRET_VALUE"
+          },
+          {
+            "not_contains": "settings.local"
+          }
+        ],
+        "files": [
+          {
+            "path": ".claude/settings.local.json",
+            "equals": "not json SECRET_VALUE"
+          }
+        ]
+      }
+    }
+  ]
+}

@@ -1,0 +1,83 @@
+{
+  "id": "setup/hook/linked-worktree-writes-the-checkout",
+  "title": "from a linked worktree the settings file goes to that worktree, while the backups go to the primary checkout's .jitso",
+  "source": [
+    "intended: docs/decisions.md D8 (setup hook, defect N-17): jitso registers its guard in the project's .claude/settings.json without clobbering anything"
+  ],
+  "status": {
+    "ts": "xfail",
+    "go": "pass"
+  },
+  "defect": "N-17",
+  "intent": "INTENDED behavior (defect N-17, setup hook). `.claude/settings.json` is committed content of the branch you are on, so the file is written into the checkout of the working folder (the worktree), never into the primary. Backups and state live under the primary's `.jitso/`: removing the hook from the worktree backs the file up there, and the worktree gets no `.jitso`. The oracle has no `setup` command: it answers `unknown command \"setup\"` on stderr with exit 2 and prints nothing on stdout, so every expectation that needs this output or file effect FAILS on it.",
+  "steps": [
+    {
+      "git_worktree": {
+        "name": "w"
+      }
+    },
+    {
+      "run": [
+        "setup",
+        "hook",
+        "--yes"
+      ],
+      "cwd": "{{WORKTREE_w}}",
+      "expect": {
+        "exit": 0,
+        "stdout": [
+          "created .claude/settings.json"
+        ],
+        "stderr": [
+          {
+            "not_contains": "unknown command"
+          }
+        ],
+        "files": [
+          {
+            "path": "{{WORKTREE_w}}/.claude/settings.json",
+            "equals": "{\n  \"hooks\": {\n    \"PreToolUse\": [\n      {\n        \"matcher\": \"Bash\",\n        \"hooks\": [\n          {\n            \"type\": \"command\",\n            \"command\": \"jitso hook guard\"\n          }\n        ]\n      },\n      {\n        \"matcher\": \"mcp__.*orca.*__.*\",\n        \"hooks\": [\n          {\n            \"type\": \"command\",\n            \"command\": \"jitso hook guard\"\n          }\n        ]\n      }\n    ],\n    \"SessionEnd\": [\n      {\n        \"hooks\": [\n          {\n            \"type\": \"command\",\n            \"command\": \"jitso hook guard\"\n          }\n        ]\n      }\n    ]\n  }\n}\n"
+          },
+          {
+            "path": "{{PROJECT}}/.claude",
+            "exists": false
+          }
+        ]
+      }
+    },
+    {
+      "run": [
+        "setup",
+        "hook",
+        "--remove",
+        "--yes"
+      ],
+      "cwd": "{{WORKTREE_w}}",
+      "expect": {
+        "exit": 0,
+        "stdout": [
+          {
+            "regex": "backed up \\.claude/settings\\.json to {{PROJECT}}/\\.jitso/backups/\\d{8}T\\d{6}Z-[0-9a-f]{4}/\\.claude/settings\\.json\\n"
+          },
+          "removed .claude/settings.json"
+        ],
+        "files": [
+          {
+            "path": "{{WORKTREE_w}}/.claude",
+            "exists": false
+          },
+          {
+            "path": "{{WORKTREE_w}}/.jitso",
+            "exists": false
+          },
+          {
+            "path": "{{PROJECT}}/.jitso/backups",
+            "entries": {
+              "count": 2
+            }
+          }
+        ]
+      }
+    }
+  ]
+}

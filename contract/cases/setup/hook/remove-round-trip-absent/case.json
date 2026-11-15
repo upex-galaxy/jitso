@@ -1,0 +1,57 @@
+{
+  "id": "setup/hook/remove-round-trip-absent",
+  "title": "setup hook then setup hook --remove on a project with no .claude leaves no .claude behind",
+  "source": [
+    "intended: docs/decisions.md D8 (setup hook, defect N-17): jitso registers its guard in the project's .claude/settings.json without clobbering anything"
+  ],
+  "status": {
+    "ts": "xfail",
+    "go": "pass"
+  },
+  "defect": "N-17",
+  "intent": "INTENDED behavior (defect N-17, setup hook). The file jitso created is deleted by `--remove` (the document becomes `{}`), and the `.claude/` folder with it when it is then empty. The oracle has no `setup` command: it answers `unknown command \"setup\"` on stderr with exit 2 and prints nothing on stdout, so every expectation that needs this output or file effect FAILS on it.",
+  "steps": [
+    {
+      "run": [
+        "setup",
+        "hook",
+        "--yes"
+      ],
+      "expect": {
+        "exit": 0,
+        "stdout": [
+          "created .claude/settings.json"
+        ]
+      }
+    },
+    {
+      "run": [
+        "setup",
+        "hook",
+        "--remove",
+        "--yes"
+      ],
+      "expect": {
+        "exit": 0,
+        "stdout": [
+          "removed .claude/settings.json",
+          "removed .claude",
+          {
+            "regex": "jitso setup hook: done\\n$"
+          }
+        ],
+        "stderr": [
+          {
+            "not_contains": "unknown command"
+          }
+        ],
+        "files": [
+          {
+            "path": ".claude",
+            "exists": false
+          }
+        ]
+      }
+    }
+  ]
+}

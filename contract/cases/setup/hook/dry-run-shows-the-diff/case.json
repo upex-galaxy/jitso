@@ -1,0 +1,68 @@
+{
+  "id": "setup/hook/dry-run-shows-the-diff",
+  "title": "setup hook --dry-run prints the diff of the new file and writes nothing",
+  "source": [
+    "intended: docs/decisions.md D8 (setup hook, defect N-17): jitso registers its guard in the project's .claude/settings.json without clobbering anything"
+  ],
+  "status": {
+    "ts": "xfail",
+    "go": "pass"
+  },
+  "defect": "N-17",
+  "intent": "INTENDED behavior (defect N-17, setup hook). `--dry-run` shows what would change and ends with `jitso setup hook: dry run, nothing written`, exit 0, and writes nothing (not the file, not a backup folder). The oracle has no `setup` command: it answers `unknown command \"setup\"` on stderr with exit 2 and prints nothing on stdout, so every expectation that needs this output or file effect FAILS on it.",
+  "steps": [
+    {
+      "run": [
+        "setup",
+        "hook",
+        "--dry-run"
+      ],
+      "expect": {
+        "exit": 0,
+        "stdout": [
+          "--- /dev/null",
+          "+++ b/.claude/settings.json",
+          "+            \"command\": \"jitso hook guard\"",
+          {
+            "regex": "jitso setup hook: dry run, nothing written\\n$"
+          }
+        ],
+        "stderr": [
+          {
+            "not_contains": "unknown command"
+          }
+        ],
+        "files": [
+          {
+            "path": ".claude/settings.json",
+            "exists": false
+          },
+          {
+            "path": ".jitso/backups",
+            "exists": false
+          }
+        ]
+      }
+    },
+    {
+      "run": [
+        "setup",
+        "hook",
+        "--dry-run",
+        "--yes"
+      ],
+      "expect": {
+        "exit": 0,
+        "stdout": [
+          "dry run, nothing written"
+        ],
+        "files": [
+          {
+            "path": ".claude",
+            "exists": false
+          }
+        ]
+      }
+    }
+  ]
+}

@@ -1,0 +1,86 @@
+{
+  "id": "setup/hook/refuses-a-foreign-layout",
+  "title": "a file that does not re-encode to its own bytes is refused with exit 3 and the fragment to add by hand",
+  "source": [
+    "intended: docs/decisions.md D8 (setup hook, defect N-17): jitso registers its guard in the project's .claude/settings.json without clobbering anything"
+  ],
+  "status": {
+    "ts": "xfail",
+    "go": "pass"
+  },
+  "defect": "N-17",
+  "intent": "INTENDED behavior (defect N-17, setup hook). The edit re-encodes the JSON tree in the file's own indent. When the unchanged tree does not give the file's own bytes (several keys on one line, an indent that jumps, CRLF, a `\\\\u` escape, extra blank lines at the end, a space before a colon), jitso will not reformat the file: `jitso: .claude/settings.json is not laid out the way jitso writes JSON (one value per line, a consistent indent); nothing written. Add these entries by hand, or re-save the file with a 2-space indent and run again:` and then the hooks to add, as JSON, on stderr. Exit 3, the file unchanged. The oracle has no `setup` command: it answers `unknown command \"setup\"` on stderr with exit 2 and prints nothing on stdout, so every expectation that needs this output or file effect FAILS on it.",
+  "project": {
+    "files": {
+      ".claude/settings.json": "{{seed}}"
+    }
+  },
+  "for_each": {
+    "vars": [
+      "seed"
+    ],
+    "rows": [
+      [
+        "{\n  \"a\": 1, \"b\": 2\n}\n"
+      ],
+      [
+        "{\n  \"a\": {\n      \"b\": 1\n  }\n}\n"
+      ],
+      [
+        "{\r\n  \"a\": 1\r\n}\r\n"
+      ],
+      [
+        "{\n  \"a\": \"\\u00e9\"\n}\n"
+      ],
+      [
+        "{\n  \"a\": 1\n}\n\n"
+      ],
+      [
+        "{\n  \"a\" : 1\n}\n"
+      ]
+    ],
+    "ids": [
+      "keys-on-one-line",
+      "indent-jumps",
+      "crlf-line-ends",
+      "unicode-escape",
+      "two-trailing-newlines",
+      "space-before-colon"
+    ]
+  },
+  "steps": [
+    {
+      "run": [
+        "setup",
+        "hook",
+        "--yes"
+      ],
+      "expect": {
+        "exit": 3,
+        "stdout": [
+          {
+            "empty": true
+          }
+        ],
+        "stderr": [
+          "jitso: .claude/settings.json is not laid out the way jitso writes JSON (one value per line, a consistent indent); nothing written. Add these entries by hand, or re-save the file with a 2-space indent and run again:",
+          "            \"command\": \"jitso hook guard\"",
+          "\"matcher\": \"mcp__.*orca.*__.*\"",
+          {
+            "not_contains": "unknown command"
+          }
+        ],
+        "files": [
+          {
+            "path": ".claude/settings.json",
+            "equals": "{{seed}}"
+          },
+          {
+            "path": ".jitso/backups",
+            "exists": false
+          }
+        ]
+      }
+    }
+  ]
+}

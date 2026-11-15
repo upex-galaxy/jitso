@@ -1,0 +1,131 @@
+{
+  "id": "setup/hook/refuses-broken-settings",
+  "title": "a settings file that is not valid JSON or has the wrong shape is refused with exit 3, the file named, nothing written",
+  "source": [
+    "intended: docs/decisions.md D8 (setup hook, defect N-17): jitso registers its guard in the project's .claude/settings.json without clobbering anything"
+  ],
+  "status": {
+    "ts": "xfail",
+    "go": "pass"
+  },
+  "defect": "N-17",
+  "intent": "INTENDED behavior (defect N-17, setup hook). Each broken file is an environment error (exit 3): `jitso: .claude/settings.json is not valid JSON (<decoder message>); nothing written`, `... must hold a JSON object ...`, `jitso: \"<dot path>\" in .claude/settings.json must be an object|an array; nothing written`, or `.claude/settings.json has the key \"<k>\" twice at \"<path>\"` (the root is `.`). The file stays as it was and there is no backup. `--remove` is refused the same way. The oracle has no `setup` command: it answers `unknown command \"setup\"` on stderr with exit 2 and prints nothing on stdout, so every expectation that needs this output or file effect FAILS on it.",
+  "project": {
+    "files": {
+      ".claude/settings.json": "{{seed}}"
+    }
+  },
+  "for_each": {
+    "vars": [
+      "seed",
+      "detail"
+    ],
+    "rows": [
+      [
+        "{",
+        "is not valid JSON ("
+      ],
+      [
+        "[]",
+        "must hold a JSON object"
+      ],
+      [
+        "{\"hooks\": []}",
+        "\"hooks\" in .claude/settings.json must be an object"
+      ],
+      [
+        "{\"hooks\": {\"PreToolUse\": {}}}",
+        "\"hooks.PreToolUse\" in .claude/settings.json must be an array"
+      ],
+      [
+        "{\"hooks\": {\"PreToolUse\": [\"x\"]}}",
+        "\"hooks.PreToolUse.0\" in .claude/settings.json must be an object"
+      ],
+      [
+        "{\"hooks\": {\"Stop\": [{\"hooks\": {}}]}}",
+        "\"hooks.Stop.0.hooks\" in .claude/settings.json must be an array"
+      ],
+      [
+        "{\"a\": 1,}",
+        "is not valid JSON ("
+      ],
+      [
+        "{\"a\":1,\"a\":2}",
+        "has the key \"a\" twice at \".\""
+      ],
+      [
+        "",
+        "is not valid JSON ("
+      ]
+    ],
+    "ids": [
+      "not-json",
+      "root-is-an-array",
+      "hooks-is-an-array",
+      "event-is-an-object",
+      "group-is-a-string",
+      "group-hooks-is-an-object",
+      "trailing-comma",
+      "duplicate-key",
+      "empty-file"
+    ]
+  },
+  "steps": [
+    {
+      "run": [
+        "setup",
+        "hook",
+        "--yes"
+      ],
+      "expect": {
+        "exit": 3,
+        "stdout": [
+          {
+            "empty": true
+          }
+        ],
+        "stderr": [
+          {
+            "regex": "^jitso: "
+          },
+          "{{detail}}",
+          "nothing written",
+          {
+            "not_contains": "unknown command"
+          }
+        ],
+        "files": [
+          {
+            "path": ".claude/settings.json",
+            "equals": "{{seed}}"
+          },
+          {
+            "path": ".jitso/backups",
+            "exists": false
+          }
+        ]
+      }
+    },
+    {
+      "run": [
+        "setup",
+        "hook",
+        "--remove",
+        "--yes"
+      ],
+      "expect": {
+        "exit": 3,
+        "stderr": [
+          "{{detail}}",
+          "nothing written"
+        ],
+        "files": [
+          {
+            "path": ".claude/settings.json",
+            "equals": "{{seed}}"
+          }
+        ]
+      }
+    }
+  ]
+}

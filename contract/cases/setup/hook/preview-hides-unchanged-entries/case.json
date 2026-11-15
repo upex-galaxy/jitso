@@ -1,0 +1,69 @@
+{
+  "id": "setup/hook/preview-hides-unchanged-entries",
+  "title": "the preview of a settings change prints no unchanged line, so a token in a user hook or in env never reaches the terminal",
+  "source": [
+    "intended: docs/decisions.md D8 (setup hook, defect N-17): jitso registers its guard in the project's .claude/settings.json without clobbering anything"
+  ],
+  "status": {
+    "ts": "xfail",
+    "go": "pass"
+  },
+  "defect": "N-17",
+  "intent": "INTENDED behavior (defect N-17, setup hook). `.claude/settings.json` can hold `env` values and other hooks' commands with tokens (AGENTS.md rule 1). jitso only adds lines here, so the diff of a settings file prints zero context lines: the unified diff has its `---`/`+++` headers and `@@` hunks but never the user's own entries (`TOKEN-CANARY-7`, `ENV-CANARY-9`). The oracle has no `setup` command: it answers `unknown command \"setup\"` on stderr with exit 2 and prints nothing on stdout, so every expectation that needs this output or file effect FAILS on it.",
+  "project": {
+    "files": {
+      ".claude/settings.json": {
+        "from": "seed.json"
+      }
+    }
+  },
+  "steps": [
+    {
+      "run": [
+        "setup",
+        "hook",
+        "--dry-run"
+      ],
+      "expect": {
+        "exit": 0,
+        "stdout": [
+          "+++ b/.claude/settings.json",
+          "@@",
+          "+        \"matcher\": \"mcp__.*orca.*__.*\",",
+          {
+            "not_contains": "TOKEN-CANARY-7"
+          },
+          {
+            "not_contains": "ENV-CANARY-9"
+          },
+          {
+            "not_contains": "API_KEY"
+          },
+          {
+            "not_contains": "./a.sh"
+          },
+          {
+            "regex": "jitso setup hook: dry run, nothing written\\n$"
+          }
+        ],
+        "stderr": [
+          {
+            "not_contains": "unknown command"
+          },
+          {
+            "not_contains": "TOKEN-CANARY-7"
+          },
+          {
+            "not_contains": "ENV-CANARY-9"
+          }
+        ],
+        "files": [
+          {
+            "path": ".claude/settings.json",
+            "equals": "{\n  \"hooks\": {\n    \"PreToolUse\": [\n      {\n        \"matcher\": \"Bash\",\n        \"hooks\": [\n          {\n            \"type\": \"command\",\n            \"command\": \"./a.sh\"\n          }\n        ]\n      }\n    ],\n    \"Stop\": [\n      {\n        \"hooks\": [\n          {\n            \"type\": \"command\",\n            \"command\": \"./notify.sh TOKEN-CANARY-7\"\n          }\n        ]\n      }\n    ]\n  },\n  \"env\": {\n    \"API_KEY\": \"ENV-CANARY-9\"\n  }\n}\n"
+          }
+        ]
+      }
+    }
+  ]
+}

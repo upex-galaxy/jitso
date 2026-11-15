@@ -1,0 +1,28 @@
+{
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "./a.sh"
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "./notify.sh TOKEN-CANARY-7"
+          }
+        ]
+      }
+    ]
+  },
+  "env": {
+    "API_KEY": "ENV-CANARY-9"
+  }
+}

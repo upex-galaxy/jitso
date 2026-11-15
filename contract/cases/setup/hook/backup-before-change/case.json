@@ -1,0 +1,87 @@
+{
+  "id": "setup/hook/backup-before-change",
+  "title": "changing an existing settings file saves the old bytes first under .jitso/backups/<id>/, which ignores itself",
+  "source": [
+    "intended: docs/decisions.md D8 (setup hook, defect N-17): jitso registers its guard in the project's .claude/settings.json without clobbering anything"
+  ],
+  "status": {
+    "ts": "xfail",
+    "go": "pass"
+  },
+  "defect": "N-17",
+  "intent": "INTENDED behavior (defect N-17, setup hook). Before it rewrites an existing file, jitso copies the old bytes to `.jitso/backups/<id>/.claude/settings.json` (`<id>` is the UTC time plus 4 hex digits), prints `backed up <path> to <backup path>`, writes `manifest.json` and a self-ignoring `.gitignore` (`*`) in `.jitso/backups/`. The oracle has no `setup` command: it answers `unknown command \"setup\"` on stderr with exit 2 and prints nothing on stdout, so every expectation that needs this output or file effect FAILS on it.",
+  "project": {
+    "files": {
+      ".claude/settings.json": {
+        "from": "seed.json"
+      }
+    }
+  },
+  "steps": [
+    {
+      "run": [
+        "setup",
+        "hook",
+        "--yes"
+      ],
+      "capture": {
+        "BACKUP": {
+          "from": "stdout",
+          "regex": "backed up \\.claude/settings\\.json to (\\.jitso/backups/\\d{8}T\\d{6}Z-[0-9a-f]{4}/\\.claude/settings\\.json)"
+        },
+        "BACKUP_DIR": {
+          "from": "stdout",
+          "regex": "backed up \\.claude/settings\\.json to (\\.jitso/backups/\\d{8}T\\d{6}Z-[0-9a-f]{4})/"
+        }
+      },
+      "expect": {
+        "exit": 0,
+        "stdout": [
+          {
+            "regex": "backed up \\.claude/settings\\.json to \\.jitso/backups/\\d{8}T\\d{6}Z-[0-9a-f]{4}/\\.claude/settings\\.json\\n"
+          }
+        ],
+        "stderr": [
+          {
+            "not_contains": "unknown command"
+          }
+        ],
+        "files": [
+          {
+            "path": ".jitso/backups/.gitignore",
+            "equals": "*\n"
+          },
+          {
+            "path": ".claude/settings.json",
+            "equals": "{\n  \"$schema\": \"https://json.schemastore.org/claude-code-settings.json\",\n  \"permissions\": {\n    \"allow\": [\n      \"Bash(git status)\"\n    ]\n  },\n  \"hooks\": {\n    \"PreToolUse\": [\n      {\n        \"matcher\": \"Bash\",\n        \"hooks\": [\n          {\n            \"type\": \"command\",\n            \"command\": \"./check.sh\"\n          }\n        ]\n      },\n      {\n        \"matcher\": \"Bash\",\n        \"hooks\": [\n          {\n            \"type\": \"command\",\n            \"command\": \"jitso hook guard\"\n          }\n        ]\n      },\n      {\n        \"matcher\": \"mcp__.*orca.*__.*\",\n        \"hooks\": [\n          {\n            \"type\": \"command\",\n            \"command\": \"jitso hook guard\"\n          }\n        ]\n      }\n    ],\n    \"Stop\": [\n      {\n        \"hooks\": [\n          {\n            \"type\": \"command\",\n            \"command\": \"./notify.sh\"\n          }\n        ]\n      }\n    ],\n    \"SessionEnd\": [\n      {\n        \"hooks\": [\n          {\n            \"type\": \"command\",\n            \"command\": \"jitso hook guard\"\n          }\n        ]\n      }\n    ]\n  },\n  \"env\": {\n    \"FOO\": \"bar\"\n  }\n}\n"
+          },
+          {
+            "path": "{{BACKUP}}",
+            "equals": "{\n  \"$schema\": \"https://json.schemastore.org/claude-code-settings.json\",\n  \"permissions\": {\n    \"allow\": [\n      \"Bash(git status)\"\n    ]\n  },\n  \"hooks\": {\n    \"PreToolUse\": [\n      {\n        \"matcher\": \"Bash\",\n        \"hooks\": [\n          {\n            \"type\": \"command\",\n            \"command\": \"./check.sh\"\n          }\n        ]\n      }\n    ],\n    \"Stop\": [\n      {\n        \"hooks\": [\n          {\n            \"type\": \"command\",\n            \"command\": \"./notify.sh\"\n          }\n        ]\n      }\n    ]\n  },\n  \"env\": {\n    \"FOO\": \"bar\"\n  }\n}\n"
+          },
+          {
+            "path": "{{BACKUP_DIR}}/manifest.json",
+            "json": [
+              {
+                "path": "command",
+                "equals": "setup hook"
+              },
+              {
+                "path": "scope",
+                "equals": "project"
+              },
+              {
+                "path": "files.0.path",
+                "equals": ".claude/settings.json"
+              },
+              {
+                "path": "files.0.existed",
+                "equals": true
+              }
+            ]
+          }
+        ]
+      }
+    }
+  ]
+}
