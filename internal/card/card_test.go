@@ -30,13 +30,13 @@ func TestRender(t *testing.T) {
 				"launch: bun run jitso launch\n" +
 				"budget 400k tokens (100%), list cap US$ 6.00 | reports to: your conductor | log .jitso/launches.jsonl"},
 	}
-	// The header names the layer of a parent or user build, and only those.
+	// The header names the layer of a parent, user or draft build, and only those.
 	base := Input{ID: "L1", Role: "operator", Type: "explorer", Mode: "direct", Build: "b", BuildVersion: "1", Model: "m", Effort: "low", LaunchCommand: CommandPlain}
-	for _, layer := range []string{"", "repo", "parent", "user"} {
+	for _, layer := range []string{"", "repo", "parent", "user", "draft"} {
 		in := base
 		in.Layer = layer
 		want := "JITSO L1 | operator/explorer | mode direct (asks you) | build b v1"
-		if layer == "parent" || layer == "user" {
+		if layer == "parent" || layer == "user" || layer == "draft" {
 			want += " (" + layer + ")"
 		}
 		tests = append(tests, struct {

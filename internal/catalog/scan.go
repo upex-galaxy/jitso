@@ -81,6 +81,33 @@ func (r *Result) Winner(id string) *File {
 	return nil
 }
 
+// Saved is the file that is the build of id among the saved layers (the
+// project's own, the parents' and the user's), valid or not: the first file
+// with that id in source order that is not a draft. Nil when no saved file has
+// it. A draft may not take an id that Saved returns.
+func (r *Result) Saved(id string) *File {
+	if id == "" {
+		return nil
+	}
+	for _, f := range r.Files {
+		if f.ID == id && f.Layer != LayerDraft {
+			return f
+		}
+	}
+	return nil
+}
+
+// Drafts are the files of the draft layer, by file name.
+func (r *Result) Drafts() []*File {
+	var out []*File
+	for _, f := range r.Files {
+		if f.Layer == LayerDraft {
+			out = append(out, f)
+		}
+	}
+	return out
+}
+
 // Scan reads the allowlists and the route ids of the project (fsys is its
 // primary checkout) and every build file of every layer, and validates each
 // file against the project's allowlists and route ids: a build is valid for
@@ -125,8 +152,17 @@ func ScanSources(cfg Config, routeIDs []string, sources []Source) (*Result, erro
 		}
 		res.Files = append(res.Files, files...)
 	}
+	res.resolve()
+	return res, nil
+}
+
+// resolve decides which file is the build of each id (the first file of each id
+// in source order shadows the others) and resolves the subagent names of every
+// file that is valid so far. It runs once over files whose Problems hold only
+// their load problems.
+func (r *Result) resolve() {
 	winners := map[string]*File{}
-	for _, f := range res.Files {
+	for _, f := range r.Files {
 		if f.ID == "" {
 			continue
 		}
@@ -138,7 +174,7 @@ func ScanSources(cfg Config, routeIDs []string, sources []Source) (*Result, erro
 	}
 	// Subagent names resolve with the same lookup as every build: the winner
 	// of the name, which must itself be valid here and subagent tier.
-	for _, f := range res.Files {
+	for _, f := range r.Files {
 		if f.Raw == nil || len(f.Problems) > 0 {
 			continue
 		}
@@ -148,7 +184,80 @@ func ScanSources(cfg Config, routeIDs []string, sources []Source) (*Result, erro
 			}
 		}
 	}
-	return res, nil
+}
+
+// Candidate is the scan as it would be once a draft holding data is written to
+// the draft layer, and that draft's file: the draft of the same id (the same
+// file name) is replaced, every other file is as scanned, and the new file is
+// validated like every draft (the draft status rule, the allowlists, the
+// subagent names resolved through the same lookup). The receiver is not
+// changed. A draft that has no valid id has no file name: its Name is "" and
+// it shadows nothing.
+//
+// It is the pure half of `jitso build draft`: the caller adds the rules only a
+// launch sees and refuses an id a saved build already has.
+func (r *Result) Candidate(data []byte) (*Result, *File) {
+	f := &File{Layer: LayerDraft}
+	fillFile(f, data, r.Config, r.RouteIDs)
+	display, dir := DraftsDir, ""
+	for _, src := range r.Sources {
+		if src.Layer == LayerDraft {
+			display, dir = src.Display, src.Dir
+		}
+	}
+	if f.ID != "" {
+		f.Name = f.ID + buildsExtension
+		f.Display = display + "/" + f.Name
+		f.Path = realPath(filepath.Join(dir, f.Name))
+	}
+
+	out := &Result{Config: r.Config, RouteIDs: r.RouteIDs, Sources: r.Sources}
+	at := -1
+	for _, old := range r.Files {
+		if old.Layer == LayerDraft && f.Name != "" && old.Name == f.Name {
+			continue
+		}
+		c := *old
+		c.Problems = append([]string(nil), old.Problems[:old.loadProblems]...)
+		c.ShadowedBy = nil
+		out.Files = append(out.Files, &c)
+		if c.Layer == LayerDraft && (f.Name == "" || c.Name < f.Name) {
+			at = len(out.Files)
+		}
+	}
+	// The new file goes by name among the drafts, after every saved layer.
+	if at < 0 {
+		at = len(out.Files)
+		for i, c := range out.Files {
+			if c.Layer == LayerDraft {
+				at = i
+				break
+			}
+		}
+	}
+	out.Files = slices.Insert(out.Files, at, f)
+	out.resolve()
+	return out, f
+}
+
+// fillFile reads data into f: its hash, then decoding and the rules of
+// ValidateBuildIn for the file's layer.
+func fillFile(f *File, data []byte, cfg Config, routeIDs []string) {
+	sum := sha256.Sum256(data)
+	f.SHA256 = hex.EncodeToString(sum[:])
+	raw, err := decodeYAML(data)
+	if err != nil {
+		f.Problems = []string{err.Error()}
+	} else {
+		f.Problems = ValidateBuildIn(raw, cfg, routeIDs, f.Layer)
+		if m, ok := raw.(*Map); ok {
+			f.Raw = m
+			if id, ok := m.Value("id").(string); ok && kebab.MatchString(id) {
+				f.ID = id
+			}
+		}
+	}
+	f.loadProblems = len(f.Problems)
 }
 
 // scanSource reads, decodes and validates the *.yaml files of one folder, by
@@ -181,21 +290,7 @@ func scanSource(src Source, cfg Config, routeIDs []string) ([]*File, error) {
 			files = append(files, f)
 			continue
 		}
-		sum := sha256.Sum256(data)
-		f.SHA256 = hex.EncodeToString(sum[:])
-		raw, err := decodeYAML(data)
-		if err != nil {
-			f.Problems = []string{err.Error()}
-		} else {
-			f.Problems = ValidateBuild(raw, cfg, routeIDs)
-			if m, ok := raw.(*Map); ok {
-				f.Raw = m
-				if id, ok := m.Value("id").(string); ok && kebab.MatchString(id) {
-					f.ID = id
-				}
-			}
-		}
-		f.loadProblems = len(f.Problems)
+		fillFile(f, data, cfg, routeIDs)
 		files = append(files, f)
 	}
 	return files, nil

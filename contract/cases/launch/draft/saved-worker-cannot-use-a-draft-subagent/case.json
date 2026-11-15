@@ -1,0 +1,98 @@
+{
+  "id": "launch/draft/saved-worker-cannot-use-a-draft-subagent",
+  "title": "a saved worker may list only approved subagents, a draft subagent included; a draft worker may list draft subagents but still not a candidate or retired one",
+  "source": [
+    "intended: docs/decisions.md D7 and the drafts rows of the other decisions (a just-in-time build is a draft kept in .jitso/drafts/ and validated by code)"
+  ],
+  "status": {
+    "ts": "xfail",
+    "go": "pass"
+  },
+  "defect": "N-15",
+  "intent": "INTENDED behavior (defect N-15, drafts; docs/decisions.md D7). A subagent's prompt reaches `claude --agents`, so only reviewed text may. A saved (approved) worker whose listed subagent is a draft is `JITSO REJECTED: build \"<worker>\" lists subagent \"<subagent>\", which is draft, not approved`. A draft worker may list a draft subagent (the dry run prints the card), and a draft worker that lists a saved `candidate` subagent is rejected like any worker. The oracle has no drafts and no subagent status check (defect N-11): it ignores the draft helper and launches the saved worker, so the first step exits 0 instead of 2 and the case FAILS on it.",
+  "project": {
+    "files": {
+      ".jitso/briefs/brief.md": "## Goal\n\nFind where the sync entry point of this project is defined and explain in a few sentences how it is wired to the rest of the code.\n\n## Scope\n\nRead only. Do not change any file and do not leave the repository.\n\n## Done when\n\nYou can name the file and the line that defines the entry point, and you have checked it by reading the file.\n\n## Report format\n\nOne short paragraph with the file path, the line number and a one line summary of what it does.\n",
+      "jitso/builds/uses-helper.yaml": "# Saved build written by a drafts case.\nid: uses-helper\nversion: 1\nstatus: approved\nrole: operator\ntype: scanner\nwork_kind: repo-scan\ndescription: Scan the repo for TODO comments and report them.\nharness: claude\nmodel: claude-haiku-5-5\neffort: low\nmode_default: direct\nagents_md: exclude\nroute_scope: [none]\nskills_first: []\ntools: [Read, Glob, Grep]\nmcp: []\nsubagents: [scratch-helper]\nrequires: []\nbudget: { tokens: 150000, usd_list_cap: 0.30 }\nsuccess:\n  - { check: answer_delivered }\n  - { check: no_rule_breaks }\n",
+      "jitso/builds/old-helper.yaml": "# Subagent-tier draft written by a drafts case.\nid: old-helper\nversion: 1\nstatus: candidate\ntier: subagent\ndescription: Read-only helper that lists the TODO comments of one folder.\nprompt: You are a helper. Read the folder you are given and return its TODO comments, one per line. Never edit a file.\nmodel: claude-haiku-5-5\neffort: low\ntools: [Read, Glob, Grep]\nroute_scope: [none]\nsuccess:\n  - { check: answer_delivered }\n",
+      ".jitso/drafts/scratch-helper.yaml": "# Subagent-tier draft written by a drafts case.\nid: scratch-helper\nversion: 1\nstatus: draft\ntier: subagent\ndescription: Read-only helper that lists the TODO comments of one folder.\nprompt: You are a helper. Read the folder you are given and return its TODO comments, one per line. Never edit a file.\nmodel: claude-haiku-5-5\neffort: low\ntools: [Read, Glob, Grep]\nroute_scope: [none]\nsuccess:\n  - { check: answer_delivered }\n",
+      ".jitso/drafts/draft-team.yaml": "# Draft written by a drafts case.\nid: draft-team\nversion: 1\nstatus: draft\nrole: operator\ntype: scanner\nwork_kind: repo-scan\ndescription: Scan the repo for TODO comments and report them.\nharness: claude\nmodel: claude-haiku-5-5\neffort: low\nmode_default: direct\nagents_md: exclude\nroute_scope: [none]\nskills_first: []\ntools: [Read, Glob, Grep]\nmcp: []\nsubagents: [scratch-helper]\nrequires: []\nbudget: { tokens: 150000, usd_list_cap: 0.30 }\nsuccess:\n  - { check: answer_delivered }\n  - { check: no_rule_breaks }\n",
+      ".jitso/drafts/draft-picky.yaml": "# Draft written by a drafts case.\nid: draft-picky\nversion: 1\nstatus: draft\nrole: operator\ntype: scanner\nwork_kind: repo-scan\ndescription: Scan the repo for TODO comments and report them.\nharness: claude\nmodel: claude-haiku-5-5\neffort: low\nmode_default: direct\nagents_md: exclude\nroute_scope: [none]\nskills_first: []\ntools: [Read, Glob, Grep]\nmcp: []\nsubagents: [old-helper]\nrequires: []\nbudget: { tokens: 150000, usd_list_cap: 0.30 }\nsuccess:\n  - { check: answer_delivered }\n  - { check: no_rule_breaks }\n"
+    }
+  },
+  "steps": [
+    {
+      "run": [
+        "launch",
+        "--build",
+        "uses-helper",
+        "--brief",
+        "{{PROJECT}}/.jitso/briefs/brief.md",
+        "--mode",
+        "direct",
+        "--dry-run"
+      ],
+      "expect": {
+        "exit": 2,
+        "stdout": [
+          {
+            "empty": true
+          }
+        ],
+        "stderr": [
+          {
+            "equals": "JITSO REJECTED: build \"uses-helper\" lists subagent \"scratch-helper\", which is draft, not approved\n"
+          }
+        ]
+      }
+    },
+    {
+      "run": [
+        "launch",
+        "--build",
+        "draft-team",
+        "--brief",
+        "{{PROJECT}}/.jitso/briefs/brief.md",
+        "--mode",
+        "direct",
+        "--dry-run"
+      ],
+      "expect": {
+        "exit": 0,
+        "stdout": [
+          {
+            "contains": "| build draft-team v1 (draft)\n"
+          },
+          {
+            "regex": "(?m)^subagents .*scratch-helper"
+          }
+        ]
+      }
+    },
+    {
+      "run": [
+        "launch",
+        "--build",
+        "draft-picky",
+        "--brief",
+        "{{PROJECT}}/.jitso/briefs/brief.md",
+        "--mode",
+        "direct",
+        "--dry-run"
+      ],
+      "expect": {
+        "exit": 2,
+        "stdout": [
+          {
+            "empty": true
+          }
+        ],
+        "stderr": [
+          {
+            "equals": "JITSO REJECTED: build \"draft-picky\" lists subagent \"old-helper\", which is candidate, not approved\n"
+          }
+        ]
+      }
+    }
+  ]
+}

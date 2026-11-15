@@ -1,0 +1,71 @@
+{
+  "id": "launch/draft/registry-names-the-draft",
+  "title": "a real launch of a draft records build_layer draft, the real file and the SHA-256 of the draft's bytes, and card.txt carries (draft)",
+  "source": [
+    "intended: docs/decisions.md D7 and the drafts rows of the other decisions (a just-in-time build is a draft kept in .jitso/drafts/ and validated by code)"
+  ],
+  "status": {
+    "ts": "xfail",
+    "go": "pass"
+  },
+  "defect": "N-15",
+  "intent": "INTENDED behavior (defect N-15, drafts; docs/decisions.md D7). The registry launch line of a draft names the layer (`build_layer: draft`), the real path of the draft file and the SHA-256 of its bytes, so the record still says exactly what ran after the draft is discarded or replaced. card.txt holds the same header as stdout, ending ` (draft)`. The registry keeps its preset and preset_version keys. The oracle has no drafts: it rejects the id as an unknown preset and the case FAILS on it.",
+  "project": {
+    "files": {
+      ".jitso/briefs/brief.md": "## Goal\n\nFind where the sync entry point of this project is defined and explain in a few sentences how it is wired to the rest of the code.\n\n## Scope\n\nRead only. Do not change any file and do not leave the repository.\n\n## Done when\n\nYou can name the file and the line that defines the entry point, and you have checked it by reading the file.\n\n## Report format\n\nOne short paragraph with the file path, the line number and a one line summary of what it does.\n",
+      ".jitso/drafts/scout.yaml": "# Draft written by a drafts case.\nid: scout\nversion: 1\nstatus: draft\nrole: operator\ntype: scanner\nwork_kind: repo-scan\ndescription: Scan the repo for TODO comments and report them.\nharness: claude\nmodel: claude-haiku-5-5\neffort: low\nmode_default: direct\nagents_md: exclude\nroute_scope: [none]\nskills_first: []\ntools: [Read, Glob, Grep]\nmcp: []\nrequires: []\nbudget: { tokens: 150000, usd_list_cap: 0.30 }\nsuccess:\n  - { check: answer_delivered }\n  - { check: no_rule_breaks }\n"
+    }
+  },
+  "steps": [
+    {
+      "run": [
+        "launch",
+        "--build",
+        "scout",
+        "--brief",
+        "{{PROJECT}}/.jitso/briefs/brief.md",
+        "--mode",
+        "direct"
+      ],
+      "capture": {
+        "LAUNCH_ID": {
+          "from": "stdout",
+          "regex": "JITSO (L\\d{8}T\\d{6}-[0-9a-f]{4})",
+          "group": 1
+        }
+      },
+      "expect": {
+        "exit": 0,
+        "stdout": [
+          {
+            "contains": "| build scout v1 (draft)\n"
+          }
+        ],
+        "files": [
+          {
+            "path": ".jitso/launches/{{LAUNCH_ID}}/card.txt",
+            "contains": [
+              "| build scout v1 (draft)\n"
+            ]
+          }
+        ],
+        "registry": {
+          "count": 1,
+          "events": [
+            {
+              "at": 0,
+              "event": "launch",
+              "fields": {
+                "preset": "scout",
+                "preset_version": 1,
+                "build_layer": "draft",
+                "build_file": "{{PROJECT}}/.jitso/drafts/scout.yaml",
+                "build_sha256": "c2924a96bd9b4fec4b15b10e7af04481901c78e60116c77118c4eb84fdc1ec27"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ]
+}

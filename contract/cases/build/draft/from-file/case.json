@@ -1,0 +1,109 @@
+{
+  "id": "build/draft/from-file",
+  "title": "build draft <file> checks a build file and keeps its bytes as .jitso/drafts/<id>.yaml (a .yml input too); the draft is not listed as a launchable build",
+  "source": [
+    "intended: docs/decisions.md D7 and the drafts rows of the other decisions (a just-in-time build is a draft kept in .jitso/drafts/ and validated by code)"
+  ],
+  "status": {
+    "ts": "xfail",
+    "go": "pass"
+  },
+  "defect": "N-15",
+  "intent": "INTENDED behavior (defect N-15, drafts; docs/decisions.md D7). `jitso build draft <file.yaml|->` reads a build file (a path ending in .yaml or .yml, at most 64 KiB), checks it with the build rules of the draft layer, and writes the input bytes unchanged to `.jitso/drafts/<id>.yaml` (always the .yaml name, whatever the input was called). It prints `drafted <id>: .jitso/drafts/<id>.yaml (launch it with --build <id>; only the owner can save it)` and exits 0. A draft is never a launchable build: the default `build list` does not show it and prints nothing on stderr for a valid one. The oracle has no `build draft` and no `build discard` (the runner maps only `build list`): both answer `unknown command` on stderr with exit 2, so every expectation that needs their output FAILS on it.",
+  "project": {
+    "files": {
+      "proposals/scout.yaml": "# Draft written by a drafts case.\nid: scout\nversion: 1\nstatus: draft\nrole: operator\ntype: scanner\nwork_kind: repo-scan\ndescription: Scan the repo for TODO comments and report them.\nharness: claude\nmodel: claude-haiku-5-5\neffort: low\nmode_default: direct\nagents_md: exclude\nroute_scope: [none]\nskills_first: []\ntools: [Read, Glob, Grep]\nmcp: []\nrequires: []\nbudget: { tokens: 150000, usd_list_cap: 0.30 }\nsuccess:\n  - { check: answer_delivered }\n  - { check: no_rule_breaks }\n",
+      "proposals/other.yml": "# Draft written by a drafts case.\nid: other\nversion: 1\nstatus: draft\nrole: operator\ntype: scanner\nwork_kind: repo-scan\ndescription: Count the TODO comments of one folder.\nharness: claude\nmodel: claude-haiku-5-5\neffort: low\nmode_default: direct\nagents_md: exclude\nroute_scope: [none]\nskills_first: []\ntools: [Read, Glob, Grep]\nmcp: []\nrequires: []\nbudget: { tokens: 150000, usd_list_cap: 0.30 }\nsuccess:\n  - { check: answer_delivered }\n  - { check: no_rule_breaks }\n"
+    }
+  },
+  "steps": [
+    {
+      "run": [
+        "build",
+        "draft",
+        "proposals/scout.yaml"
+      ],
+      "expect": {
+        "exit": 0,
+        "stdout": [
+          {
+            "equals": "drafted scout: .jitso/drafts/scout.yaml (launch it with --build scout; only the owner can save it)\n"
+          }
+        ],
+        "stderr": [
+          {
+            "empty": true
+          }
+        ],
+        "orca_calls": {
+          "empty": true
+        },
+        "files": [
+          {
+            "path": ".jitso/drafts/scout.yaml",
+            "equals": "# Draft written by a drafts case.\nid: scout\nversion: 1\nstatus: draft\nrole: operator\ntype: scanner\nwork_kind: repo-scan\ndescription: Scan the repo for TODO comments and report them.\nharness: claude\nmodel: claude-haiku-5-5\neffort: low\nmode_default: direct\nagents_md: exclude\nroute_scope: [none]\nskills_first: []\ntools: [Read, Glob, Grep]\nmcp: []\nrequires: []\nbudget: { tokens: 150000, usd_list_cap: 0.30 }\nsuccess:\n  - { check: answer_delivered }\n  - { check: no_rule_breaks }\n"
+          }
+        ]
+      }
+    },
+    {
+      "run": [
+        "build",
+        "draft",
+        "proposals/other.yml"
+      ],
+      "expect": {
+        "exit": 0,
+        "stdout": [
+          {
+            "equals": "drafted other: .jitso/drafts/other.yaml (launch it with --build other; only the owner can save it)\n"
+          }
+        ],
+        "stderr": [
+          {
+            "empty": true
+          }
+        ],
+        "files": [
+          {
+            "path": ".jitso/drafts/other.yaml",
+            "equals": "# Draft written by a drafts case.\nid: other\nversion: 1\nstatus: draft\nrole: operator\ntype: scanner\nwork_kind: repo-scan\ndescription: Count the TODO comments of one folder.\nharness: claude\nmodel: claude-haiku-5-5\neffort: low\nmode_default: direct\nagents_md: exclude\nroute_scope: [none]\nskills_first: []\ntools: [Read, Glob, Grep]\nmcp: []\nrequires: []\nbudget: { tokens: 150000, usd_list_cap: 0.30 }\nsuccess:\n  - { check: answer_delivered }\n  - { check: no_rule_breaks }\n"
+          },
+          {
+            "path": ".jitso/drafts",
+            "entries": [
+              {
+                "equals": ".gitignore\nother.yaml\nscout.yaml"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "run": [
+        "build",
+        "list"
+      ],
+      "expect": {
+        "exit": 0,
+        "stdout": [
+          {
+            "not_contains": "scout"
+          },
+          {
+            "not_contains": "other"
+          },
+          {
+            "regex": "(?m)^- haiku-explorer: "
+          }
+        ],
+        "stderr": [
+          {
+            "empty": true
+          }
+        ]
+      }
+    }
+  ]
+}

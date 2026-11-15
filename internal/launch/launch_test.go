@@ -344,6 +344,10 @@ func TestEventNamesTheBuildFile(t *testing.T) {
 	if e := Event(in); e.BuildLayer != "user" || e.BuildFile != "/h/.jitso/builds/x.yaml" || e.BuildSHA256 != "abc" {
 		t.Errorf("event %+v", e)
 	}
+	b.Layer = catalog.LayerDraft
+	if e := Event(in); e.BuildLayer != "draft" {
+		t.Errorf("a draft records its layer, got %q", e.BuildLayer)
+	}
 	b.Layer = ""
 	if e := Event(in); e.BuildLayer != "repo" {
 		t.Errorf("a build made by hand reads as repo, got %q", e.BuildLayer)

@@ -18,8 +18,10 @@ import (
 
 // Paths inside the project.
 const (
-	ConfigPath      = "jitso/jitso.yaml"
-	BuildsDir       = "jitso/builds"
+	ConfigPath = "jitso/jitso.yaml"
+	BuildsDir  = "jitso/builds"
+	// DraftsDir is the folder of the draft layer, from the primary checkout.
+	DraftsDir       = ".jitso/drafts"
 	InstructionsDir = ".agents/instructions"
 	buildsExtension = ".yaml"
 )

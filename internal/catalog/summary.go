@@ -11,13 +11,38 @@ import (
 // Values are rendered with String(), so a missing description reads
 // "undefined", as in the oracle.
 func SummaryLine(b *Build) string {
-	m := b.Raw
+	return summaryOf(b.Raw, jsconv.String(b.Raw.Value("id")))
+}
+
+// summaryOf is the summary line of a decoded file under the given id text.
+func summaryOf(m *Map, id string) string {
 	requires := "nothing"
 	if list, ok := m.Value("requires").([]any); ok && len(list) > 0 {
 		requires = jsconv.Join(list, ", ")
 	}
-	return "- " + jsconv.String(m.Value("id")) + ": " + jsconv.String(m.Value("model")) + " " +
+	return "- " + id + ": " + jsconv.String(m.Value("model")) + " " +
 		jsconv.String(m.Value("effort")) + ". " + jsconv.String(m.Value("description")) + " requires: " + requires
+}
+
+// DraftLine is one draft file as `build list --drafts` shows it: the summary
+// line, then ` (draft <display path>)`, then ` shadowed by <layer> <display
+// path>` when a saved build has the id of the draft, then ` invalid here:
+// <problems joined by "; ">` when the file is not valid for this project. A
+// file that is not a mapping, or has no id, still has a line: the id is the
+// file name without its extension and the other values read as undefined.
+func DraftLine(f *File) string {
+	id := jsconv.String(f.Raw.Value("id"))
+	if f.Raw.Value("id") == jsconv.Undefined {
+		id = strings.TrimSuffix(f.Name, buildsExtension)
+	}
+	line := summaryOf(f.Raw, id) + " (draft " + f.Display + ")"
+	if f.ShadowedBy != nil {
+		line += " shadowed by " + string(f.ShadowedBy.Layer) + " " + f.ShadowedBy.Display
+	}
+	if !f.Valid() {
+		line += " invalid here: " + strings.Join(f.Problems, "; ")
+	}
+	return line
 }
 
 // ListLine is one build as `build list` shows it: the SummaryLine, plus

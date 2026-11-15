@@ -12,21 +12,23 @@ import (
 
 	"github.com/upex-galaxy/jitso/internal/cli"
 	"github.com/upex-galaxy/jitso/internal/orca"
+	"github.com/upex-galaxy/jitso/internal/tty"
 )
 
 func main() {
 	os.Exit(cli.Run(os.Args[1:], cli.System{
-		Stdin:      os.Stdin,
-		Stdout:     os.Stdout,
-		Stderr:     os.Stderr,
-		LookupEnv:  os.LookupEnv,
-		Getwd:      os.Getwd,
-		Executable: os.Executable,
-		Now:        time.Now,
-		Sleep:      time.Sleep,
-		Rand:       rand.Reader,
-		Orca:       orca.ExecRunner(orca.Command(os.LookupEnv)),
-		Spawn:      spawn,
+		Stdin:           os.Stdin,
+		Stdout:          os.Stdout,
+		Stderr:          os.Stderr,
+		LookupEnv:       os.LookupEnv,
+		Getwd:           os.Getwd,
+		Executable:      os.Executable,
+		Now:             time.Now,
+		Sleep:           time.Sleep,
+		Rand:            rand.Reader,
+		Orca:            orca.ExecRunner(orca.Command(os.LookupEnv)),
+		Spawn:           spawn,
+		StdinIsTerminal: func() bool { return tty.IsTerminal(os.Stdin) },
 	}))
 }
 

@@ -9,7 +9,7 @@
     "go": "pass"
   },
   "defect": "N-10",
-  "intent": "INTENDED behavior (defect N-10, build vocabulary; docs/decisions.md D6). The catalog commands live under one command group, `jitso build <subcommand>`. With no subcommand it exits 2 and prints `jitso build: missing subcommand`, a blank line and the build usage on stderr; with a subcommand it does not know it prints `jitso build: unknown subcommand \"<x>\"` and the same usage; `--help` and `-h` print the usage on stdout and exit 0. The oracle has no `build` command at all (its catalog command is `presets`): it answers `unknown command` on stderr with exit 2, so the `missing subcommand` and `unknown subcommand` expectations and the `--help` exit code FAIL on TS. The build usage also lists `validate [<id>]` (defect N-13).",
+  "intent": "INTENDED behavior (defect N-10, build vocabulary; docs/decisions.md D6). The catalog commands live under one command group, `jitso build <subcommand>`. With no subcommand it exits 2 and prints `jitso build: missing subcommand`, a blank line and the build usage on stderr; with a subcommand it does not know it prints `jitso build: unknown subcommand \"<x>\"` and the same usage; `--help` and `-h` print the usage on stdout and exit 0. The oracle has no `build` command at all (its catalog command is `presets`): it answers `unknown command` on stderr with exit 2, so the `missing subcommand` and `unknown subcommand` expectations and the `--help` exit code FAIL on TS. The build usage also lists `validate [<id>]` (defect N-13). It also lists `list [--drafts]`, `draft <file.yaml|->` and `discard <id>|--all` (defect N-15, drafts).",
   "steps": [
     {
       "run": [
@@ -26,7 +26,10 @@
           "jitso build: missing subcommand",
           "Usage: jitso build",
           "list",
-          "validate [<id>]"
+          "validate [<id>]",
+          "list [--drafts]",
+          "draft <file.yaml|->",
+          "discard <id>|--all"
         ],
         "orca_calls": {
           "empty": true
@@ -49,7 +52,10 @@
           "jitso build: unknown subcommand \"show\"",
           "Usage: jitso build",
           "list",
-          "validate [<id>]"
+          "validate [<id>]",
+          "list [--drafts]",
+          "draft <file.yaml|->",
+          "discard <id>|--all"
         ],
         "orca_calls": {
           "empty": true
@@ -66,7 +72,10 @@
         "stdout": [
           "Usage: jitso build",
           "list",
-          "validate [<id>]"
+          "validate [<id>]",
+          "list [--drafts]",
+          "draft <file.yaml|->",
+          "discard <id>|--all"
         ],
         "stderr": [
           {
@@ -88,7 +97,10 @@
         "stdout": [
           "Usage: jitso build",
           "list",
-          "validate [<id>]"
+          "validate [<id>]",
+          "list [--drafts]",
+          "draft <file.yaml|->",
+          "discard <id>|--all"
         ],
         "stderr": [
           {

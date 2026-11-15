@@ -1,0 +1,118 @@
+{
+  "id": "build/list/drafts",
+  "title": "build list never lists a draft (an invalid one is a warning on stderr); build list --drafts lists every draft with its origin, whether a saved build shadows it and why it is invalid",
+  "source": [
+    "intended: docs/decisions.md D7 and the drafts rows of the other decisions (a just-in-time build is a draft kept in .jitso/drafts/ and validated by code)"
+  ],
+  "status": {
+    "ts": "xfail",
+    "go": "pass"
+  },
+  "defect": "N-15",
+  "intent": "INTENDED behavior (defect N-15, drafts; docs/decisions.md D7). Drafts are not launchable builds, so the default list leaves them out and the dispatcher catalog never offers them. A draft that is invalid for this project is skipped with `jitso: warning: skipped build draft <path>: <problems>` on stderr (a draft shadowed by a saved build is silent). `--drafts` prints only drafts, one line per draft file by file name: the summary line, then ` (draft .jitso/drafts/<file>)`, then ` shadowed by <layer> <path>` when a saved build has its id, then ` invalid here: <problems>` when it is invalid; an empty folder prints one empty line like the default list. Any other argument is `JITSO REJECTED: unknown argument \"<x>\"`. The oracle's `presets list` knows no drafts and no flag: it prints the launchable presets and nothing on stderr, so the warning and the `--drafts` output FAIL on it.",
+  "project": {
+    "files": {
+      ".jitso/drafts/scout.yaml": "# Draft written by a drafts case.\nid: scout\nversion: 1\nstatus: draft\nrole: operator\ntype: scanner\nwork_kind: repo-scan\ndescription: Scan the repo for TODO comments and report them.\nharness: claude\nmodel: claude-haiku-5-5\neffort: low\nmode_default: direct\nagents_md: exclude\nroute_scope: [none]\nskills_first: []\ntools: [Read, Glob, Grep]\nmcp: []\nrequires: []\nbudget: { tokens: 150000, usd_list_cap: 0.30 }\nsuccess:\n  - { check: answer_delivered }\n  - { check: no_rule_breaks }\n",
+      ".jitso/drafts/broken.yaml": "# Draft written by a drafts case.\nid: broken\nversion: 1\nstatus: draft\nrole: operator\ntype: scanner\nwork_kind: repo-scan\ndescription: Scan the repo for TODO comments and report them.\nharness: claude\nmodel: gpt\neffort: low\nmode_default: direct\nagents_md: exclude\nroute_scope: [none]\nskills_first: []\ntools: [Read, Glob, Grep]\nmcp: []\nrequires: []\nbudget: { tokens: 150000, usd_list_cap: 0.30 }\nsuccess:\n  - { check: answer_delivered }\n  - { check: no_rule_breaks }\n",
+      ".jitso/drafts/haiku-explorer.yaml": "# Draft written by a drafts case.\nid: haiku-explorer\nversion: 1\nstatus: draft\nrole: operator\ntype: scanner\nwork_kind: repo-scan\ndescription: A draft with the id of a saved build.\nharness: claude\nmodel: claude-haiku-5-5\neffort: low\nmode_default: direct\nagents_md: exclude\nroute_scope: [none]\nskills_first: []\ntools: [Read, Glob, Grep]\nmcp: []\nrequires: []\nbudget: { tokens: 150000, usd_list_cap: 0.30 }\nsuccess:\n  - { check: answer_delivered }\n  - { check: no_rule_breaks }\n"
+    }
+  },
+  "steps": [
+    {
+      "run": [
+        "build",
+        "list"
+      ],
+      "expect": {
+        "exit": 0,
+        "stdout": [
+          {
+            "regex": "(?m)^- haiku-explorer: claude-haiku-5-5 low\\. Read-only search of the repo that returns file paths and line numbers\\. requires: nothing$"
+          },
+          {
+            "not_contains": "scout"
+          },
+          {
+            "not_contains": "broken"
+          },
+          {
+            "not_contains": "(draft"
+          }
+        ],
+        "stderr": [
+          {
+            "equals": "jitso: warning: skipped build draft .jitso/drafts/broken.yaml: model \"gpt\" is not in the allowlist\n"
+          }
+        ]
+      }
+    },
+    {
+      "run": [
+        "build",
+        "list",
+        "--drafts"
+      ],
+      "expect": {
+        "exit": 0,
+        "stderr": [
+          {
+            "empty": true
+          }
+        ],
+        "stdout": [
+          {
+            "equals": "- broken: gpt low. Scan the repo for TODO comments and report them. requires: nothing (draft .jitso/drafts/broken.yaml) invalid here: model \"gpt\" is not in the allowlist\n- haiku-explorer: claude-haiku-5-5 low. A draft with the id of a saved build. requires: nothing (draft .jitso/drafts/haiku-explorer.yaml) shadowed by repo jitso/builds/haiku-explorer.yaml\n- scout: claude-haiku-5-5 low. Scan the repo for TODO comments and report them. requires: nothing (draft .jitso/drafts/scout.yaml)\n"
+          }
+        ]
+      }
+    },
+    {
+      "run": [
+        "build",
+        "list",
+        "--nope"
+      ],
+      "expect": {
+        "exit": 2,
+        "stdout": [
+          {
+            "empty": true
+          }
+        ],
+        "stderr": [
+          {
+            "equals": "JITSO REJECTED: unknown argument \"--nope\"\n"
+          }
+        ]
+      }
+    },
+    {
+      "write": {
+        "project": {
+          ".jitso/drafts": null
+        }
+      },
+      "expect": {}
+    },
+    {
+      "run": [
+        "build",
+        "list",
+        "--drafts"
+      ],
+      "expect": {
+        "exit": 0,
+        "stdout": [
+          {
+            "equals": "\n"
+          }
+        ],
+        "stderr": [
+          {
+            "empty": true
+          }
+        ]
+      }
+    }
+  ]
+}

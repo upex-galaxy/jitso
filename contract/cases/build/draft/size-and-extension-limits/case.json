@@ -1,0 +1,152 @@
+{
+  "id": "build/draft/size-and-extension-limits",
+  "title": "a draft is a .yaml or .yml file (or - for stdin) of at most 64 KiB; any other input, a missing argument or an extra one is rejected before anything is written",
+  "source": [
+    "intended: docs/decisions.md D7 and the drafts rows of the other decisions (a just-in-time build is a draft kept in .jitso/drafts/ and validated by code)"
+  ],
+  "status": {
+    "ts": "xfail",
+    "go": "pass"
+  },
+  "defect": "N-15",
+  "intent": "INTENDED behavior (defect N-15, drafts; docs/decisions.md D7). The input is a path ending in `.yaml` or `.yml`, or `-`, and holds at most 64 KiB (read with a limit, so a device or an endless file cannot fill memory: the case reads a symlink to /dev/zero). A path with another extension, an oversized input and no argument at all are `JITSO REJECTED: a draft is a .yaml file (or - for stdin) of at most 64 KiB`; a second word or a flag is `JITSO REJECTED: unknown argument \"<x>\"`; a file that cannot be read is `JITSO REJECTED: cannot read <path>: <reason>`. All exit 2 and write nothing. The oracle has no `build draft` and no `build discard` (the runner maps only `build list`): both answer `unknown command` on stderr with exit 2, so every expectation that needs their output FAILS on it.",
+  "tags": [
+    "posix"
+  ],
+  "project": {
+    "files": {
+      "notes.txt": "# Draft written by a drafts case.\nid: scout\nversion: 1\nstatus: draft\nrole: operator\ntype: scanner\nwork_kind: repo-scan\ndescription: Scan the repo for TODO comments and report them.\nharness: claude\nmodel: claude-haiku-5-5\neffort: low\nmode_default: direct\nagents_md: exclude\nroute_scope: [none]\nskills_first: []\ntools: [Read, Glob, Grep]\nmcp: []\nrequires: []\nbudget: { tokens: 150000, usd_list_cap: 0.30 }\nsuccess:\n  - { check: answer_delivered }\n  - { check: no_rule_breaks }\n",
+      "huge.yaml": {
+        "symlink": "/dev/zero"
+      }
+    }
+  },
+  "steps": [
+    {
+      "run": [
+        "build",
+        "draft",
+        "notes.txt"
+      ],
+      "expect": {
+        "exit": 2,
+        "stdout": [
+          {
+            "empty": true
+          }
+        ],
+        "stderr": [
+          {
+            "equals": "JITSO REJECTED: a draft is a .yaml file (or - for stdin) of at most 64 KiB\n"
+          }
+        ]
+      }
+    },
+    {
+      "run": [
+        "build",
+        "draft",
+        "huge.yaml"
+      ],
+      "expect": {
+        "exit": 2,
+        "stdout": [
+          {
+            "empty": true
+          }
+        ],
+        "stderr": [
+          {
+            "equals": "JITSO REJECTED: a draft is a .yaml file (or - for stdin) of at most 64 KiB\n"
+          }
+        ]
+      }
+    },
+    {
+      "run": [
+        "build",
+        "draft"
+      ],
+      "expect": {
+        "exit": 2,
+        "stdout": [
+          {
+            "empty": true
+          }
+        ],
+        "stderr": [
+          {
+            "equals": "JITSO REJECTED: a draft is a .yaml file (or - for stdin) of at most 64 KiB\n"
+          }
+        ]
+      }
+    },
+    {
+      "run": [
+        "build",
+        "draft",
+        "a.yaml",
+        "b.yaml"
+      ],
+      "expect": {
+        "exit": 2,
+        "stdout": [
+          {
+            "empty": true
+          }
+        ],
+        "stderr": [
+          {
+            "equals": "JITSO REJECTED: unknown argument \"b.yaml\"\n"
+          }
+        ]
+      }
+    },
+    {
+      "run": [
+        "build",
+        "draft",
+        "--all"
+      ],
+      "expect": {
+        "exit": 2,
+        "stdout": [
+          {
+            "empty": true
+          }
+        ],
+        "stderr": [
+          {
+            "equals": "JITSO REJECTED: unknown argument \"--all\"\n"
+          }
+        ]
+      }
+    },
+    {
+      "run": [
+        "build",
+        "draft",
+        "missing.yaml"
+      ],
+      "expect": {
+        "exit": 2,
+        "stdout": [
+          {
+            "empty": true
+          }
+        ],
+        "stderr": [
+          {
+            "regex": "^JITSO REJECTED: cannot read missing\\.yaml: .+\n$"
+          }
+        ],
+        "files": [
+          {
+            "path": ".jitso/drafts",
+            "exists": false
+          }
+        ]
+      }
+    }
+  ]
+}

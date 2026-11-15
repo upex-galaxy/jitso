@@ -1,0 +1,198 @@
+{
+  "id": "build/discard/one-and-all",
+  "title": "build discard <id> deletes one draft, --all deletes every draft file and keeps the folder's .gitignore; a bad id or argument is rejected before anything is deleted",
+  "source": [
+    "intended: docs/decisions.md D7 and the drafts rows of the other decisions (a just-in-time build is a draft kept in .jitso/drafts/ and validated by code)"
+  ],
+  "status": {
+    "ts": "xfail",
+    "go": "pass"
+  },
+  "defect": "N-15",
+  "intent": "INTENDED behavior (defect N-15, drafts; docs/decisions.md D7). `discard <id>` removes `.jitso/drafts/<id>.yaml` and prints `discarded <id>`; an id with no draft is `JITSO REJECTED: no draft \"<id>\"`; an id that is not kebab-case (a path, for example) is `JITSO REJECTED: build id must be kebab-case` and never touches the file system; no argument is `JITSO REJECTED: build discard needs a draft id or --all`; a second word is an unknown argument and deletes nothing. `--all` removes every `*.yaml` of the folder and prints `discarded <n> drafts` (0 included), leaving the `.gitignore` and any other file. Discard needs only the project, not the catalog. The oracle has no `build draft` and no `build discard` (the runner maps only `build list`): both answer `unknown command` on stderr with exit 2, so every expectation that needs their output FAILS on it.",
+  "project": {
+    "files": {
+      ".jitso/drafts/a-one.yaml": "# Draft written by a drafts case.\nid: a-one\nversion: 1\nstatus: draft\nrole: operator\ntype: scanner\nwork_kind: repo-scan\ndescription: Scan the repo for TODO comments and report them.\nharness: claude\nmodel: claude-haiku-5-5\neffort: low\nmode_default: direct\nagents_md: exclude\nroute_scope: [none]\nskills_first: []\ntools: [Read, Glob, Grep]\nmcp: []\nrequires: []\nbudget: { tokens: 150000, usd_list_cap: 0.30 }\nsuccess:\n  - { check: answer_delivered }\n  - { check: no_rule_breaks }\n",
+      ".jitso/drafts/b-two.yaml": "# Draft written by a drafts case.\nid: b-two\nversion: 1\nstatus: draft\nrole: operator\ntype: scanner\nwork_kind: repo-scan\ndescription: Scan the repo for TODO comments and report them.\nharness: claude\nmodel: claude-haiku-5-5\neffort: low\nmode_default: direct\nagents_md: exclude\nroute_scope: [none]\nskills_first: []\ntools: [Read, Glob, Grep]\nmcp: []\nrequires: []\nbudget: { tokens: 150000, usd_list_cap: 0.30 }\nsuccess:\n  - { check: answer_delivered }\n  - { check: no_rule_breaks }\n",
+      ".jitso/drafts/c-three.yaml": "# Draft written by a drafts case.\nid: c-three\nversion: 1\nstatus: draft\nrole: operator\ntype: scanner\nwork_kind: repo-scan\ndescription: Scan the repo for TODO comments and report them.\nharness: claude\nmodel: claude-haiku-5-5\neffort: low\nmode_default: direct\nagents_md: exclude\nroute_scope: [none]\nskills_first: []\ntools: [Read, Glob, Grep]\nmcp: []\nrequires: []\nbudget: { tokens: 150000, usd_list_cap: 0.30 }\nsuccess:\n  - { check: answer_delivered }\n  - { check: no_rule_breaks }\n",
+      ".jitso/drafts/.gitignore": "*\n",
+      ".jitso/drafts/notes.txt": "keep me\n"
+    }
+  },
+  "steps": [
+    {
+      "run": [
+        "build",
+        "discard",
+        "a-one"
+      ],
+      "expect": {
+        "exit": 0,
+        "stdout": [
+          {
+            "equals": "discarded a-one\n"
+          }
+        ],
+        "stderr": [
+          {
+            "empty": true
+          }
+        ],
+        "orca_calls": {
+          "empty": true
+        },
+        "files": [
+          {
+            "path": ".jitso/drafts",
+            "entries": [
+              {
+                "equals": ".gitignore\nb-two.yaml\nc-three.yaml\nnotes.txt"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "run": [
+        "build",
+        "discard",
+        "a-one"
+      ],
+      "expect": {
+        "exit": 2,
+        "stdout": [
+          {
+            "empty": true
+          }
+        ],
+        "stderr": [
+          {
+            "equals": "JITSO REJECTED: no draft \"a-one\"\n"
+          }
+        ]
+      }
+    },
+    {
+      "run": [
+        "build",
+        "discard",
+        "../jitso/builds/haiku-explorer"
+      ],
+      "expect": {
+        "exit": 2,
+        "stdout": [
+          {
+            "empty": true
+          }
+        ],
+        "stderr": [
+          {
+            "equals": "JITSO REJECTED: build id must be kebab-case\n"
+          }
+        ],
+        "files": [
+          {
+            "path": "jitso/builds/haiku-explorer.yaml",
+            "exists": true
+          }
+        ]
+      }
+    },
+    {
+      "run": [
+        "build",
+        "discard"
+      ],
+      "expect": {
+        "exit": 2,
+        "stdout": [
+          {
+            "empty": true
+          }
+        ],
+        "stderr": [
+          {
+            "equals": "JITSO REJECTED: build discard needs a draft id or --all\n"
+          }
+        ]
+      }
+    },
+    {
+      "run": [
+        "build",
+        "discard",
+        "b-two",
+        "c-three"
+      ],
+      "expect": {
+        "exit": 2,
+        "stdout": [
+          {
+            "empty": true
+          }
+        ],
+        "stderr": [
+          {
+            "equals": "JITSO REJECTED: unknown argument \"c-three\"\n"
+          }
+        ],
+        "files": [
+          {
+            "path": ".jitso/drafts",
+            "entries": [
+              {
+                "equals": ".gitignore\nb-two.yaml\nc-three.yaml\nnotes.txt"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "run": [
+        "build",
+        "discard",
+        "--all"
+      ],
+      "expect": {
+        "exit": 0,
+        "stdout": [
+          {
+            "equals": "discarded 2 drafts\n"
+          }
+        ],
+        "stderr": [
+          {
+            "empty": true
+          }
+        ],
+        "files": [
+          {
+            "path": ".jitso/drafts",
+            "entries": [
+              {
+                "equals": ".gitignore\nnotes.txt"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "run": [
+        "build",
+        "discard",
+        "--all"
+      ],
+      "expect": {
+        "exit": 0,
+        "stdout": [
+          {
+            "equals": "discarded 0 drafts\n"
+          }
+        ]
+      }
+    }
+  ]
+}

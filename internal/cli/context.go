@@ -33,6 +33,10 @@ type System struct {
 	// Spawn runs a program in the foreground with the terminal inherited and
 	// returns its exit status; an error means it could not start.
 	Spawn func(argv []string, dir string, env []string) (int, error)
+	// StdinIsTerminal reports whether standard input is a terminal
+	// (tty.IsTerminal(os.Stdin)); nil means it is not. A command that asks
+	// a person a question asks only when it is true.
+	StdinIsTerminal func() bool
 }
 
 // Context is what a command runs with: the System plus memoized lookups of
@@ -44,6 +48,8 @@ type Context struct {
 
 	root       *project.Root
 	rootErr    error
+	scan       *catalog.Result
+	scanErr    error
 	catalog    *catalog.Catalog
 	catalogErr error
 }
@@ -94,17 +100,32 @@ func (c *Context) Project() (project.Root, error) {
 	return *c.root, nil
 }
 
-// Catalog loads the project's layered catalog once: its own builds from the
-// primary checkout, the builds of the trusted parent folders and the user's
-// folder under $HOME (the layers and the trust are computed from the primary's
-// real path and ~/.jitso/config.yaml).
-func (c *Context) Catalog() (*catalog.Catalog, error) {
-	if c.catalog == nil && c.catalogErr == nil {
+// Scan reads every build file of every layer once, with no whole-catalog rule:
+// an invalid file is a problem of that file (see catalog.Scan). Commands that
+// show files, drafts included, use it after Catalog has applied the rule.
+func (c *Context) Scan() (*catalog.Result, error) {
+	if c.scan == nil && c.scanErr == nil {
 		root, err := c.Project()
 		if err != nil {
 			return nil, err
 		}
-		c.catalog, c.catalogErr = catalog.LoadLayers(os.DirFS(root.Primary), root.Primary, c.Home())
+		c.scan, c.scanErr = catalog.Scan(os.DirFS(root.Primary), root.Primary, c.Home())
+	}
+	return c.scan, c.scanErr
+}
+
+// Catalog loads the project's layered catalog once: its own builds from the
+// primary checkout, the builds of the trusted parent folders and the user's
+// folder under $HOME, then its drafts (the layers and the trust are computed
+// from the primary's real path and ~/.jitso/config.yaml). The project's own
+// files keep the whole-catalog rule: one invalid file is the error.
+func (c *Context) Catalog() (*catalog.Catalog, error) {
+	if c.catalog == nil && c.catalogErr == nil {
+		res, err := c.Scan()
+		if err != nil {
+			return nil, err
+		}
+		c.catalog, c.catalogErr = res.Catalog()
 	}
 	return c.catalog, c.catalogErr
 }

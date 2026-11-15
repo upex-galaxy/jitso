@@ -1,0 +1,71 @@
+{
+  "id": "build/draft/status-must-be-draft",
+  "title": "a draft's status is exactly draft: approved, candidate, retired or a missing status are rejected, so a draft cannot pass as a saved build",
+  "source": [
+    "intended: docs/decisions.md D7 and the drafts rows of the other decisions (a just-in-time build is a draft kept in .jitso/drafts/ and validated by code)"
+  ],
+  "status": {
+    "ts": "xfail",
+    "go": "pass"
+  },
+  "defect": "N-15",
+  "intent": "INTENDED behavior (defect N-15, drafts; docs/decisions.md D7). `status: draft` is valid only in the draft layer and the draft layer accepts nothing else: any other status, or none, is `status must be draft in a draft`. The rest of the file is valid, so that is the only problem. The oracle has no `build draft` and no `build discard` (the runner maps only `build list`): both answer `unknown command` on stderr with exit 2, so every expectation that needs their output FAILS on it.",
+  "for_each": {
+    "var": "status",
+    "values": [
+      "approved",
+      "candidate",
+      "retired"
+    ]
+  },
+  "steps": [
+    {
+      "run": [
+        "build",
+        "draft",
+        "-"
+      ],
+      "stdin": "# Draft written by a drafts case.\nid: scout\nversion: 1\nstatus: {{status}}\nrole: operator\ntype: scanner\nwork_kind: repo-scan\ndescription: Scan the repo for TODO comments and report them.\nharness: claude\nmodel: claude-haiku-5-5\neffort: low\nmode_default: direct\nagents_md: exclude\nroute_scope: [none]\nskills_first: []\ntools: [Read, Glob, Grep]\nmcp: []\nrequires: []\nbudget: { tokens: 150000, usd_list_cap: 0.30 }\nsuccess:\n  - { check: answer_delivered }\n  - { check: no_rule_breaks }\n",
+      "expect": {
+        "exit": 2,
+        "stdout": [
+          {
+            "empty": true
+          }
+        ],
+        "stderr": [
+          {
+            "equals": "JITSO REJECTED: draft stdin is invalid: status must be draft in a draft\n"
+          }
+        ],
+        "files": [
+          {
+            "path": ".jitso/drafts",
+            "exists": false
+          }
+        ]
+      }
+    },
+    {
+      "run": [
+        "build",
+        "draft",
+        "-"
+      ],
+      "stdin": "# Draft written by a drafts case.\nid: scout\nversion: 1\nrole: operator\ntype: scanner\nwork_kind: repo-scan\ndescription: Scan the repo for TODO comments and report them.\nharness: claude\nmodel: claude-haiku-5-5\neffort: low\nmode_default: direct\nagents_md: exclude\nroute_scope: [none]\nskills_first: []\ntools: [Read, Glob, Grep]\nmcp: []\nrequires: []\nbudget: { tokens: 150000, usd_list_cap: 0.30 }\nsuccess:\n  - { check: answer_delivered }\n  - { check: no_rule_breaks }\n",
+      "expect": {
+        "exit": 2,
+        "stdout": [
+          {
+            "empty": true
+          }
+        ],
+        "stderr": [
+          {
+            "equals": "JITSO REJECTED: draft stdin is invalid: status must be draft in a draft\n"
+          }
+        ]
+      }
+    }
+  ]
+}

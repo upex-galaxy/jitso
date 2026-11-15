@@ -242,6 +242,7 @@ func TestSources(t *testing.T) {
 		{Layer: LayerParent, Dir: filepath.Join(mid, "jitso", "builds"), Display: filepath.ToSlash(mid) + "/jitso/builds"},
 		{Layer: LayerParent, Dir: filepath.Join(outer, "jitso", "builds"), Display: filepath.ToSlash(outer) + "/jitso/builds"},
 		{Layer: LayerUser, Dir: filepath.Join(home, ".jitso", "builds"), Display: "~/.jitso/builds"},
+		{Layer: LayerDraft, Dir: filepath.Join(primary, ".jitso", "drafts"), Display: ".jitso/drafts"},
 	}
 	if !reflect.DeepEqual(got, want) {
 		t.Errorf("sources\n got %+v\nwant %+v", got, want)
@@ -249,12 +250,12 @@ func TestSources(t *testing.T) {
 
 	// A parent under HOME shows as ~/<path>.
 	got = Sources(repoRepo, home, UserConfig{TrustedParents: []string{inHome}})
-	if len(got) != 3 || got[1].Display != "~/clients/jitso/builds" || got[1].Dir != filepath.Join(inHome, "jitso", "builds") {
+	if len(got) != 4 || got[1].Display != "~/clients/jitso/builds" || got[1].Dir != filepath.Join(inHome, "jitso", "builds") {
 		t.Errorf("parent under home: %+v", got)
 	}
 
-	// No home: no user layer.
-	if got := Sources(primary, "", UserConfig{}); len(got) != 1 {
+	// No home: no user layer, and the draft layer is still last.
+	if got := Sources(primary, "", UserConfig{}); len(got) != 2 || got[0].Layer != LayerRepo || got[1].Layer != LayerDraft {
 		t.Errorf("no home: %+v", got)
 	}
 }

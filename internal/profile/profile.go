@@ -40,12 +40,14 @@ type Profile struct {
 // Resolve validates req against cat, in the oracle's order: the build exists
 // (the nearest layer that has the id; invalid for this project is a rejection
 // that names the file and its problems, defect N-12),
-// is approved, is not subagent tier (a subagent-tier build is never launched
+// is approved (a draft of the draft layer launches too, and only that layer:
+// defect N-15), is not subagent tier (a subagent-tier build is never launched
 // alone, defect N-5), its model and effort are allowlisted, every MCP server
 // is known, the route scope is valid, every field is required by the build
 // and matches its pattern, every required field is given, and every subagent
 // the build lists is approved (defect N-11): a subagent's prompt reaches
-// `claude --agents`, so only reviewed text may.
+// `claude --agents`, so only reviewed text may. A draft worker may also list
+// draft subagents; a saved worker may not.
 func Resolve(req Request, cat *catalog.Catalog) (Profile, error) {
 	b, ok := cat.Find(req.Build)
 	if !ok {
@@ -56,7 +58,7 @@ func Resolve(req Request, cat *catalog.Catalog) (Profile, error) {
 		}
 		return Profile{}, fail.Rejectedf(`unknown build "%s"`, req.Build)
 	}
-	if b.Status != "approved" {
+	if !launchableStatus(b) {
 		return Profile{}, fail.Rejectedf(`build "%s" is %s, not approved`, b.ID, b.Status)
 	}
 	if b.Tier == catalog.TierSubagent {
@@ -114,6 +116,12 @@ func Resolve(req Request, cat *catalog.Catalog) (Profile, error) {
 	}, nil
 }
 
+// launchableStatus is true for the status a build may launch with: approved in
+// any layer, and draft in the draft layer, the one layer whose files are drafts.
+func launchableStatus(b *catalog.Build) bool {
+	return b.Status == "approved" || (b.LayerWord() == catalog.LayerDraft && b.Status == catalog.StatusDraft)
+}
+
 // LaunchProblems lists what keeps the build b from launching and that only a
 // launch can see, as plain problem lines (the texts `jitso build validate`
 // prints): each subagent it lists that is not approved.
@@ -126,13 +134,15 @@ func LaunchProblems(b *catalog.Build, cat *catalog.Catalog) []string {
 }
 
 // unapprovedSubagents are the subagents b lists whose status is not approved,
-// in b's order.
+// in b's order. A draft build may list draft subagents: its own prompt is not
+// reviewed either, and it launches only while it stays a draft.
 func unapprovedSubagents(b *catalog.Build, cat *catalog.Catalog) []*catalog.Build {
 	var out []*catalog.Build
 	for _, s := range cat.SubagentsOf(b) {
-		if s.Status != "approved" {
-			out = append(out, s)
+		if s.Status == "approved" || (b.LayerWord() == catalog.LayerDraft && s.Status == catalog.StatusDraft) {
+			continue
 		}
+		out = append(out, s)
 	}
 	return out
 }

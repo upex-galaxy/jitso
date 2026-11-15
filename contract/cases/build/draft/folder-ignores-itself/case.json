@@ -1,0 +1,69 @@
+{
+  "id": "build/draft/folder-ignores-itself",
+  "title": "the drafts folder holds its own .gitignore (a single * line), created when missing and never rewritten",
+  "source": [
+    "intended: docs/decisions.md D7 and the drafts rows of the other decisions (a just-in-time build is a draft kept in .jitso/drafts/ and validated by code)"
+  ],
+  "status": {
+    "ts": "xfail",
+    "go": "pass"
+  },
+  "defect": "N-15",
+  "intent": "INTENDED behavior (defect N-15, drafts; docs/decisions.md D7). The first draft creates `.jitso/drafts/.gitignore` with the content `*` and a newline, so a draft is never committed by accident. An existing `.gitignore` of that folder is left as it is. The oracle has no `build draft` and no `build discard` (the runner maps only `build list`): both answer `unknown command` on stderr with exit 2, so every expectation that needs their output FAILS on it.",
+  "project": {
+    "files": {
+      "proposals/scout.yaml": "# Draft written by a drafts case.\nid: scout\nversion: 1\nstatus: draft\nrole: operator\ntype: scanner\nwork_kind: repo-scan\ndescription: Scan the repo for TODO comments and report them.\nharness: claude\nmodel: claude-haiku-5-5\neffort: low\nmode_default: direct\nagents_md: exclude\nroute_scope: [none]\nskills_first: []\ntools: [Read, Glob, Grep]\nmcp: []\nrequires: []\nbudget: { tokens: 150000, usd_list_cap: 0.30 }\nsuccess:\n  - { check: answer_delivered }\n  - { check: no_rule_breaks }\n",
+      "proposals/other.yaml": "# Draft written by a drafts case.\nid: other\nversion: 1\nstatus: draft\nrole: operator\ntype: scanner\nwork_kind: repo-scan\ndescription: Count the TODO comments of one folder.\nharness: claude\nmodel: claude-haiku-5-5\neffort: low\nmode_default: direct\nagents_md: exclude\nroute_scope: [none]\nskills_first: []\ntools: [Read, Glob, Grep]\nmcp: []\nrequires: []\nbudget: { tokens: 150000, usd_list_cap: 0.30 }\nsuccess:\n  - { check: answer_delivered }\n  - { check: no_rule_breaks }\n"
+    }
+  },
+  "steps": [
+    {
+      "run": [
+        "build",
+        "draft",
+        "proposals/scout.yaml"
+      ],
+      "expect": {
+        "exit": 0,
+        "files": [
+          {
+            "path": ".jitso/drafts/.gitignore",
+            "equals": "*\n"
+          }
+        ]
+      }
+    },
+    {
+      "write": {
+        "project": {
+          ".jitso/drafts/.gitignore": "mine\n"
+        }
+      },
+      "expect": {}
+    },
+    {
+      "run": [
+        "build",
+        "draft",
+        "proposals/other.yaml"
+      ],
+      "expect": {
+        "exit": 0,
+        "files": [
+          {
+            "path": ".jitso/drafts/.gitignore",
+            "equals": "mine\n"
+          },
+          {
+            "path": ".jitso/drafts",
+            "entries": [
+              {
+                "equals": ".gitignore\nother.yaml\nscout.yaml"
+              }
+            ]
+          }
+        ]
+      }
+    }
+  ]
+}

@@ -8,8 +8,12 @@ import (
 	"github.com/upex-galaxy/jitso/internal/jsconv"
 )
 
-// Status values of a build.
+// Status values of a saved build. A draft (the draft layer, and only it) has
+// the one status StatusDraft.
 var Statuses = []string{"candidate", "approved", "retired"}
+
+// StatusDraft is the status of every file of the draft layer.
+const StatusDraft = "draft"
 
 // The tiers of a build (docs/decisions.md, tiers). A build without a tier is a
 // worker. A subagent-tier build is never launched alone: a worker or a
@@ -45,16 +49,27 @@ var (
 	placeholder = regexp.MustCompile(`\{([a-z_]+)\}`)
 )
 
-// ValidateBuild checks one decoded build file against the allowlists and the
-// route ids. It returns every problem, in the oracle's order (its validatePreset),
-// followed by the tier rules; an empty list means valid. The messages and the
-// String() coercion of values are the oracle's.
+// ValidateBuild checks one decoded build file of a saved layer (the project's
+// own, a parent's or the user's) against the allowlists and the route ids. See
+// ValidateBuildIn.
+func ValidateBuild(raw any, cfg Config, routeIDs []string) []string {
+	return ValidateBuildIn(raw, cfg, routeIDs, LayerRepo)
+}
+
+// ValidateBuildIn checks one decoded build file of the given layer against the
+// allowlists and the route ids. It returns every problem, in the oracle's order
+// (its validatePreset), followed by the tier rules; an empty list means valid.
+// The messages and the String() coercion of values are the oracle's.
+//
+// The layer decides one rule, the status: a saved layer takes candidate,
+// approved or retired, the draft layer takes exactly draft (defect N-15), so a
+// draft cannot pass as a saved build and a saved file cannot claim to be a draft.
 //
 // Worker and conductor builds are validated identically. A subagent-tier build
 // never launches alone, so route_scope and success are optional for it (checked
 // only when present, never used), and skills_first, mcp, requires and
 // subagents must be empty (docs/decisions.md, tier matrix, defect N-11).
-func ValidateBuild(raw any, cfg Config, routeIDs []string) []string {
+func ValidateBuildIn(raw any, cfg Config, routeIDs []string, layer Layer) []string {
 	p, ok := raw.(*Map)
 	if !ok {
 		return []string{"build is not a mapping"}
@@ -66,7 +81,13 @@ func ValidateBuild(raw any, cfg Config, routeIDs []string) []string {
 	if id, ok := p.Value("id").(string); !ok || !kebab.MatchString(id) {
 		add("id must be kebab-case")
 	}
-	if s, ok := p.Value("status").(string); !ok || !slices.Contains(Statuses, s) {
+	status, isString := p.Value("status").(string)
+	switch {
+	case layer == LayerDraft:
+		if !isString || status != StatusDraft {
+			add("status must be draft in a draft")
+		}
+	case !isString || !slices.Contains(Statuses, status):
 		add("status must be one of " + strings.Join(Statuses, ", "))
 	}
 	if model := jsconv.String(p.Value("model")); !slices.Contains(cfg.Models, model) {

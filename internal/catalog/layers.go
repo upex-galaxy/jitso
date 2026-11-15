@@ -13,9 +13,9 @@ import (
 // Layer names where a build file lives. Builds come from layers, nearest
 // first (docs/decisions.md, build layers): the project's own jitso/builds
 // folder, each trusted parent folder from the nearest to the farthest, then
-// the user's folder. A draft layer will be appended after the user layer; the
-// lookup treats the order of the Source list as the order of precedence, so
-// adding one is adding a Source.
+// the user's folder, then the draft layer last: a draft never shadows a saved
+// build. The lookup treats the order of the Source list as the order of
+// precedence.
 type Layer string
 
 // The layer words, as shown in build list, the card and the registry.
@@ -23,6 +23,9 @@ const (
 	LayerRepo   Layer = "repo"
 	LayerParent Layer = "parent"
 	LayerUser   Layer = "user"
+	// LayerDraft is <primary>/.jitso/drafts, the just-in-time builds written
+	// by `jitso build draft`. It is the only layer where status is draft.
+	LayerDraft Layer = "draft"
 )
 
 // userBuildsDir is the user's builds folder inside project.UserDir.
@@ -57,9 +60,11 @@ func (s Source) displayFile(name string) string {
 
 // Sources are the folders of builds of the project whose primary checkout has
 // the real path primary, nearest first: the project, each trusted parent that
-// strictly contains it (the nearest parent first), then the user folder.
+// strictly contains it (the nearest parent first), the user folder, then the
+// drafts folder of the project.
 // Every folder is computed from the primary's real path, so a linked worktree
-// gets the layers of its primary checkout. An empty home means no user layer.
+// gets the layers of its primary checkout. An empty home means no user layer;
+// the draft layer always exists (a missing folder is an empty layer).
 func Sources(primary, home string, cfg UserConfig) []Source {
 	out := []Source{{Layer: LayerRepo, Dir: filepath.Join(primary, filepath.FromSlash(BuildsDir)), Display: BuildsDir}}
 	for _, p := range cfg.ParentsOf(primary) {
@@ -76,7 +81,7 @@ func Sources(primary, home string, cfg UserConfig) []Source {
 			Display: "~/.jitso/" + userBuildsDir,
 		})
 	}
-	return out
+	return append(out, Source{Layer: LayerDraft, Dir: filepath.Join(primary, filepath.FromSlash(DraftsDir)), Display: DraftsDir})
 }
 
 // displayFolder is ~/<rel> for a folder strictly inside HOME and the absolute
