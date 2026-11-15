@@ -29,7 +29,7 @@ func build(id string, extra ...string) string {
 	return b.String()
 }
 
-func load(t *testing.T) *catalog.Catalog {
+func load(t *testing.T, extra ...string) *catalog.Catalog {
 	t.Helper()
 	fsys := fstest.MapFS{
 		"jitso/jitso.yaml":                          {Data: []byte(config)},
@@ -41,6 +41,9 @@ func load(t *testing.T) *catalog.Catalog {
 		"jitso/builds/worker.yaml":                  {Data: []byte(build("worker", "subagents: [plan]", "model: claude-sonnet-5-5", "effort: medium", "mcp: [dbhub]", "route_scope: [ticket-work, code-quickref]"))},
 		"jitso/builds/tester.yaml":                  {Data: []byte(build("tester", "requires: [ticket_key, env]"))},
 		"jitso/builds/mixed-scope.yaml":             {Data: []byte(build("mixed-scope", "route_scope: [none, ticket-work]"))},
+	}
+	for i := 0; i+1 < len(extra); i += 2 {
+		fsys["jitso/builds/"+extra[i]] = &fstest.MapFile{Data: []byte(extra[i+1])}
 	}
 	cat, err := catalog.Load(fsys)
 	if err != nil {
@@ -91,6 +94,53 @@ func TestResolve(t *testing.T) {
 			}
 		})
 	}
+}
+
+// A worker may launch only with approved subagents (defect N-11). The extra
+// file replaces the `plan` subagent of the base catalog.
+func TestResolveSubagentStatus(t *testing.T) {
+	tests := []struct {
+		status string
+		reason string
+	}{
+		{"approved", ""},
+		{"candidate", `build "worker" lists subagent "plan", which is candidate, not approved`},
+		{"retired", `build "worker" lists subagent "plan", which is retired, not approved`},
+	}
+	for _, tt := range tests {
+		t.Run(tt.status, func(t *testing.T) {
+			cat := load(t, "plan.yaml", build("plan", "tier: subagent", "prompt: You plan.", "status: "+tt.status))
+			_, err := Resolve(Request{Build: "worker"}, cat)
+			if tt.reason == "" {
+				if err != nil {
+					t.Fatal(err)
+				}
+			} else if err == nil || err.Error() != "JITSO REJECTED: "+tt.reason {
+				t.Fatalf("got %v, want %q", err, tt.reason)
+			}
+			// A worker with no subagents is unaffected.
+			if _, err := Resolve(Request{Build: "explorer"}, cat); err != nil {
+				t.Errorf("explorer: %v", err)
+			}
+			problems := LaunchProblems(mustFind(t, cat, "worker"), cat)
+			var want []string
+			if tt.reason != "" {
+				want = []string{`subagent "plan" is ` + tt.status + ", not approved"}
+			}
+			if !reflect.DeepEqual(problems, want) {
+				t.Errorf("LaunchProblems %q, want %q", problems, want)
+			}
+		})
+	}
+}
+
+func mustFind(t *testing.T, cat *catalog.Catalog, id string) *catalog.Build {
+	t.Helper()
+	b, ok := cat.Find(id)
+	if !ok {
+		t.Fatalf("build %s not found", id)
+	}
+	return b
 }
 
 func TestResolveProfile(t *testing.T) {

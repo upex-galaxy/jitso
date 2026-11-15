@@ -2,6 +2,7 @@
 id: sonnet-conductor
 version: 1
 status: approved
+tier: conductor
 role: conductor
 type: conductor
 work_kind: automation-batch

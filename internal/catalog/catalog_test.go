@@ -130,6 +130,24 @@ func TestValidateBuild(t *testing.T) {
 		{"subagent tier blank prompt", []string{"tier: subagent", "prompt: '  '"}, []string{"prompt must be a non-empty string in a subagent-tier build"}},
 		{"subagent tier without description", []string{"tier: subagent", "prompt: p", "description:-"}, []string{"description must be a non-empty string in a subagent-tier build"}},
 		{"subagent tier listing subagents", []string{"tier: subagent", "prompt: p", "subagents: [plan]"}, []string{"a subagent-tier build cannot list subagents"}},
+		{"conductor needs route_scope", []string{"tier: conductor", "route_scope:-"}, []string{"route_scope is empty (use [none])"}},
+		{"conductor needs success", []string{"tier: conductor", "success:-"}, []string{"success must list at least one check"}},
+		{"conductor may list subagents and skills", []string{"tier: conductor", "skills_first: [sprint-testing]", "mcp: [dbhub]", "requires: [ticket_key]", "subagents: [plan]"}, nil},
+		{"subagent tier needs no launch-only field", []string{"tier: subagent", "prompt: p", "route_scope:-", "success:-", "budget:-", "mode_default:-", "agents_md:-", "harness:-"}, nil},
+		{"subagent tier needs no list field at all", []string{"tier: subagent", "prompt: p", "skills_first:-", "mcp:-", "requires:-"}, nil},
+		{"subagent tier route_scope is checked when present", []string{"tier: subagent", "prompt: p", "route_scope: [nope]"}, []string{`route_scope id "nope" is not an instruction section`}},
+		{"subagent tier empty route_scope is checked when present", []string{"tier: subagent", "prompt: p", "route_scope: []"}, []string{"route_scope is empty (use [none])"}},
+		{"subagent tier success is checked when present", []string{"tier: subagent", "prompt: p", "success: [{ check: magic }]"}, []string{`success check "magic" is unknown`}},
+		{"subagent tier empty success is checked when present", []string{"tier: subagent", "prompt: p", "success: []"}, []string{"success must list at least one check"}},
+		{"subagent tier skills_first must be empty", []string{"tier: subagent", "prompt: p", "skills_first: [sprint-testing]"}, []string{"skills_first must be empty in a subagent-tier build"}},
+		{"subagent tier mcp must be empty", []string{"tier: subagent", "prompt: p", "mcp: [dbhub]"}, []string{"mcp must be empty in a subagent-tier build"}},
+		{"subagent tier requires must be empty", []string{"tier: subagent", "prompt: p", "requires: [ticket_key]"}, []string{"requires must be empty in a subagent-tier build"}},
+		{"subagent tier unknown mcp reports both", []string{"tier: subagent", "prompt: p", "mcp: [evil]"}, []string{`mcp "evil" is not in the allowlist`, "mcp must be empty in a subagent-tier build"}},
+		{"subagent tier lists in order", []string{"tier: subagent", "prompt: p", "skills_first: [sprint-testing]", "mcp: [dbhub]", "requires: [ticket_key]", "subagents: [plan]"}, []string{
+			"skills_first must be empty in a subagent-tier build", "mcp must be empty in a subagent-tier build",
+			"requires must be empty in a subagent-tier build", "a subagent-tier build cannot list subagents",
+		}},
+		{"unknown tier value keeps the worker rules", []string{"tier: boss", "route_scope:-"}, []string{"route_scope is empty (use [none])", "tier must be one of worker, conductor, subagent"}},
 		{"several problems in order", []string{"id: X", "model: gpt", "route_scope: []"}, []string{
 			"id must be kebab-case", `model "gpt" is not in the allowlist`, "route_scope is empty (use [none])",
 		}},
@@ -249,6 +267,25 @@ func TestLoad(t *testing.T) {
 	}
 }
 
+// A subagent-tier build with only the fields claude needs loads, resolves
+// from its worker and is never listed (defect N-11).
+func TestLoadLeanSubagent(t *testing.T) {
+	lean := "id: lean\nversion: 1\nstatus: approved\ntier: subagent\ndescription: Helper.\nprompt: You help.\nmodel: claude-haiku-5-5\neffort: low\ntools: [Read]\n"
+	worker := strings.Replace(validBuild, "tools: [Read, Bash]", "tools: [Read, Bash]\nsubagents: [lean]", 1)
+	cat, err := Load(testFS(map[string]string{"lean.yaml": lean, "w.yaml": worker}))
+	if err != nil {
+		t.Fatal(err)
+	}
+	w, _ := cat.Find("haiku-explorer")
+	subs := cat.SubagentsOf(w)
+	if len(subs) != 1 || subs[0].ID != "lean" || subs[0].Prompt != "You help." || len(subs[0].RouteScope) != 0 || subs[0].Budget.Set {
+		t.Errorf("subagents %+v", subs)
+	}
+	if l := cat.Launchable(); len(l) != 1 || l[0].ID != "haiku-explorer" {
+		t.Errorf("launchable %+v", l)
+	}
+}
+
 func TestLoadErrors(t *testing.T) {
 	worker := func(subs string) string {
 		return strings.Replace(validBuild, "tools: [Read, Bash]", "tools: [Read, Bash]\nsubagents: "+subs, 1)
@@ -266,6 +303,8 @@ func TestLoadErrors(t *testing.T) {
 		{"worker-tier subagent", map[string]string{"w.yaml": worker("[plan, other]"), "p.yaml": sub("plan"),
 			"o.yaml": strings.Replace(validBuild, "id: haiku-explorer", "id: other", 1)},
 			`build jitso/builds/w.yaml is invalid: subagent "other" is not a subagent-tier build`},
+		{"subagent with mcp", map[string]string{"p.yaml": strings.Replace(sub("plan"), "success:", "mcp: [dbhub]\nsuccess:", 1)},
+			`build jitso/builds/p.yaml is invalid: mcp "dbhub" is not in the allowlist; mcp must be empty in a subagent-tier build`},
 		{"bad yaml", map[string]string{"y.yaml": "a: [1\n"}, "build jitso/builds/y.yaml is invalid: "},
 	}
 	for _, tt := range tests {

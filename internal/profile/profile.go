@@ -40,7 +40,9 @@ type Profile struct {
 // is approved, is not subagent tier (a subagent-tier build is never launched
 // alone, defect N-5), its model and effort are allowlisted, every MCP server
 // is known, the route scope is valid, every field is required by the build
-// and matches its pattern, and every required field is given.
+// and matches its pattern, every required field is given, and every subagent
+// the build lists is approved (defect N-11): a subagent's prompt reaches
+// `claude --agents`, so only reviewed text may.
 func Resolve(req Request, cat *catalog.Catalog) (Profile, error) {
 	b, ok := cat.Find(req.Build)
 	if !ok {
@@ -90,6 +92,9 @@ func Resolve(req Request, cat *catalog.Catalog) (Profile, error) {
 			return Profile{}, fail.Rejectedf("missing %s", name)
 		}
 	}
+	if s := unapprovedSubagents(b, cat); len(s) > 0 {
+		return Profile{}, fail.Rejectedf(`build "%s" lists subagent "%s", which is %s, not approved`, b.ID, s[0].ID, s[0].Status)
+	}
 	return Profile{
 		Build:      b,
 		Model:      b.Model,
@@ -99,4 +104,27 @@ func Resolve(req Request, cat *catalog.Catalog) (Profile, error) {
 		Subagents:  cat.SubagentsOf(b),
 		Fields:     req.Fields,
 	}, nil
+}
+
+// LaunchProblems lists what keeps the build b from launching and that only a
+// launch can see, as plain problem lines (the texts `jitso build validate`
+// prints): each subagent it lists that is not approved.
+func LaunchProblems(b *catalog.Build, cat *catalog.Catalog) []string {
+	var problems []string
+	for _, s := range unapprovedSubagents(b, cat) {
+		problems = append(problems, `subagent "`+s.ID+`" is `+s.Status+", not approved")
+	}
+	return problems
+}
+
+// unapprovedSubagents are the subagents b lists whose status is not approved,
+// in b's order.
+func unapprovedSubagents(b *catalog.Build, cat *catalog.Catalog) []*catalog.Build {
+	var out []*catalog.Build
+	for _, s := range cat.SubagentsOf(b) {
+		if s.Status != "approved" {
+			out = append(out, s)
+		}
+	}
+	return out
 }

@@ -1,0 +1,123 @@
+{
+  "id": "validation/tier/subagent-needs-no-launch-fields",
+  "title": "a subagent-tier build needs no launch-only field: it is valid with only id, version, status, tier, description, prompt, model, effort and tools, and a worker can launch with it",
+  "source": [
+    "intended: docs/decisions.md (tier matrix: route_scope, success, budget, mode_default, agents_md and harness are optional in a subagent-tier build)"
+  ],
+  "tags": [
+    "posix"
+  ],
+  "status": {
+    "ts": "xfail",
+    "go": "pass"
+  },
+  "defect": "N-11",
+  "intent": "INTENDED behavior (defect N-11, tier fields; docs/decisions.md). A subagent-tier build never launches alone, so route_scope, success, budget, mode_default, agents_md and harness mean nothing to it: they are optional and unused. The overlay jitso/builds/lean.yaml has only id, version, status, tier, description, prompt, model, effort and tools, and jitso/builds/lean-team.yaml is a worker that lists it. The catalog is valid: `build list` exits 0 and lists lean-team and not lean (a subagent is never listed), a dry launch of lean-team exits 0, and a real launch hands claude an --agents entry whose description and prompt are the file's text as written. The TS binary validates every file as a worker preset and requires route_scope and success of lean.yaml, so the whole catalog is invalid there: every command exits 3.",
+  "project": {
+    "files": {
+      "jitso/builds/lean.yaml": "id: lean\nversion: 1\nstatus: approved\ntier: subagent\ndescription: Lean helper used by a contract case, it carries only what claude needs.\nprompt: You are the lean helper of this session. Answer in one line and never edit a file.\nmodel: claude-haiku-5-5\neffort: low\ntools: [Read, Glob, Grep]\n",
+      "jitso/builds/lean-team.yaml": "id: lean-team\nversion: 1\nstatus: approved\nrole: operator\ntype: explorer\nwork_kind: repo-exploration\ndescription: Worker used by a contract case, it lists a lean subagent.\nharness: claude\nmodel: claude-haiku-5-5\neffort: low\nmode_default: direct\nagents_md: exclude\nroute_scope: [none]\nskills_first: []\ntools: [Read, Glob, Grep, Bash]\nsubagents: [lean]\nmcp: []\nrequires: []\nbudget: { tokens: 250000, usd_list_cap: 0.50 }\nsuccess:\n  - { check: answer_delivered }\n",
+      ".jitso/briefs/b.md": {
+        "from": "brief.md"
+      }
+    }
+  },
+  "steps": [
+    {
+      "run": [
+        "build",
+        "list"
+      ],
+      "expect": {
+        "exit": 0,
+        "stderr": [
+          {
+            "empty": true
+          }
+        ],
+        "stdout": [
+          {
+            "regex": "(?m)^- lean-team: "
+          },
+          {
+            "not_regex": "(?m)^- lean: "
+          }
+        ]
+      }
+    },
+    {
+      "run": [
+        "launch",
+        "--build",
+        "lean-team",
+        "--brief",
+        "{{PROJECT}}/.jitso/briefs/b.md",
+        "--mode",
+        "direct",
+        "--dry-run"
+      ],
+      "expect": {
+        "exit": 0,
+        "stderr": [
+          {
+            "empty": true
+          }
+        ],
+        "orca_calls": {
+          "empty": true
+        }
+      }
+    },
+    {
+      "run": [
+        "launch",
+        "--build",
+        "lean-team",
+        "--brief",
+        "{{PROJECT}}/.jitso/briefs/b.md",
+        "--mode",
+        "direct"
+      ],
+      "capture": {
+        "LAUNCH_ID": {
+          "from": "stdout",
+          "regex": "JITSO (L\\d{8}T\\d{6}-[0-9a-f]{4})"
+        }
+      },
+      "expect": {
+        "exit": 0
+      }
+    },
+    {
+      "exec": "run_sh",
+      "launch": "{{LAUNCH_ID}}",
+      "expect": {
+        "exit": 0,
+        "claude": {
+          "ran": true,
+          "argv_contains": [
+            "--agents"
+          ],
+          "json_arg_after": {
+            "--agents": [
+              {
+                "path": "",
+                "keys_exact": [
+                  "lean"
+                ]
+              },
+              {
+                "path": "lean.description",
+                "equals": "Lean helper used by a contract case, it carries only what claude needs."
+              },
+              {
+                "path": "lean.prompt",
+                "equals": "You are the lean helper of this session. Answer in one line and never edit a file."
+              }
+            ]
+          }
+        }
+      }
+    }
+  ]
+}

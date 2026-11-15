@@ -1,0 +1,93 @@
+{
+  "id": "validation/subagents/listed-subagent-must-be-approved",
+  "title": "a worker whose listed subagent is not approved is rejected at launch (exit 2), naming the worker, the subagent and its status; a worker with no subagents is unaffected",
+  "source": [
+    "intended: docs/decisions.md (a worker may launch only with approved subagents)"
+  ],
+  "status": {
+    "ts": "xfail",
+    "go": "pass"
+  },
+  "defect": "N-11",
+  "intent": "INTENDED behavior (defect N-11, approved subagents; docs/decisions.md). A subagent's prompt reaches `claude --agents`, so it is reviewed text: a worker may launch only with approved subagents. The overlay is a copy of the fixture's plan with its status set to candidate or retired (valid for the catalog). `launch --build sonnet-automator`, which lists plan, is rejected at launch, not at catalog load: exit 2, one stderr line `JITSO REJECTED: build \"sonnet-automator\" lists subagent \"plan\", which is <status>, not approved`, nothing on stdout, no registry line, orca never called. A worker that lists no subagent (haiku-explorer) still launches, so the catalog stays usable while one subagent is edited. The TS binary ignores a subagent's status, and also passes no --agents, so the first launch exits 0 and prints a card.",
+  "for_each": {
+    "var": "status",
+    "values": [
+      "candidate",
+      "retired"
+    ]
+  },
+  "project": {
+    "files": {
+      "jitso/builds/plan.yaml": "# Subagent-tier build (tier: subagent): not launchable alone, a worker lists it by name in subagents.\nid: plan\nversion: 1\nstatus: {{status}}\ntier: subagent\nrole: operator\ntype: planner\nwork_kind: planning\ndescription: Read-only planner that turns one user story into an ordered list of automation steps and returns it without editing anything.\nprompt: You are the planner of this session. Read the approved test plan and the code it touches, then return a short numbered list of the steps to automate, each naming the file it changes. Never edit, create or delete a file.\nharness: claude\nmodel: claude-haiku-5-5\neffort: low\nmode_default: direct\nagents_md: exclude\nroute_scope: [none]\nskills_first: []\ntools: [Read, Glob, Grep]\nmcp: []\nrequires: []\nbudget: { tokens: 100000, usd_list_cap: 0.50 }\nsuccess:\n  - { check: answer_delivered }\n",
+      ".jitso/briefs/b.md": {
+        "from": "brief.md"
+      }
+    }
+  },
+  "steps": [
+    {
+      "run": [
+        "launch",
+        "--build",
+        "sonnet-automator",
+        "--field",
+        "ticket_key=PRJ-1",
+        "--brief",
+        "{{PROJECT}}/.jitso/briefs/b.md",
+        "--mode",
+        "direct",
+        "--dry-run"
+      ],
+      "expect": {
+        "exit": 2,
+        "stdout": [
+          {
+            "empty": true
+          }
+        ],
+        "stderr": [
+          "JITSO REJECTED: build \"sonnet-automator\" lists subagent \"plan\", which is {{status}}, not approved",
+          {
+            "line_count": 1
+          }
+        ],
+        "orca_calls": {
+          "empty": true
+        },
+        "registry": {
+          "count": 0
+        },
+        "files": [
+          {
+            "path": ".jitso/launches",
+            "exists": false
+          }
+        ]
+      }
+    },
+    {
+      "run": [
+        "launch",
+        "--build",
+        "haiku-explorer",
+        "--brief",
+        "{{PROJECT}}/.jitso/briefs/b.md",
+        "--mode",
+        "direct",
+        "--dry-run"
+      ],
+      "expect": {
+        "exit": 0,
+        "stderr": [
+          {
+            "empty": true
+          }
+        ],
+        "orca_calls": {
+          "empty": true
+        }
+      }
+    }
+  ]
+}

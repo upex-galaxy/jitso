@@ -49,6 +49,11 @@ var (
 // route ids. It returns every problem, in the oracle's order (its validatePreset),
 // followed by the tier rules; an empty list means valid. The messages and the
 // String() coercion of values are the oracle's.
+//
+// Worker and conductor builds are validated identically. A subagent-tier build
+// never launches alone, so route_scope and success are optional for it (checked
+// only when present, never used), and skills_first, mcp, requires and
+// subagents must be empty (docs/decisions.md, tier matrix, defect N-11).
 func ValidateBuild(raw any, cfg Config, routeIDs []string) []string {
 	p, ok := raw.(*Map)
 	if !ok {
@@ -56,6 +61,7 @@ func ValidateBuild(raw any, cfg Config, routeIDs []string) []string {
 	}
 	var errs []string
 	add := func(msg string) { errs = append(errs, msg) }
+	subagent := tierOf(p) == TierSubagent
 
 	if id, ok := p.Value("id").(string); !ok || !kebab.MatchString(id) {
 		add("id must be kebab-case")
@@ -87,13 +93,15 @@ func ValidateBuild(raw any, cfg Config, routeIDs []string) []string {
 	if v, present := p.Get("subagents"); present && !kebabList(v) {
 		add("subagents must be a list of kebab-case names")
 	}
-	scope := jsconv.Strings(p.Value("route_scope"))
-	if len(scope) == 0 {
-		add("route_scope is empty (use [none])")
-	}
-	for _, id := range scope {
-		if id != "none" && !slices.Contains(routeIDs, id) {
-			add(`route_scope id "` + id + `" is not an instruction section`)
+	if _, present := p.Get("route_scope"); present || !subagent {
+		scope := jsconv.Strings(p.Value("route_scope"))
+		if len(scope) == 0 {
+			add("route_scope is empty (use [none])")
+		}
+		for _, id := range scope {
+			if id != "none" && !slices.Contains(routeIDs, id) {
+				add(`route_scope id "` + id + `" is not an instruction section`)
+			}
 		}
 	}
 	requires := jsconv.Strings(p.Value("requires"))
@@ -103,7 +111,7 @@ func ValidateBuild(raw any, cfg Config, routeIDs []string) []string {
 		}
 	}
 	success, isList := p.Value("success").([]any)
-	if !isList || len(success) == 0 {
+	if _, present := p.Get("success"); (present || !subagent) && (!isList || len(success) == 0) {
 		add("success must list at least one check")
 	}
 	for _, entry := range success {
@@ -122,25 +130,37 @@ func ValidateBuild(raw any, cfg Config, routeIDs []string) []string {
 	return append(errs, tierProblems(p)...)
 }
 
+// tierOf is the tier a build file declares: worker when the key is absent or
+// not a known tier (tierProblems reports the latter).
+func tierOf(p *Map) string {
+	if s, ok := p.Value("tier").(string); ok && slices.Contains(Tiers, s) {
+		return s
+	}
+	return TierWorker
+}
+
 // tierProblems are the rules of the tier field, which the oracle does not
-// know: the value, and what a subagent-tier build must carry to reach claude
-// as an --agents entry (a description and a prompt, defect S3).
+// know: the value, what a subagent-tier build must carry to reach claude as an
+// --agents entry (a description and a prompt, defect S3), and what it must not
+// carry (skills_first, mcp, requires and subagents must be empty, defect N-11).
 func tierProblems(p *Map) []string {
-	tier := TierWorker
 	if v, present := p.Get("tier"); present {
-		s, ok := v.(string)
-		if !ok || !slices.Contains(Tiers, s) {
+		if s, ok := v.(string); !ok || !slices.Contains(Tiers, s) {
 			return []string{"tier must be one of " + strings.Join(Tiers, ", ")}
 		}
-		tier = s
 	}
-	if tier != TierSubagent {
+	if tierOf(p) != TierSubagent {
 		return nil
 	}
 	var errs []string
 	for _, key := range []string{"description", "prompt"} {
 		if s, ok := p.Value(key).(string); !ok || strings.TrimSpace(s) == "" {
 			errs = append(errs, key+" must be a non-empty string in a subagent-tier build")
+		}
+	}
+	for _, key := range []string{"skills_first", "mcp", "requires"} {
+		if len(jsconv.Strings(p.Value(key))) > 0 {
+			errs = append(errs, key+" must be empty in a subagent-tier build")
 		}
 	}
 	if list, ok := p.Value("subagents").([]any); ok && len(list) > 0 {

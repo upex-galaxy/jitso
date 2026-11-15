@@ -1,0 +1,66 @@
+{
+  "id": "validation/tier/subagent-lists-must-be-empty",
+  "title": "a subagent-tier build with a non-empty skills_first, mcp or requires is a catalog error: exit 3, the file and the field named",
+  "source": [
+    "intended: docs/decisions.md (tier matrix: skills_first, mcp and requires must be empty in a subagent-tier build)"
+  ],
+  "status": {
+    "ts": "xfail",
+    "go": "pass"
+  },
+  "defect": "N-11",
+  "intent": "INTENDED behavior (defect N-11, tier fields; docs/decisions.md). A subagent runs inside its worker's session, so it cannot start its own skills or MCP servers and takes no launch fields: skills_first, mcp and requires must be empty. The overlay jitso/builds/plan.yaml is a copy of the fixture's plan, which is a valid worker preset for the oracle too, with one of them set to a value the allowlists accept. That is an invalid catalog entry: exit 3, nothing on stdout, a stderr that names jitso/builds/plan.yaml and says `<field> must be empty in a subagent-tier build`. The TS binary has no tiers, so it accepts the file and `build list` exits 0.",
+  "for_each": {
+    "vars": [
+      "field",
+      "plan"
+    ],
+    "rows": [
+      [
+        "mcp",
+        "# Subagent-tier build (tier: subagent): not launchable alone, a worker lists it by name in subagents.\nid: plan\nversion: 1\nstatus: approved\ntier: subagent\nrole: operator\ntype: planner\nwork_kind: planning\ndescription: Read-only planner that turns one user story into an ordered list of automation steps and returns it without editing anything.\nprompt: You are the planner of this session. Read the approved test plan and the code it touches, then return a short numbered list of the steps to automate, each naming the file it changes. Never edit, create or delete a file.\nharness: claude\nmodel: claude-haiku-5-5\neffort: low\nmode_default: direct\nagents_md: exclude\nroute_scope: [none]\nskills_first: []\ntools: [Read, Glob, Grep]\nmcp: [dbhub]\nrequires: []\nbudget: { tokens: 100000, usd_list_cap: 0.50 }\nsuccess:\n  - { check: answer_delivered }\n"
+      ],
+      [
+        "skills_first",
+        "# Subagent-tier build (tier: subagent): not launchable alone, a worker lists it by name in subagents.\nid: plan\nversion: 1\nstatus: approved\ntier: subagent\nrole: operator\ntype: planner\nwork_kind: planning\ndescription: Read-only planner that turns one user story into an ordered list of automation steps and returns it without editing anything.\nprompt: You are the planner of this session. Read the approved test plan and the code it touches, then return a short numbered list of the steps to automate, each naming the file it changes. Never edit, create or delete a file.\nharness: claude\nmodel: claude-haiku-5-5\neffort: low\nmode_default: direct\nagents_md: exclude\nroute_scope: [none]\nskills_first: [sprint-testing]\ntools: [Read, Glob, Grep]\nmcp: []\nrequires: []\nbudget: { tokens: 100000, usd_list_cap: 0.50 }\nsuccess:\n  - { check: answer_delivered }\n"
+      ],
+      [
+        "requires",
+        "# Subagent-tier build (tier: subagent): not launchable alone, a worker lists it by name in subagents.\nid: plan\nversion: 1\nstatus: approved\ntier: subagent\nrole: operator\ntype: planner\nwork_kind: planning\ndescription: Read-only planner that turns one user story into an ordered list of automation steps and returns it without editing anything.\nprompt: You are the planner of this session. Read the approved test plan and the code it touches, then return a short numbered list of the steps to automate, each naming the file it changes. Never edit, create or delete a file.\nharness: claude\nmodel: claude-haiku-5-5\neffort: low\nmode_default: direct\nagents_md: exclude\nroute_scope: [none]\nskills_first: []\ntools: [Read, Glob, Grep]\nmcp: []\nrequires: [ticket_key]\nbudget: { tokens: 100000, usd_list_cap: 0.50 }\nsuccess:\n  - { check: answer_delivered }\n"
+      ]
+    ],
+    "ids": [
+      "mcp",
+      "skills-first",
+      "requires"
+    ]
+  },
+  "project": {
+    "files": {
+      "jitso/builds/plan.yaml": "{{plan}}"
+    }
+  },
+  "steps": [
+    {
+      "run": [
+        "build",
+        "list"
+      ],
+      "expect": {
+        "exit": 3,
+        "stdout": [
+          {
+            "empty": true
+          }
+        ],
+        "stderr": [
+          "jitso/builds/plan.yaml",
+          "{{field}} must be empty in a subagent-tier build"
+        ],
+        "orca_calls": {
+          "empty": true
+        }
+      }
+    }
+  ]
+}
