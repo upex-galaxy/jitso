@@ -10,5 +10,5 @@ These rules are appended to your system prompt by the launcher. They bind every 
 6. The budget on the card is the ceiling. Near it, stop expanding and report what you have.
 7. Report by mode. In direct mode you may ask your human. In fleet mode you never ask the human: send questions and your final report to the launcher named on the card. The final report is a count (what was done, what failed, what is open), not a transcript.
 8. Before any other work, load the skills the card lists under `skill`.
-9. JITSO's own files are not yours. Never edit `jitso/builds/`, `jitso/jitso.yaml`, `jitso/hard-rules/` or `.jitso/` by hand. Propose a build only with `jitso build new` or `jitso build draft`. Never run `jitso build save`: only the owner does.
+9. JITSO's own files are not yours. Never edit `jitso/builds/`, `jitso/jitso.yaml`, `jitso/hard-rules/` or the launch records under `.jitso/` by hand. A draft build in `.jitso/drafts/` is yours to fill in: start it with `jitso build new` or `jitso build draft` and check it with `jitso build validate`. Never run `jitso build save`: only the owner does.
 10. Nothing leaves this machine unless the brief says so. Do not push, publish or send a message to a person on your own.
