@@ -11,14 +11,14 @@ the allowlists of the repo where they launch.
 
 ## Status
 
-Pre-release. Nothing is published: no remote, no release, no install script.
+Pre-release. Nothing is published: no remote, no release, no tag.
 
 | Part | State |
 |---|---|
-| CLI (`launch`, `close`, `reap`, `analyze`, `presets list`, the dispatcher, the two hooks) | ported to Go; passes the contract suite on fakes; never run against a real Orca or a real Claude Code session |
+| CLI (`launch`, `close`, `reap`, `analyze`, `presets list`, `version`, the dispatcher, the two hooks) | ported to Go; passes the contract suite on fakes; never run against a real Orca or a real Claude Code session |
 | Build schema, validators, hard-rules core, templates | not in this repo yet |
 | Adoption commands (`install skill`, `setup hook`, `setup instructions`, `doctor`) | not built |
-| Distribution (GitHub Releases, install script, Homebrew tap) | not built |
+| Distribution (GitHub Releases, install script, Homebrew tap) | the packaging script, the install script with its offline test, the release workflow and the Homebrew formula template exist as local files and have never run against GitHub; nothing is published. The procedure is [`docs/release.md`](docs/release.md) |
 | Platforms | builds for macOS, Linux and Windows; `launch` and the dispatcher need `/bin/sh`, so they do not run on Windows |
 
 ## Build and test
