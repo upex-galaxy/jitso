@@ -1,0 +1,61 @@
+{
+  "id": "setup/hook/preview-of-a-compact-file-hides-everything",
+  "title": "the preview of a one-line settings file prints one fallback line instead of the whole file",
+  "source": [
+    "intended: docs/decisions.md D8 (setup hook, defect N-17): jitso registers its guard in the project's .claude/settings.json without clobbering anything"
+  ],
+  "status": {
+    "ts": "xfail",
+    "go": "pass"
+  },
+  "defect": "N-17",
+  "intent": "INTENDED behavior (defect N-17, setup hook). A compact settings file is one line, so its diff would be that whole line, secrets included (AGENTS.md rule 1). The preview of a sensitive file whose existing content has fewer than three lines prints only `(.claude/settings.json: the file is compact JSON; its changes are not shown)`. The dry run still exits 0 and writes nothing. The oracle has no `setup` command: it answers `unknown command \"setup\"` on stderr with exit 2 and prints nothing on stdout, so every expectation that needs this output or file effect FAILS on it.",
+  "project": {
+    "files": {
+      ".claude/settings.json": {
+        "from": "seed.json"
+      }
+    }
+  },
+  "steps": [
+    {
+      "run": [
+        "setup",
+        "hook",
+        "--dry-run"
+      ],
+      "expect": {
+        "exit": 0,
+        "stdout": [
+          "(.claude/settings.json: the file is compact JSON; its changes are not shown)",
+          {
+            "not_contains": "CANARY"
+          },
+          {
+            "not_contains": "apiKeyHelper"
+          },
+          {
+            "not_contains": "key.sh"
+          },
+          {
+            "regex": "jitso setup hook: dry run, nothing written\\n$"
+          }
+        ],
+        "stderr": [
+          {
+            "not_contains": "unknown command"
+          },
+          {
+            "not_contains": "CANARY"
+          }
+        ],
+        "files": [
+          {
+            "path": ".claude/settings.json",
+            "equals": "{\"apiKeyHelper\":\"./key.sh ENV-CANARY-9\",\"env\":{\"TOKEN\":\"TOKEN-CANARY-7\"}}\n"
+          }
+        ]
+      }
+    }
+  ]
+}

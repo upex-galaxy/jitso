@@ -56,9 +56,14 @@ type Change struct {
 	// delete <path>) instead of a diff.
 	Brief bool
 	// Sensitive marks a file that may hold secrets (.claude/settings.json):
-	// its diff prints no unchanged line, and a diff too large to compute
-	// prints only a count of changed lines.
+	// its diff prints no unchanged line and no line of the user's file, only
+	// the lines jitso wrote (see UnifiedSensitive), and a diff too large to
+	// compute prints only a count of changed lines.
 	Sensitive bool
+	// Written reports whether a line of a Sensitive file (trimmed of its
+	// spaces and a trailing comma) is one jitso writes, so it may print. Nil
+	// means none beyond lone braces and brackets.
+	Written func(line string) bool
 	// Prune marks a KindDelete of a folder that is removed only when it is
 	// empty by then (the folders left behind by --remove). It is not
 	// previewed and does not make a plan non-empty; Apply runs it in order.

@@ -1,0 +1,67 @@
+{
+  "id": "setup/hook/preview-hides-a-secret-next-to-a-removal",
+  "title": "the preview of --remove never prints a user line whose only change is the comma it loses",
+  "source": [
+    "intended: docs/decisions.md D8 (setup hook, defect N-17): jitso registers its guard in the project's .claude/settings.json without clobbering anything"
+  ],
+  "status": {
+    "ts": "xfail",
+    "go": "pass"
+  },
+  "defect": "N-17",
+  "intent": "INTENDED behavior (defect N-17, setup hook). Taking out the last key of the root object (`hooks`) makes the key before it lose its trailing comma, so a line diff shows that user line as removed and added. For this sensitive file the preview prints only lines jitso wrote (here the removed handler, with its `jitso hook guard` command): the user line shows as the one marker line `~ (a line of the existing file changes only by a comma; not shown)`, never its text. The oracle has no `setup` command: it answers `unknown command \"setup\"` on stderr with exit 2 and prints nothing on stdout, so every expectation that needs this output or file effect FAILS on it.",
+  "project": {
+    "files": {
+      ".claude/settings.json": {
+        "from": "seed.json"
+      }
+    }
+  },
+  "steps": [
+    {
+      "run": [
+        "setup",
+        "hook",
+        "--remove",
+        "--dry-run"
+      ],
+      "expect": {
+        "exit": 0,
+        "stdout": [
+          "+++ b/.claude/settings.json",
+          "~ (a line of the existing file changes only by a comma; not shown)",
+          "-            \"command\": \"jitso hook guard\"",
+          {
+            "not_contains": "TOKEN-CANARY-7"
+          },
+          {
+            "not_contains": "apiKeyHelper"
+          },
+          {
+            "not_contains": "key.sh"
+          },
+          {
+            "regex": "jitso setup hook: dry run, nothing written\\n$"
+          }
+        ],
+        "stderr": [
+          {
+            "not_contains": "unknown command"
+          },
+          {
+            "not_contains": "TOKEN-CANARY-7"
+          }
+        ],
+        "files": [
+          {
+            "path": ".claude/settings.json",
+            "contains": [
+              "TOKEN-CANARY-7",
+              "jitso hook guard"
+            ]
+          }
+        ]
+      }
+    }
+  ]
+}

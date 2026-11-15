@@ -1,0 +1,15 @@
+{
+  "apiKeyHelper": "./key.sh TOKEN-CANARY-7",
+  "hooks": {
+    "SessionEnd": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "jitso hook guard"
+          }
+        ]
+      }
+    ]
+  }
+}

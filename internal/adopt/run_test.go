@@ -211,7 +211,7 @@ func TestPreviewKinds(t *testing.T) {
 		{"new empty file, brief", Change{Display: "n", Kind: KindFile, New: nil, Brief: true}, "new file n (0 lines)\n"},
 		{"changed file stays a diff even when brief", Change{Display: "c", Kind: KindFile, Old: []byte("a\n"), New: []byte("b\n"), Brief: true}, "--- a/c\n+++ b/c\n@@ -1 +1 @@\n-a\n+b\n"},
 		{"three lines of context", Change{Display: "c", Kind: KindFile, Old: []byte(long + "x\n" + long), New: []byte(long + "y\n" + long)}, "--- a/c\n+++ b/c\n@@ -3,7 +3,7 @@\n keep\n keep\n keep\n-x\n+y\n keep\n keep\n keep\n"},
-		{"sensitive prints no unchanged line", Change{Display: ".claude/settings.json", Kind: KindFile, Old: []byte(settings), New: []byte(settingsNew), Sensitive: true}, "--- a/.claude/settings.json\n+++ b/.claude/settings.json\n@@ -3 +3 @@\n-  \"hooks\": {}\n+  \"hooks\": {\"a\": 1}\n"},
+		{"sensitive prints no unchanged line", Change{Display: ".claude/settings.json", Kind: KindFile, Old: []byte(settings), New: []byte(settingsNew), Sensitive: true, Written: func(l string) bool { return strings.HasPrefix(l, `"hooks"`) }}, "--- a/.claude/settings.json\n+++ b/.claude/settings.json\n@@ -3 +3 @@\n-  \"hooks\": {}\n+  \"hooks\": {\"a\": 1}\n"},
 		{"delete, brief", Change{Display: "d", Kind: KindDelete, Old: []byte("a\n"), Brief: true}, "delete d\n"},
 		{"delete, unknown content", Change{Display: "d", Kind: KindDelete}, "delete d\n"},
 		{"delete, diff", Change{Display: "d", Kind: KindDelete, Old: []byte("a\n")}, "--- a/d\n+++ /dev/null\n@@ -1 +0,0 @@\n-a\n"},

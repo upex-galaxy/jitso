@@ -165,7 +165,7 @@ func setupHookPlan(root project.Root, file string, old []byte, command string, r
 		return plan, setupProblem(err, command)
 	}
 
-	change := adopt.Change{Path: file, Display: setupSettingsRel, Old: old, Kind: adopt.KindFile, Sensitive: true}
+	change := adopt.Change{Path: file, Display: setupSettingsRel, Old: old, Kind: adopt.KindFile, Sensitive: true, Written: settingsjson.WrittenLine(command)}
 	switch {
 	case remove && old == nil, old != nil && out != nil && bytes.Equal(out, old):
 		// No change: a missing file, or one that already has the answer.

@@ -126,7 +126,8 @@ func readLine(r io.Reader) (line string, eof bool) {
 
 // Preview prints what the plan would change, for each effective change in
 // plan order: the plan's header lines, then a unified diff (no unchanged line
-// for a Sensitive file, three lines of context otherwise), or one line for a
+// for a Sensitive file, where only the lines jitso wrote are printed; three
+// lines of context otherwise), or one line for a
 // Brief change: `new file <path> (<n> lines)`, `delete <path>`; and for the
 // kinds that are not file content `link <path> -> <target>`, `unlink <path>`
 // and `new folder <path>`. A Prune change is not shown.
@@ -172,7 +173,7 @@ func previewOne(c Change) string {
 
 func diffOf(c Change, old, new []byte) string {
 	if c.Sensitive {
-		return UnifiedWith(c.Display, old, new, 0, FallbackSummary)
+		return UnifiedSensitive(c.Display, old, new, c.Written)
 	}
 	return UnifiedWith(c.Display, old, new, 3, FallbackHunk)
 }

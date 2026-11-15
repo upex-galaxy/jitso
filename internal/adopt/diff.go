@@ -38,11 +38,20 @@ func UnifiedWith(display string, old, new []byte, context int, tooLarge TooLarge
 }
 
 func unified(display string, old, new []byte, context int, tooLarge TooLarge, maxCells int) string {
+	return render(display, old, new, context, tooLarge, maxCells, nil)
+}
+
+// render is the diff of old to new. A non-nil g makes it the diff of a
+// sensitive file: see UnifiedSensitive.
+func render(display string, old, new []byte, context int, tooLarge TooLarge, maxCells int, g *guard) string {
 	if (old == nil) == (new == nil) && string(old) == string(new) {
 		return ""
 	}
 	if context < 0 {
 		context = 0
+	}
+	if g != nil && g.compact(old) {
+		return fmt.Sprintf("(%s: the file is compact JSON; its changes are not shown)\n", display)
 	}
 	var b strings.Builder
 	if old == nil {
@@ -59,6 +68,9 @@ func unified(display string, old, new []byte, context int, tooLarge TooLarge, ma
 	ops, fell := diffOps(a, c, maxCells)
 	if fell && tooLarge == FallbackSummary {
 		return fmt.Sprintf("(%s: %d lines change, too large to show)\n", display, changedLines(ops))
+	}
+	if g != nil {
+		g.mask(ops, a, c)
 	}
 	writeHunks(&b, ops, context)
 	return b.String()
@@ -96,6 +108,10 @@ const (
 type op struct {
 	kind opKind
 	line string
+	// mark, when set, is printed instead of kind (a masked line keeps its
+	// kind so the hunk ranges stay true); hide leaves the line out.
+	mark byte
+	hide bool
 }
 
 // diffOps is the edit script from a to c. It sets the common first and last
@@ -114,7 +130,7 @@ func diffOps(a, c []string, maxCells int) (ops []op, fell bool) {
 	ma, mc := a[pre:len(a)-suf], c[pre:len(c)-suf]
 	ops = make([]op, 0, len(a)+len(c))
 	for _, l := range a[:pre] {
-		ops = append(ops, op{opEq, l})
+		ops = append(ops, op{kind: opEq, line: l})
 	}
 	switch {
 	case len(ma) == 0 || len(mc) == 0 || (len(ma)+1)*(len(mc)+1) <= maxCells:
@@ -122,14 +138,14 @@ func diffOps(a, c []string, maxCells int) (ops []op, fell bool) {
 	default:
 		fell = true
 		for _, l := range ma {
-			ops = append(ops, op{opDel, l})
+			ops = append(ops, op{kind: opDel, line: l})
 		}
 		for _, l := range mc {
-			ops = append(ops, op{opIns, l})
+			ops = append(ops, op{kind: opIns, line: l})
 		}
 	}
 	for _, l := range a[len(a)-suf:] {
-		ops = append(ops, op{opEq, l})
+		ops = append(ops, op{kind: opEq, line: l})
 	}
 	return ops, fell
 }
@@ -143,10 +159,10 @@ func lcsOps(a, c []string) []op {
 	if n == 0 || m == 0 {
 		ops := make([]op, 0, n+m)
 		for _, l := range a {
-			ops = append(ops, op{opDel, l})
+			ops = append(ops, op{kind: opDel, line: l})
 		}
 		for _, l := range c {
-			ops = append(ops, op{opIns, l})
+			ops = append(ops, op{kind: opIns, line: l})
 		}
 		return ops
 	}
@@ -169,22 +185,22 @@ func lcsOps(a, c []string) []op {
 	for i < n && j < m {
 		switch {
 		case a[i] == c[j]:
-			ops = append(ops, op{opEq, a[i]})
+			ops = append(ops, op{kind: opEq, line: a[i]})
 			i++
 			j++
 		case table[(i+1)*w+j] >= table[i*w+j+1]:
-			ops = append(ops, op{opDel, a[i]})
+			ops = append(ops, op{kind: opDel, line: a[i]})
 			i++
 		default:
-			ops = append(ops, op{opIns, c[j]})
+			ops = append(ops, op{kind: opIns, line: c[j]})
 			j++
 		}
 	}
 	for ; i < n; i++ {
-		ops = append(ops, op{opDel, a[i]})
+		ops = append(ops, op{kind: opDel, line: a[i]})
 	}
 	for ; j < m; j++ {
-		ops = append(ops, op{opIns, c[j]})
+		ops = append(ops, op{kind: opIns, line: c[j]})
 	}
 	return ops
 }
@@ -255,7 +271,14 @@ func writeHunks(b *strings.Builder, ops []op, context int) {
 		newCount := cPos[hi] - cPos[lo]
 		fmt.Fprintf(b, "@@ -%s +%s @@\n", span(aPos[lo], oldCount), span(cPos[lo], newCount))
 		for _, o := range ops[lo:hi] {
-			b.WriteByte(byte(o.kind))
+			if o.hide {
+				continue
+			}
+			if o.mark != 0 {
+				b.WriteByte(o.mark)
+			} else {
+				b.WriteByte(byte(o.kind))
+			}
 			b.WriteString(o.line)
 			if !strings.HasSuffix(o.line, "\n") {
 				b.WriteString("\n\\ No newline at end of file\n")
