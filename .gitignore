@@ -1,0 +1,15 @@
+.session/
+.jitso/
+dist/
+*.test
+
+# The runner built in place, as contract/runner/README.md shows
+/contract/runner/jitso-contract-runner
+# The CLI built in place by a bare `go build ./cmd/jitso` at the repo root
+/jitso
+!/jitso/
+# skill-creator eval workspaces
+.agents/skills/*-workspace/
+# Claude Code local state: never committed (AGENTS.md rule 1)
+.claude/settings.local.json
+.claude/worktrees/
