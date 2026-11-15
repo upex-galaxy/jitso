@@ -30,6 +30,14 @@ func Line() string {
 	return line(Version, info, ok, runtime.Version(), runtime.GOOS, runtime.GOARCH)
 }
 
+// Current is the version of this build alone, as the first field of Line
+// prints it: the stamped value, else the module version, else "dev".
+func Current() string {
+	info, ok := debug.ReadBuildInfo()
+	v, _ := resolve(Version, info, ok)
+	return v
+}
+
 // line is Line over explicit inputs, so a test can give it any build info.
 func line(stamped string, info *debug.BuildInfo, ok bool, goVersion, goos, goarch string) string {
 	v, commit := resolve(stamped, info, ok)

@@ -1,0 +1,57 @@
+{
+  "id": "install/skill/project-dry-run-writes-nothing",
+  "title": "a dry run of install skill at project scope prints the plan and writes nothing",
+  "source": [
+    "intended: docs: B4B5-DESIGN.md B4.3 case table, common rules (dry run)"
+  ],
+  "status": {
+    "ts": "xfail",
+    "go": "pass"
+  },
+  "defect": "N-16",
+  "intent": "INTENDED behavior (defect N-16, B4.3). `--dry-run` prints `new file <path> (<n> lines)` for each skill file and the manifest, `link .claude/skills/jitso -> ../../.agents/skills/jitso`, then `jitso install skill: dry run, nothing written`, exit 0, and creates neither the skill folder, the link nor a backup folder. The oracle has no `install` command: it answers `unknown command \"install\"` on stderr with exit 2 and prints nothing on stdout, so the pinned output and file effects FAIL on it.",
+  "steps": [
+    {
+      "run": [
+        "install",
+        "skill",
+        "--scope",
+        "project",
+        "--dry-run"
+      ],
+      "expect": {
+        "exit": 0,
+        "stdout": [
+          "new file .agents/skills/jitso/SKILL.md",
+          "new file .agents/skills/jitso/references/README.md",
+          "new file .agents/skills/jitso/.jitso-skill.json",
+          "link .claude/skills/jitso -> ../../.agents/skills/jitso",
+          "jitso install skill: dry run, nothing written"
+        ],
+        "stderr": [
+          {
+            "empty": true
+          }
+        ],
+        "files": [
+          {
+            "path": ".agents/skills/jitso",
+            "exists": false
+          },
+          {
+            "path": ".agents/skills",
+            "exists": false
+          },
+          {
+            "path": ".claude",
+            "exists": false
+          },
+          {
+            "path": ".jitso",
+            "exists": false
+          }
+        ]
+      }
+    }
+  ]
+}

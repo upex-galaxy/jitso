@@ -1,0 +1,74 @@
+{
+  "id": "install/skill/link-is-repaired",
+  "title": "install skill recreates a missing link without touching the current copy",
+  "source": [
+    "intended: docs: B4B5-DESIGN.md states table (current, a missing link is repaired)"
+  ],
+  "status": {
+    "ts": "xfail",
+    "go": "pass"
+  },
+  "defect": "N-16",
+  "intent": "INTENDED behavior (defect N-16, B4.3). With the copy current and the link deleted, install prints only `link .claude/skills/jitso -> ../../.agents/skills/jitso`, applies it with `--yes` (`linked ...`), writes no file and makes no backup. The oracle has no `install` command: it answers `unknown command \"install\"` on stderr with exit 2 and prints nothing on stdout, so the pinned output and file effects FAIL on it.",
+  "steps": [
+    {
+      "run": [
+        "install",
+        "skill",
+        "--scope",
+        "project",
+        "--yes"
+      ],
+      "expect": {
+        "exit": 0,
+        "stdout": [
+          "jitso install skill: done"
+        ]
+      }
+    },
+    {
+      "write": {
+        "project": {
+          ".claude/skills/jitso": null
+        }
+      }
+    },
+    {
+      "run": [
+        "install",
+        "skill",
+        "--scope",
+        "project",
+        "--yes"
+      ],
+      "expect": {
+        "exit": 0,
+        "stdout": [
+          "link .claude/skills/jitso -> ../../.agents/skills/jitso",
+          "linked .claude/skills/jitso -> ../../.agents/skills/jitso",
+          {
+            "not_contains": "created"
+          },
+          {
+            "not_contains": "wrote"
+          },
+          "jitso install skill: done"
+        ],
+        "stderr": [
+          {
+            "empty": true
+          }
+        ],
+        "files": [
+          {
+            "path": ".claude/skills/jitso/SKILL.md"
+          },
+          {
+            "path": ".jitso/backups",
+            "exists": false
+          }
+        ]
+      }
+    }
+  ]
+}

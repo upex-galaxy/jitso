@@ -1,0 +1,53 @@
+{
+  "id": "install/skill/project-scope-outside-git",
+  "title": "install skill at project scope outside a git checkout is an environment error",
+  "source": [
+    "intended: docs: B4B5-DESIGN.md `install skill` input table"
+  ],
+  "status": {
+    "ts": "xfail",
+    "go": "pass"
+  },
+  "defect": "N-16",
+  "intent": "INTENDED behavior (defect N-16, B4.3). From a folder that is not inside a git checkout, project scope is exit 3 with `jitso: <folder> is not inside a git checkout`, and nothing is written; user scope from the same folder works (the user-scope case). The oracle has no `install` command: it answers `unknown command \"install\"` on stderr with exit 2 and prints nothing on stdout, so the pinned output and file effects FAIL on it.",
+  "steps": [
+    {
+      "run": [
+        "install",
+        "skill",
+        "--scope",
+        "project",
+        "--yes"
+      ],
+      "cwd": "{{HOME}}",
+      "expect": {
+        "exit": 3,
+        "stdout": [
+          {
+            "empty": true
+          }
+        ],
+        "stderr": [
+          "is not inside a git checkout",
+          {
+            "not_contains": "unknown command"
+          }
+        ],
+        "files": [
+          {
+            "path": "{{HOME}}/.agents",
+            "exists": false
+          },
+          {
+            "path": "{{HOME}}/.claude",
+            "exists": false
+          },
+          {
+            "path": "{{HOME}}/.jitso",
+            "exists": false
+          }
+        ]
+      }
+    }
+  ]
+}

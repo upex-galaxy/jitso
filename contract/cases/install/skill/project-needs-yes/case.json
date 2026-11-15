@@ -1,0 +1,52 @@
+{
+  "id": "install/skill/project-needs-yes",
+  "title": "install skill without --yes and without a terminal shows the preview, refuses with exit 2 and writes nothing",
+  "source": [
+    "intended: docs: B4B5-DESIGN.md B4-9 and common rules"
+  ],
+  "status": {
+    "ts": "xfail",
+    "go": "pass"
+  },
+  "defect": "N-16",
+  "intent": "INTENDED behavior (defect N-16, B4.3). No `--yes` and no terminal (the contract gives none): the preview goes to stdout, stderr is `JITSO REJECTED: this changes files: read the preview above, then run it again with --yes, or in a terminal to answer the prompt; nothing written`, exit 2. The oracle has no `install` command: it answers `unknown command \"install\"` on stderr with exit 2 and prints nothing on stdout, so the pinned output and file effects FAIL on it.",
+  "steps": [
+    {
+      "run": [
+        "install",
+        "skill",
+        "--scope",
+        "project"
+      ],
+      "expect": {
+        "exit": 2,
+        "stdout": [
+          "new file .agents/skills/jitso/SKILL.md",
+          "link .claude/skills/jitso -> ../../.agents/skills/jitso"
+        ],
+        "stderr": [
+          "JITSO REJECTED: this changes files",
+          "run it again with --yes",
+          "nothing written",
+          {
+            "not_contains": "unknown command"
+          }
+        ],
+        "files": [
+          {
+            "path": ".agents/skills/jitso",
+            "exists": false
+          },
+          {
+            "path": ".claude",
+            "exists": false
+          },
+          {
+            "path": ".jitso",
+            "exists": false
+          }
+        ]
+      }
+    }
+  ]
+}

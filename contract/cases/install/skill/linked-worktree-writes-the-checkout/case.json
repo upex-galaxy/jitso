@@ -1,0 +1,60 @@
+{
+  "id": "install/skill/linked-worktree-writes-the-checkout",
+  "title": "from a linked worktree the skill is written into that checkout and the primary is left alone",
+  "source": [
+    "intended: docs: B4B5-DESIGN.md B4-8"
+  ],
+  "status": {
+    "ts": "xfail",
+    "go": "pass"
+  },
+  "defect": "N-16",
+  "intent": "INTENDED behavior (defect N-16, B4.3). The skill is committed content of the branch you are on, so a linked worktree gets its own `.agents/skills/jitso` and link and the primary checkout is left alone. The oracle has no `install` command: it answers `unknown command \"install\"` on stderr with exit 2 and prints nothing on stdout, so the pinned output and file effects FAIL on it.",
+  "steps": [
+    {
+      "git_worktree": {
+        "name": "w"
+      },
+      "expect": {
+        "files": [
+          {
+            "path": "{{WORKTREE_w}}/.git"
+          }
+        ]
+      }
+    },
+    {
+      "run": [
+        "install",
+        "skill",
+        "--scope",
+        "project",
+        "--yes"
+      ],
+      "cwd": "{{WORKTREE_w}}",
+      "expect": {
+        "exit": 0,
+        "stdout": [
+          "created .agents/skills/jitso/SKILL.md",
+          "jitso install skill: done"
+        ],
+        "files": [
+          {
+            "path": "{{WORKTREE_w}}/.agents/skills/jitso/SKILL.md"
+          },
+          {
+            "path": "{{WORKTREE_w}}/.claude/skills/jitso/SKILL.md"
+          },
+          {
+            "path": "{{PROJECT}}/.agents/skills",
+            "exists": false
+          },
+          {
+            "path": "{{PROJECT}}/.claude",
+            "exists": false
+          }
+        ]
+      }
+    }
+  ]
+}

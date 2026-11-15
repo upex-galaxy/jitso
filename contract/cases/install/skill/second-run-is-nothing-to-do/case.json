@@ -1,0 +1,93 @@
+{
+  "id": "install/skill/second-run-is-nothing-to-do",
+  "title": "a second install skill changes nothing and says so",
+  "source": [
+    "intended: docs: B4B5-DESIGN.md states table (current)"
+  ],
+  "status": {
+    "ts": "xfail",
+    "go": "pass"
+  },
+  "defect": "N-16",
+  "intent": "INTENDED behavior (defect N-16, B4.3). When the installed copy is current (every file matches the manifest, the manifest matches the shipped skill, the link is right) the run prints `jitso install skill: nothing to do (the jitso skill <version> is installed and up to date)`, exit 0, no preview, no backup folder, and the manifest bytes stay the same. The oracle has no `install` command: it answers `unknown command \"install\"` on stderr with exit 2 and prints nothing on stdout, so the pinned output and file effects FAIL on it.",
+  "steps": [
+    {
+      "run": [
+        "install",
+        "skill",
+        "--scope",
+        "project",
+        "--yes"
+      ],
+      "capture": {
+        "MANIFEST": {
+          "from": "file",
+          "path": ".agents/skills/jitso/.jitso-skill.json",
+          "regex": "(?s)^(.*)$"
+        }
+      },
+      "expect": {
+        "exit": 0,
+        "stdout": [
+          "jitso install skill: done"
+        ]
+      }
+    },
+    {
+      "run": [
+        "install",
+        "skill",
+        "--scope",
+        "project",
+        "--yes"
+      ],
+      "expect": {
+        "exit": 0,
+        "stdout": [
+          "jitso install skill: nothing to do (the jitso skill ",
+          " is installed and up to date)",
+          {
+            "not_contains": "new file"
+          },
+          {
+            "not_contains": "done"
+          }
+        ],
+        "stderr": [
+          {
+            "empty": true
+          }
+        ],
+        "files": [
+          {
+            "path": ".agents/skills/jitso/.jitso-skill.json",
+            "equals": "{{MANIFEST}}"
+          },
+          {
+            "path": ".jitso/backups",
+            "exists": false
+          }
+        ]
+      }
+    },
+    {
+      "run": [
+        "install",
+        "skill",
+        "--scope",
+        "project"
+      ],
+      "expect": {
+        "exit": 0,
+        "stdout": [
+          "nothing to do (the jitso skill "
+        ],
+        "stderr": [
+          {
+            "empty": true
+          }
+        ]
+      }
+    }
+  ]
+}

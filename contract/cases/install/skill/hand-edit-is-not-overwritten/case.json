@@ -1,0 +1,131 @@
+{
+  "id": "install/skill/hand-edit-is-not-overwritten",
+  "title": "a hand-edited installed skill is never overwritten without --force, and --force backs it up first",
+  "source": [
+    "intended: docs: B4B5-DESIGN.md B4-16, states table (modified)"
+  ],
+  "status": {
+    "ts": "xfail",
+    "go": "pass"
+  },
+  "defect": "N-16",
+  "intent": "INTENDED behavior (defect N-16, B4.3). After an edit by hand, install without `--force` shows what it would change, then exits 2 with `JITSO REJECTED: the jitso skill in .agents/skills/jitso was edited by hand (SKILL.md); nothing written; run again with --force to replace it (a backup is kept)` and leaves the edit. With `--force` it prints `backed up .agents/skills/jitso/SKILL.md to <backup>`, the backup copy holds the edited bytes, and the file is the shipped skill again. The oracle has no `install` command: it answers `unknown command \"install\"` on stderr with exit 2 and prints nothing on stdout, so the pinned output and file effects FAIL on it.",
+  "steps": [
+    {
+      "run": [
+        "install",
+        "skill",
+        "--scope",
+        "project",
+        "--yes"
+      ],
+      "expect": {
+        "exit": 0,
+        "stdout": [
+          "jitso install skill: done"
+        ]
+      }
+    },
+    {
+      "write": {
+        "project": {
+          ".agents/skills/jitso/SKILL.md": "mine\n"
+        }
+      }
+    },
+    {
+      "run": [
+        "install",
+        "skill",
+        "--scope",
+        "project",
+        "--yes"
+      ],
+      "expect": {
+        "exit": 2,
+        "stdout": [
+          "--- a/.agents/skills/jitso/SKILL.md",
+          "+++ b/.agents/skills/jitso/SKILL.md",
+          "-mine"
+        ],
+        "stderr": [
+          "JITSO REJECTED: the jitso skill in .agents/skills/jitso was edited by hand (SKILL.md)",
+          "nothing written",
+          "--force",
+          {
+            "not_contains": "unknown command"
+          }
+        ],
+        "files": [
+          {
+            "path": ".agents/skills/jitso/SKILL.md",
+            "equals": "mine\n"
+          },
+          {
+            "path": ".jitso/backups",
+            "exists": false
+          }
+        ]
+      }
+    },
+    {
+      "run": [
+        "install",
+        "skill",
+        "--scope",
+        "project",
+        "--yes",
+        "--force"
+      ],
+      "capture": {
+        "BACKUP": {
+          "from": "stdout",
+          "regex": "backed up \\.agents/skills/jitso/SKILL\\.md to (\\S+)"
+        }
+      },
+      "expect": {
+        "exit": 0,
+        "stdout": [
+          {
+            "regex": "backed up \\.agents/skills/jitso/SKILL\\.md to \\.jitso/backups/\\d{8}T\\d{6}Z-[0-9a-f]{4}/\\.agents/skills/jitso/SKILL\\.md"
+          },
+          "wrote .agents/skills/jitso/SKILL.md",
+          "jitso install skill: done"
+        ],
+        "files": [
+          {
+            "path": "{{BACKUP}}",
+            "equals": "mine\n"
+          },
+          {
+            "path": ".agents/skills/jitso/SKILL.md",
+            "not_contains": [
+              "mine"
+            ],
+            "regex": [
+              "^---\nname: jitso\n"
+            ]
+          },
+          {
+            "path": ".jitso/backups/.gitignore",
+            "equals": "*\n"
+          }
+        ]
+      }
+    },
+    {
+      "run": [
+        "install",
+        "skill",
+        "--scope",
+        "project"
+      ],
+      "expect": {
+        "exit": 0,
+        "stdout": [
+          "nothing to do (the jitso skill "
+        ]
+      }
+    }
+  ]
+}

@@ -1,0 +1,95 @@
+{
+  "id": "install/skill/project-installs",
+  "title": "install skill --yes at project scope writes the skill, its manifest and the relative link",
+  "source": [
+    "intended: docs: B4B5-DESIGN.md B4-13 to B4-15, c.2"
+  ],
+  "status": {
+    "ts": "xfail",
+    "go": "pass"
+  },
+  "defect": "N-16",
+  "intent": "INTENDED behavior (defect N-16, B4.3). `--yes` creates `.agents/skills/jitso/SKILL.md` (frontmatter starts `name: jitso` then `description: `), `references/README.md` and the manifest `.jitso-skill.json` (`v`, `skill`, `jitso_version`, a 64 hex `content_sha256`, one SHA-256 per file), and the link `.claude/skills/jitso` so the skill is also reachable through `.claude/skills/jitso/SKILL.md`. It prints one line per action and `jitso install skill: done`, and a note to commit both paths (the paths are untracked). A fresh install needs no backup. That the link is a symbolic link with the relative target is pinned by a Go unit test, because a file check follows links. The oracle has no `install` command: it answers `unknown command \"install\"` on stderr with exit 2 and prints nothing on stdout, so the pinned output and file effects FAIL on it.",
+  "steps": [
+    {
+      "run": [
+        "install",
+        "skill",
+        "--scope",
+        "project",
+        "--yes"
+      ],
+      "expect": {
+        "exit": 0,
+        "stdout": [
+          "created .agents/skills/jitso/SKILL.md",
+          "created .agents/skills/jitso/references/README.md",
+          "created .agents/skills/jitso/.jitso-skill.json",
+          "linked .claude/skills/jitso -> ../../.agents/skills/jitso",
+          "note: commit .agents/skills/jitso and .claude/skills/jitso so other clones get the skill",
+          "jitso install skill: done"
+        ],
+        "stderr": [
+          {
+            "empty": true
+          }
+        ],
+        "files": [
+          {
+            "path": ".agents/skills/jitso/SKILL.md",
+            "regex": [
+              "^---\nname: jitso\ndescription: [^\n]+\n---\n"
+            ]
+          },
+          {
+            "path": ".agents/skills/jitso/references/README.md"
+          },
+          {
+            "path": ".claude/skills/jitso/SKILL.md",
+            "regex": [
+              "^---\nname: jitso\ndescription: "
+            ]
+          },
+          {
+            "path": ".claude/skills/jitso/references/README.md"
+          },
+          {
+            "path": ".agents/skills/jitso/.jitso-skill.json",
+            "json": [
+              {
+                "path": "v",
+                "equals": 1
+              },
+              {
+                "path": "skill",
+                "equals": "jitso"
+              },
+              {
+                "path": "jitso_version",
+                "regex": "^.+$"
+              },
+              {
+                "path": "content_sha256",
+                "regex": "^[0-9a-f]{64}$"
+              },
+              {
+                "path": "files",
+                "keys_include": [
+                  "SKILL.md",
+                  "references/README.md"
+                ]
+              }
+            ]
+          },
+          {
+            "path": ".claude/skills/jitso/.jitso-skill.json"
+          },
+          {
+            "path": ".jitso/backups",
+            "exists": false
+          }
+        ]
+      }
+    }
+  ]
+}

@@ -1,0 +1,108 @@
+{
+  "id": "install/skill/remove-refuses-hand-edits",
+  "title": "install skill --remove refuses a hand-edited copy without --force and removes it with --force",
+  "source": [
+    "intended: docs: B4B5-DESIGN.md B4-16, states table (modified, --remove)"
+  ],
+  "status": {
+    "ts": "xfail",
+    "go": "pass"
+  },
+  "defect": "N-16",
+  "intent": "INTENDED behavior (defect N-16, B4.3). `--remove` of a copy whose file was edited by hand is exit 2 with the same `was edited by hand` rejection (`... run again with --force to remove it ...`), and every file stays. With `--force` it backs the file up, removes the copy and the link. The oracle has no `install` command: it answers `unknown command \"install\"` on stderr with exit 2 and prints nothing on stdout, so the pinned output and file effects FAIL on it.",
+  "steps": [
+    {
+      "run": [
+        "install",
+        "skill",
+        "--scope",
+        "project",
+        "--yes"
+      ],
+      "expect": {
+        "exit": 0,
+        "stdout": [
+          "jitso install skill: done"
+        ]
+      }
+    },
+    {
+      "write": {
+        "project": {
+          ".agents/skills/jitso/SKILL.md": "mine\n"
+        }
+      }
+    },
+    {
+      "run": [
+        "install",
+        "skill",
+        "--scope",
+        "project",
+        "--remove",
+        "--yes"
+      ],
+      "expect": {
+        "exit": 2,
+        "stdout": [
+          "delete .agents/skills/jitso/references/README.md"
+        ],
+        "stderr": [
+          "JITSO REJECTED: the jitso skill in .agents/skills/jitso was edited by hand (SKILL.md)",
+          "nothing written",
+          "run again with --force to remove it",
+          {
+            "not_contains": "unknown command"
+          }
+        ],
+        "files": [
+          {
+            "path": ".agents/skills/jitso/SKILL.md",
+            "equals": "mine\n"
+          },
+          {
+            "path": ".agents/skills/jitso/references/README.md"
+          },
+          {
+            "path": ".claude/skills/jitso/SKILL.md",
+            "equals": "mine\n"
+          }
+        ]
+      }
+    },
+    {
+      "run": [
+        "install",
+        "skill",
+        "--scope",
+        "project",
+        "--remove",
+        "--force",
+        "--yes"
+      ],
+      "expect": {
+        "exit": 0,
+        "stdout": [
+          "backed up .agents/skills/jitso/SKILL.md to ",
+          "removed .agents/skills/jitso/SKILL.md",
+          "unlinked .claude/skills/jitso",
+          "jitso install skill: done"
+        ],
+        "files": [
+          {
+            "path": ".agents/skills",
+            "exists": false
+          },
+          {
+            "path": ".claude",
+            "exists": false
+          },
+          {
+            "path": ".agents/instructions",
+            "exists": true
+          }
+        ]
+      }
+    }
+  ]
+}

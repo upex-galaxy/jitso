@@ -10,6 +10,7 @@ dist/
 !/jitso/
 # skill-creator eval workspaces
 .agents/skills/*-workspace/
+internal/skill/*-workspace/
 # Claude Code local state: never committed (AGENTS.md rule 1)
 .claude/settings.local.json
 .claude/worktrees/

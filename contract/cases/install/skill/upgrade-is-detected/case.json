@@ -1,0 +1,129 @@
+{
+  "id": "install/skill/upgrade-is-detected",
+  "title": "an installed copy from an older jitso is upgraded, with a preview, a backup and no --force",
+  "source": [
+    "intended: docs: B4B5-DESIGN.md B4-14, states table (outdated)"
+  ],
+  "status": {
+    "ts": "xfail",
+    "go": "pass"
+  },
+  "defect": "N-16",
+  "intent": "INTENDED behavior (defect N-16, B4.3). A copy whose manifest matches its own files but not the shipped skill is outdated: the preview starts with `upgrade the jitso skill from <old version> to <new version>`, then the diffs; `--yes` backs up every existing file it changes, rewrites the files and the manifest, and adds the shipped files the old copy lacked. No `--force` is needed because nothing was edited by hand. The oracle has no `install` command: it answers `unknown command \"install\"` on stderr with exit 2 and prints nothing on stdout, so the pinned output and file effects FAIL on it.",
+  "project": {
+    "files": {
+      ".agents/skills/jitso/SKILL.md": "old skill\n",
+      ".agents/skills/jitso/.jitso-skill.json": "{\n  \"v\": 1,\n  \"skill\": \"jitso\",\n  \"jitso_version\": \"v0.0.0-old\",\n  \"content_sha256\": \"0000000000000000000000000000000000000000000000000000000000000000\",\n  \"files\": {\n    \"SKILL.md\": \"f6f3108de5373de3c872bb097f49e4abdd0c0c471bf03fc0083775c7f853dcd4\"\n  }\n}\n"
+    }
+  },
+  "steps": [
+    {
+      "run": [
+        "install",
+        "skill",
+        "--scope",
+        "project",
+        "--dry-run"
+      ],
+      "expect": {
+        "exit": 0,
+        "stdout": [
+          "upgrade the jitso skill from v0.0.0-old to ",
+          "--- a/.agents/skills/jitso/SKILL.md",
+          "-old skill",
+          "new file .agents/skills/jitso/references/README.md",
+          "dry run, nothing written"
+        ],
+        "stderr": [
+          {
+            "empty": true
+          }
+        ],
+        "files": [
+          {
+            "path": ".agents/skills/jitso/SKILL.md",
+            "equals": "old skill\n"
+          },
+          {
+            "path": ".jitso",
+            "exists": false
+          }
+        ]
+      }
+    },
+    {
+      "run": [
+        "install",
+        "skill",
+        "--scope",
+        "project",
+        "--yes"
+      ],
+      "expect": {
+        "exit": 0,
+        "stdout": [
+          "upgrade the jitso skill from v0.0.0-old to ",
+          "backed up .agents/skills/jitso/SKILL.md to ",
+          "backed up .agents/skills/jitso/.jitso-skill.json to ",
+          "wrote .agents/skills/jitso/SKILL.md",
+          "created .agents/skills/jitso/references/README.md",
+          "wrote .agents/skills/jitso/.jitso-skill.json",
+          "jitso install skill: done"
+        ],
+        "stderr": [
+          {
+            "empty": true
+          }
+        ],
+        "files": [
+          {
+            "path": ".agents/skills/jitso/SKILL.md",
+            "not_contains": [
+              "old skill"
+            ],
+            "regex": [
+              "^---\nname: jitso\n"
+            ]
+          },
+          {
+            "path": ".agents/skills/jitso/.jitso-skill.json",
+            "json": [
+              {
+                "path": "files",
+                "keys_include": [
+                  "SKILL.md",
+                  "references/README.md"
+                ]
+              },
+              {
+                "path": "content_sha256",
+                "regex": "^[0-9a-f]{64}$"
+              }
+            ],
+            "not_contains": [
+              "v0.0.0-old",
+              "0000000000000000000000000000000000000000000000000000000000000000"
+            ]
+          },
+          {
+            "path": ".claude/skills/jitso/SKILL.md"
+          }
+        ]
+      }
+    },
+    {
+      "run": [
+        "install",
+        "skill",
+        "--scope",
+        "project"
+      ],
+      "expect": {
+        "exit": 0,
+        "stdout": [
+          "nothing to do (the jitso skill "
+        ]
+      }
+    }
+  ]
+}

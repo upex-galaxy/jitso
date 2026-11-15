@@ -97,3 +97,16 @@ func TestLineShape(t *testing.T) {
 		t.Errorf("Line() = %q does not match %s", got, re)
 	}
 }
+
+func TestCurrentIsTheVersionOfLine(t *testing.T) {
+	old := Version
+	t.Cleanup(func() { Version = old })
+	Version = "v7.7.7"
+	if got := Current(); got != "v7.7.7" {
+		t.Errorf("Current() = %q, want the stamped version", got)
+	}
+	Version = ""
+	if got := Current(); got == "" {
+		t.Error("Current() is empty, want at least dev")
+	}
+}
