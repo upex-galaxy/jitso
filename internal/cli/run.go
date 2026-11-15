@@ -12,6 +12,7 @@ import (
 // calls os.Exit; cmd/jitso does.
 //
 //	no argument, --help or -h       usage on stdout, 0
+//	--version                       the version command (same output as `version`)
 //	a known command                 that command
 //	an unknown word with whitespace the dispatcher, with argv joined by spaces
 //	any other word (also "")        "jitso: unknown command" and the usage on stderr, 2
@@ -26,6 +27,9 @@ func dispatch(ctx *Context, argv []string) error {
 		return nil
 	}
 	first := argv[0]
+	if first == "--version" {
+		first = "version"
+	}
 	cmd, ok := Lookup(first)
 	if !ok && IsRequest(first) {
 		if requestHandler == nil {

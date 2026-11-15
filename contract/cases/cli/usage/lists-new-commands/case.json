@@ -1,0 +1,42 @@
+{
+  "id": "cli/usage/lists-new-commands",
+  "title": "the usage has one row per command that came after the first port",
+  "source": [
+    "intended: every command is listed in the usage with a summary"
+  ],
+  "status": {
+    "ts": "xfail",
+    "go": "pass"
+  },
+  "defect": "N-21",
+  "intent": "INTENDED behavior (defect N-21, version). The oracle usage has no `version` row, so the row expectation FAILS on TS. Each later command adds its own word to the for_each list.",
+  "for_each": {
+    "var": "word",
+    "values": [
+      "version"
+    ]
+  },
+  "steps": [
+    {
+      "run": [
+        "--help"
+      ],
+      "expect": {
+        "exit": 0,
+        "stdout": [
+          {
+            "regex": "(?m)^  {{word}} +[a-z]"
+          }
+        ],
+        "stderr": [
+          {
+            "empty": true
+          }
+        ],
+        "orca_calls": {
+          "empty": true
+        }
+      }
+    }
+  ]
+}

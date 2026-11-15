@@ -1,0 +1,42 @@
+{
+  "id": "cli/version/spellings-agree",
+  "title": "version and --version print the same bytes",
+  "source": [
+    "intended: one answer for both spellings"
+  ],
+  "status": {
+    "ts": "xfail",
+    "go": "pass"
+  },
+  "defect": "N-21",
+  "intent": "INTENDED behavior (defect N-21, version). The oracle has neither spelling: both are an unknown command, so the first step fails on TS.",
+  "steps": [
+    {
+      "run": [
+        "version"
+      ],
+      "capture": {
+        "V": {
+          "from": "stdout",
+          "regex": "(?s)^(.*)$"
+        }
+      },
+      "expect": {
+        "exit": 0
+      }
+    },
+    {
+      "run": [
+        "--version"
+      ],
+      "expect": {
+        "exit": 0,
+        "stdout": [
+          {
+            "equals": "{{V}}"
+          }
+        ]
+      }
+    }
+  ]
+}

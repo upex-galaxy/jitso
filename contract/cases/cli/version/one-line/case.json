@@ -1,0 +1,46 @@
+{
+  "id": "cli/version/one-line",
+  "title": "version and --version print one line with the version, the commit, the Go version and the platform, and exit 0",
+  "source": [
+    "intended: a binary that says what it is (docs/decisions.md D4, the release plan)"
+  ],
+  "status": {
+    "ts": "xfail",
+    "go": "pass"
+  },
+  "defect": "N-21",
+  "intent": "INTENDED behavior (defect N-21, version). The oracle has no `version` command and no `--version` flag: both words are an unknown command (exit 2, the usage on stderr). The case pins the shape of the line only, not its value: the stamped version cannot be built inside a case, and a binary built without a stamp prints `dev` or the module version.",
+  "for_each": {
+    "var": "word",
+    "values": [
+      "version",
+      "--version"
+    ]
+  },
+  "steps": [
+    {
+      "run": [
+        "{{word}}"
+      ],
+      "expect": {
+        "exit": 0,
+        "stdout": [
+          {
+            "regex": "^jitso [^ ]+ \\(commit (?:[0-9a-f]{12}(?:-dirty)?|unknown), go[^,]+, [a-z0-9]+/[a-z0-9]+\\)\\n$"
+          },
+          {
+            "line_count": 1
+          }
+        ],
+        "stderr": [
+          {
+            "empty": true
+          }
+        ],
+        "orca_calls": {
+          "empty": true
+        }
+      }
+    }
+  ]
+}
