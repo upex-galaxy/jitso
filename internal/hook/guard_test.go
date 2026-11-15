@@ -39,6 +39,10 @@ func TestGuardVerb(t *testing.T) {
 		{"read tool", mcp("read_terminal", map[string]any{}), ""},
 		{"send_instruction", mcp("send_instruction", map[string]any{}), ""},
 		{"other tool", map[string]any{"tool_name": "Write", "tool_input": map[string]any{"command": "orca orchestration worker-start"}}, ""},
+		{"build save", bash("jitso build save x"), VerbBuildSave},
+		{"build save by own path", bash("/opt/jitso build save x --confirm abc"), VerbBuildSave},
+		{"build draft", bash("jitso build draft x.yaml"), ""},
+		{"build save in a Write is not Bash", map[string]any{"tool_name": "Write", "tool_input": map[string]any{"command": "jitso build save x"}}, ""},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -64,6 +68,38 @@ func TestLaunchWord(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			if got := LaunchWord([]byte(tt.pkg)); got != tt.want {
 				t.Errorf("LaunchWord = %q, want %q", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestLauncherWord(t *testing.T) {
+	if got := LauncherWord([]byte(`{"scripts":{"jitso":"bun cli/jitso/index.ts"}}`)); got != "bun run jitso" {
+		t.Errorf("with a script: %q", got)
+	}
+	if got := LauncherWord(nil); got != "jitso" {
+		t.Errorf("without package.json: %q", got)
+	}
+}
+
+func TestDenialReason(t *testing.T) {
+	script := []byte(`{"scripts":{"jitso":"x"}}`)
+	tests := []struct {
+		name string
+		d    Denial
+		pkg  []byte
+		want string
+	}{
+		{"save", Denial{Verb: VerbBuildSave, SaveID: "scout"}, nil,
+			"JITSO: only the owner saves a draft as a build; ask the owner to run: jitso build save scout (denied: jitso build save)"},
+		{"save with a script", Denial{Verb: VerbBuildSave, SaveID: "<id>"}, script,
+			"JITSO: only the owner saves a draft as a build; ask the owner to run: bun run jitso build save <id> (denied: jitso build save)"},
+		{"launch", Denial{Verb: "agent launch"}, nil, GuardReason("jitso launch", "agent launch")},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := tt.d.Reason(tt.pkg); got != tt.want {
+				t.Errorf("Reason = %q, want %q", got, tt.want)
 			}
 		})
 	}

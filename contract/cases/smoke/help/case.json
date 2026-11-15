@@ -7,13 +7,13 @@
     "go": "pass"
   },
   "defect": "N-10",
-  "intent": "INTENDED behavior (defect N-10, build vocabulary; docs/decisions.md D6). The usage lists the catalog command group as `build` in place of `presets`. The oracle usage still lists `presets  list the approved presets` and has no `build` word, so the `build` expectation FAILS on TS. The same usage also lists the `version` row (defect N-21), which the oracle lacks too.",
+  "intent": "INTENDED behavior (defect N-10, build vocabulary; docs/decisions.md D6). The usage lists the catalog command group as `build` in place of `presets`. The oracle usage still lists `presets  list the approved presets` and has no `build` word, so the `build` expectation FAILS on TS. The `build` row reads `list, validate, create, draft, save and discard builds` (defects N-13, N-14, N-15), where the oracle row reads `list the approved presets`. The same usage also lists the `version` row (defect N-21), which the oracle lacks too.",
   "steps": [
     {
       "run": ["--help"],
       "expect": {
         "exit": 0,
-        "stdout": ["launch", "close", "reap", "tree", "analyze", "build", "version"],
+        "stdout": ["launch", "close", "reap", "tree", "analyze", "build", "list, validate, create, draft, save and discard builds", "version"],
         "stderr": [{ "empty": true }],
         "orca_calls": { "empty": true }
       }

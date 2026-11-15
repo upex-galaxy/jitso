@@ -1,0 +1,244 @@
+{
+  "id": "build/save/keeps-every-other-byte",
+  "title": "the saved file differs from the draft in the one status scalar: comments, quotes, spacing, a trailing comment, blank lines and the word draft elsewhere stay byte for byte",
+  "source": [
+    "intended: docs/decisions.md D7 and B3-18/B3-19 (a draft becomes a build only with the owner's OK: a terminal, or the token of the content he read; the guard denies the agent)"
+  ],
+  "status": {
+    "ts": "xfail",
+    "go": "pass"
+  },
+  "defect": "N-15",
+  "intent": "INTENDED behavior (defect N-15, drafts; docs/decisions.md D7). The written content is the draft bytes with the status value `draft` replaced by `approved`: the position is taken from the YAML node, so a trailing comment on the status line, a single or double quoted value (the quotes stay), a quoted key, extra spaces, a comment and blank lines at the end of the file, and the word `draft` or `status` inside another value are all kept exactly as written. The oracle has no `build save` (the runner maps only `build list`): it answers `unknown command` on stderr with exit 2 and prints nothing on stdout, so every expectation that needs the `+ ` lines, the token text or the written file FAILS on it.",
+  "project": {
+    "files": {
+      ".jitso/drafts/k-plain-with-a-comment.yaml": "# Draft written by a drafts case.\nid: k-plain-with-a-comment\nversion: 1\nstatus: draft  # waiting for the owner\nrole: operator\ntype: scanner\nwork_kind: repo-scan\ndescription: The word draft stays where it is, and so does the word status.\nharness: claude\nmodel: claude-haiku-5-5\neffort: low\nmode_default: direct\nagents_md: exclude\nroute_scope: [none]\nskills_first: []\ntools: [Read, Glob, Grep]\nmcp: []\nrequires: []\nbudget: { tokens: 150000, usd_list_cap: 0.30 }\nsuccess:\n  - { check: answer_delivered }\n  - { check: no_rule_breaks }\n# trailing comment\n\n",
+      ".jitso/drafts/k-double-quoted.yaml": "# Draft written by a drafts case.\nid: k-double-quoted\nversion: 1\nstatus: \"draft\"\nrole: operator\ntype: scanner\nwork_kind: repo-scan\ndescription: The word draft stays where it is, and so does the word status.\nharness: claude\nmodel: claude-haiku-5-5\neffort: low\nmode_default: direct\nagents_md: exclude\nroute_scope: [none]\nskills_first: []\ntools: [Read, Glob, Grep]\nmcp: []\nrequires: []\nbudget: { tokens: 150000, usd_list_cap: 0.30 }\nsuccess:\n  - { check: answer_delivered }\n  - { check: no_rule_breaks }\n# trailing comment\n\n",
+      ".jitso/drafts/k-single-quoted.yaml": "# Draft written by a drafts case.\nid: k-single-quoted\nversion: 1\nstatus: 'draft'\nrole: operator\ntype: scanner\nwork_kind: repo-scan\ndescription: The word draft stays where it is, and so does the word status.\nharness: claude\nmodel: claude-haiku-5-5\neffort: low\nmode_default: direct\nagents_md: exclude\nroute_scope: [none]\nskills_first: []\ntools: [Read, Glob, Grep]\nmcp: []\nrequires: []\nbudget: { tokens: 150000, usd_list_cap: 0.30 }\nsuccess:\n  - { check: answer_delivered }\n  - { check: no_rule_breaks }\n# trailing comment\n\n",
+      ".jitso/drafts/k-quoted-key.yaml": "# Draft written by a drafts case.\nid: k-quoted-key\nversion: 1\n\"status\": draft\nrole: operator\ntype: scanner\nwork_kind: repo-scan\ndescription: The word draft stays where it is, and so does the word status.\nharness: claude\nmodel: claude-haiku-5-5\neffort: low\nmode_default: direct\nagents_md: exclude\nroute_scope: [none]\nskills_first: []\ntools: [Read, Glob, Grep]\nmcp: []\nrequires: []\nbudget: { tokens: 150000, usd_list_cap: 0.30 }\nsuccess:\n  - { check: answer_delivered }\n  - { check: no_rule_breaks }\n# trailing comment\n\n",
+      ".jitso/drafts/k-wide-spacing.yaml": "# Draft written by a drafts case.\nid: k-wide-spacing\nversion: 1\nstatus:     draft   \nrole: operator\ntype: scanner\nwork_kind: repo-scan\ndescription: The word draft stays where it is, and so does the word status.\nharness: claude\nmodel: claude-haiku-5-5\neffort: low\nmode_default: direct\nagents_md: exclude\nroute_scope: [none]\nskills_first: []\ntools: [Read, Glob, Grep]\nmcp: []\nrequires: []\nbudget: { tokens: 150000, usd_list_cap: 0.30 }\nsuccess:\n  - { check: answer_delivered }\n  - { check: no_rule_breaks }\n# trailing comment\n\n"
+    }
+  },
+  "steps": [
+    {
+      "run": [
+        "build",
+        "save",
+        "k-plain-with-a-comment"
+      ],
+      "capture": {
+        "TOKEN_PLAIN_WITH_A_COMMENT": {
+          "from": "stderr",
+          "regex": "--confirm ([0-9a-f]{12})",
+          "group": 1
+        }
+      },
+      "expect": {
+        "exit": 2
+      }
+    },
+    {
+      "run": [
+        "build",
+        "save",
+        "k-plain-with-a-comment",
+        "--confirm",
+        "{{TOKEN_PLAIN_WITH_A_COMMENT}}"
+      ],
+      "expect": {
+        "exit": 0,
+        "stdout": [
+          {
+            "contains": "saved k-plain-with-a-comment: jitso/builds/k-plain-with-a-comment.yaml (status approved); the draft is removed\n"
+          }
+        ],
+        "files": [
+          {
+            "path": "jitso/builds/k-plain-with-a-comment.yaml",
+            "equals": "# Draft written by a drafts case.\nid: k-plain-with-a-comment\nversion: 1\nstatus: approved  # waiting for the owner\nrole: operator\ntype: scanner\nwork_kind: repo-scan\ndescription: The word draft stays where it is, and so does the word status.\nharness: claude\nmodel: claude-haiku-5-5\neffort: low\nmode_default: direct\nagents_md: exclude\nroute_scope: [none]\nskills_first: []\ntools: [Read, Glob, Grep]\nmcp: []\nrequires: []\nbudget: { tokens: 150000, usd_list_cap: 0.30 }\nsuccess:\n  - { check: answer_delivered }\n  - { check: no_rule_breaks }\n# trailing comment\n\n"
+          },
+          {
+            "path": ".jitso/drafts/k-plain-with-a-comment.yaml",
+            "exists": false
+          }
+        ]
+      }
+    },
+    {
+      "run": [
+        "build",
+        "save",
+        "k-double-quoted"
+      ],
+      "capture": {
+        "TOKEN_DOUBLE_QUOTED": {
+          "from": "stderr",
+          "regex": "--confirm ([0-9a-f]{12})",
+          "group": 1
+        }
+      },
+      "expect": {
+        "exit": 2
+      }
+    },
+    {
+      "run": [
+        "build",
+        "save",
+        "k-double-quoted",
+        "--confirm",
+        "{{TOKEN_DOUBLE_QUOTED}}"
+      ],
+      "expect": {
+        "exit": 0,
+        "stdout": [
+          {
+            "contains": "saved k-double-quoted: jitso/builds/k-double-quoted.yaml (status approved); the draft is removed\n"
+          }
+        ],
+        "files": [
+          {
+            "path": "jitso/builds/k-double-quoted.yaml",
+            "equals": "# Draft written by a drafts case.\nid: k-double-quoted\nversion: 1\nstatus: \"approved\"\nrole: operator\ntype: scanner\nwork_kind: repo-scan\ndescription: The word draft stays where it is, and so does the word status.\nharness: claude\nmodel: claude-haiku-5-5\neffort: low\nmode_default: direct\nagents_md: exclude\nroute_scope: [none]\nskills_first: []\ntools: [Read, Glob, Grep]\nmcp: []\nrequires: []\nbudget: { tokens: 150000, usd_list_cap: 0.30 }\nsuccess:\n  - { check: answer_delivered }\n  - { check: no_rule_breaks }\n# trailing comment\n\n"
+          },
+          {
+            "path": ".jitso/drafts/k-double-quoted.yaml",
+            "exists": false
+          }
+        ]
+      }
+    },
+    {
+      "run": [
+        "build",
+        "save",
+        "k-single-quoted"
+      ],
+      "capture": {
+        "TOKEN_SINGLE_QUOTED": {
+          "from": "stderr",
+          "regex": "--confirm ([0-9a-f]{12})",
+          "group": 1
+        }
+      },
+      "expect": {
+        "exit": 2
+      }
+    },
+    {
+      "run": [
+        "build",
+        "save",
+        "k-single-quoted",
+        "--confirm",
+        "{{TOKEN_SINGLE_QUOTED}}"
+      ],
+      "expect": {
+        "exit": 0,
+        "stdout": [
+          {
+            "contains": "saved k-single-quoted: jitso/builds/k-single-quoted.yaml (status approved); the draft is removed\n"
+          }
+        ],
+        "files": [
+          {
+            "path": "jitso/builds/k-single-quoted.yaml",
+            "equals": "# Draft written by a drafts case.\nid: k-single-quoted\nversion: 1\nstatus: 'approved'\nrole: operator\ntype: scanner\nwork_kind: repo-scan\ndescription: The word draft stays where it is, and so does the word status.\nharness: claude\nmodel: claude-haiku-5-5\neffort: low\nmode_default: direct\nagents_md: exclude\nroute_scope: [none]\nskills_first: []\ntools: [Read, Glob, Grep]\nmcp: []\nrequires: []\nbudget: { tokens: 150000, usd_list_cap: 0.30 }\nsuccess:\n  - { check: answer_delivered }\n  - { check: no_rule_breaks }\n# trailing comment\n\n"
+          },
+          {
+            "path": ".jitso/drafts/k-single-quoted.yaml",
+            "exists": false
+          }
+        ]
+      }
+    },
+    {
+      "run": [
+        "build",
+        "save",
+        "k-quoted-key"
+      ],
+      "capture": {
+        "TOKEN_QUOTED_KEY": {
+          "from": "stderr",
+          "regex": "--confirm ([0-9a-f]{12})",
+          "group": 1
+        }
+      },
+      "expect": {
+        "exit": 2
+      }
+    },
+    {
+      "run": [
+        "build",
+        "save",
+        "k-quoted-key",
+        "--confirm",
+        "{{TOKEN_QUOTED_KEY}}"
+      ],
+      "expect": {
+        "exit": 0,
+        "stdout": [
+          {
+            "contains": "saved k-quoted-key: jitso/builds/k-quoted-key.yaml (status approved); the draft is removed\n"
+          }
+        ],
+        "files": [
+          {
+            "path": "jitso/builds/k-quoted-key.yaml",
+            "equals": "# Draft written by a drafts case.\nid: k-quoted-key\nversion: 1\n\"status\": approved\nrole: operator\ntype: scanner\nwork_kind: repo-scan\ndescription: The word draft stays where it is, and so does the word status.\nharness: claude\nmodel: claude-haiku-5-5\neffort: low\nmode_default: direct\nagents_md: exclude\nroute_scope: [none]\nskills_first: []\ntools: [Read, Glob, Grep]\nmcp: []\nrequires: []\nbudget: { tokens: 150000, usd_list_cap: 0.30 }\nsuccess:\n  - { check: answer_delivered }\n  - { check: no_rule_breaks }\n# trailing comment\n\n"
+          },
+          {
+            "path": ".jitso/drafts/k-quoted-key.yaml",
+            "exists": false
+          }
+        ]
+      }
+    },
+    {
+      "run": [
+        "build",
+        "save",
+        "k-wide-spacing"
+      ],
+      "capture": {
+        "TOKEN_WIDE_SPACING": {
+          "from": "stderr",
+          "regex": "--confirm ([0-9a-f]{12})",
+          "group": 1
+        }
+      },
+      "expect": {
+        "exit": 2
+      }
+    },
+    {
+      "run": [
+        "build",
+        "save",
+        "k-wide-spacing",
+        "--confirm",
+        "{{TOKEN_WIDE_SPACING}}"
+      ],
+      "expect": {
+        "exit": 0,
+        "stdout": [
+          {
+            "contains": "saved k-wide-spacing: jitso/builds/k-wide-spacing.yaml (status approved); the draft is removed\n"
+          }
+        ],
+        "files": [
+          {
+            "path": "jitso/builds/k-wide-spacing.yaml",
+            "equals": "# Draft written by a drafts case.\nid: k-wide-spacing\nversion: 1\nstatus:     approved   \nrole: operator\ntype: scanner\nwork_kind: repo-scan\ndescription: The word draft stays where it is, and so does the word status.\nharness: claude\nmodel: claude-haiku-5-5\neffort: low\nmode_default: direct\nagents_md: exclude\nroute_scope: [none]\nskills_first: []\ntools: [Read, Glob, Grep]\nmcp: []\nrequires: []\nbudget: { tokens: 150000, usd_list_cap: 0.30 }\nsuccess:\n  - { check: answer_delivered }\n  - { check: no_rule_breaks }\n# trailing comment\n\n"
+          },
+          {
+            "path": ".jitso/drafts/k-wide-spacing.yaml",
+            "exists": false
+          }
+        ]
+      }
+    }
+  ]
+}

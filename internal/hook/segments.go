@@ -24,7 +24,19 @@ var (
 	terminalMake  = regexp.MustCompile(`\bterminal create\b`)
 	commandFlag   = regexp.MustCompile(`(?:^| )--command(?:[ =]|$)`)
 	commandPrefix = regexp.MustCompile(`^ ?--command[ =]?`)
+
+	// buildSave is the words `jitso build save` as a word of their own: at the
+	// start of a segment, or after a space or a slash (a path ending in jitso).
+	// Segments has already removed the quotes, so `sh -c 'jitso build save x'`
+	// reads `sh -c jitso build save x`.
+	buildSave = regexp.MustCompile(`(?:^|[ /])jitso build save\b`)
+	// buildIDWord is a word that can be a build id.
+	buildIDWord = regexp.MustCompile(`^[a-z][a-z0-9-]{0,63}$`)
 )
+
+// VerbBuildSave is the verb the guard names when it denies `jitso build save`,
+// as `(denied: jitso build save)` ends the reason.
+const VerbBuildSave = "jitso build save"
 
 // Segments splits a shell line into its commands: cut at every separator,
 // quotes removed, runs of whitespace collapsed, empty parts dropped.
@@ -71,6 +83,43 @@ func (l Launcher) Is(segment string) bool {
 func isAssignment(word string) bool {
 	k := strings.IndexByte(word, '=')
 	return k >= 1 && k < len(word)-1
+}
+
+// BuildSave reports whether segment runs `jitso build save`: the words
+// `jitso build save` anywhere in it (the bare word, `bun run jitso`, a path
+// ending in jitso, after NAME=value words, inside `sh -c '...'`), or a word
+// that is this executable followed by `build save`. The text is judged, not the
+// program, so a commit message that holds those words matches too. id is the
+// build id the command names, "<id>" when it names none or something that is
+// not an id, so a reason never echoes arbitrary text.
+func (l Launcher) BuildSave(segment string) (id string, ok bool) {
+	if at := buildSave.FindStringIndex(segment); at != nil {
+		return saveID(strings.Fields(segment[at[1]:])), true
+	}
+	words := strings.Split(segment, " ")
+	for i, w := range words {
+		if l.IsOwn != nil && i+2 < len(words) && words[i+1] == "build" && words[i+2] == "save" && l.IsOwn(w) {
+			return saveID(words[i+3:]), true
+		}
+	}
+	return "", false
+}
+
+// saveID is the draft id among the words after `build save`: the first word
+// that is not a flag (or the value of --confirm) and looks like an id.
+func saveID(words []string) string {
+	for i := 0; i < len(words); i++ {
+		switch w := words[i]; {
+		case w == "--confirm":
+			i++
+		case strings.HasPrefix(w, "-"):
+		case buildIDWord.MatchString(w):
+			return w
+		default:
+			return "<id>"
+		}
+	}
+	return "<id>"
 }
 
 // LaunchVerb is the way segment launches an agent outside jitso, "" when it
@@ -127,13 +176,31 @@ func startsHarness(words []string) bool {
 	return false
 }
 
-// BashVerb is the launch verb of the first segment of command that launches
-// an agent outside jitso, "" when none does.
-func (l Launcher) BashVerb(command string) string {
+// Denial is a Bash command or a tool call the guard refuses.
+type Denial struct {
+	// Verb is what was denied, the word of `(denied: <verb>)`. Empty when the
+	// call is allowed.
+	Verb string
+	// SaveID is the build id of a denied `jitso build save`.
+	SaveID string
+}
+
+// BashDenial is the denial of the first segment of command that launches an
+// agent outside jitso or runs `jitso build save`; the zero Denial when none
+// does.
+func (l Launcher) BashDenial(command string) Denial {
 	for _, segment := range Segments(command) {
+		if id, ok := l.BuildSave(segment); ok {
+			return Denial{Verb: VerbBuildSave, SaveID: id}
+		}
 		if verb := l.LaunchVerb(segment); verb != "" {
-			return verb
+			return Denial{Verb: verb}
 		}
 	}
-	return ""
+	return Denial{}
+}
+
+// BashVerb is the verb of BashDenial: "" when no segment is denied.
+func (l Launcher) BashVerb(command string) string {
+	return l.BashDenial(command).Verb
 }

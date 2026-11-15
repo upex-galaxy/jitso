@@ -1,0 +1,111 @@
+{
+  "id": "build/save/with-the-confirm-token",
+  "title": "build save <id> --confirm <token> writes jitso/builds/<id>.yaml with status approved and every other byte of the draft, removes the draft, and the build is then listed and valid",
+  "source": [
+    "intended: docs/decisions.md D7 and B3-18/B3-19 (a draft becomes a build only with the owner's OK: a terminal, or the token of the content he read; the guard denies the agent)"
+  ],
+  "status": {
+    "ts": "xfail",
+    "go": "pass"
+  },
+  "defect": "N-15",
+  "intent": "INTENDED behavior (defect N-15, drafts; docs/decisions.md D7). The token printed by the refusal binds the owner's OK to the content he read: `jitso build save <id> --confirm <token>` with that token writes `jitso/builds/<id>.yaml`, which is the draft bytes with the `status` scalar `draft` replaced by `approved` and nothing else changed, removes `.jitso/drafts/<id>.yaml`, shows the file with `+ ` prefixes and prints `saved <id>: jitso/builds/<id>.yaml (status approved); the draft is removed`, exit 0. The saved build is a repo build: `build list` shows it and `build validate <id>` says ok. The oracle has no `build save` (the runner maps only `build list`): it answers `unknown command` on stderr with exit 2 and prints nothing on stdout, so every expectation that needs the `+ ` lines, the token text or the written file FAILS on it.",
+  "project": {
+    "files": {
+      ".jitso/drafts/scout.yaml": "# Draft written by a drafts case.\nid: scout\nversion: 1\nstatus: draft\nrole: operator\ntype: scanner\nwork_kind: repo-scan\ndescription: Scan the repo for TODO comments and report them.\nharness: claude\nmodel: claude-haiku-5-5\neffort: low\nmode_default: direct\nagents_md: exclude\nroute_scope: [none]\nskills_first: []\ntools: [Read, Glob, Grep]\nmcp: []\nrequires: []\nbudget: { tokens: 150000, usd_list_cap: 0.30 }\nsuccess:\n  - { check: answer_delivered }\n  - { check: no_rule_breaks }\n"
+    }
+  },
+  "steps": [
+    {
+      "run": [
+        "build",
+        "save",
+        "scout"
+      ],
+      "capture": {
+        "TOKEN": {
+          "from": "stderr",
+          "regex": "--confirm ([0-9a-f]{12})",
+          "group": 1
+        }
+      },
+      "expect": {
+        "exit": 2
+      }
+    },
+    {
+      "run": [
+        "build",
+        "save",
+        "scout",
+        "--confirm",
+        "{{TOKEN}}"
+      ],
+      "expect": {
+        "exit": 0,
+        "stdout": [
+          {
+            "equals": "+ # Draft written by a drafts case.\n+ id: scout\n+ version: 1\n+ status: approved\n+ role: operator\n+ type: scanner\n+ work_kind: repo-scan\n+ description: Scan the repo for TODO comments and report them.\n+ harness: claude\n+ model: claude-haiku-5-5\n+ effort: low\n+ mode_default: direct\n+ agents_md: exclude\n+ route_scope: [none]\n+ skills_first: []\n+ tools: [Read, Glob, Grep]\n+ mcp: []\n+ requires: []\n+ budget: { tokens: 150000, usd_list_cap: 0.30 }\n+ success:\n+   - { check: answer_delivered }\n+   - { check: no_rule_breaks }\nsaved scout: jitso/builds/scout.yaml (status approved); the draft is removed\n"
+          }
+        ],
+        "stderr": [
+          {
+            "empty": true
+          }
+        ],
+        "orca_calls": {
+          "empty": true
+        },
+        "files": [
+          {
+            "path": "jitso/builds/scout.yaml",
+            "equals": "# Draft written by a drafts case.\nid: scout\nversion: 1\nstatus: approved\nrole: operator\ntype: scanner\nwork_kind: repo-scan\ndescription: Scan the repo for TODO comments and report them.\nharness: claude\nmodel: claude-haiku-5-5\neffort: low\nmode_default: direct\nagents_md: exclude\nroute_scope: [none]\nskills_first: []\ntools: [Read, Glob, Grep]\nmcp: []\nrequires: []\nbudget: { tokens: 150000, usd_list_cap: 0.30 }\nsuccess:\n  - { check: answer_delivered }\n  - { check: no_rule_breaks }\n"
+          },
+          {
+            "path": ".jitso/drafts/scout.yaml",
+            "exists": false
+          }
+        ]
+      }
+    },
+    {
+      "run": [
+        "build",
+        "list"
+      ],
+      "expect": {
+        "exit": 0,
+        "stdout": [
+          {
+            "regex": "(?m)^- scout: claude-haiku-5-5 low\\. Scan the repo for TODO comments and report them\\. requires: nothing$"
+          }
+        ],
+        "stderr": [
+          {
+            "empty": true
+          }
+        ]
+      }
+    },
+    {
+      "run": [
+        "build",
+        "validate",
+        "scout"
+      ],
+      "expect": {
+        "exit": 0,
+        "stdout": [
+          {
+            "regex": "(?m)^ok scout repo jitso/builds/scout\\.yaml$"
+          }
+        ],
+        "stderr": [
+          {
+            "empty": true
+          }
+        ]
+      }
+    }
+  ]
+}

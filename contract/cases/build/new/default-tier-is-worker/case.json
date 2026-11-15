@@ -1,0 +1,49 @@
+{
+  "id": "build/new/default-tier-is-worker",
+  "title": "build new <id> with no --tier writes the worker template",
+  "source": [
+    "intended: docs/decisions.md D7 and the templates row of the other decisions (a new build starts as a draft from a template: invalid until every empty value is filled)"
+  ],
+  "status": {
+    "ts": "xfail",
+    "go": "pass"
+  },
+  "defect": "N-14",
+  "intent": "INTENDED behavior (defect N-14, shipped core and templates; docs/decisions.md D7). The default tier of `jitso build new <id>` is `worker`: the file has `tier: worker` and the printed line says `tier worker`. The oracle has no `build new` (the runner maps only `build list`): it answers `unknown command` on stderr with exit 2, so every expectation that needs the written file or the printed line FAILS on it.",
+  "steps": [
+    {
+      "run": [
+        "build",
+        "new",
+        "plain-one"
+      ],
+      "expect": {
+        "exit": 0,
+        "stdout": [
+          {
+            "equals": "wrote .jitso/drafts/plain-one.yaml (tier worker, status draft): fill every empty value, check it with jitso build validate plain-one, and ask the owner to run jitso build save plain-one\n"
+          }
+        ],
+        "stderr": [
+          {
+            "empty": true
+          }
+        ],
+        "files": [
+          {
+            "path": ".jitso/drafts/plain-one.yaml",
+            "regex": [
+              "(?m)^tier: worker$"
+            ]
+          },
+          {
+            "path": ".jitso/drafts/plain-one.yaml",
+            "regex": [
+              "(?m)^id: plain-one$"
+            ]
+          }
+        ]
+      }
+    }
+  ]
+}

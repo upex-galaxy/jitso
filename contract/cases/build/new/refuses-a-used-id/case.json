@@ -1,0 +1,123 @@
+{
+  "id": "build/new/refuses-a-used-id",
+  "title": "build new refuses the id of a saved build of any layer and the id of an existing draft, before writing anything, and never overwrites a draft",
+  "source": [
+    "intended: docs/decisions.md D7 and the templates row of the other decisions (a new build starts as a draft from a template: invalid until every empty value is filled)"
+  ],
+  "status": {
+    "ts": "xfail",
+    "go": "pass"
+  },
+  "defect": "N-14",
+  "intent": "INTENDED behavior (defect N-14, shipped core and templates; docs/decisions.md D7). The id of a saved build is `JITSO REJECTED: build \"<id>\" already exists (<layer> <path>): a draft needs an id no build has` (the same text as `build draft`); the id of an existing draft is `JITSO REJECTED: draft \"<id>\" already exists: edit .jitso/drafts/<id>.yaml or discard it`. Both exit 2 and are checked before anything is written, so a refused call leaves no folder behind, and an existing draft is never overwritten. The oracle has no `build new` (the runner maps only `build list`): it answers `unknown command` on stderr with exit 2, so every expectation that needs the written file or the printed line FAILS on it.",
+  "home": {
+    "files": {
+      ".jitso/builds/shared-scan.yaml": "# Draft written by a drafts case.\nid: shared-scan\nversion: 1\nstatus: approved\nrole: operator\ntype: scanner\nwork_kind: repo-scan\ndescription: Scan the repo for shared settings and report them.\nharness: claude\nmodel: claude-haiku-5-5\neffort: low\nmode_default: direct\nagents_md: exclude\nroute_scope: [none]\nskills_first: []\ntools: [Read, Glob, Grep]\nmcp: []\nrequires: []\nbudget: { tokens: 150000, usd_list_cap: 0.30 }\nsuccess:\n  - { check: answer_delivered }\n  - { check: no_rule_breaks }\n"
+    }
+  },
+  "steps": [
+    {
+      "run": [
+        "build",
+        "new",
+        "haiku-explorer"
+      ],
+      "expect": {
+        "exit": 2,
+        "stdout": [
+          {
+            "empty": true
+          }
+        ],
+        "stderr": [
+          {
+            "equals": "JITSO REJECTED: build \"haiku-explorer\" already exists (repo jitso/builds/haiku-explorer.yaml): a draft needs an id no build has\n"
+          }
+        ],
+        "files": [
+          {
+            "path": ".jitso/drafts",
+            "exists": false
+          }
+        ]
+      }
+    },
+    {
+      "run": [
+        "build",
+        "new",
+        "shared-scan"
+      ],
+      "expect": {
+        "exit": 2,
+        "stdout": [
+          {
+            "empty": true
+          }
+        ],
+        "stderr": [
+          {
+            "equals": "JITSO REJECTED: build \"shared-scan\" already exists (user ~/.jitso/builds/shared-scan.yaml): a draft needs an id no build has\n"
+          }
+        ],
+        "files": [
+          {
+            "path": ".jitso/drafts",
+            "exists": false
+          }
+        ]
+      }
+    },
+    {
+      "run": [
+        "build",
+        "new",
+        "my-build"
+      ],
+      "expect": {
+        "exit": 0,
+        "stdout": [
+          {
+            "equals": "wrote .jitso/drafts/my-build.yaml (tier worker, status draft): fill every empty value, check it with jitso build validate my-build, and ask the owner to run jitso build save my-build\n"
+          }
+        ]
+      }
+    },
+    {
+      "write": {
+        "project": {
+          ".jitso/drafts/my-build.yaml": "id: my-build\n# edited by hand\n"
+        }
+      },
+      "expect": {}
+    },
+    {
+      "run": [
+        "build",
+        "new",
+        "my-build",
+        "--tier",
+        "subagent"
+      ],
+      "expect": {
+        "exit": 2,
+        "stdout": [
+          {
+            "empty": true
+          }
+        ],
+        "stderr": [
+          {
+            "equals": "JITSO REJECTED: draft \"my-build\" already exists: edit .jitso/drafts/my-build.yaml or discard it\n"
+          }
+        ],
+        "files": [
+          {
+            "path": ".jitso/drafts/my-build.yaml",
+            "equals": "id: my-build\n# edited by hand\n"
+          }
+        ]
+      }
+    }
+  ]
+}

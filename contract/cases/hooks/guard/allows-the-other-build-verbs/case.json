@@ -1,0 +1,48 @@
+{
+  "id": "hooks/guard/allows-the-other-build-verbs",
+  "title": "the guard stays silent for the build verbs an agent may run: draft, list, validate, discard and new, and for text that only names the file",
+  "source": [
+    "intended: docs/decisions.md D7 and B3-19 (the agent boundary of build save is the launch guard)"
+  ],
+  "for_each": {
+    "var": "command",
+    "values": [
+      "jitso build draft x.yaml",
+      "jitso build draft -",
+      "jitso build list",
+      "jitso build list --drafts",
+      "jitso build validate",
+      "jitso build validate x",
+      "jitso build discard x",
+      "jitso build discard --all",
+      "jitso build new x --tier worker",
+      "{{JITSO}} build new x",
+      "{{JITSO}} build draft x.yaml",
+      "bun run jitso build validate x",
+      "cat jitso/builds/save.yaml",
+      "echo build save"
+    ]
+  },
+  "steps": [
+    {
+      "hook": "guard",
+      "input": {
+        "hook_event_name": "PreToolUse",
+        "tool_name": "Bash",
+        "tool_input": {
+          "command": "{{command}}"
+        },
+        "cwd": "{{PROJECT}}"
+      },
+      "expect": {
+        "exit": 0,
+        "decision": "none",
+        "stdout": [
+          {
+            "empty": true
+          }
+        ]
+      }
+    }
+  ]
+}

@@ -1,0 +1,281 @@
+{
+  "id": "build/new/bad-id-and-tier",
+  "title": "build new rejects an id that is not kebab-case, an unknown tier and bad arguments before touching the file system",
+  "source": [
+    "intended: docs/decisions.md D7 and the templates row of the other decisions (a new build starts as a draft from a template: invalid until every empty value is filled)"
+  ],
+  "status": {
+    "ts": "xfail",
+    "go": "pass"
+  },
+  "defect": "N-14",
+  "intent": "INTENDED behavior (defect N-14, shipped core and templates; docs/decisions.md D7). The id is the launcher's pattern (a lower-case letter, then lower-case letters, digits and hyphens, at most 64 characters): anything else is `JITSO REJECTED: build id must be kebab-case`. The tier is `worker`, `conductor` or `subagent`: anything else is `JITSO REJECTED: --tier must be worker, conductor or subagent`. No id is `JITSO REJECTED: build new needs a build id`, `--tier` with no value is `JITSO REJECTED: --tier needs a value`, any other word or flag is an unknown argument. All exit 2, are checked before the project is read, and leave no folder behind. The oracle has no `build new` (the runner maps only `build list`): it answers `unknown command` on stderr with exit 2, so every expectation that needs the written file or the printed line FAILS on it.",
+  "steps": [
+    {
+      "run": [
+        "build",
+        "new",
+        "Bad_ID"
+      ],
+      "expect": {
+        "exit": 2,
+        "stdout": [
+          {
+            "empty": true
+          }
+        ],
+        "stderr": [
+          {
+            "equals": "JITSO REJECTED: build id must be kebab-case\n"
+          }
+        ],
+        "files": [
+          {
+            "path": ".jitso/drafts",
+            "exists": false
+          }
+        ]
+      }
+    },
+    {
+      "run": [
+        "build",
+        "new",
+        "../x"
+      ],
+      "expect": {
+        "exit": 2,
+        "stdout": [
+          {
+            "empty": true
+          }
+        ],
+        "stderr": [
+          {
+            "equals": "JITSO REJECTED: build id must be kebab-case\n"
+          }
+        ],
+        "files": [
+          {
+            "path": ".jitso/drafts",
+            "exists": false
+          }
+        ]
+      }
+    },
+    {
+      "run": [
+        "build",
+        "new",
+        "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+      ],
+      "expect": {
+        "exit": 2,
+        "stdout": [
+          {
+            "empty": true
+          }
+        ],
+        "stderr": [
+          {
+            "equals": "JITSO REJECTED: build id must be kebab-case\n"
+          }
+        ],
+        "files": [
+          {
+            "path": ".jitso/drafts",
+            "exists": false
+          }
+        ]
+      }
+    },
+    {
+      "run": [
+        "build",
+        "new",
+        "1-start"
+      ],
+      "expect": {
+        "exit": 2,
+        "stdout": [
+          {
+            "empty": true
+          }
+        ],
+        "stderr": [
+          {
+            "equals": "JITSO REJECTED: build id must be kebab-case\n"
+          }
+        ],
+        "files": [
+          {
+            "path": ".jitso/drafts",
+            "exists": false
+          }
+        ]
+      }
+    },
+    {
+      "run": [
+        "build",
+        "new",
+        "my-build",
+        "--tier",
+        "boss"
+      ],
+      "expect": {
+        "exit": 2,
+        "stdout": [
+          {
+            "empty": true
+          }
+        ],
+        "stderr": [
+          {
+            "equals": "JITSO REJECTED: --tier must be worker, conductor or subagent\n"
+          }
+        ],
+        "files": [
+          {
+            "path": ".jitso/drafts",
+            "exists": false
+          }
+        ]
+      }
+    },
+    {
+      "run": [
+        "build",
+        "new",
+        "my-build",
+        "--tier",
+        "Worker"
+      ],
+      "expect": {
+        "exit": 2,
+        "stdout": [
+          {
+            "empty": true
+          }
+        ],
+        "stderr": [
+          {
+            "equals": "JITSO REJECTED: --tier must be worker, conductor or subagent\n"
+          }
+        ],
+        "files": [
+          {
+            "path": ".jitso/drafts",
+            "exists": false
+          }
+        ]
+      }
+    },
+    {
+      "run": [
+        "build",
+        "new",
+        "my-build",
+        "--tier"
+      ],
+      "expect": {
+        "exit": 2,
+        "stdout": [
+          {
+            "empty": true
+          }
+        ],
+        "stderr": [
+          {
+            "equals": "JITSO REJECTED: --tier needs a value\n"
+          }
+        ],
+        "files": [
+          {
+            "path": ".jitso/drafts",
+            "exists": false
+          }
+        ]
+      }
+    },
+    {
+      "run": [
+        "build",
+        "new"
+      ],
+      "expect": {
+        "exit": 2,
+        "stdout": [
+          {
+            "empty": true
+          }
+        ],
+        "stderr": [
+          {
+            "equals": "JITSO REJECTED: build new needs a build id\n"
+          }
+        ],
+        "files": [
+          {
+            "path": ".jitso/drafts",
+            "exists": false
+          }
+        ]
+      }
+    },
+    {
+      "run": [
+        "build",
+        "new",
+        "my-build",
+        "other"
+      ],
+      "expect": {
+        "exit": 2,
+        "stdout": [
+          {
+            "empty": true
+          }
+        ],
+        "stderr": [
+          {
+            "equals": "JITSO REJECTED: unknown argument \"other\"\n"
+          }
+        ],
+        "files": [
+          {
+            "path": ".jitso/drafts",
+            "exists": false
+          }
+        ]
+      }
+    },
+    {
+      "run": [
+        "build",
+        "new",
+        "my-build",
+        "--nope"
+      ],
+      "expect": {
+        "exit": 2,
+        "stdout": [
+          {
+            "empty": true
+          }
+        ],
+        "stderr": [
+          {
+            "equals": "JITSO REJECTED: unknown argument \"--nope\"\n"
+          }
+        ],
+        "files": [
+          {
+            "path": ".jitso/drafts",
+            "exists": false
+          }
+        ]
+      }
+    }
+  ]
+}

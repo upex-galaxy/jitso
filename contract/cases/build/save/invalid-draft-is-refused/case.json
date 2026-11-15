@@ -1,0 +1,118 @@
+{
+  "id": "build/save/invalid-draft-is-refused",
+  "title": "a draft is checked again at save time against the current allowlists, its id must be its file name, and its status must be written so the save can change it; nothing is saved",
+  "source": [
+    "intended: docs/decisions.md D7 and B3-18/B3-19 (a draft becomes a build only with the owner's OK: a terminal, or the token of the content he read; the guard denies the agent)"
+  ],
+  "status": {
+    "ts": "xfail",
+    "go": "pass"
+  },
+  "defect": "N-15",
+  "intent": "INTENDED behavior (defect N-15, drafts; docs/decisions.md D7). The allowlists may have changed since the draft was written, so `build save` re-checks the draft with the rules of `build draft`: `JITSO REJECTED: draft \"<id>\" is invalid: <problems joined by \"; \">`, exit 2, nothing shown as saved. A draft whose `id` is not its file name is invalid (`the id \"<x>\" must be the file name \"<id>\"`), because the saved file would then carry another name than its id. A status written with a tag (`!!str draft`) is a valid draft that cannot be saved byte for byte: `JITSO REJECTED: draft \"<id>\" cannot be saved: write its status as the plain word draft, or in quotes`. The oracle has no `build save` (the runner maps only `build list`): it answers `unknown command` on stderr with exit 2 and prints nothing on stdout, so every expectation that needs the `+ ` lines, the token text or the written file FAILS on it.",
+  "project": {
+    "files": {
+      ".jitso/drafts/broken.yaml": "# Draft written by a drafts case.\nid: broken\nversion: 1\nstatus: draft\nrole: operator\ntype: scanner\nwork_kind: repo-scan\ndescription: Scan the repo for TODO comments and report them.\nharness: claude\nmodel: gpt\neffort: low\nmode_default: direct\nagents_md: exclude\nroute_scope: [none]\nskills_first: []\ntools: [Read, Glob, Grep]\nmcp: []\nrequires: []\nbudget: { tokens: 150000, usd_list_cap: 0.30 }\nsuccess:\n  - { check: answer_delivered }\n  - { check: no_rule_breaks }\n",
+      ".jitso/drafts/mismatch.yaml": "# Draft written by a drafts case.\nid: somebody-else\nversion: 1\nstatus: draft\nrole: operator\ntype: scanner\nwork_kind: repo-scan\ndescription: Scan the repo for TODO comments and report them.\nharness: claude\nmodel: claude-haiku-5-5\neffort: low\nmode_default: direct\nagents_md: exclude\nroute_scope: [none]\nskills_first: []\ntools: [Read, Glob, Grep]\nmcp: []\nrequires: []\nbudget: { tokens: 150000, usd_list_cap: 0.30 }\nsuccess:\n  - { check: answer_delivered }\n  - { check: no_rule_breaks }\n",
+      ".jitso/drafts/tagged.yaml": "# Draft written by a drafts case.\nid: tagged\nversion: 1\nstatus: !!str draft\nrole: operator\ntype: scanner\nwork_kind: repo-scan\ndescription: Scan the repo for TODO comments and report them.\nharness: claude\nmodel: claude-haiku-5-5\neffort: low\nmode_default: direct\nagents_md: exclude\nroute_scope: [none]\nskills_first: []\ntools: [Read, Glob, Grep]\nmcp: []\nrequires: []\nbudget: { tokens: 150000, usd_list_cap: 0.30 }\nsuccess:\n  - { check: answer_delivered }\n  - { check: no_rule_breaks }\n"
+    }
+  },
+  "steps": [
+    {
+      "run": [
+        "build",
+        "save",
+        "broken",
+        "--confirm",
+        "123456789abc"
+      ],
+      "expect": {
+        "exit": 2,
+        "stdout": [
+          {
+            "empty": true
+          }
+        ],
+        "stderr": [
+          {
+            "equals": "JITSO REJECTED: draft \"broken\" is invalid: model \"gpt\" is not in the allowlist\n"
+          }
+        ],
+        "files": [
+          {
+            "path": "jitso/builds/broken.yaml",
+            "exists": false
+          },
+          {
+            "path": ".jitso/drafts/broken.yaml",
+            "equals": "# Draft written by a drafts case.\nid: broken\nversion: 1\nstatus: draft\nrole: operator\ntype: scanner\nwork_kind: repo-scan\ndescription: Scan the repo for TODO comments and report them.\nharness: claude\nmodel: gpt\neffort: low\nmode_default: direct\nagents_md: exclude\nroute_scope: [none]\nskills_first: []\ntools: [Read, Glob, Grep]\nmcp: []\nrequires: []\nbudget: { tokens: 150000, usd_list_cap: 0.30 }\nsuccess:\n  - { check: answer_delivered }\n  - { check: no_rule_breaks }\n"
+          }
+        ]
+      }
+    },
+    {
+      "run": [
+        "build",
+        "save",
+        "mismatch",
+        "--confirm",
+        "123456789abc"
+      ],
+      "expect": {
+        "exit": 2,
+        "stdout": [
+          {
+            "empty": true
+          }
+        ],
+        "stderr": [
+          {
+            "equals": "JITSO REJECTED: draft \"mismatch\" is invalid: the id \"somebody-else\" must be the file name \"mismatch\"\n"
+          }
+        ],
+        "files": [
+          {
+            "path": "jitso/builds/mismatch.yaml",
+            "exists": false
+          },
+          {
+            "path": "jitso/builds/somebody-else.yaml",
+            "exists": false
+          }
+        ]
+      }
+    },
+    {
+      "run": [
+        "build",
+        "save",
+        "tagged",
+        "--confirm",
+        "123456789abc"
+      ],
+      "expect": {
+        "exit": 2,
+        "stdout": [
+          {
+            "empty": true
+          }
+        ],
+        "stderr": [
+          {
+            "equals": "JITSO REJECTED: draft \"tagged\" cannot be saved: write its status as the plain word draft, or in quotes\n"
+          }
+        ],
+        "files": [
+          {
+            "path": "jitso/builds/tagged.yaml",
+            "exists": false
+          },
+          {
+            "path": ".jitso/drafts/tagged.yaml",
+            "equals": "# Draft written by a drafts case.\nid: tagged\nversion: 1\nstatus: !!str draft\nrole: operator\ntype: scanner\nwork_kind: repo-scan\ndescription: Scan the repo for TODO comments and report them.\nharness: claude\nmodel: claude-haiku-5-5\neffort: low\nmode_default: direct\nagents_md: exclude\nroute_scope: [none]\nskills_first: []\ntools: [Read, Glob, Grep]\nmcp: []\nrequires: []\nbudget: { tokens: 150000, usd_list_cap: 0.30 }\nsuccess:\n  - { check: answer_delivered }\n  - { check: no_rule_breaks }\n"
+          }
+        ]
+      }
+    }
+  ]
+}

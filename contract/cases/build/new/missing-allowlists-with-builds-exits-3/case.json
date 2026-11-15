@@ -1,0 +1,50 @@
+{
+  "id": "build/new/missing-allowlists-with-builds-exits-3",
+  "title": "build new in a project that has repo builds but no jitso/jitso.yaml exits 3 with the missing-allowlists message and writes nothing",
+  "source": [
+    "intended: docs/decisions.md D7 and the templates row of the other decisions (a new build starts as a draft from a template: invalid until every empty value is filled)"
+  ],
+  "status": {
+    "ts": "xfail",
+    "go": "pass"
+  },
+  "defect": "N-14",
+  "intent": "INTENDED behavior (defect N-14, shipped core and templates; docs/decisions.md D7). The skeleton is written only in a fresh project. When `jitso/builds/` holds builds and `jitso/jitso.yaml` is missing, the project is broken, not new: `jitso build new` exits 3 with `jitso: jitso/jitso.yaml is missing: this project has no JITSO allowlists (create it with jitso build new <id>)`, like every catalog command, and writes neither the skeleton nor a draft. The oracle has no `build new` (the runner maps only `build list`): it answers `unknown command` on stderr with exit 2, so every expectation that needs the written file or the printed line FAILS on it.",
+  "project": {
+    "files": {
+      "jitso/jitso.yaml": null
+    }
+  },
+  "steps": [
+    {
+      "run": [
+        "build",
+        "new",
+        "my-build"
+      ],
+      "expect": {
+        "exit": 3,
+        "stdout": [
+          {
+            "empty": true
+          }
+        ],
+        "stderr": [
+          {
+            "contains": "jitso: jitso/jitso.yaml is missing: this project has no JITSO allowlists (create it with jitso build new <id>)"
+          }
+        ],
+        "files": [
+          {
+            "path": "jitso/jitso.yaml",
+            "exists": false
+          },
+          {
+            "path": ".jitso/drafts",
+            "exists": false
+          }
+        ]
+      }
+    }
+  ]
+}

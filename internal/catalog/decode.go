@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"errors"
 	"io"
+	"unicode/utf8"
 
 	yaml "go.yaml.in/yaml/v3"
 )
@@ -96,4 +97,106 @@ func fromNode(n *yaml.Node) (any, error) {
 		return v, nil
 	}
 	return nil, nil
+}
+
+// StatusSpan is the byte range of the text of the top-level `status` scalar of
+// a build file: data[start:end] is the value as written, without the quotes of
+// a quoted scalar. ok is false when the file has no such scalar, or when its
+// text cannot be located with certainty: a value with a tag or an anchor, an
+// alias, a block or multi-line scalar, a quoted value that holds an escape. A
+// caller that rewrites the value (`build save` turns draft into approved) can
+// then change that range and keep every other byte.
+//
+// The position comes from the YAML node (its line and column), and the text at
+// that position is checked against the value the decoder read, so a wrong
+// position can never select the wrong bytes.
+func StatusSpan(data []byte) (start, end int, ok bool) {
+	var doc yaml.Node
+	if err := yaml.NewDecoder(bytes.NewReader(data)).Decode(&doc); err != nil {
+		return 0, 0, false
+	}
+	if doc.Kind != yaml.DocumentNode || len(doc.Content) == 0 || doc.Content[0].Kind != yaml.MappingNode {
+		return 0, 0, false
+	}
+	m := doc.Content[0]
+	var val *yaml.Node
+	for i := 0; i+1 < len(m.Content); i += 2 {
+		if k := m.Content[i]; k.Kind == yaml.ScalarNode && k.Value == "status" {
+			val = m.Content[i+1]
+			break
+		}
+	}
+	if val == nil || val.Kind != yaml.ScalarNode || val.Anchor != "" || val.Style&yaml.TaggedStyle != 0 {
+		return 0, 0, false
+	}
+	at, ok := offsetAt(data, val.Line, val.Column)
+	if !ok {
+		return 0, 0, false
+	}
+	text := val.Value
+	switch {
+	case val.Style&(yaml.LiteralStyle|yaml.FoldedStyle|yaml.FlowStyle) != 0:
+		return 0, 0, false
+	case val.Style&yaml.DoubleQuotedStyle != 0:
+		return quotedSpan(data, at, '"', text)
+	case val.Style&yaml.SingleQuotedStyle != 0:
+		return quotedSpan(data, at, '\'', text)
+	}
+	if text == "" || !bytes.HasPrefix(data[at:], []byte(text)) {
+		return 0, 0, false
+	}
+	return at, at + len(text), true
+}
+
+// quotedSpan is the span of the text of a quoted scalar that starts at the
+// quote at data[at]: the text must be written as is between the quotes.
+func quotedSpan(data []byte, at int, quote byte, text string) (int, int, bool) {
+	start, end := at+1, at+1+len(text)
+	if end >= len(data) || data[at] != quote || data[end] != quote || string(data[start:end]) != text {
+		return 0, 0, false
+	}
+	return start, end, true
+}
+
+// offsetAt is the byte offset of the 1-based line and column that the YAML
+// parser reports: a column counts characters, and a line break is CR, LF,
+// CRLF, NEL, LS or PS. A leading byte order mark is not counted.
+func offsetAt(data []byte, line, column int) (int, bool) {
+	i := 0
+	if bytes.HasPrefix(data, []byte{0xEF, 0xBB, 0xBF}) {
+		i = 3
+	}
+	for l := 1; l < line; {
+		if i >= len(data) {
+			return 0, false
+		}
+		if n := breakLen(data[i:]); n > 0 {
+			i += n
+			l++
+			continue
+		}
+		_, w := utf8.DecodeRune(data[i:])
+		i += w
+	}
+	for c := 1; c < column; c++ {
+		if i >= len(data) || breakLen(data[i:]) > 0 {
+			return 0, false
+		}
+		_, w := utf8.DecodeRune(data[i:])
+		i += w
+	}
+	return i, true
+}
+
+// breakLen is the length of the line break at the start of b, 0 when there is
+// none.
+func breakLen(b []byte) int {
+	if bytes.HasPrefix(b, []byte("\r\n")) {
+		return 2
+	}
+	switch r, w := utf8.DecodeRune(b); r {
+	case '\r', '\n', '\u0085', '\u2028', '\u2029':
+		return w
+	}
+	return 0
 }

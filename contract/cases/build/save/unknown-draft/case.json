@@ -1,0 +1,172 @@
+{
+  "id": "build/save/unknown-draft",
+  "title": "build save of an id with no draft, an id that is not kebab-case, and bad arguments are rejected before anything is shown or written",
+  "source": [
+    "intended: docs/decisions.md D7 and B3-18/B3-19 (a draft becomes a build only with the owner's OK: a terminal, or the token of the content he read; the guard denies the agent)"
+  ],
+  "status": {
+    "ts": "xfail",
+    "go": "pass"
+  },
+  "defect": "N-15",
+  "intent": "INTENDED behavior (defect N-15, drafts; docs/decisions.md D7). `build save` reads only `.jitso/drafts/<id>.yaml`: an id with no draft is `JITSO REJECTED: no draft \"<id>\"`; an id that is not kebab-case (a path, for example) is `JITSO REJECTED: build id must be kebab-case` and is never turned into a path; no id is `JITSO REJECTED: build save needs a draft id`; `--confirm` with no value is `JITSO REJECTED: --confirm needs a value`; any other word is an unknown argument. All exit 2 with nothing on stdout. The oracle has no `build save` (the runner maps only `build list`): it answers `unknown command` on stderr with exit 2 and prints nothing on stdout, so every expectation that needs the `+ ` lines, the token text or the written file FAILS on it.",
+  "project": {
+    "files": {
+      ".jitso/drafts/scout.yaml": "# Draft written by a drafts case.\nid: scout\nversion: 1\nstatus: draft\nrole: operator\ntype: scanner\nwork_kind: repo-scan\ndescription: Scan the repo for TODO comments and report them.\nharness: claude\nmodel: claude-haiku-5-5\neffort: low\nmode_default: direct\nagents_md: exclude\nroute_scope: [none]\nskills_first: []\ntools: [Read, Glob, Grep]\nmcp: []\nrequires: []\nbudget: { tokens: 150000, usd_list_cap: 0.30 }\nsuccess:\n  - { check: answer_delivered }\n  - { check: no_rule_breaks }\n"
+    }
+  },
+  "steps": [
+    {
+      "run": [
+        "build",
+        "save",
+        "nope"
+      ],
+      "expect": {
+        "exit": 2,
+        "stdout": [
+          {
+            "empty": true
+          }
+        ],
+        "stderr": [
+          {
+            "equals": "JITSO REJECTED: no draft \"nope\"\n"
+          }
+        ]
+      }
+    },
+    {
+      "run": [
+        "build",
+        "save",
+        "../scout"
+      ],
+      "expect": {
+        "exit": 2,
+        "stdout": [
+          {
+            "empty": true
+          }
+        ],
+        "stderr": [
+          {
+            "equals": "JITSO REJECTED: build id must be kebab-case\n"
+          }
+        ]
+      }
+    },
+    {
+      "run": [
+        "build",
+        "save",
+        "Scout"
+      ],
+      "expect": {
+        "exit": 2,
+        "stdout": [
+          {
+            "empty": true
+          }
+        ],
+        "stderr": [
+          {
+            "equals": "JITSO REJECTED: build id must be kebab-case\n"
+          }
+        ]
+      }
+    },
+    {
+      "run": [
+        "build",
+        "save"
+      ],
+      "expect": {
+        "exit": 2,
+        "stdout": [
+          {
+            "empty": true
+          }
+        ],
+        "stderr": [
+          {
+            "equals": "JITSO REJECTED: build save needs a draft id\n"
+          }
+        ]
+      }
+    },
+    {
+      "run": [
+        "build",
+        "save",
+        "scout",
+        "--confirm"
+      ],
+      "expect": {
+        "exit": 2,
+        "stdout": [
+          {
+            "empty": true
+          }
+        ],
+        "stderr": [
+          {
+            "equals": "JITSO REJECTED: --confirm needs a value\n"
+          }
+        ]
+      }
+    },
+    {
+      "run": [
+        "build",
+        "save",
+        "scout",
+        "--nope"
+      ],
+      "expect": {
+        "exit": 2,
+        "stdout": [
+          {
+            "empty": true
+          }
+        ],
+        "stderr": [
+          {
+            "equals": "JITSO REJECTED: unknown argument \"--nope\"\n"
+          }
+        ]
+      }
+    },
+    {
+      "run": [
+        "build",
+        "save",
+        "scout",
+        "other"
+      ],
+      "expect": {
+        "exit": 2,
+        "stdout": [
+          {
+            "empty": true
+          }
+        ],
+        "stderr": [
+          {
+            "equals": "JITSO REJECTED: unknown argument \"other\"\n"
+          }
+        ],
+        "files": [
+          {
+            "path": "jitso/builds/scout.yaml",
+            "exists": false
+          },
+          {
+            "path": ".jitso/drafts/scout.yaml",
+            "equals": "# Draft written by a drafts case.\nid: scout\nversion: 1\nstatus: draft\nrole: operator\ntype: scanner\nwork_kind: repo-scan\ndescription: Scan the repo for TODO comments and report them.\nharness: claude\nmodel: claude-haiku-5-5\neffort: low\nmode_default: direct\nagents_md: exclude\nroute_scope: [none]\nskills_first: []\ntools: [Read, Glob, Grep]\nmcp: []\nrequires: []\nbudget: { tokens: 150000, usd_list_cap: 0.30 }\nsuccess:\n  - { check: answer_delivered }\n  - { check: no_rule_breaks }\n"
+          }
+        ]
+      }
+    }
+  ]
+}

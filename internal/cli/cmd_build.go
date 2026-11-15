@@ -72,7 +72,7 @@ func init() {
 	Register(Command{
 		Name:    "build",
 		Order:   60,
-		Summary: "list the approved builds",
+		Summary: "list, validate, create, draft, save and discard builds",
 		Run:     runBuild,
 	})
 }

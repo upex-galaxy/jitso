@@ -1,0 +1,169 @@
+{
+  "id": "build/new/writes-a-draft-template",
+  "title": "build new <id> --tier <t> writes .jitso/drafts/<id>.yaml from the tier template: a draft that is invalid until its empty values are filled, never a file in jitso/builds/, so the catalog keeps working",
+  "source": [
+    "intended: docs/decisions.md D7 and the templates row of the other decisions (a new build starts as a draft from a template: invalid until every empty value is filled)"
+  ],
+  "status": {
+    "ts": "xfail",
+    "go": "pass"
+  },
+  "defect": "N-14",
+  "intent": "INTENDED behavior (defect N-14, shipped core and templates; docs/decisions.md D7). `jitso build new <id> --tier worker|conductor|subagent` writes a draft, `.jitso/drafts/<id>.yaml`, from the commented template of the tier, with the line `id: <id>` filled, `status: draft` and every value that must come from an allowlist left empty. It prints `wrote .jitso/drafts/<id>.yaml (tier <t>, status draft): fill every empty value, check it with jitso build validate <id>, and ask the owner to run jitso build save <id>`. The new draft is invalid for this project, so `build validate <id>` exits 2 and `launch --build <id>` is `is invalid here`, while the rest of the catalog still launches. Nothing is written to `jitso/builds/`. The oracle has no `build new` (the runner maps only `build list`): it answers `unknown command` on stderr with exit 2, so every expectation that needs the written file or the printed line FAILS on it.",
+  "for_each": {
+    "var": "tier",
+    "values": [
+      "worker",
+      "conductor",
+      "subagent"
+    ]
+  },
+  "project": {
+    "files": {
+      ".jitso/briefs/brief.md": "## Goal\n\nFind where the sync entry point of this project is defined and explain in a few sentences how it is wired to the rest of the code.\n\n## Scope\n\nRead only. Do not change any file and do not leave the repository.\n\n## Done when\n\nYou can name the file and the line that defines the entry point, and you have checked it by reading the file.\n\n## Report format\n\nOne short paragraph with the file path, the line number and a one line summary of what it does.\n"
+    }
+  },
+  "steps": [
+    {
+      "run": [
+        "build",
+        "new",
+        "my-build",
+        "--tier",
+        "{{tier}}"
+      ],
+      "expect": {
+        "exit": 0,
+        "stdout": [
+          {
+            "equals": "wrote .jitso/drafts/my-build.yaml (tier {{tier}}, status draft): fill every empty value, check it with jitso build validate my-build, and ask the owner to run jitso build save my-build\n"
+          }
+        ],
+        "stderr": [
+          {
+            "empty": true
+          }
+        ],
+        "orca_calls": {
+          "empty": true
+        },
+        "files": [
+          {
+            "path": ".jitso/drafts/my-build.yaml",
+            "regex": [
+              "(?m)^id: my-build$"
+            ]
+          },
+          {
+            "path": ".jitso/drafts/my-build.yaml",
+            "regex": [
+              "(?m)^tier: {{tier}}$"
+            ]
+          },
+          {
+            "path": ".jitso/drafts/my-build.yaml",
+            "regex": [
+              "(?m)^status: draft$"
+            ]
+          },
+          {
+            "path": ".jitso/drafts/.gitignore",
+            "equals": "*\n"
+          },
+          {
+            "path": "jitso/builds/my-build.yaml",
+            "exists": false
+          }
+        ]
+      }
+    },
+    {
+      "run": [
+        "build",
+        "validate",
+        "my-build"
+      ],
+      "expect": {
+        "exit": 2,
+        "stdout": [
+          {
+            "regex": "(?m)^invalid my-build draft \\.jitso/drafts/my-build\\.yaml$"
+          },
+          {
+            "regex": "(?m)^  model "
+          },
+          {
+            "regex": "(?m)^checked 1 builds: 0 ok, 1 invalid$"
+          }
+        ],
+        "stderr": [
+          {
+            "empty": true
+          }
+        ]
+      }
+    },
+    {
+      "run": [
+        "launch",
+        "--build",
+        "my-build",
+        "--brief",
+        "{{PROJECT}}/.jitso/briefs/brief.md",
+        "--mode",
+        "direct",
+        "--dry-run"
+      ],
+      "expect": {
+        "exit": 2,
+        "stderr": [
+          {
+            "contains": "JITSO REJECTED: build \"my-build\" from draft .jitso/drafts/my-build.yaml is invalid here: "
+          }
+        ]
+      }
+    },
+    {
+      "run": [
+        "launch",
+        "--build",
+        "haiku-explorer",
+        "--brief",
+        "{{PROJECT}}/.jitso/briefs/brief.md",
+        "--mode",
+        "direct",
+        "--dry-run"
+      ],
+      "expect": {
+        "exit": 0,
+        "stderr": [
+          {
+            "empty": true
+          }
+        ]
+      }
+    },
+    {
+      "run": [
+        "build",
+        "list"
+      ],
+      "expect": {
+        "exit": 0,
+        "stdout": [
+          {
+            "not_contains": "my-build"
+          },
+          {
+            "regex": "(?m)^- haiku-explorer: "
+          }
+        ],
+        "stderr": [
+          {
+            "contains": "jitso: warning: skipped build draft .jitso/drafts/my-build.yaml: "
+          }
+        ]
+      }
+    }
+  ]
+}

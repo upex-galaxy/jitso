@@ -1,0 +1,128 @@
+{
+  "id": "build/save/never-overwrites",
+  "title": "build save never overwrites a file of jitso/builds/ and never takes the id of a saved build of any layer, even with a good token; nothing is written or deleted",
+  "source": [
+    "intended: docs/decisions.md D7 and B3-18/B3-19 (a draft becomes a build only with the owner's OK: a terminal, or the token of the content he read; the guard denies the agent)"
+  ],
+  "status": {
+    "ts": "xfail",
+    "go": "pass"
+  },
+  "defect": "N-15",
+  "intent": "INTENDED behavior (defect N-15, drafts; docs/decisions.md D7). A draft whose id is the id of a saved build of the project is `JITSO REJECTED: jitso/builds/<id>.yaml already exists: save never overwrites a build`; so is a draft whose target file exists under another id. A draft whose id a build of another layer already has (here the user folder) is `JITSO REJECTED: build \"<id>\" already exists (<layer> <path>): a draft needs an id no build has`. The check comes before the token: the answer is the same with a bogus `--confirm`. The saved file and the draft are left as they were. The oracle has no `build save` (the runner maps only `build list`): it answers `unknown command` on stderr with exit 2 and prints nothing on stdout, so every expectation that needs the `+ ` lines, the token text or the written file FAILS on it.",
+  "project": {
+    "files": {
+      ".jitso/drafts/haiku-explorer.yaml": "# Draft written by a drafts case.\nid: haiku-explorer\nversion: 1\nstatus: draft\nrole: operator\ntype: scanner\nwork_kind: repo-scan\ndescription: A draft with the id of a saved build.\nharness: claude\nmodel: claude-haiku-5-5\neffort: low\nmode_default: direct\nagents_md: exclude\nroute_scope: [none]\nskills_first: []\ntools: [Read, Glob, Grep]\nmcp: []\nrequires: []\nbudget: { tokens: 150000, usd_list_cap: 0.30 }\nsuccess:\n  - { check: answer_delivered }\n  - { check: no_rule_breaks }\n",
+      ".jitso/drafts/shared-scan.yaml": "# Draft written by a drafts case.\nid: shared-scan\nversion: 1\nstatus: draft\nrole: operator\ntype: scanner\nwork_kind: repo-scan\ndescription: A draft with the id of a user build.\nharness: claude\nmodel: claude-haiku-5-5\neffort: low\nmode_default: direct\nagents_md: exclude\nroute_scope: [none]\nskills_first: []\ntools: [Read, Glob, Grep]\nmcp: []\nrequires: []\nbudget: { tokens: 150000, usd_list_cap: 0.30 }\nsuccess:\n  - { check: answer_delivered }\n  - { check: no_rule_breaks }\n",
+      ".jitso/drafts/taken.yaml": "# Draft written by a drafts case.\nid: taken\nversion: 1\nstatus: draft\nrole: operator\ntype: scanner\nwork_kind: repo-scan\ndescription: A draft whose file name is used.\nharness: claude\nmodel: claude-haiku-5-5\neffort: low\nmode_default: direct\nagents_md: exclude\nroute_scope: [none]\nskills_first: []\ntools: [Read, Glob, Grep]\nmcp: []\nrequires: []\nbudget: { tokens: 150000, usd_list_cap: 0.30 }\nsuccess:\n  - { check: answer_delivered }\n  - { check: no_rule_breaks }\n"
+    }
+  },
+  "home": {
+    "files": {
+      ".jitso/builds/shared-scan.yaml": "# Draft written by a drafts case.\nid: shared-scan\nversion: 1\nstatus: approved\nrole: operator\ntype: scanner\nwork_kind: repo-scan\ndescription: Scan the repo for shared settings and report them.\nharness: claude\nmodel: claude-haiku-5-5\neffort: low\nmode_default: direct\nagents_md: exclude\nroute_scope: [none]\nskills_first: []\ntools: [Read, Glob, Grep]\nmcp: []\nrequires: []\nbudget: { tokens: 150000, usd_list_cap: 0.30 }\nsuccess:\n  - { check: answer_delivered }\n  - { check: no_rule_breaks }\n"
+    }
+  },
+  "steps": [
+    {
+      "run": [
+        "build",
+        "save",
+        "haiku-explorer",
+        "--confirm",
+        "123456789abc"
+      ],
+      "expect": {
+        "exit": 2,
+        "stderr": [
+          {
+            "equals": "JITSO REJECTED: jitso/builds/haiku-explorer.yaml already exists: save never overwrites a build\n"
+          }
+        ],
+        "files": [
+          {
+            "path": "jitso/builds/haiku-explorer.yaml",
+            "not_contains": [
+              "A draft with the id"
+            ]
+          },
+          {
+            "path": ".jitso/drafts/haiku-explorer.yaml",
+            "contains": [
+              "A draft with the id of a saved build."
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "run": [
+        "build",
+        "save",
+        "shared-scan",
+        "--confirm",
+        "123456789abc"
+      ],
+      "expect": {
+        "exit": 2,
+        "stdout": [
+          {
+            "empty": true
+          }
+        ],
+        "stderr": [
+          {
+            "equals": "JITSO REJECTED: build \"shared-scan\" already exists (user ~/.jitso/builds/shared-scan.yaml): a draft needs an id no build has\n"
+          }
+        ],
+        "files": [
+          {
+            "path": "jitso/builds/shared-scan.yaml",
+            "exists": false
+          },
+          {
+            "path": ".jitso/drafts/shared-scan.yaml",
+            "exists": true
+          }
+        ]
+      }
+    },
+    {
+      "write": {
+        "project": {
+          "jitso/builds/taken.yaml": "# Draft written by a drafts case.\nid: other-thing\nversion: 1\nstatus: approved\nrole: operator\ntype: scanner\nwork_kind: repo-scan\ndescription: A saved build in the way.\nharness: claude\nmodel: claude-haiku-5-5\neffort: low\nmode_default: direct\nagents_md: exclude\nroute_scope: [none]\nskills_first: []\ntools: [Read, Glob, Grep]\nmcp: []\nrequires: []\nbudget: { tokens: 150000, usd_list_cap: 0.30 }\nsuccess:\n  - { check: answer_delivered }\n  - { check: no_rule_breaks }\n"
+        }
+      },
+      "expect": {}
+    },
+    {
+      "run": [
+        "build",
+        "save",
+        "taken"
+      ],
+      "expect": {
+        "exit": 2,
+        "stdout": [
+          {
+            "empty": true
+          }
+        ],
+        "stderr": [
+          {
+            "equals": "JITSO REJECTED: jitso/builds/taken.yaml already exists: save never overwrites a build\n"
+          }
+        ],
+        "files": [
+          {
+            "path": "jitso/builds/taken.yaml",
+            "equals": "# Draft written by a drafts case.\nid: other-thing\nversion: 1\nstatus: approved\nrole: operator\ntype: scanner\nwork_kind: repo-scan\ndescription: A saved build in the way.\nharness: claude\nmodel: claude-haiku-5-5\neffort: low\nmode_default: direct\nagents_md: exclude\nroute_scope: [none]\nskills_first: []\ntools: [Read, Glob, Grep]\nmcp: []\nrequires: []\nbudget: { tokens: 150000, usd_list_cap: 0.30 }\nsuccess:\n  - { check: answer_delivered }\n  - { check: no_rule_breaks }\n"
+          },
+          {
+            "path": ".jitso/drafts/taken.yaml",
+            "exists": true
+          }
+        ]
+      }
+    }
+  ]
+}
