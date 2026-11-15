@@ -1,0 +1,106 @@
+# Release workflow. Written, not yet run: nothing is published from this repo
+# until the owner decides (docs/release.md, every outward step is OWNER-GATED).
+#
+# Every `uses:` line below carries a PLACEHOLDER commit SHA (forty zeros). Before
+# the first tag, resolve each action to the full commit SHA of a release tag and
+# review it (docs/release.md, pre-flight). Only GitHub-owned actions are used.
+name: release
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+
+permissions: {}
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+env:
+  GO_VERSION: '1.27.4'
+  CGO_ENABLED: '0'
+
+jobs:
+  build:
+    name: verify and build
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@0000000000000000000000000000000000000000 # PLACEHOLDER: resolve actions/checkout
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-go@0000000000000000000000000000000000000000 # PLACEHOLDER: resolve actions/setup-go
+        with:
+          go-version: ${{ env.GO_VERSION }}
+          cache: false
+
+      - name: The tag is a version
+        run: printf '%s\n' "$GITHUB_REF_NAME" | grep -Eq '^v[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z.]+)?$'
+
+      - name: Verify the CLI module
+        run: |
+          go test ./...
+          go vet ./...
+          test -z "$(gofmt -l .)"
+
+      - name: Verify the contract runner
+        working-directory: contract/runner
+        run: |
+          go test ./...
+          go vet ./...
+          test -z "$(gofmt -l .)"
+          go build -o "$RUNNER_TEMP/jitso-contract" .
+
+      - name: Build the release archives
+        run: sh scripts/package.sh "$GITHUB_REF_NAME" dist
+
+      - name: Contract suite against the Linux binary
+        run: |
+          mkdir -p "$RUNNER_TEMP/linux"
+          tar -xzf dist/jitso-linux-amd64.tar.gz -C "$RUNNER_TEMP/linux"
+          bin="$RUNNER_TEMP/linux/jitso-linux-amd64/jitso"
+          "$bin" version | grep -F "jitso $GITHUB_REF_NAME "
+          cd contract
+          "$RUNNER_TEMP/jitso-contract" --impl bin --bin "$bin" --jobs 4
+
+      - name: Install script against the built archives
+        run: sh scripts/test-install.sh dist "$GITHUB_REF_NAME"
+
+      - uses: actions/upload-artifact@0000000000000000000000000000000000000000 # PLACEHOLDER: resolve actions/upload-artifact
+        with:
+          name: dist
+          path: dist/
+          if-no-files-found: error
+          retention-days: 7
+
+  release:
+    name: publish the GitHub Release
+    needs: build
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@0000000000000000000000000000000000000000 # PLACEHOLDER: resolve actions/download-artifact
+        with:
+          name: dist
+          path: dist
+
+      - name: Checksums hold
+        working-directory: dist
+        run: sha256sum -c checksums.txt
+
+      - name: Create the release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          pre=""
+          case "$GITHUB_REF_NAME" in *-*) pre="--prerelease" ;; esac
+          gh release create "$GITHUB_REF_NAME" --verify-tag $pre \
+            --title "jitso $GITHUB_REF_NAME" --generate-notes \
+            dist/*.tar.gz dist/*.zip dist/install.sh dist/checksums.txt
