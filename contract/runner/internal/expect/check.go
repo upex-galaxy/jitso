@@ -18,6 +18,8 @@ const (
 	KindWrite = "write"
 	// KindGitWorktree adds a linked git worktree to the sandbox (SPEC 6.5).
 	KindGitWorktree = "git_worktree"
+	// KindGitInit creates a nested git checkout inside the project or HOME (SPEC 6.6).
+	KindGitInit = "git_init"
 )
 
 // Observation is everything a check may look at after one step.
@@ -67,7 +69,7 @@ type builder struct {
 var builders = map[string]builder{}
 
 // any step kind
-var allKinds = []string{KindRun, KindHook, KindExec, KindWrite, KindGitWorktree}
+var allKinds = []string{KindRun, KindHook, KindExec, KindWrite, KindGitWorktree, KindGitInit}
 
 // register adds an expectation key valid on the given step kinds.
 func register(name string, on []string, build func(v any, what string) (Check, error)) {

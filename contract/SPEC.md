@@ -149,7 +149,7 @@ The knobs travel in the scenario file (`JITSO_CONTRACT_SCENARIO`, key `claude`),
 
 `steps` run in order; a failed expectation stops the case (later steps are reported as not run). Every expectation of the failing step is still evaluated and reported.
 
-A step holds exactly one of `run`, `hook`, `exec`, `write`, `git_worktree`, and only the keys of its kind:
+A step holds exactly one of `run`, `hook`, `exec`, `write`, `git_worktree`, `git_init`, and only the keys of its kind:
 
 | Kind | Keys |
 |---|---|
@@ -158,6 +158,7 @@ A step holds exactly one of `run`, `hook`, `exec`, `write`, `git_worktree`, and 
 | `exec` | `exec`, `launch` (required), `env`, `capture`, `expect` |
 | `write` | `write`, `expect` |
 | `git_worktree` | `git_worktree`, `expect` |
+| `git_init` | `git_init`, `expect` |
 
 `env` is an object of strings, applied over the sandbox environment. `capture` maps a placeholder name (not a built-in, not a `for_each` var) to `{"from": <source>, "regex": "re", "group": n}`; `group` defaults to `1` when the regex has a group, else `0`. The source, read after the step ran, is one of:
 
@@ -215,6 +216,18 @@ Takes the same file maps as section 3. Used to set up state a later step reads (
 Adds a real linked git worktree to the project, so a case pins what happens from inside one (state goes to the primary checkout's `.jitso/`, the trust of a linked worktree) instead of faking `.git` internals. `name` is a literal `[A-Za-z0-9_]+`, unique in the case; the worktree lives at `{{WORKTREE_<name>}}`, a real path inside the sandbox root, on a new branch `contract-<name>`.
 
 When the project has no commit yet, the runner first makes one empty commit (no file is added, so the worktree holds only its `.git` file). Every git command of this step runs with the sandbox environment plus a runner-controlled author and committer (`jitso-contract <contract@example.invalid>`), `GIT_CONFIG_NOSYSTEM=1`, `GIT_CONFIG_GLOBAL=/dev/null`, `commit.gpgsign=false` and `core.hooksPath=/dev/null`: no signing, no hook, no owner config. A git failure is a runner error.
+
+### 6.6 `git_init`: a nested git checkout
+
+```json
+{ "git_init": { "path": "nested" }, "expect": { "files": [ { "path": "nested/.git" } ] } }
+```
+
+Creates a second, independent git repository inside the sandbox, so a case pins what happens from inside a nested checkout (which checkout is the project, which catalogs are in scope) instead of faking `.git`. `path` is a folder relative to the project dir, or an absolute placeholder path (for example `{{HOME}}/repo`). The runner creates the folder and its parents and runs `git init -q` there, with the sandbox environment and the same controlled git settings as section 6.5: the runner-controlled author and committer, `GIT_CONFIG_NOSYSTEM=1`, `GIT_CONFIG_GLOBAL=/dev/null`, `commit.gpgsign=false` and `core.hooksPath=/dev/null`. The step makes no commit and adds no file: files for the nested checkout come from the case's `project.files` (they are written before the first step) or from an earlier `write` step.
+
+These are runner errors, never expectation failures: a path that already holds a `.git` (the project dir itself included), a path that lies outside the project dir and HOME once its symlinks are resolved (a symlinked parent that leads out counts), and a git failure. A relative `path` that leaves the project dir by its text (`..`) is a load error, like any other bad shape of the step (a missing or empty `path`, an unknown key).
+
+Only the expectations `files`, `registry`, `orca_calls` and `elapsed_ms_lt` apply; any other key is a load error (section 7).
 
 ## 7. Expectations
 

@@ -1,0 +1,65 @@
+{
+  "id": "project/nested-checkout-is-its-own-project",
+  "title": "build list run from a git checkout nested inside the project reads that checkout's own catalog",
+  "source": [
+    "intended: the project is the git primary checkout of the working directory, not the folder the executable lives in"
+  ],
+  "status": {
+    "ts": "xfail",
+    "go": "pass"
+  },
+  "defect": "N-1",
+  "intent": "INTENDED behavior (defect N-1, project root). The project is the git primary checkout of the working directory: from inside a repository nested in another one, the project is that nested repository, so build list reads its jitso/ catalog and prints only solo. The TS binary resolves its project from its own script folder (the outer fixture), so it lists the fixture builds and the case FAILS on TS: the solo line is missing and haiku-explorer is listed.",
+  "project": {
+    "base": "default",
+    "files": {
+      "nested/jitso/jitso.yaml": {
+        "from": "nested-jitso.yaml"
+      },
+      "nested/jitso/builds/solo.yaml": {
+        "from": "nested-solo.yaml"
+      },
+      "nested/.agents/instructions/agent-project.md": {
+        "from": "nested-agent-project.md"
+      }
+    }
+  },
+  "steps": [
+    {
+      "git_init": {
+        "path": "nested"
+      },
+      "expect": {
+        "files": [
+          {
+            "path": "nested/.git",
+            "exists": true
+          }
+        ]
+      }
+    },
+    {
+      "run": [
+        "build",
+        "list"
+      ],
+      "cwd": "nested",
+      "expect": {
+        "exit": 0,
+        "stdout": [
+          {
+            "regex": "(?m)^- solo: claude-haiku-5-5 low\\. "
+          },
+          {
+            "not_contains": "haiku-explorer"
+          }
+        ],
+        "stderr": [
+          {
+            "empty": true
+          }
+        ]
+      }
+    }
+  ]
+}

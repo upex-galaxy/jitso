@@ -145,7 +145,10 @@ var gitIdentity = map[string]string{
 
 // git runs one git command in the project, with the sandbox environment plus gitIdentity,
 // commit signing off and hooks disabled.
-func (s *Sandbox) git(args ...string) error {
+func (s *Sandbox) git(args ...string) error { return s.gitIn(s.Project, args...) }
+
+// gitIn is git run in dir.
+func (s *Sandbox) gitIn(dir string, args ...string) error {
 	path := "/usr/bin/git"
 	if _, err := os.Stat(path); err != nil {
 		if path, err = exec.LookPath("git"); err != nil {
@@ -153,7 +156,7 @@ func (s *Sandbox) git(args ...string) error {
 		}
 	}
 	cmd := exec.Command(path, append([]string{"-c", "commit.gpgsign=false", "-c", "core.hooksPath=/dev/null"}, args...)...)
-	cmd.Dir = s.Project
+	cmd.Dir = dir
 	cmd.Env = s.Env(gitIdentity)
 	out, err := cmd.CombinedOutput()
 	if err != nil {
@@ -179,6 +182,60 @@ func (s *Sandbox) AddWorktree(name string) error {
 		return err
 	}
 	return s.git("worktree", "add", "-q", "-b", "contract-"+name, s.Worktree(name))
+}
+
+// InitRepo creates path (a folder relative to the project dir, or an absolute path) and its
+// parents, then runs `git init -q` there with the same controlled git settings as every other
+// git command of the sandbox. The path, with its existing symlinks resolved, must lie inside
+// the project dir or HOME, and must not hold a `.git` yet: both are runner errors.
+func (s *Sandbox) InitRepo(path string) error {
+	if !filepath.IsAbs(path) {
+		path = filepath.Join(s.Project, path)
+	}
+	path = filepath.Clean(path)
+	if err := s.insideProjectOrHome(path); err != nil {
+		return err
+	}
+	if _, err := os.Lstat(filepath.Join(path, ".git")); err == nil {
+		return fmt.Errorf("git_init: %s already holds a .git", path)
+	} else if !os.IsNotExist(err) {
+		return err
+	}
+	if err := os.MkdirAll(path, 0o755); err != nil {
+		return err
+	}
+	return s.gitIn(path, "init", "-q")
+}
+
+// insideProjectOrHome refuses a path whose deepest existing ancestor resolves, through any
+// symlink, outside the project dir and HOME. The part below that ancestor does not exist yet,
+// so it holds no symlink and the cleaned path cannot climb out through it.
+func (s *Sandbox) insideProjectOrHome(path string) error {
+	existing := path
+	for {
+		if _, err := os.Lstat(existing); err == nil {
+			break
+		}
+		parent := filepath.Dir(existing)
+		if parent == existing {
+			break
+		}
+		existing = parent
+	}
+	real, err := filepath.EvalSymlinks(existing)
+	if err != nil {
+		return err
+	}
+	for _, base := range []string{s.Project, s.Home} {
+		realBase, err := filepath.EvalSymlinks(base)
+		if err != nil {
+			continue
+		}
+		if rel, err := filepath.Rel(realBase, real); err == nil && (rel == "." || filepath.IsLocal(rel)) {
+			return nil
+		}
+	}
+	return fmt.Errorf("git_init: %s resolves outside the project dir and HOME", path)
 }
 
 // RemoveFake takes a fake off PATH (the case field `claude: {"missing": true}`).

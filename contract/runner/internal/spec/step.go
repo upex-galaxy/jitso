@@ -21,6 +21,8 @@ var stepKeys = map[string][]string{
 	expect.KindWrite: {"write", "expect"},
 	// git_worktree: SPEC 6.5
 	expect.KindGitWorktree: {"git_worktree", "expect"},
+	// git_init: SPEC 6.6
+	expect.KindGitInit: {"git_init", "expect"},
 }
 
 // Action is the resolved, executable part of a step.
@@ -40,6 +42,8 @@ type Action struct {
 	HomeFiles    FileMap
 	// git_worktree
 	Worktree string
+	// git_init: a path relative to the project dir, or absolute
+	InitPath string
 
 	Env      map[string]string
 	Captures []Capture
@@ -61,13 +65,13 @@ var captureSources = []string{"stdout", "stderr", "file", "orca_log"}
 // StepKind names the kind of a raw step, or fails when it is not exactly one.
 func StepKind(step map[string]any) (string, error) {
 	var kinds []string
-	for _, k := range []string{expect.KindRun, expect.KindHook, expect.KindExec, expect.KindWrite, expect.KindGitWorktree} {
+	for _, k := range []string{expect.KindRun, expect.KindHook, expect.KindExec, expect.KindWrite, expect.KindGitWorktree, expect.KindGitInit} {
 		if _, ok := step[k]; ok {
 			kinds = append(kinds, k)
 		}
 	}
 	if len(kinds) != 1 {
-		return "", fmt.Errorf("a step has exactly one of run, hook, exec, write, git_worktree (got %v)", kinds)
+		return "", fmt.Errorf("a step has exactly one of run, hook, exec, write, git_worktree, git_init (got %v)", kinds)
 	}
 	return kinds[0], nil
 }
@@ -113,11 +117,37 @@ func parseAction(step map[string]any, vars Vars, caseDir string) (*Action, error
 		err = parseWrite(s, a, caseDir, vars)
 	case expect.KindGitWorktree:
 		a.Worktree, err = worktreeName(s["git_worktree"], "git_worktree")
+	case expect.KindGitInit:
+		a.InitPath, err = parseGitInit(s["git_init"])
 	}
 	if err != nil {
 		return nil, err
 	}
 	return a, nil
+}
+
+// parseGitInit reads a git_init step: {"path": "<relative to the project dir, or absolute>"}.
+// A relative path must stay inside the project dir by its text; an absolute one (a placeholder
+// path) is checked against the real sandbox when the step runs.
+func parseGitInit(v any) (string, error) {
+	obj, err := jsonx.Object(v, "git_init")
+	if err != nil {
+		return "", err
+	}
+	if err := jsonx.Keys(obj, "git_init", "path"); err != nil {
+		return "", err
+	}
+	path, err := jsonx.String(obj["path"], "git_init.path")
+	if err != nil {
+		return "", fmt.Errorf("a git_init step needs path: %w", err)
+	}
+	if path == "" {
+		return "", fmt.Errorf("git_init.path: must not be empty")
+	}
+	if !filepath.IsAbs(path) && !filepath.IsLocal(path) {
+		return "", fmt.Errorf("git_init.path: %q leaves the project dir", path)
+	}
+	return path, nil
 }
 
 func parseRun(s map[string]any, a *Action) error {

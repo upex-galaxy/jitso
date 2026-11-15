@@ -25,6 +25,7 @@ var stepKinds = map[string]func(*spec.Action) Step{
 	expect.KindExec:        func(a *spec.Action) Step { return execStep{a} },
 	expect.KindWrite:       func(a *spec.Action) Step { return writeStep{a} },
 	expect.KindGitWorktree: func(a *spec.Action) Step { return worktreeStep{a} },
+	expect.KindGitInit:     func(a *spec.Action) Step { return gitInitStep{a} },
 }
 
 // runProcessStep is the part run, hook and exec share.
@@ -140,4 +141,17 @@ func (s worktreeStep) Execute(sb *sandbox.Sandbox, _ impl.Implementation, res *S
 	}
 	res.Elapsed = time.Since(start)
 	return &expect.Observation{Kind: expect.KindGitWorktree, Elapsed: res.Elapsed}, nil
+}
+
+// --- git_init: a nested git checkout inside the project or HOME ---
+
+type gitInitStep struct{ a *spec.Action }
+
+func (s gitInitStep) Execute(sb *sandbox.Sandbox, _ impl.Implementation, res *StepResult) (*expect.Observation, error) {
+	start := time.Now()
+	if err := sb.InitRepo(s.a.InitPath); err != nil {
+		return nil, err
+	}
+	res.Elapsed = time.Since(start)
+	return &expect.Observation{Kind: expect.KindGitInit, Elapsed: res.Elapsed}, nil
 }

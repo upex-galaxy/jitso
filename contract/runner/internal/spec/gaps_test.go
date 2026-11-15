@@ -109,3 +109,43 @@ func TestClaudeField(t *testing.T) {
 		}
 	}
 }
+
+func TestGitInitStep(t *testing.T) {
+	good := []struct{ name, step, wantPath string }{
+		{"relative", `{"git_init":{"path":"nested"},"expect":{"files":[{"path":"nested/.git"}]}}`, "nested"},
+		{"nested relative", `{"git_init":{"path":"a/b/c"}}`, "a/b/c"},
+		{"placeholder home", `{"git_init":{"path":"{{HOME}}/repo"},"expect":{"elapsed_ms_lt":60000,"registry":{"count":0},"orca_calls":{"empty":true}}}`, "/stub/home/repo"},
+	}
+	builtins := Vars{VarProject: "/stub/project", VarHome: "/stub/home", VarBin: "/stub/bin", VarJitso: "/stub/jitso"}
+	for _, g := range good {
+		c, err := writeCase(t, "g", `{"id":"g","title":"t","steps":[`+g.step+`]}`, nil)
+		if err != nil {
+			t.Errorf("%s: %v", g.name, err)
+			continue
+		}
+		x := c.Expand()[0]
+		a, err := x.Action(0, x.Bind(builtins))
+		if err != nil || a.Kind != "git_init" || a.InitPath != g.wantPath {
+			t.Errorf("%s: action %+v, err %v", g.name, a, err)
+		}
+	}
+	bad := []struct{ name, step, want string }{
+		{"not an object", `{"git_init":"nested"}`, "git_init"},
+		{"no path", `{"git_init":{}}`, "needs path"},
+		{"path not a string", `{"git_init":{"path":3}}`, "git_init.path"},
+		{"empty path", `{"git_init":{"path":""}}`, "must not be empty"},
+		{"unknown key", `{"git_init":{"path":"n","branch":"b"}}`, "branch"},
+		{"relative escape", `{"git_init":{"path":"../out"}}`, "leaves the project dir"},
+		{"two kinds", `{"git_init":{"path":"n"},"run":[]}`, "exactly one"},
+		{"step key of another kind", `{"git_init":{"path":"n"},"cwd":"."}`, "cwd"},
+		{"exit expectation", `{"git_init":{"path":"n"},"expect":{"exit":0}}`, "expect.exit"},
+		{"stdout expectation", `{"git_init":{"path":"n"},"expect":{"stdout":[{"empty":true}]}}`, "expect.stdout"},
+		{"claude expectation", `{"git_init":{"path":"n"},"expect":{"claude":{}}}`, "expect.claude"},
+	}
+	for _, b := range bad {
+		_, err := writeCase(t, "x", `{"id":"x","title":"t","steps":[`+b.step+`]}`, nil)
+		if err == nil || !strings.Contains(err.Error(), b.want) {
+			t.Errorf("%s: want a load error containing %q, got %v", b.name, b.want, err)
+		}
+	}
+}
