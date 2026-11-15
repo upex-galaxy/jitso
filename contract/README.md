@@ -89,6 +89,7 @@ The `XFAIL` cases, found with `grep -rl '"xfail"' cases`, are the known defects,
 | N-6 tiers: subagent names | `validation/subagents/*` | a worker whose `subagents` names a missing build, or a build that is not subagent tier, is a catalog error: exit 3, stderr names the file and the subagent |
 | N-7 dispatcher project handoff | `project/dispatcher-handoff/*`, `dispatch/hands-the-project-to-claude` | `JITSO_PROJECT` names the project: a launch from a cwd outside git succeeds with it, a `JITSO_PROJECT` that is not a git checkout exits 3 naming the folder, and the dispatcher starts `claude` with the variable set |
 | N-8 dispatcher launcher word | `dispatch/prompt-launch-line-is-the-guarded-launcher` | the prompt's launch line starts with the launcher itself, no `bun` word, and is the line the dispatch guard allows |
+| N-9 quoted words | `hooks/dispatch-guard/bash-allows-quoted-words` | the dispatch guard allows a single-quoted word only when it holds a space, for the launcher and the value of `--brief`; every other quote stays denied (`hooks/dispatch-guard/bash-denies-misused-quotes`) |
 
 For the Go port every case must `PASS`: set `status.go` to `pass` (the default) and keep
 `status.ts` as `xfail` until the oracle is retired.

@@ -7,9 +7,13 @@ import (
 )
 
 var (
-	// plainCommand is one line of words made only of plain characters: no
-	// quote, `;`, `&`, `|`, `$`, backtick, redirect or newline.
-	plainCommand = regexp.MustCompile(`^[\w@%+=:,./-]+(?: [\w@%+=:,./-]+)*$`)
+	// plainWord is one word made only of plain characters: no quote, space, `;`,
+	// `&`, `|`, `$`, backtick, redirect or newline.
+	plainWord = regexp.MustCompile(`^[\w@%+=:,./-]+$`)
+	// quotedText is what a single-quoted word may hold: plain runs separated by
+	// single spaces, at least one space (a quote appears only where a space
+	// needs it).
+	quotedText = regexp.MustCompile(`^[\w@%+=:,./-]+(?: [\w@%+=:,./-]+)+$`)
 	// briefName is a markdown file name that does not start with a dot.
 	briefName = regexp.MustCompile(`(?i)^[a-z0-9][\w.-]*\.md$`)
 	// valueFlags are the flags of `launch` that take a value, which the
@@ -63,30 +67,91 @@ func toolLabel(v any) string {
 	return "unknown"
 }
 
+// word is one word of the launcher line. A quoted word was written inside one
+// pair of single quotes and holds a space; text is what the shell would pass.
+type word struct {
+	text   string
+	quoted bool
+}
+
+// splitWords splits a one-line command into words separated by single spaces.
+// A word is plain characters only, or one whole single-quoted word that holds
+// a space (quotedText). Anything else (an empty word, a double or trailing
+// space, a quote in the middle of a word, an unterminated quote) is not a
+// command the guard can read: ok is false.
+func splitWords(command string) (words []word, ok bool) {
+	i := 0
+	for {
+		if i >= len(command) {
+			return nil, false
+		}
+		if command[i] == '\'' {
+			n := strings.IndexByte(command[i+1:], '\'')
+			if n < 0 {
+				return nil, false
+			}
+			end := i + 1 + n + 1
+			content := command[i+1 : i+1+n]
+			if !quotedText.MatchString(content) || (end < len(command) && command[end] != ' ') {
+				return nil, false
+			}
+			words = append(words, word{text: content, quoted: true})
+			i = end
+		} else {
+			end := strings.IndexByte(command[i:], ' ')
+			if end < 0 {
+				end = len(command)
+			} else {
+				end += i
+			}
+			if !plainWord.MatchString(command[i:end]) {
+				return nil, false
+			}
+			words = append(words, word{text: command[i:end]})
+			i = end
+		}
+		if i >= len(command) {
+			return words, true
+		}
+		i++ // the single space; a trailing one leaves an empty word, caught above
+	}
+}
+
 // commandProblem is "" when command is the one allowed launcher line: this
 // executable, then launch, then only known flags with their values, in direct
-// mode.
+// mode. A word may be single-quoted only when it holds a space: the launcher
+// and the value of --brief.
 func (g DispatchGuard) commandProblem(raw any) string {
 	command, ok := text(raw)
-	if !ok || !plainCommand.MatchString(command) {
+	if !ok {
 		return "the command has characters outside the plain set, or is not one line"
 	}
-	words := strings.Split(command, " ")
-	if len(words) < 2 || !filepath.IsAbs(words[0]) || !g.IsOwn(words[0]) || words[1] != "launch" {
+	words, ok := splitWords(command)
+	if !ok {
+		return "the command has characters outside the plain set, or is not one line"
+	}
+	if len(words) < 2 || words[1].quoted || !filepath.IsAbs(words[0].text) || !g.IsOwn(words[0].text) || words[1].text != "launch" {
 		return `only "` + g.Launcher + ` launch ..." may run`
 	}
 	for i := 2; i < len(words); i++ {
 		flag := words[i]
-		if flag == "--dry-run" {
+		if flag.quoted {
+			return "a quoted word is allowed only as the launcher or the value of --brief"
+		}
+		if flag.text == "--dry-run" {
 			continue
 		}
-		if !valueFlags[flag] {
-			return `flag "` + flag + `" is not allowed`
+		if !valueFlags[flag.text] {
+			return `flag "` + flag.text + `" is not allowed`
 		}
-		if i+1 >= len(words) || strings.HasPrefix(words[i+1], "-") {
-			return flag + " needs a value"
+		if i+1 >= len(words) || strings.HasPrefix(words[i+1].text, "-") {
+			return flag.text + " needs a value"
 		}
-		if flag == "--mode" && words[i+1] != "direct" {
+		value := words[i+1]
+		if value.quoted && flag.text != "--brief" {
+			return "a quoted word is allowed only as the launcher or the value of --brief"
+		}
+		if flag.text == "--mode" && value.text != "direct" {
 			return "the dispatcher launches in direct mode only"
 		}
 		i++

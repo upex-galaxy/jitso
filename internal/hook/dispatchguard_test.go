@@ -57,6 +57,16 @@ func TestDispatchGuardCommands(t *testing.T) {
 		{"flag without value", launch + "--preset p --mode", false},
 		{"value that is a flag", launch + "--preset --brief x", false},
 		{"empty command", "", false},
+		{"quoted launcher with space", "'/opt/jitso' launch --preset p", false}, // no space inside: not needed
+		{"quoted brief with space", launch + "--preset p --brief '/h/my dir/a.md' --mode direct", true},
+		{"quoted brief with two spaces", launch + "--preset p --brief '/h/my  dir/a.md'", false},
+		{"quoted brief with dollar", launch + "--preset p --brief '/h/my $dir/a.md'", false},
+		{"quoted brief glued to text", launch + "--preset p --brief '/h/my dir'/a.md", false},
+		{"quoted brief unterminated", launch + "--preset p --brief '/h/my dir", false},
+		{"quoted brief starting with a dash", launch + "--preset p --brief '-x y'", false},
+		{"quoted value of another flag", launch + "--field 'a=b c'", false},
+		{"quoted flag", launch + "'--dry-run'", false},
+		{"quoted subcommand", "/opt/jitso 'launch x'", false},
 	}
 	g := testGuard()
 	for _, tt := range tests {
@@ -66,6 +76,25 @@ func TestDispatchGuardCommands(t *testing.T) {
 				t.Errorf("command %q: problem %q, allowed want %v", tt.command, problem, tt.allowed)
 			}
 		})
+	}
+}
+
+func TestDispatchGuardQuotedLauncher(t *testing.T) {
+	g := testGuard()
+	g.Launcher = "/opt/my tools/jitso"
+	g.IsOwn = isOwnAt("/opt/my tools/jitso")
+	for command, allowed := range map[string]bool{
+		"'/opt/my tools/jitso' launch --preset p --brief /h/b/a.md --mode direct": true,
+		"'/opt/my tools/jitso' launch":                                            true,
+		"/opt/my tools/jitso launch --preset p":                                   false,
+		"'/opt/my tools/other' launch --preset p":                                 false,
+		"'/opt/my tools/jitso' close L1":                                          false,
+		"'/opt/my tools/jitso' launch --preset p; ls":                             false,
+	} {
+		problem := g.Problem(payload("Bash", map[string]any{"command": command}, g.DispatchDir))
+		if (problem == "") != allowed {
+			t.Errorf("command %q: problem %q, allowed want %v", command, problem, allowed)
+		}
 	}
 }
 

@@ -36,7 +36,7 @@ A behavior change starts as a case under `contract/cases/`. Behavior the oracle 
 
 ## Known defects of the oracle
 
-Measured against the TypeScript implementation on 2026-11-14. Each is encoded as intended behavior, `xfail` on `ts` and `pass` on `go`; the cases are the ones that declare `status.ts: xfail` (`grep -rl '"xfail"' contract/cases`). N-2 to N-4 are decided TS-ODDITIES rows (L2, L3, L8, owner, 2026-11-15). N-5 to N-8 come from the owner's decisions of the same day (the tier model, the dispatcher project handoff, the launcher word of the dispatcher prompt).
+Measured against the TypeScript implementation on 2026-11-14. Each is encoded as intended behavior, `xfail` on `ts` and `pass` on `go`; the cases are the ones that declare `status.ts: xfail` (`grep -rl '"xfail"' contract/cases`). N-2 to N-4 are decided TS-ODDITIES rows (L2, L3, L8, owner, 2026-11-15). N-5 to N-8 come from the owner's decisions of the same day (the tier model, the dispatcher project handoff, the launcher word of the dispatcher prompt). N-9 is a hardening found while validating the launcher path (decided inside the completion wave, a technical call).
 
 | Id | Intended behavior | The oracle today |
 |---|---|---|
@@ -51,3 +51,4 @@ Measured against the TypeScript implementation on 2026-11-14. Each is encoded as
 | N-6 tiers: subagent names | a worker whose `subagents` names a missing build, or a build that is not subagent tier, is a catalog error (exit 3, stderr names the file and the subagent) | the oracle only checks that each name is kebab-case |
 | N-7 dispatcher project handoff | `JITSO_PROJECT` names the project: set to a git checkout it lets a launch run from outside git, set to a folder that is not a git checkout it exits 3 naming the folder, and the dispatcher starts `claude` with it set | the oracle finds its project from its own script folder and never reads the variable |
 | N-8 dispatcher launcher word | the dispatcher prompt's launch line starts with the launcher itself (no `bun` word) and is the line the dispatch guard allows | the oracle's guard allows only `bun <index.ts> launch`, so the line the new prompt template tells the model to write is denied |
+| N-9 quoted words | the dispatch guard accepts a single-quoted word only where a space needs it, only for the launcher and the value of `--brief`; the dispatcher prompt writes the launcher quoted when its path holds a space, and the dispatcher refuses to start (exit 3) when the launcher path has characters the guard cannot allow | the oracle's guard denies every line that holds a quote, so a binary under a path with a space can never launch |

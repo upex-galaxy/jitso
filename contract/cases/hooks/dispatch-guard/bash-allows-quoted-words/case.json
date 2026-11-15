@@ -1,0 +1,77 @@
+{
+  "id": "hooks/dispatch-guard/bash-allows-quoted-words",
+  "title": "the launcher line is allowed when the launcher path, or the brief path, holds a space and is written as one single-quoted word",
+  "source": [
+    "intended: a binary installed under a folder with a space (for example a macOS Application Support path) must still launch"
+  ],
+  "status": {
+    "ts": "xfail",
+    "go": "pass"
+  },
+  "defect": "N-9",
+  "intent": "INTENDED behavior (defect N-9, quoted words). The dispatcher prompt renders the launcher as a single-quoted word when its path holds a space, and the guard must allow that exact line: the first word as one quoted word whose real path is this executable, and the value after --brief as one quoted word. A quoted word holds plain characters and single spaces only, and holds at least one space (quotes appear only where a space needs them). The TypeScript guard denies every line with a quote, so each row is DENIED there and the expectation of allow fails. The launcher in the first row is a symlink inside a folder with a space that points at the implementation under test, so the guard must compare real paths.",
+  "project": {
+    "files": {
+      "tools dir/jitso": {
+        "symlink": "{{JITSO}}"
+      }
+    }
+  },
+  "home": {
+    "files": {
+      ".jitso/dispatch-cwd/briefs/.keep": ""
+    }
+  },
+  "for_each": {
+    "vars": [
+      "launcher",
+      "tail"
+    ],
+    "rows": [
+      [
+        "'{{PROJECT}}/tools dir/jitso'",
+        "--preset haiku-explorer --brief {{HOME}}/.jitso/dispatch-cwd/briefs/a.md --mode direct"
+      ],
+      [
+        "'{{PROJECT}}/tools dir/jitso'",
+        "--preset haiku-explorer --brief {{HOME}}/.jitso/dispatch-cwd/briefs/a.md --mode direct --dry-run"
+      ],
+      [
+        "'{{PROJECT}}/tools dir/jitso'",
+        "--preset sonnet-tester --brief {{HOME}}/.jitso/dispatch-cwd/briefs/a.md --mode direct --field ticket_key=PRJ-120"
+      ],
+      [
+        "{{JITSO}}",
+        "--preset haiku-explorer --brief '/home dir/.jitso/dispatch-cwd/briefs/a.md' --mode direct"
+      ],
+      [
+        "'{{PROJECT}}/tools dir/jitso'",
+        "--preset haiku-explorer --brief '/home dir/.jitso/dispatch-cwd/briefs/a b.md' --mode direct"
+      ]
+    ],
+    "ids": [
+      "quoted-launcher",
+      "quoted-launcher-dry-run",
+      "quoted-launcher-with-field",
+      "quoted-brief",
+      "both-quoted"
+    ]
+  },
+  "steps": [
+    {
+      "hook": "dispatch-guard",
+      "input": {
+        "hook_event_name": "PreToolUse",
+        "tool_name": "Bash",
+        "tool_input": {
+          "command": "{{launcher}} launch {{tail}}"
+        },
+        "cwd": "{{HOME}}/.jitso/dispatch-cwd"
+      },
+      "expect": {
+        "exit": 0,
+        "decision": "allow"
+      }
+    }
+  ]
+}

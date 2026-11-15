@@ -1,0 +1,68 @@
+{
+  "id": "hooks/dispatch-guard/bash-denies-misused-quotes",
+  "title": "a quote is denied unless it wraps a whole launcher or --brief word that holds a space and plain characters only",
+  "source": [
+    "intended: measured on the TypeScript hook, which denies every quote"
+  ],
+  "project": {
+    "files": {
+      "tools dir/jitso": {
+        "symlink": "{{JITSO}}"
+      },
+      "tools dir/other": {
+        "symlink": "/bin/echo"
+      }
+    }
+  },
+  "home": {
+    "files": {
+      ".jitso/dispatch-cwd/briefs/.keep": ""
+    }
+  },
+  "for_each": {
+    "var": "command",
+    "values": [
+      "'{{JITSO}}' launch --preset haiku-explorer --brief x --mode direct",
+      "'{{PROJECT}}/tools dir/other' launch --preset haiku-explorer --brief x --mode direct",
+      "'{{PROJECT}}/tools dir/jitso' status",
+      "'{{PROJECT}}/tools dir/jitso' launch --preset haiku-explorer --brief x --mode direct; ls",
+      "'{{PROJECT}}/tools dir/jitso launch --preset haiku-explorer --brief x --mode direct",
+      "'{{PROJECT}}/tools dir/jitso'x launch --preset haiku-explorer --brief x --mode direct",
+      "\"{{PROJECT}}/tools dir/jitso\" launch --preset haiku-explorer --brief x --mode direct",
+      "{{JITSO}} launch '--preset' haiku-explorer --brief x --mode direct",
+      "{{JITSO}} launch --preset 'haiku explorer' --brief x --mode direct",
+      "{{JITSO}} launch --preset haiku-explorer --brief x --mode direct --field 'k=a b'",
+      "{{JITSO}} launch --preset haiku-explorer --brief 'a b --mode direct",
+      "{{JITSO}} launch --preset haiku-explorer --brief 'a b'c --mode direct",
+      "{{JITSO}} launch --preset haiku-explorer --brief \"a b\" --mode direct",
+      "{{JITSO}} launch --preset haiku-explorer --brief 'a  b' --mode direct",
+      "{{JITSO}} launch --preset haiku-explorer --brief ' a b' --mode direct",
+      "{{JITSO}} launch --preset haiku-explorer --brief 'a;b c' --mode direct",
+      "{{JITSO}} launch --preset haiku-explorer --brief 'a $HOME b' --mode direct",
+      "{{JITSO}} launch --preset haiku-explorer --brief 'a b' --mode 'direct'",
+      "{{JITSO}} launch --preset haiku-explorer --brief 'ab' --mode direct"
+    ]
+  },
+  "steps": [
+    {
+      "hook": "dispatch-guard",
+      "input": {
+        "hook_event_name": "PreToolUse",
+        "tool_name": "Bash",
+        "tool_input": {
+          "command": "{{command}}"
+        },
+        "cwd": "{{HOME}}/.jitso/dispatch-cwd"
+      },
+      "expect": {
+        "exit": 0,
+        "decision": "deny",
+        "reason": [
+          {
+            "regex": "(?i)jitso"
+          }
+        ]
+      }
+    }
+  ]
+}

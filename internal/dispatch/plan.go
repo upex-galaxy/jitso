@@ -2,6 +2,7 @@ package dispatch
 
 import (
 	"path/filepath"
+	"regexp"
 	"strings"
 
 	"github.com/upex-galaxy/jitso/internal/fail"
@@ -15,6 +16,10 @@ const (
 	Model  = "claude-haiku-5-5"
 	Effort = "medium"
 )
+
+// launcherPath is a launcher path the dispatch guard can allow: plain runs
+// separated by single spaces (a space makes the prompt quote the launcher).
+var launcherPath = regexp.MustCompile(`^[\w@%+=:,./-]+(?: [\w@%+=:,./-]+)*$`)
 
 // CheckRequest is the request as the dispatcher takes it: trimmed, never
 // empty, and never starting with a dash (it is the last argument of claude and
@@ -55,7 +60,14 @@ type PlanInput struct {
 // registered on Bash and Write, and the request as the last argument.
 func BuildPlan(in PlanInput) (Plan, error) {
 	briefs := BriefsDir(in.DispatchDir)
-	prompt := RenderPrompt(in.Template, PromptParts{Catalog: in.Summary, Launcher: in.Launcher, BriefsDir: briefs})
+	if !launcherPath.MatchString(in.Launcher) {
+		return Plan{}, fail.Envf("the dispatch guard cannot allow the launcher path %q: only letters, digits, single spaces and . _ - / @ %% + = : , are supported", in.Launcher)
+	}
+	launcher, err := shell.Word(in.Launcher)
+	if err != nil {
+		return Plan{}, fail.Envf("cannot write the launcher into the prompt: %v", err)
+	}
+	prompt := RenderPrompt(in.Template, PromptParts{Catalog: in.Summary, Launcher: launcher, BriefsDir: briefs})
 	settings, err := Settings(in.Launcher)
 	if err != nil {
 		return Plan{}, err
