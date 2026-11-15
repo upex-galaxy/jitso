@@ -2,14 +2,14 @@
 
 A language-independent behavioral test suite for the `jitso` CLI and its two hooks. It runs
 any implementation against the same cases. The frozen TypeScript binary in the boilerplate is
-the oracle; the Go binary must pass every case.
+the oracle; the Go binary at the repo root must pass every case.
 
 | File | What it is |
 |---|---|
 | `SPEC.md` | the case format and the matchers (normative) |
-| `PLAN.md` | why it is built this way, the decisions, the three known defects |
-| `TS-ODDITIES.md` | behaviors the oracle has today that look accidental, with a proposal per row |
-| `fixtures/default/` | the base project every case copies (catalog, builds, hard rules, instruction stubs) |
+| `PLAN.md` | why it is built this way and the decisions of the first design; a dated record |
+| `TS-ODDITIES.md` | behaviors the oracle has today that look accidental, with a proposal per row and what became of each |
+| `fixtures/default/` | the base project every case copies (`jitso/jitso.yaml`, the builds under `jitso/builds/`, hard rules, instruction stubs) |
 | `cases/<area>/<slug>/case.json` | one case per folder |
 | `runner/` | the Go runner, standard library only |
 
@@ -18,7 +18,7 @@ the oracle; the Go binary must pass every case.
 The TypeScript oracle is the `cli/jitso/` folder of the boilerplate repo at commit
 `acd3d3de61e85e53e53b6028f4676161a8b34b49` (branch `feat/jitso`, local at the time of
 writing), tagged `jitso-oracle-1` in that repo (a local annotated tag). The expected state
-below is only valid for that commit. When the boilerplate drops its JITSO code, the tag keeps
+below is only valid for that commit. The oracle speaks the old vocabulary (`--preset`, `jitso/presets/`, `presets list`); the cases speak the current one (`--build`, `jitso/builds/`, `build list`), and the `ts` adapter of the runner maps the new spelling to the old in one direction (`SPEC.md` section 9), which is why only the cases that pin renamed output are `xfail` on `ts`. When the boilerplate drops its JITSO code, the tag keeps
 it reachable for as long as the suite still runs against `--impl ts`: check it out in a
 separate checkout and pass that folder as `--ts-src`.
 
@@ -39,15 +39,15 @@ Against the TypeScript oracle (needs `bun` and `node` on PATH, and a checkout of
 /tmp/jitso-contract --impl ts --ts-src /path/to/agentic-qa-boilerplate --jobs 4
 ```
 
-Against any other binary, for example the Go port:
+Against the Go port (build it from the repo root first, `go build -o /path/to/jitso ./cmd/jitso`):
 
 ```sh
 /tmp/jitso-contract --impl bin --bin /path/to/jitso --jobs 4
 ```
 
-The port is expected to answer `jitso hook guard` and `jitso hook dispatch-guard` (stdin JSON,
-stdout JSON). Those two names are a proposal; changing them is a one-line edit in
-`runner/internal/impl/bin.go`.
+Any binary the suite runs with `--impl bin` has to answer `jitso hook guard` and
+`jitso hook dispatch-guard` (stdin JSON, stdout JSON), the names `runner/internal/impl/bin.go`
+uses; the Go port does.
 
 Useful flags: `--filter '<regex on id>'`, `--skip-tag posix` (cases that need `/bin/sh`),
 `-v` (argv, stdout, stderr and the sandbox path of failing cases), `--keep` (keep sandboxes).
@@ -100,6 +100,7 @@ The `XFAIL` cases, found with `grep -rl '"xfail"' cases`, are the known defects,
 | N-19 adoption guard | `hooks/guard/deny-adoption-commands` (the cases `hooks/guard/allows-read-only-jitso` and `hooks/dispatch-guard/bash-denies-adoption-commands` pass on both implementations and pin what stays allowed) | the launch guard denies a Bash segment that runs `jitso setup` or `jitso install` in every launcher form of `build save`, with `JITSO: only the owner changes the JITSO setup; ask the owner to run it in a terminal (denied: jitso <verb>)`, unless a word after the command is `--dry-run`; `doctor`, `version` and `--version` pass (docs/decisions.md) | the oracle guard knows no such verb: it stays silent |
 | N-17 setup hook | `setup/hook/*`, `cli/usage/lists-new-commands` | `jitso setup hook [--absolute] [--remove] [--dry-run] [--yes]` registers `jitso hook guard` in the checkout's `.claude/settings.json`: two JITSO groups under `PreToolUse` (the matcher `Bash` and the regex `mcp__.*orca.*__.*`) and one under `SessionEnd`, appended after the user's own groups, which are never edited (a JITSO handler inside a user group is taken out of it, an older absolute command is replaced). The preview is a unified diff with no unchanged line and no line of the user's file (a line that only gains a comma, or a compact file, shows as a marker), an existing file is backed up under `.jitso/backups/<id>/` first, a write needs `--yes` (or a terminal), a second run is `nothing to do`, and `--remove` gives the original bytes back (the file is deleted when nothing else was in it). A file that is not JSON, has the wrong shape or does not re-encode to its own bytes is exit 3 and is not written, `.claude/settings.local.json` is never opened, a linked worktree gets its own file with the backups in the primary's `.jitso/`, `--scope` is rejected, and the usage lists a `setup` row. The oracle has no `setup` command: it answers `unknown command` |
 | N-18 setup instructions | `setup/instructions/*` | `jitso setup instructions [--scope project\|user] [--remove] [--dry-run] [--yes]` keeps a delimited JITSO block (`<!-- BEGIN JITSO block=<n> added=<new\|0\|1\|2>: ... -->` to `<!-- END JITSO block=<n> -->`, recognized only at a line start and outside fenced code blocks) in the checkout's `AGENTS.md`, and in a `CLAUDE.md` or `.claude/CLAUDE.md` that does not import `@AGENTS.md`; with `--scope user` in `~/.claude/CLAUDE.md`, `$CODEX_HOME/AGENTS.md` (default `~/.codex`, only when that folder exists, not when `AGENTS.override.md` has text) and `~/.config/opencode/AGENTS.md` (only when it exists). The preview is a diff, an existing file is backed up first, a write needs `--yes` (or a terminal), a current block is `nothing to do`, an older block is replaced in place, and `--remove` gives back the original bytes of an absent, empty, CRLF, newline-less or fence-quoting file. A `CLAUDE.local.md` without the import is a warning; broken markers and a file that ends in an open fence are exit 3 and are not written | the oracle has no `setup` command: it answers `unknown command` on stderr, exit 2, nothing on stdout |
+| N-20 doctor | `doctor/*`, `cli/usage/lists-new-commands` | `jitso doctor` prints one line per check (`<status> <check>: <detail>`, `ok  `, `warn` or `fail`) and `doctor: <n> ok, <n> warn, <n> fail`, exits 0 when nothing fails (warnings allowed) and 3 when a check fails, writes nothing and makes no `orca` call, fails `project` outside a git checkout and leaves out the project checks, fails a hook command that cannot start, a bad catalog and a missing `claude`, warns about a fresh project, an untracked settings file, a skill edited by hand and a `.jitso/` git does not ignore, and `doctor x` exits 2; the 7 day draft age, the windows `shell` warning and `ok   hooks` are Go unit tests, because a case cannot age a file, run on windows or stage a file | the oracle has no `doctor` command: `unknown command` on stderr, exit 2, nothing on stdout |
 | N-21 version | `cli/version/*`, `cli/usage/lists-new-commands` | `jitso version` and `jitso --version` print one line (`jitso <version> (commit <12 hex>[-dirty]\|unknown, <go version>, <goos>/<goarch>)`) and exit 0, the two spellings print the same bytes, `version x` exits 2 with `jitso version: takes no arguments`, and the usage lists a `version` row; the stamped value is not pinned, because a case cannot build one |
 
 For the Go port every case must `PASS`: set `status.go` to `pass` (the default) and keep

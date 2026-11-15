@@ -28,6 +28,8 @@ cd contract/runner && go build -o <scratch dir>/jitso-contract . && cd ..
 <scratch dir>/jitso-contract --impl bin --bin <built jitso> --filter '^launch/' --jobs 4
 ```
 
+Cases are written in the current vocabulary (`--build`, `jitso/builds/`, `build list`); the oracle still says preset, and the `ts` adapter of the runner maps the new spelling to the old one in one direction (`contract/SPEC.md` section 9). A command the oracle does not have, such as `build validate`, `install` or `setup`, is an unknown command there, so its case is `xfail` on `ts` and must pin text or a file effect that answer cannot produce, or it would `XPASS`.
+
 Useful flags: `-v` (argv, stdout, stderr, sandbox of failing cases), `--keep` (keep the sandboxes), `--skip-tag posix` (on a machine without `/bin/sh`). Exit codes: `0` no `FAIL` and no `XPASS`, `1` at least one, `2` a load or usage error.
 
 ## Status
@@ -42,7 +44,7 @@ Never set `status.go` to `xfail`: the port must pass everything. While the port 
 
 ## Where the call is recorded
 
-- A `TS-ODDITIES.md` row the case settles: change its proposal to the decision and the date, in the same change. A `fix` row is a technical call inside an approved plan; an `ask` row is the owner's (product behavior): recommend, never decide it yourself.
+- A `TS-ODDITIES.md` row the case settles: change its proposal to the decision and the date, in the same change, and end the cell with `DONE (<defect id>)`; a row nobody has taken up ends with `OPEN (fix, not done)` or `OPEN (owner)` (the legend is at the top of that file). A `fix` row is a technical call inside an approved plan; an `ask` row is the owner's (product behavior): recommend, never decide it yourself.
 - A product decision (new command, new field, changed exit code): a row in `docs/decisions.md`.
 - A new defect id: a row in the defects table of `docs/decisions.md` and in `contract/README.md`.
 - A format change (new key, new matcher, new step kind): `contract/SPEC.md` and the runner in the same change (`contract/runner/README.md` shows how to add a matcher or an adapter).

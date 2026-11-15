@@ -4,7 +4,7 @@ The only instruction body of this repo. Claude Code (2.1.277 or later), OpenCode
 
 ## 1. What this repo is
 
-JITSO is a strategy for orchestrating agents based on builds: a build is an approved profile (model, effort, MCP servers, skills, rules) that a session is launched with. The `jitso` CLI launches each worker from a build, composes the launch line in code, logs every launch to a local event log, and reads the log back to see what each session cost and whether it broke a rule. Its core is a fixed set of hard rules every launched session carries, plus patterns and a schema with validators. JITSO ships no builds of its own: each project writes its builds and JITSO validates them (`docs/decisions.md`, D5). This repo will hold the Go CLI and its hooks; today it holds the language-independent contract the Go port must pass, with the earlier TypeScript implementation as the frozen oracle.
+JITSO is a strategy for orchestrating agents based on builds: a build is an approved profile (model, effort, MCP servers, skills, rules) that a session is launched with. The `jitso` CLI launches each worker from a build, composes the launch line in code, logs every launch to a local event log, and reads the log back to see what each session cost and whether it broke a rule. Its core is a fixed set of hard rules every launched session carries, plus patterns and a schema with validators. JITSO ships no builds of its own: each project writes its builds and JITSO validates them (`docs/decisions.md`, D5). This repo holds the Go CLI and its hooks, the language-independent contract they pass (the earlier TypeScript implementation is the frozen oracle), the schema of a build and the validators that check it, and the release files (written, nothing published).
 
 ## 2. Repo map
 
@@ -15,10 +15,14 @@ JITSO is a strategy for orchestrating agents based on builds: a build is an appr
 | `.claude/skills/<name>` | one committed relative symlink per skill to `../../.agents/skills/<name>`, because Claude Code discovers skills only under `.claude/skills/` (section 8) |
 | `go.mod`, `cmd/jitso/`, `internal/<pkg>/` | the Go module of the `jitso` CLI (`github.com/upex-galaxy/jitso`); the package map and the port milestones are in `docs/architecture.md` (sections 3 and 9) |
 | `contract/` | the behavioral contract: `README.md` (how to run it), `SPEC.md` (case format, normative), `PLAN.md` (contract design decisions), `TS-ODDITIES.md` (oracle behaviors that look accidental), `fixtures/`, `cases/`, `runner/` (Go module, stdlib only) |
+| `internal/skill/jitso/` | the jitso usage skill the binary ships and `jitso install skill` writes; it is not one of this repo's own skills, which live in `.agents/skills/` |
 | `docs/decisions.md` | product and repo decisions, with the options beaten |
+| `docs/build-schema.md` | the schema of a build: layers, tiers, fields, drafts, the exact validator texts |
+| `docs/release.md` | the release procedure; every outward step is marked OWNER-GATED |
+| `scripts/`, `packaging/`, `.github/workflows/` | packaging, the install script and its offline test, the Homebrew formula template and its filler, the release workflow |
 | `.session/` | local history and handoffs, gitignored, mostly Spanish: never commit it, never quote it or its tracker keys in committed files |
 
-Not built yet: the commands of the Go CLI whose port milestone has not landed (`docs/architecture.md` section 9; until then they answer exit 3), the build schema and validators, the hard-rules core and templates of this repo, release tooling. The oracle lives outside this repo, in `cli/jitso/` of a checkout of the original QA boilerplate.
+Not done: `jitso tree` (it answers "not implemented yet"), the first release and every outward step of `docs/release.md` (no remote, no tag, nothing published; the release workflow has never run), a real Orca run, the real Claude Code interactive path, a Linux run of the contract suite, and Windows testing. The oracle lives outside this repo, in `cli/jitso/` of a checkout of the original QA boilerplate.
 
 ## 3. Which skill to load
 
@@ -30,7 +34,7 @@ Load the skill before acting when the request matches. If none matches and the t
 | writing or reviewing Go (runner or CLI), `go build` / `test` / `vet`, cross-compiling, binary size, a new dependency | `go-development` |
 | staging, committing, a branch, a worktree, history, trailers, a remote | `git-flow-master` |
 | the context window is high, or the work must continue in a fresh session | `session-handoff` |
-| a release, an install script, a Homebrew tap, publishing anything | no skill yet: outward and owner-gated (rule 4); write a plan against D4 first |
+| a release, an install script, a Homebrew tap, publishing anything | no skill: `docs/release.md` is the procedure, and every outward step is owner-gated (rule 4) |
 | Orca workers or terminals | no repo skill: use the user-level `orca-cli` / `orchestration` skills if installed; when `orca` is absent, say nothing about it |
 
 ## 4. Critical rules
@@ -62,7 +66,7 @@ go vet ./...
 test -z "$(gofmt -l .)"    # gofmt -l exits 0 even when it lists files
 ```
 
-The contract suite: build the runner and run it as `contract/README.md` ("Run it") says; that file also prints the expected summary line against the oracle and explains the exit codes. Against the oracle it needs `bun` and `node` on PATH and `--ts-src <a boilerplate checkout that still has cli/jitso/>`. Against the Go port, build it into a scratch directory from the repo root (`go build -o <scratch>/jitso ./cmd/jitso`) and run `--impl bin --bin <scratch>/jitso`; a port milestone is proved with the `--filter` that `docs/architecture.md` section 9 gives for it. Use the built binaries, not `go run`.
+The contract suite: build the runner and run it as `contract/README.md` ("Run it") says; that file also prints the expected summary line against the oracle and explains the exit codes. Against the oracle it needs `bun` and `node` on PATH and `--ts-src <a boilerplate checkout that still has cli/jitso/>`. Against the Go port, build it into a scratch directory from the repo root (`go build -o <scratch>/jitso ./cmd/jitso`) and run `--impl bin --bin <scratch>/jitso`; a port milestone is proved with the `--filter` that `docs/architecture.md` section 9 gives for it. Use the built binaries, not `go run`. A change to `scripts/` or to packaging also runs `scripts/test-install.sh` (offline, POSIX shell, throwaway folders), and a change to OS-specific code cross-compiles with `scripts/package.sh <tag> <scratch>/dist` (every release target; the steps are `docs/release.md` section 3).
 
 ## 7. Git strategy
 

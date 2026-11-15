@@ -1,6 +1,6 @@
 ---
 name: go-development
-description: "Go conventions for this repo: the contract runner today and the jitso CLI port next. Covers standard library first, where code goes, tests, the check order (go test, go vet, gofmt), cross-compiling for macOS, Linux and Windows, the binary size budget, and looking things up in the official Go docs and go doc instead of from memory. Use whenever you write, review or refactor Go here, start the Go module of the CLI, add a package or a dependency, touch go.mod or the toolchain version, hit an OS-specific behavior (process groups, paths, /bin/sh), or are asked about binary size or builds per OS. Do NOT use for: deciding what the CLI should do (contract-driven-development owns behavior), or git and releases (git-flow-master; releases are owner-gated)."
+description: "Go conventions for this repo: the contract runner and the jitso CLI. Covers standard library first, where code goes, tests, the check order (go test, go vet, gofmt), cross-compiling for macOS, Linux and Windows, the binary size budget, and looking things up in the official Go docs and go doc instead of from memory. Use whenever you write, review or refactor Go here, start the Go module of the CLI, add a package or a dependency, touch go.mod or the toolchain version, hit an OS-specific behavior (process groups, paths, /bin/sh), or are asked about binary size or builds per OS. Do NOT use for: deciding what the CLI should do (contract-driven-development owns behavior), or git and releases (git-flow-master; releases are owner-gated)."
 ---
 
 # Go development
@@ -10,7 +10,7 @@ Two Go codebases, at different stages:
 | Module | State | Where |
 |---|---|---|
 | `jitso-contract-runner` | exists, stdlib only | `contract/runner/` (`main.go` plus `internal/<pkg>`; package map in `contract/runner/README.md`) |
-| the `jitso` CLI | not started | no module yet: its layout is decided in a plan the owner approves before the first file (AGENTS.md rule 2) |
+| the `jitso` CLI | exists, one dependency (YAML, behind `internal/catalog/decode.go`) | the repo root: `cmd/jitso/` is wiring only and everything else is under `internal/<package>/`; read the layout from the tree (`ls internal`, `go list ./...`) and the responsibilities from `docs/architecture.md` sections 3 to 5 |
 
 They are separate modules. A `go test ./...` at one module's root never runs the other's tests, so run the checks in each module you touched.
 
@@ -29,7 +29,7 @@ They are separate modules. A `go test ./...` at one module's root never runs the
 
 ## Testing
 
-- Table-driven tests with `t.Run`, temp files under `t.TempDir()`, no network, and never a real `orca` or `claude`: behavior is tested by the contract with its fakes; Go tests cover the units.
+- Table-driven tests with `t.Run`, temp files under `t.TempDir()`, no network, and never a real `orca` or `claude`: behavior is tested by the contract with its fakes; Go tests cover the units, with the ports of `docs/architecture.md` section 4 stood in by small fakes (a scripted `orca.Runner`, a fake clock, an injected terminal and reader for the commands that ask a person). The terminal path of `jitso build save` and of the adoption commands is a unit test, because the contract never has a terminal.
 - A Go test does not replace a contract case for observable behavior.
 
 ## Checks, in this order (AGENTS.md rule 8)
@@ -48,4 +48,4 @@ Then the contract cases the change touches (`contract-driven-development`). Cros
 
 - Never build into the repo tree with a name `.gitignore` does not cover; build into a scratch directory, as `contract/README.md` does.
 - `go run` turns every non-zero exit into 1: build a binary wherever an exit code matters.
-- Version stamping, release archives and install scripts wait for the release plan (decision D4 in `docs/decisions.md`); publishing anything is the owner's call.
+- Version stamping, the release archives and the install script exist: `scripts/package.sh` builds the archives and stamps `internal/version.Version` with `-ldflags -X`, and `docs/release.md` is the procedure. Use them; do not hand-roll a release build. Publishing anything (a tag, a remote, a GitHub Release, the tap) stays the owner's call (AGENTS.md rule 4).

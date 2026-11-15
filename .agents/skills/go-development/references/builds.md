@@ -11,13 +11,13 @@ CGO_ENABLED=0 GOOS=linux   GOARCH=amd64 go build -o "$out/jitso-linux-amd64" .
 CGO_ENABLED=0 GOOS=windows GOARCH=amd64 go build -o "$out/jitso-windows-amd64.exe" .
 ```
 
-A successful cross-compile proves that the build constraints are complete (every OS has an implementation of each OS-specific function). It does not prove the binary works there: Windows stays "not tested" until the owner runs it. `go tool dist list` prints every valid `GOOS/GOARCH` pair.
+`scripts/package.sh <tag> <scratch dir>` is the one script that builds every release target, names the archives and stamps the version (`docs/release.md` section 1); the loop above is for a quick check of one target. A successful cross-compile proves that the build constraints are complete (every OS has an implementation of each OS-specific function). It does not prove the binary works there: Windows stays "not tested" until the owner runs it. `go tool dist list` prints every valid `GOOS/GOARCH` pair.
 
 ## Size budget
 
 JITSO exists partly because the compiled TypeScript CLI measured about 85 MB. The reference point for Go is a stdlib-only probe (json, regexp, os/exec) measured on 2026-11-14: about 4.2 MB with default flags and about 3 MB stripped, per OS. Those numbers are history, not a live value: measure again rather than quoting them.
 
-Measure on every new dependency and before a release:
+Measure on every new dependency and before a release (`docs/release.md` section 3 says where the previous numbers live):
 
 ```sh
 go build -ldflags='-s -w' -o <scratch dir>/jitso . && ls -l <scratch dir>/jitso
