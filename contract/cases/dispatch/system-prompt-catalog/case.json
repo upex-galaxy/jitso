@@ -1,6 +1,6 @@
 {
   "id": "dispatch/system-prompt-catalog",
-  "title": "the {{CATALOG}} placeholder becomes one line per approved preset: id, model, effort, description and what it requires",
+  "title": "the {{CATALOG}} placeholder becomes one line per approved build: id, model, effort, description and what it requires",
   "source": [
     "cli/jitso/dispatch.test.ts: 'the summary lists every approved preset with what it requires'",
     "intended: docs/decisions.md (tiers): a subagent-tier build is not a launchable build, so it is not listed"
@@ -10,7 +10,7 @@
     "go": "pass"
   },
   "defect": "N-5",
-  "intent": "INTENDED behavior (defect N-5, tiers; docs/decisions.md, owner 2026-11-15). Only launchable builds (tier worker or conductor) are listed and offered: the three subagent-tier builds of the default fixture (plan, code, verifier) never appear. The expectations below were written for the four launchable builds and still hold for the intended behavior. The TS binary lists every approved preset, so it prints seven lines (code, haiku-explorer, plan, sonnet-automator, sonnet-conductor, sonnet-tester, verifier) and the case FAILS on TS on the exact catalog text of the --system-prompt (three extra lines).",
+  "intent": "INTENDED behavior (defect N-5, tiers; docs/decisions.md, owner 2026-11-15). Only launchable builds (tier worker or conductor) are listed and offered: the three subagent-tier builds of the default fixture (plan, code, verifier) never appear. The expectations below were written for the four launchable builds and still hold for the intended behavior. The TS binary lists every approved build, so it prints seven lines (code, haiku-explorer, plan, sonnet-automator, sonnet-conductor, sonnet-tester, verifier) and the case FAILS on TS on the exact catalog text of the --system-prompt (three extra lines).",
   "project": {
     "files": {
       "jitso/dispatcher/prompt.md": {

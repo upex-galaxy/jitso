@@ -1,0 +1,56 @@
+{
+  "id": "cli/presets-is-unknown",
+  "title": "presets, with or without list, is an unknown command: the old word is not kept as an alias",
+  "source": [
+    "intended: docs/decisions.md D6 and the no-alias row (the catalog commands are jitso build <subcommand>)"
+  ],
+  "status": {
+    "ts": "xfail",
+    "go": "pass"
+  },
+  "defect": "N-10",
+  "intent": "INTENDED behavior (defect N-10, build vocabulary; docs/decisions.md D6). `presets` and `presets list` are no longer commands: each exits 2 with `unknown command` and the word on stderr and nothing on stdout, like any other unknown word. The oracle still has the command: `presets list` prints the catalog and exits 0, and `presets` alone answers `not implemented yet` with exit 0, so the exit and stderr expectations FAIL on TS. The ts adapter maps only `build list` to `presets list`, never the other way, so these argv reach the oracle unchanged.",
+  "steps": [
+    {
+      "run": [
+        "presets"
+      ],
+      "expect": {
+        "exit": 2,
+        "stdout": [
+          {
+            "empty": true
+          }
+        ],
+        "stderr": [
+          "unknown command",
+          "presets"
+        ],
+        "orca_calls": {
+          "empty": true
+        }
+      }
+    },
+    {
+      "run": [
+        "presets",
+        "list"
+      ],
+      "expect": {
+        "exit": 2,
+        "stdout": [
+          {
+            "empty": true
+          }
+        ],
+        "stderr": [
+          "unknown command",
+          "presets"
+        ],
+        "orca_calls": {
+          "empty": true
+        }
+      }
+    }
+  ]
+}

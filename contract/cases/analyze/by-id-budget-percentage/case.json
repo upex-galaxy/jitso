@@ -1,6 +1,6 @@
 {
   "id": "analyze/by-id-budget-percentage",
-  "title": "budget_pct is the peak context as a percentage of the preset token budget, to one decimal",
+  "title": "budget_pct is the peak context as a percentage of the build token budget, to one decimal",
   "source": [
     "cli/jitso/analyze.ts: budget_pct; cli/jitso/analyze.test.ts: 'writes analyzed + rule_break events...' (budget_pct)"
   ],

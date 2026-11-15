@@ -369,9 +369,9 @@ func TestVerdictOf(t *testing.T) {
 		reason  string
 	}{
 		{"secret read fails", 2, check("no_rule_breaks"), "fail", "a tool call read a secret path"},
-		{"no checks is unknown", 0, nil, "unknown", "preset success checks 0 of 0 evaluated here; the rest need the destination"},
-		{"only no_rule_breaks is success", 0, check("no_rule_breaks"), "success", "preset success checks 1 of 1 evaluated here; the rest need the destination"},
-		{"one decidable of two is unknown", 0, check("no_rule_breaks", "answer_delivered"), "unknown", "preset success checks 1 of 2 evaluated here; the rest need the destination"},
+		{"no checks is unknown", 0, nil, "unknown", "build success checks 0 of 0 evaluated here; the rest need the destination"},
+		{"only no_rule_breaks is success", 0, check("no_rule_breaks"), "success", "build success checks 1 of 1 evaluated here; the rest need the destination"},
+		{"one decidable of two is unknown", 0, check("no_rule_breaks", "answer_delivered"), "unknown", "build success checks 1 of 2 evaluated here; the rest need the destination"},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

@@ -4,11 +4,17 @@
   "source": [
     "cli/jitso/launch.ts: parseLaunchArgs (the value is argv[i+1], whatever it is)"
   ],
+  "status": {
+    "ts": "xfail",
+    "go": "pass"
+  },
+  "defect": "N-10",
+  "intent": "INTENDED behavior (defect N-10, build vocabulary; docs/decisions.md D6). A value flag takes the next word as its value even when it looks like a flag, so `launch --build --dry-run ...` takes `--dry-run` as the build id and is rejected with `invalid value for --build`. The oracle still prints `invalid value for --preset`, so the stderr expectation FAILS on TS.",
   "steps": [
     {
       "run": [
         "launch",
-        "--preset",
+        "--build",
         "--dry-run",
         "--brief",
         "{{PROJECT}}/.jitso/briefs/b.md",
@@ -24,7 +30,7 @@
         ],
         "stderr": [
           "JITSO REJECTED:",
-          "invalid value for --preset"
+          "invalid value for --build"
         ],
         "orca_calls": {
           "empty": true

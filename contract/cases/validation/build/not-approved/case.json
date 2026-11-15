@@ -1,0 +1,53 @@
+{
+  "id": "validation/build/not-approved",
+  "title": "a candidate or a retired build exists but cannot be launched",
+  "source": [
+    "cli/jitso/profile.test.ts: 'a preset that is not approved cannot be launched'"
+  ],
+  "status": {
+    "ts": "xfail",
+    "go": "pass"
+  },
+  "defect": "N-10",
+  "intent": "INTENDED behavior (defect N-10, build vocabulary; docs/decisions.md D6). The rejection of a build that is not approved reads `build \"<id>\" is <status>, not approved`. The oracle still prints `preset \"<id>\" is <status>, not approved`, so the stderr expectation FAILS on TS.",
+  "project": {
+    "files": {
+      "jitso/builds/draft-explorer.yaml": "id: draft-explorer\nversion: 1\nstatus: {{status}}\nrole: operator\ntype: explorer\nwork_kind: repo-exploration\ndescription: Draft explorer used by a contract case.\nharness: claude\nmodel: claude-haiku-5-5\neffort: low\nmode_default: direct\nagents_md: exclude\nroute_scope: [none]\nskills_first: []\ntools: [Read, Glob, Grep, Bash]\nmcp: []\nrequires: []\nbudget: { tokens: 250000, usd_list_cap: 0.50 }\nsuccess:\n  - { check: answer_delivered }\n"
+    }
+  },
+  "for_each": {
+    "var": "status",
+    "values": [
+      "candidate",
+      "retired"
+    ]
+  },
+  "steps": [
+    {
+      "run": [
+        "launch",
+        "--build",
+        "draft-explorer",
+        "--brief",
+        "{{PROJECT}}/.jitso/briefs/b.md",
+        "--mode",
+        "direct"
+      ],
+      "expect": {
+        "exit": 2,
+        "stdout": [
+          {
+            "empty": true
+          }
+        ],
+        "stderr": [
+          "JITSO REJECTED:",
+          "build \"draft-explorer\" is {{status}}, not approved"
+        ],
+        "orca_calls": {
+          "empty": true
+        }
+      }
+    }
+  ]
+}

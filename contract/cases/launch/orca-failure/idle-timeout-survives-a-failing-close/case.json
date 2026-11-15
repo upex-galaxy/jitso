@@ -28,7 +28,7 @@
     {
       "run": [
         "launch",
-        "--preset",
+        "--build",
         "haiku-explorer",
         "--brief",
         "{{PROJECT}}/.jitso/briefs/brief.md",

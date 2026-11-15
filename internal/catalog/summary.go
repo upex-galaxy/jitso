@@ -6,7 +6,7 @@ import (
 	"github.com/upex-galaxy/jitso/internal/jsconv"
 )
 
-// SummaryLine is one build as `presets list` and the dispatcher prompt show
+// SummaryLine is one build as `build list` and the dispatcher prompt show
 // it: `- <id>: <model> <effort>. <description> requires: <fields or nothing>`.
 // Values are rendered with String(), so a missing description reads
 // "undefined", as in the oracle.

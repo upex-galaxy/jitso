@@ -16,8 +16,8 @@ import (
 
 // Request is what a launch asks for.
 type Request struct {
-	// Preset is the build id.
-	Preset string
+	// Build is the build id.
+	Build string
 	// Fields are the --field name=value pairs.
 	Fields Fields
 }
@@ -42,15 +42,15 @@ type Profile struct {
 // is known, the route scope is valid, every field is required by the build
 // and matches its pattern, and every required field is given.
 func Resolve(req Request, cat *catalog.Catalog) (Profile, error) {
-	b, ok := cat.Find(req.Preset)
+	b, ok := cat.Find(req.Build)
 	if !ok {
-		return Profile{}, fail.Rejectedf(`unknown preset "%s"`, req.Preset)
+		return Profile{}, fail.Rejectedf(`unknown build "%s"`, req.Build)
 	}
 	if b.Status != "approved" {
-		return Profile{}, fail.Rejectedf(`preset "%s" is %s, not approved`, b.ID, b.Status)
+		return Profile{}, fail.Rejectedf(`build "%s" is %s, not approved`, b.ID, b.Status)
 	}
 	if b.Tier == catalog.TierSubagent {
-		return Profile{}, fail.Rejectedf(`preset "%s" has tier subagent: it is not launched alone, a worker lists it in its subagents`, b.ID)
+		return Profile{}, fail.Rejectedf(`build "%s" has tier subagent: it is not launched alone, a worker lists it in its subagents`, b.ID)
 	}
 	cfg := cat.Config
 	if !slices.Contains(cfg.Models, b.Model) {
@@ -78,7 +78,7 @@ func Resolve(req Request, cat *catalog.Catalog) (Profile, error) {
 	}
 	for _, name := range req.Fields.Keys() {
 		if !slices.Contains(b.Requires, name) {
-			return Profile{}, fail.Rejectedf(`unknown field "%s" for preset "%s"`, name, b.ID)
+			return Profile{}, fail.Rejectedf(`unknown field "%s" for build "%s"`, name, b.ID)
 		}
 		pattern, ok := catalog.FieldPattern(name)
 		if !ok || !pattern.MatchString(req.Fields.Get(name)) {

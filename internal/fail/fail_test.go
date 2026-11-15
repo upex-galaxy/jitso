@@ -14,7 +14,7 @@ func TestCodeAndText(t *testing.T) {
 		text string
 	}{
 		{"nil", nil, 0, ""},
-		{"rejected", Rejected(`unknown preset "x"`), 2, `JITSO REJECTED: unknown preset "x"`},
+		{"rejected", Rejected(`unknown build "x"`), 2, `JITSO REJECTED: unknown build "x"`},
 		{"rejectedf", Rejectedf("missing %s", "ticket_key"), 2, "JITSO REJECTED: missing ticket_key"},
 		{"usage", Usage("jitso: unknown command \"x\"\n\nUsage"), 2, "jitso: unknown command \"x\"\n\nUsage"},
 		{"env", Env("the lock stayed busy"), 3, "jitso: the lock stayed busy"},

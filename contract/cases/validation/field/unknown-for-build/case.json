@@ -1,0 +1,51 @@
+{
+  "id": "validation/field/unknown-for-build",
+  "title": "a field the build does not require is rejected by name, even a real field of another build",
+  "source": [
+    "cli/jitso/profile.test.ts: 'a field no preset declares is rejected'"
+  ],
+  "status": {
+    "ts": "xfail",
+    "go": "pass"
+  },
+  "defect": "N-10",
+  "intent": "INTENDED behavior (defect N-10, build vocabulary; docs/decisions.md D6). The rejection of a field the build does not require reads `unknown field \"<f>\" for build \"<id>\"`. The oracle still prints `unknown field \"<f>\" for preset \"<id>\"`, so the stderr expectation FAILS on TS.",
+  "for_each": {
+    "var": "v",
+    "values": [
+      "evil",
+      "ticket_key",
+      "env"
+    ]
+  },
+  "steps": [
+    {
+      "run": [
+        "launch",
+        "--build",
+        "haiku-explorer",
+        "--brief",
+        "{{PROJECT}}/.jitso/briefs/b.md",
+        "--mode",
+        "direct",
+        "--field",
+        "{{v}}=PRJ-1"
+      ],
+      "expect": {
+        "exit": 2,
+        "stdout": [
+          {
+            "empty": true
+          }
+        ],
+        "stderr": [
+          "JITSO REJECTED:",
+          "unknown field \"{{v}}\" for build \"haiku-explorer\""
+        ],
+        "orca_calls": {
+          "empty": true
+        }
+      }
+    }
+  ]
+}

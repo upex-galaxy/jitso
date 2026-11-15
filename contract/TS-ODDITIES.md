@@ -22,7 +22,7 @@ Legend: **keep** = intended, port it as is. **fix** = change the case and the po
 | L8 | The legacy modes `directo` and `flota` are accepted by `launch` and normalized (`validation/mode`, tag `legacy-alias`; registry lines too) | DECIDED (owner, 2026-11-15): neither read nor accept. Go knows only `direct` and `fleet` everywhere, registry lines included (options beaten: read old lines but reject on input; keep both as TS). The `legacy-alias` cases and `registry/spanish-mode-alias-is-read` flip. Cases: defect N-4, `xfail` on `ts` (`validation/mode/legacy-alias-directo`, `validation/mode/legacy-alias-flota`, `registry/spanish-mode-alias-is-read`) |
 | L9 | `--mode` has no default; omitting it is an error | keep |
 | L10 | `launch --help` and `-h` are "unknown argument", exit 2 | fix: print usage for `launch` |
-| L11 | `--preset --dry-run` takes `--dry-run` as the preset value | fix: a value may not start with `--` |
+| L11 | `--preset --dry-run` takes `--dry-run` as the preset value (the flag is `--build` in the contract since N-10, so the case is `validation/flag-takes-next-word-as-value`) | fix: a value may not start with `--` |
 | L12 | Every launch calls `terminal read` once even when the folder is trusted (`launch/direct/orca-call-order`) | keep, or drop if the port reads the screen only when needed |
 
 ## Brief
@@ -38,9 +38,9 @@ Legend: **keep** = intended, port it as is. **fix** = change the case and the po
 
 | # | Behavior | Proposal |
 |---|---|---|
-| C1 | `tree` and `presets` (without `list`) print "not implemented yet" and exit 0 | fix: exit 2 until implemented, or implement `tree` |
+| C1 | `tree` and `presets` (without `list`) print "not implemented yet" and exit 0 | fix: exit 2 until implemented, or implement `tree`. The `presets` half is settled by N-10: `presets` is an unknown command, and `jitso build` alone exits 2 with the build usage (`cli/presets-is-unknown`, `build/usage`). `tree` is unchanged |
 | C2 | An empty first argument is an unknown command, not the usage | keep |
-| C3 | A broken preset file: `launch` exits 3, but `presets list` crashes uncaught (exit 1, not pinned) | fix: same handled error in both |
+| C3 | A broken preset file: `launch` exits 3, but `presets list` crashes uncaught (exit 1, not pinned). The command is `build list` since N-10, and a broken build file there gives the same handled error as `launch` (exit 3) | fix: same handled error in both |
 | C4 | Outside a git checkout the TS binary still works, because it finds its project from the script folder (`project/outside-git`, xfail N-1) | fix: project = git primary checkout of the cwd, exit 3 outside one |
 
 ## Registry, close, reap, analyze
@@ -63,8 +63,8 @@ Legend: **keep** = intended, port it as is. **fix** = change the case and the po
 | # | Behavior | Proposal |
 |---|---|---|
 | H1 | `guard` fails open on malformed input (exit 0, empty stdout); `dispatch-guard` fails closed | keep, both are deliberate |
-| H2 | The deny text of `guard` says `bun run jitso launch` | fix: name the launcher the target repo resolves (`jitso launch` or `bun run jitso launch`); the cases already match only the `(denied: <verb>)` tail |
-| H3 | `dispatch-guard` allows a bare `<launcher> launch` with no flag (the flag loop is empty) | fix: require `--preset`, `--brief`, `--mode` |
+| H2 | The deny text of `guard` says `bun run jitso launch --preset <id> ...` | fix: name the launcher the target repo resolves (`jitso launch` or `bun run jitso launch`) and the flag `--build <id>` (N-10, `hooks/guard/deny-reason-names-the-build-flag`); the other cases match only the `(denied: <verb>)` tail |
+| H3 | `dispatch-guard` allows a bare `<launcher> launch` with no flag (the flag loop is empty). Its allowed flags name `--preset`; since N-10 the contract says `--build` and the oracle denies it (`hooks/dispatch-guard/bash-allows-the-launcher`) | fix: require `--build`, `--brief`, `--mode` |
 | H4 | `guard` passes `send_instruction` and `message_worker` tools; it only denies `start_worker`, `create_worktree` with an agent and `create_terminal` with a harness | ask |
 | H5 | `dispatch-guard` rejects an env prefix and trailing or double spaces; its Write check says "a new brief" but only rejects symlinks, so overwriting an existing regular file passes | fix: reject an existing file |
 | H6 | The dispatcher joins all argv words with a single space once the first has whitespace; an empty-string argument is an unknown command | keep |
@@ -72,4 +72,4 @@ Legend: **keep** = intended, port it as is. **fix** = change the case and the po
 
 ## Known defects (xfail on `ts`, see PLAN.md)
 
-S1 route scope on the card and first prompt, S2 `agents_md: exclude`, S3 `subagents` to `--agents`, and the tier model and dispatcher rules N-5 to N-8 (`README.md` lists them all with their cases).
+S1 route scope on the card and first prompt, S2 `agents_md: exclude`, S3 `subagents` to `--agents`, the tier model and dispatcher rules N-5 to N-8, and the build vocabulary N-10 (`README.md` lists them all with their cases).

@@ -8,7 +8,7 @@
     "go": "pass"
   },
   "defect": "S1",
-  "intent": "INTENDED behavior (defect S1, route_scope). The router reads a scope with the regex (?:^|[.!?])[ \\t>*-]*ROUTE-SCOPE:([^\\n]*), so the card line must start with ROUTE-SCOPE: (with the colon, at a line start or after . ! ?) and list the preset ids comma separated. On the TS binary today the card writes 'ROUTE-SCOPE <ids>' with no colon, after a '|' separator, so the matcher finds nothing and this case FAILS on TS. Here the preset says [none], so the line must exist and name only none: route_scope [] (a missing line fails even []).",
+  "intent": "INTENDED behavior (defect S1, route_scope). The router reads a scope with the regex (?:^|[.!?])[ \\t>*-]*ROUTE-SCOPE:([^\\n]*), so the card line must start with ROUTE-SCOPE: (with the colon, at a line start or after . ! ?) and list the build ids comma separated. On the TS binary today the card writes 'ROUTE-SCOPE <ids>' with no colon, after a '|' separator, so the matcher finds nothing and this case FAILS on TS. Here the build says [none], so the line must exist and name only none: route_scope [] (a missing line fails even []).",
   "project": {
     "files": {
       ".jitso/briefs/brief.md": {
@@ -20,7 +20,7 @@
     {
       "run": [
         "launch",
-        "--preset",
+        "--build",
         "haiku-explorer",
         "--brief",
         "{{PROJECT}}/.jitso/briefs/brief.md",

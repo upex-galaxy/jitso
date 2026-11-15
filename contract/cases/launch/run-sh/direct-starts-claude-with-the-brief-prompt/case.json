@@ -1,6 +1,6 @@
 {
   "id": "launch/run-sh/direct-starts-claude-with-the-brief-prompt",
-  "title": "executing run.sh of a direct launch starts claude with bypass, the preset model and effort, the launch folder files and a last argument that points at brief.md",
+  "title": "executing run.sh of a direct launch starts claude with bypass, the build model and effort, the launch folder files and a last argument that points at brief.md",
   "source": [
     "cli/jitso/launch.test.ts: 'the generated run.sh execs claude with the adapter argv, bit for bit'"
   ],
@@ -18,7 +18,7 @@
     {
       "run": [
         "launch",
-        "--preset",
+        "--build",
         "haiku-explorer",
         "--brief",
         "{{PROJECT}}/.jitso/briefs/brief.md",

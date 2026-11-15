@@ -46,13 +46,13 @@ var (
 )
 
 // ValidateBuild checks one decoded build file against the allowlists and the
-// route ids. It returns every problem, in the oracle's order (validatePreset),
+// route ids. It returns every problem, in the oracle's order (its validatePreset),
 // followed by the tier rules; an empty list means valid. The messages and the
 // String() coercion of values are the oracle's.
 func ValidateBuild(raw any, cfg Config, routeIDs []string) []string {
 	p, ok := raw.(*Map)
 	if !ok {
-		return []string{"preset is not a mapping"}
+		return []string{"build is not a mapping"}
 	}
 	var errs []string
 	add := func(msg string) { errs = append(errs, msg) }

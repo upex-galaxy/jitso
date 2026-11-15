@@ -1,0 +1,100 @@
+{
+  "id": "build/usage",
+  "title": "build with no subcommand, or an unknown one, exits 2 with the build usage on stderr; build --help prints it and exits 0",
+  "source": [
+    "intended: docs/decisions.md D6 and the command-group row (jitso build <subcommand>); replaces the oracle's `presets` alone answer, which is the 'not implemented yet' line with exit 0 (TS-ODDITIES C1)"
+  ],
+  "status": {
+    "ts": "xfail",
+    "go": "pass"
+  },
+  "defect": "N-10",
+  "intent": "INTENDED behavior (defect N-10, build vocabulary; docs/decisions.md D6). The catalog commands live under one command group, `jitso build <subcommand>`. With no subcommand it exits 2 and prints `jitso build: missing subcommand`, a blank line and the build usage on stderr; with a subcommand it does not know it prints `jitso build: unknown subcommand \"<x>\"` and the same usage; `--help` and `-h` print the usage on stdout and exit 0. The oracle has no `build` command at all (its catalog command is `presets`): it answers `unknown command` on stderr with exit 2, so the `missing subcommand` and `unknown subcommand` expectations and the `--help` exit code FAIL on TS.",
+  "steps": [
+    {
+      "run": [
+        "build"
+      ],
+      "expect": {
+        "exit": 2,
+        "stdout": [
+          {
+            "empty": true
+          }
+        ],
+        "stderr": [
+          "jitso build: missing subcommand",
+          "Usage: jitso build",
+          "list"
+        ],
+        "orca_calls": {
+          "empty": true
+        }
+      }
+    },
+    {
+      "run": [
+        "build",
+        "show"
+      ],
+      "expect": {
+        "exit": 2,
+        "stdout": [
+          {
+            "empty": true
+          }
+        ],
+        "stderr": [
+          "jitso build: unknown subcommand \"show\"",
+          "Usage: jitso build",
+          "list"
+        ],
+        "orca_calls": {
+          "empty": true
+        }
+      }
+    },
+    {
+      "run": [
+        "build",
+        "--help"
+      ],
+      "expect": {
+        "exit": 0,
+        "stdout": [
+          "Usage: jitso build",
+          "list"
+        ],
+        "stderr": [
+          {
+            "empty": true
+          }
+        ],
+        "orca_calls": {
+          "empty": true
+        }
+      }
+    },
+    {
+      "run": [
+        "build",
+        "-h"
+      ],
+      "expect": {
+        "exit": 0,
+        "stdout": [
+          "Usage: jitso build",
+          "list"
+        ],
+        "stderr": [
+          {
+            "empty": true
+          }
+        ],
+        "orca_calls": {
+          "empty": true
+        }
+      }
+    }
+  ]
+}

@@ -1,0 +1,22 @@
+# Approved build (ADR-0027). Shape and fields: .session/jitso ARQ section 6.3.
+id: sonnet-tester
+version: 1
+status: approved
+role: operator
+type: tester
+work_kind: story-testing
+description: Manual QA of one user story end to end with sprint-testing.
+harness: claude
+model: claude-sonnet-5-5
+effort: medium
+mode_default: direct
+agents_md: full
+route_scope: [ticket-work, local-context-pbi]
+skills_first: [sprint-testing]
+mcp: [dbhub, openapi]
+requires: [ticket_key]
+budget: { tokens: 250000, usd_list_cap: 3.00 }
+success:
+  - { check: jira_comment_on, key: '{ticket_key}' }
+  - { check: xray_execution_with_env, story: '{ticket_key}' }
+  - { check: no_rule_breaks }

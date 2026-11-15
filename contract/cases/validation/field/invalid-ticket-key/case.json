@@ -28,7 +28,7 @@
     {
       "run": [
         "launch",
-        "--preset",
+        "--build",
         "sonnet-tester",
         "--brief",
         "{{PROJECT}}/.jitso/briefs/b.md",

@@ -1,0 +1,41 @@
+{
+  "id": "hooks/guard/deny-reason-names-the-build-flag",
+  "title": "the reason of a denied worker start tells the agent to launch with --build <id>, not --preset",
+  "source": [
+    "intended: docs/decisions.md D6 (the launch flag is --build); TS-ODDITIES H2 (the deny text names the launcher)"
+  ],
+  "status": {
+    "ts": "xfail",
+    "go": "pass"
+  },
+  "defect": "N-10",
+  "intent": "INTENDED behavior (defect N-10, build vocabulary; docs/decisions.md D6). A direct worker start is denied, and the reason names the replacement launch command with the flag `--build <id>`; it never names `--preset`. The oracle guard still says `Use: bun run jitso launch --preset <id> --brief <file> ...`, so both reason expectations FAIL on TS. The hook input is not translated by the ts adapter.",
+  "steps": [
+    {
+      "hook": "guard",
+      "input": {
+        "hook_event_name": "PreToolUse",
+        "tool_name": "Bash",
+        "tool_input": {
+          "command": "orca orchestration worker-start --run r1 --task t1 --terminal term_1"
+        },
+        "cwd": "{{PROJECT}}"
+      },
+      "expect": {
+        "exit": 0,
+        "decision": "deny",
+        "reason": [
+          {
+            "regex": "\\(denied: orchestration worker-start\\)"
+          },
+          {
+            "contains": "launch --build <id> --brief <file>"
+          },
+          {
+            "not_contains": "--preset"
+          }
+        ]
+      }
+    }
+  ]
+}

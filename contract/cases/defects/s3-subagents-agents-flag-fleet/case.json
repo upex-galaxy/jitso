@@ -13,7 +13,7 @@
     "go": "pass"
   },
   "defect": "S3",
-  "intent": "INTENDED behavior (defect S3, subagents; docs/decisions.md, owner 2026-11-15). A subagent is a build with `tier: subagent`. sonnet-automator is a worker build that lists `subagents: [plan, code, verifier]`; each name resolves to the build jitso/presets/<name>.yaml (tier subagent), which supplies `description`, `prompt`, `model` and `tools`. The launcher must pass `--agents <json>` to claude where the JSON object has EXACTLY the keys plan, code and verifier, and each entry carries the description, the prompt, the model and the tools of its build, byte for byte as the fixture writes them. On TS the launcher passes no subagents to the adapter, so --agents never appears and this case FAILS on TS (the argv_contains check and every json check).",
+  "intent": "INTENDED behavior (defect S3, subagents; docs/decisions.md, owner 2026-11-15). A subagent is a build with `tier: subagent`. sonnet-automator is a worker build that lists `subagents: [plan, code, verifier]`; each name resolves to the build jitso/builds/<name>.yaml (tier subagent), which supplies `description`, `prompt`, `model` and `tools`. The launcher must pass `--agents <json>` to claude where the JSON object has EXACTLY the keys plan, code and verifier, and each entry carries the description, the prompt, the model and the tools of its build, byte for byte as the fixture writes them. On TS the launcher passes no subagents to the adapter, so --agents never appears and this case FAILS on TS (the argv_contains check and every json check).",
   "project": {
     "files": {
       ".jitso/briefs/brief.md": {
@@ -25,7 +25,7 @@
     {
       "run": [
         "launch",
-        "--preset",
+        "--build",
         "sonnet-automator",
         "--brief",
         "{{PROJECT}}/.jitso/briefs/brief.md",

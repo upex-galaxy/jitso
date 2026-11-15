@@ -24,7 +24,7 @@
     {
       "run": [
         "launch",
-        "--preset",
+        "--build",
         "haiku-explorer",
         "--brief",
         "{{PROJECT}}/.jitso/briefs/brief.md",
@@ -49,7 +49,7 @@
     {
       "run": [
         "launch",
-        "--preset",
+        "--build",
         "haiku-explorer",
         "--brief",
         "{{PROJECT}}/.jitso/briefs/brief.md",

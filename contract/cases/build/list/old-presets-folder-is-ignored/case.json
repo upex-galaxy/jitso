@@ -1,0 +1,75 @@
+{
+  "id": "build/list/old-presets-folder-is-ignored",
+  "title": "a valid build file under jitso/presets/ is not read: it is neither listed nor launchable",
+  "source": [
+    "intended: docs/decisions.md D6 and the no-alias row (the catalog folder is jitso/builds/, the old folder is never read)"
+  ],
+  "status": {
+    "ts": "xfail",
+    "go": "pass"
+  },
+  "defect": "N-10",
+  "intent": "INTENDED behavior (defect N-10, build vocabulary; docs/decisions.md D6). The catalog is read from `jitso/builds/` only. The overlay adds `jitso/presets/legacy.yaml`, a valid approved build with the id `legacy` (a copy of haiku-explorer with a new id): `build list` does not list it and still lists the real builds, and `launch --build legacy --dry-run` exits 2 with `unknown build \"legacy\"` on stderr. The oracle reads `jitso/presets/` and nothing else: because the overlay creates that real folder, the ts adapter does not link `jitso/presets` to `jitso/builds`, so the oracle's catalog is the `legacy` file alone. It lists `legacy` and not the real builds, so the stdout expectations of the first step FAIL on TS (the second step is not reached).",
+  "project": {
+    "files": {
+      "jitso/presets/legacy.yaml": "id: legacy\nversion: 1\nstatus: approved\nrole: operator\ntype: explorer\nwork_kind: repo-exploration\ndescription: Read-only search of the repo that returns file paths and line numbers.\nharness: claude\nmodel: claude-haiku-5-5\neffort: low\nmode_default: direct\nagents_md: exclude\nroute_scope: [none]\nskills_first: []\ntools: [Read, Glob, Grep, Bash]\nmcp: []\nrequires: []\nbudget: { tokens: 250000, usd_list_cap: 0.50 }\nsuccess:\n  - { check: answer_delivered }\n  - { check: no_rule_breaks }\n",
+      ".jitso/briefs/b.md": {
+        "from": "brief.md"
+      }
+    }
+  },
+  "steps": [
+    {
+      "run": [
+        "build",
+        "list"
+      ],
+      "expect": {
+        "exit": 0,
+        "stdout": [
+          {
+            "regex": "(?m)^- haiku-explorer: "
+          },
+          {
+            "not_contains": "legacy"
+          }
+        ],
+        "stderr": [
+          {
+            "empty": true
+          }
+        ],
+        "orca_calls": {
+          "empty": true
+        }
+      }
+    },
+    {
+      "run": [
+        "launch",
+        "--build",
+        "legacy",
+        "--brief",
+        "{{PROJECT}}/.jitso/briefs/b.md",
+        "--mode",
+        "direct",
+        "--dry-run"
+      ],
+      "expect": {
+        "exit": 2,
+        "stdout": [
+          {
+            "empty": true
+          }
+        ],
+        "stderr": [
+          "JITSO REJECTED:",
+          "unknown build \"legacy\""
+        ],
+        "orca_calls": {
+          "empty": true
+        }
+      }
+    }
+  ]
+}

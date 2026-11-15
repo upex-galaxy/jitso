@@ -1,6 +1,6 @@
 {
   "id": "validation/mcp-exclude/effect-on-card",
-  "title": "--mcp-exclude removes servers from the card list; naming a server the preset lacks is harmless",
+  "title": "--mcp-exclude removes servers from the card list; naming a server the build lacks is harmless",
   "source": [
     "cli/jitso/launch.ts: runLaunch (mcp = profile.mcp minus --mcp-exclude)"
   ],
@@ -15,7 +15,7 @@
     {
       "run": [
         "launch",
-        "--preset",
+        "--build",
         "sonnet-tester",
         "--brief",
         "{{PROJECT}}/.jitso/briefs/b.md",
@@ -37,7 +37,7 @@
     {
       "run": [
         "launch",
-        "--preset",
+        "--build",
         "sonnet-tester",
         "--brief",
         "{{PROJECT}}/.jitso/briefs/b.md",
@@ -61,7 +61,7 @@
     {
       "run": [
         "launch",
-        "--preset",
+        "--build",
         "sonnet-tester",
         "--brief",
         "{{PROJECT}}/.jitso/briefs/b.md",
@@ -87,7 +87,7 @@
     {
       "run": [
         "launch",
-        "--preset",
+        "--build",
         "sonnet-tester",
         "--brief",
         "{{PROJECT}}/.jitso/briefs/b.md",

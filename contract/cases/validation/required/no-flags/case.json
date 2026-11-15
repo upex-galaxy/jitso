@@ -4,6 +4,12 @@
   "source": [
     "cli/jitso/index.test.ts: 'launch without its required flags exits 2 with a JITSO REJECTED line (task 3.3 wiring)'"
   ],
+  "status": {
+    "ts": "xfail",
+    "go": "pass"
+  },
+  "defect": "N-10",
+  "intent": "INTENDED behavior (defect N-10, build vocabulary; docs/decisions.md D6). The launch flag that names the build is required, and its rejection reads `--build is required`. The oracle still prints `--preset is required`, so the stderr expectation FAILS on TS.",
   "steps": [
     {
       "run": [
@@ -18,7 +24,7 @@
         ],
         "stderr": [
           "JITSO REJECTED:",
-          "--preset is required"
+          "--build is required"
         ],
         "orca_calls": {
           "empty": true

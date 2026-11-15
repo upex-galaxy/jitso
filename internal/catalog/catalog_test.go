@@ -150,7 +150,7 @@ func TestValidateBuildNotAMapping(t *testing.T) {
 		if err != nil {
 			t.Fatal(err)
 		}
-		if got := ValidateBuild(raw, testConfig, testRouteIDs); !reflect.DeepEqual(got, []string{"preset is not a mapping"}) {
+		if got := ValidateBuild(raw, testConfig, testRouteIDs); !reflect.DeepEqual(got, []string{"build is not a mapping"}) {
 			t.Errorf("%q: got %q", src, got)
 		}
 	}
@@ -209,10 +209,10 @@ func testFS(builds map[string]string) fstest.MapFS {
 		".agents/instructions/agent-code-quickref.md": {Data: []byte("---\nid: code-quickref\n---\n")},
 		".agents/instructions/agent-x.md":             {Data: []byte("no id here\n")},
 		".agents/instructions/other.md":               {Data: []byte("id: ignored\n")},
-		"jitso/presets/notes.txt":                     {Data: []byte("ignored")},
+		"jitso/builds/notes.txt":                      {Data: []byte("ignored")},
 	}
 	for name, body := range builds {
-		fsys["jitso/presets/"+name] = &fstest.MapFile{Data: []byte(body)}
+		fsys["jitso/builds/"+name] = &fstest.MapFile{Data: []byte(body)}
 	}
 	return fsys
 }
@@ -259,14 +259,14 @@ func TestLoadErrors(t *testing.T) {
 		builds map[string]string
 		want   string
 	}{
-		{"invalid build", map[string]string{"broken.yaml": bad}, `preset broken.yaml is invalid: model "gpt" is not in the allowlist`},
+		{"invalid build", map[string]string{"broken.yaml": bad}, `build jitso/builds/broken.yaml is invalid: model "gpt" is not in the allowlist`},
 		{"first invalid in file order", map[string]string{"z.yaml": bad, "a.yaml": strings.Replace(bad, "id: haiku-explorer", "id: X", 1)},
-			`preset a.yaml is invalid: id must be kebab-case; model "gpt" is not in the allowlist`},
-		{"unknown subagent", map[string]string{"w.yaml": worker("[nonexistent-helper]")}, `preset w.yaml is invalid: subagent "nonexistent-helper" is not a subagent-tier build`},
+			`build jitso/builds/a.yaml is invalid: id must be kebab-case; model "gpt" is not in the allowlist`},
+		{"unknown subagent", map[string]string{"w.yaml": worker("[nonexistent-helper]")}, `build jitso/builds/w.yaml is invalid: subagent "nonexistent-helper" is not a subagent-tier build`},
 		{"worker-tier subagent", map[string]string{"w.yaml": worker("[plan, other]"), "p.yaml": sub("plan"),
 			"o.yaml": strings.Replace(validBuild, "id: haiku-explorer", "id: other", 1)},
-			`preset w.yaml is invalid: subagent "other" is not a subagent-tier build`},
-		{"bad yaml", map[string]string{"y.yaml": "a: [1\n"}, "preset y.yaml is invalid: "},
+			`build jitso/builds/w.yaml is invalid: subagent "other" is not a subagent-tier build`},
+		{"bad yaml", map[string]string{"y.yaml": "a: [1\n"}, "build jitso/builds/y.yaml is invalid: "},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

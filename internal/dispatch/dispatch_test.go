@@ -217,14 +217,14 @@ func TestOpen(t *testing.T) {
 }
 
 func TestBuildPlanLauncherWithSpace(t *testing.T) {
-	in := PlanInput{Request: "r", Template: "{{LAUNCHER}} launch --preset <id>", Summary: "S", DispatchDir: "/h/.jitso/dispatch-cwd"}
+	in := PlanInput{Request: "r", Template: "{{LAUNCHER}} launch --build <id>", Summary: "S", DispatchDir: "/h/.jitso/dispatch-cwd"}
 	in.Launcher = "/opt/my tools/jitso"
 	plan, err := BuildPlan(in)
 	if err != nil {
 		t.Fatal(err)
 	}
 	i := slices.Index(plan.Argv, "--system-prompt")
-	if i < 0 || plan.Argv[i+1] != "'/opt/my tools/jitso' launch --preset <id>" {
+	if i < 0 || plan.Argv[i+1] != "'/opt/my tools/jitso' launch --build <id>" {
 		t.Errorf("the prompt must quote a launcher with a space, got %q", plan.Argv)
 	}
 	for _, bad := range []string{"/opt/it's/jitso", "/opt/a$b/jitso", "/opt/two  spaces/jitso", "/opt/trailing /jitso x ", "/opt/a;b/jitso", "/opt/tab\there/jitso"} {

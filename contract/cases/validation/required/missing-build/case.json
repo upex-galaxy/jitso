@@ -1,0 +1,39 @@
+{
+  "id": "validation/required/missing-build",
+  "title": "launch without --build is rejected",
+  "source": [
+    "cli/jitso/launch.test.ts: 'preset, brief and a valid mode are required; unknown flags are rejected'"
+  ],
+  "status": {
+    "ts": "xfail",
+    "go": "pass"
+  },
+  "defect": "N-10",
+  "intent": "INTENDED behavior (defect N-10, build vocabulary; docs/decisions.md D6). The launch flag that names the build is required, and its rejection reads `--build is required`. The oracle still prints `--preset is required`, so the stderr expectation FAILS on TS.",
+  "steps": [
+    {
+      "run": [
+        "launch",
+        "--brief",
+        "{{PROJECT}}/.jitso/briefs/b.md",
+        "--mode",
+        "direct"
+      ],
+      "expect": {
+        "exit": 2,
+        "stdout": [
+          {
+            "empty": true
+          }
+        ],
+        "stderr": [
+          "JITSO REJECTED:",
+          "--build is required"
+        ],
+        "orca_calls": {
+          "empty": true
+        }
+      }
+    }
+  ]
+}

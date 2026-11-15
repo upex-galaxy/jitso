@@ -35,11 +35,15 @@ func TestRun(t *testing.T) {
 		{"dispatch is not a word", []string{"dispatch"}, 2, "", `unknown command "dispatch"`},
 		{"tree", []string{"tree"}, 0, "jitso tree: not implemented yet\n", ""},
 		{"tree with root", []string{"tree", "x"}, 0, "jitso tree: not implemented yet\n", ""},
-		{"presets alone", []string{"presets"}, 0, "jitso presets: not implemented yet\n", ""},
-		{"presets other", []string{"presets", "show"}, 0, "jitso presets: not implemented yet\n", ""},
-		{"presets list needs the project", []string{"presets", "list"}, 3, "", "jitso: the cwd must not be read"},
+		{"presets is not a command", []string{"presets"}, 2, "", `jitso: unknown command "presets"`},
+		{"presets list is not a command", []string{"presets", "list"}, 2, "", `jitso: unknown command "presets"`},
+		{"build alone", []string{"build"}, 2, "", "jitso build: missing subcommand\n\nUsage: jitso build <subcommand>"},
+		{"build unknown subcommand", []string{"build", "show"}, 2, "", "jitso build: unknown subcommand \"show\"\n\nUsage: jitso build <subcommand>"},
+		{"build --help", []string{"build", "--help"}, 0, "Usage: jitso build <subcommand>", ""},
+		{"build -h", []string{"build", "-h"}, 0, "Usage: jitso build <subcommand>", ""},
+		{"build list needs the project", []string{"build", "list"}, 3, "", "jitso: the cwd must not be read"},
 		{"request needs the project", []string{"test PRJ-1", "now"}, 3, "", "jitso: the cwd must not be read"},
-		{"launch checks its arguments before the project", []string{"launch"}, 2, "", "JITSO REJECTED: --preset is required"},
+		{"launch checks its arguments before the project", []string{"launch"}, 2, "", "JITSO REJECTED: --build is required"},
 		{"hook needs a name", []string{"hook"}, 2, "", "jitso hook: expected one of guard or dispatch-guard"},
 	}
 	for _, tt := range tests {
@@ -68,7 +72,7 @@ func TestUnknownCommandPrintsUsage(t *testing.T) {
 func TestUsageOrder(t *testing.T) {
 	u := Usage()
 	last := -1
-	for _, name := range []string{"launch", "close", "reap", "tree", "analyze", "presets", "hook"} {
+	for _, name := range []string{"launch", "close", "reap", "tree", "analyze", "build", "hook"} {
 		i := strings.Index(u, "\n  "+name+" ")
 		if i <= last {
 			t.Fatalf("%s out of order in\n%s", name, u)

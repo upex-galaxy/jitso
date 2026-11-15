@@ -20,7 +20,7 @@
         "hook_event_name": "PreToolUse",
         "tool_name": "Bash",
         "tool_input": {
-          "command": "{{JITSO}} launch --preset p --brief b --mode direct{{joiner}}orca orchestration worker-start --run r1"
+          "command": "{{JITSO}} launch --build p --brief b --mode direct{{joiner}}orca orchestration worker-start --run r1"
         },
         "cwd": "{{PROJECT}}"
       },

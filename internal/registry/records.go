@@ -16,21 +16,23 @@ type Record interface {
 
 // LaunchEvent is the event a launch writes once its terminal is up.
 type LaunchEvent struct {
-	V              int      `json:"v"`
-	Event          string   `json:"event"`
-	ID             string   `json:"id"`
-	Parent         *string  `json:"parent"`
-	Root           string   `json:"root"`
-	Depth          int      `json:"depth"`
-	TS             string   `json:"ts"`
-	Repo           string   `json:"repo"`
-	Worktree       string   `json:"worktree"`
-	Cwd            *string  `json:"cwd"`
-	Mode           string   `json:"mode"`
-	Role           string   `json:"role"`
-	Type           string   `json:"type"`
-	Preset         string   `json:"preset"`
-	PresetVersion  any      `json:"preset_version"`
+	V        int     `json:"v"`
+	Event    string  `json:"event"`
+	ID       string  `json:"id"`
+	Parent   *string `json:"parent"`
+	Root     string  `json:"root"`
+	Depth    int     `json:"depth"`
+	TS       string  `json:"ts"`
+	Repo     string  `json:"repo"`
+	Worktree string  `json:"worktree"`
+	Cwd      *string `json:"cwd"`
+	Mode     string  `json:"mode"`
+	Role     string  `json:"role"`
+	Type     string  `json:"type"`
+	// Build and BuildVersion keep the v1 log keys "preset" and
+	// "preset_version": a storage schema is not renamed with the vocabulary.
+	Build          string   `json:"preset"`
+	BuildVersion   any      `json:"preset_version"`
 	Harness        string   `json:"harness"`
 	Model          string   `json:"model"`
 	Effort         string   `json:"effort"`

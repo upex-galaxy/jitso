@@ -37,12 +37,12 @@ func TestCheckLaunchField(t *testing.T) {
 		name, field, value string
 		ok                 bool
 	}{
-		{"preset ok", "preset", "haiku-explorer", true},
-		{"preset upper", "preset", "Haiku", false},
-		{"preset dash first", "preset", "-x", false},
-		{"preset 64", "preset", long(64), true},
-		{"preset 65", "preset", long(65), false},
-		{"preset dots", "preset", "a..b", false},
+		{"build ok", "build", "haiku-explorer", true},
+		{"build upper", "build", "Haiku", false},
+		{"build dash first", "build", "-x", false},
+		{"build 64", "build", long(64), true},
+		{"build 65", "build", long(65), false},
+		{"build dots", "build", "a..b", false},
 		{"run ok", "run", "run_1.a:b-c", true},
 		{"run upper first", "run", "R1", true},
 		{"run dash first", "run", "-r", false},
@@ -62,7 +62,7 @@ func TestCheckLaunchField(t *testing.T) {
 		{"worktree kelvin", "worktree", "a\u212a", false},
 		{"mcp ok", "mcp-exclude", "dbhub", true},
 		{"mcp dot", "mcp-exclude", "db.hub", false},
-		{"newline", "preset", "a\n", false},
+		{"newline", "build", "a\n", false},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

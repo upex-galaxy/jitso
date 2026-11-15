@@ -1,0 +1,22 @@
+# Approved build (ADR-0027). Shape and fields: .session/jitso ARQ section 6.3.
+id: sonnet-automator
+version: 1
+status: approved
+role: operator
+type: automator
+work_kind: automation
+description: Automate the tests of one user story with test-automation (KATA on Playwright), from its approved plan.
+harness: claude
+model: claude-sonnet-5-5
+effort: medium
+mode_default: direct
+agents_md: full
+route_scope: [code-quickref, ticket-work]
+skills_first: [test-automation]
+subagents: [plan, code, verifier]
+mcp: [dbhub, openapi]
+requires: [ticket_key]
+budget: { tokens: 400000, usd_list_cap: 6.00 }
+success:
+  - { check: answer_delivered }
+  - { check: no_rule_breaks }

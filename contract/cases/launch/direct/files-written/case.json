@@ -10,7 +10,7 @@
     "go": "pass"
   },
   "defect": "S1",
-  "intent": "INTENDED behavior (defect S1, route_scope; docs/architecture.md section 7). The card printed by a real launch has six lines (header, model, subagents, a `ROUTE-SCOPE: <ids>` line of its own, launch, budget). The TS binary prints five, so the stdout line count is the only expectation that FAILS on TS; the header regex, the brief.md card prefix, core.md, mcp.json, run.sh and card.txt (equal to stdout) hold on both.",
+  "intent": "INTENDED behavior (defect S1, route_scope; docs/architecture.md section 7). The card printed by a real launch has six lines (header, model, subagents, a `ROUTE-SCOPE: <ids>` line of its own, launch, budget). The TS binary prints five, so the stdout line count is the only expectation that FAILS on TS; the header regex, the brief.md card prefix, core.md, mcp.json, run.sh and card.txt (equal to stdout) hold on both. The card header in brief.md ends `| build <id> v<n>` (build vocabulary, defect N-10; docs/decisions.md D6), where the oracle still prints `| preset <id> v<n>`.",
   "project": {
     "files": {
       ".jitso/briefs/brief.md": {
@@ -22,7 +22,7 @@
     {
       "run": [
         "launch",
-        "--preset",
+        "--build",
         "haiku-explorer",
         "--brief",
         "{{PROJECT}}/.jitso/briefs/brief.md",
@@ -60,7 +60,7 @@
           {
             "path": ".jitso/launches/{{LAUNCH_ID}}/brief.md",
             "regex": [
-              "^JITSO {{LAUNCH_ID}} \\| operator/explorer \\| mode direct \\(asks you\\) \\| preset haiku-explorer v1\\n"
+              "^JITSO {{LAUNCH_ID}} \\| operator/explorer \\| mode direct \\(asks you\\) \\| build haiku-explorer v1\\n"
             ],
             "contains": [
               "{{CARD}}\n\n## Goal",

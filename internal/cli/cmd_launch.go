@@ -15,7 +15,7 @@ func init() {
 	Register(Command{
 		Name:    "launch",
 		Order:   10,
-		Summary: "launch a worker from a preset and a brief file, write its registry event, print its card",
+		Summary: "launch a worker from a build and a brief file, write its registry event, print its card",
 		Run:     runLaunch,
 	})
 }

@@ -1,0 +1,57 @@
+{
+  "id": "validation/old-preset-flag-is-unknown",
+  "title": "launch --preset is an unknown argument: the old flag is not kept as an alias",
+  "source": [
+    "intended: docs/decisions.md D6 and the no-alias row (the launch flag is --build)"
+  ],
+  "status": {
+    "ts": "xfail",
+    "go": "pass"
+  },
+  "defect": "N-10",
+  "intent": "INTENDED behavior (defect N-10, build vocabulary; docs/decisions.md D6). `launch --preset <id> ...` is rejected like any flag the launcher does not know: exit 2, `JITSO REJECTED: unknown argument \"--preset\"` on stderr, nothing on stdout, nothing written, orca never called, even for an id that is in the catalog. The oracle still takes `--preset` as the build flag: the same dry run succeeds with exit 0 and prints the card, so the exit, the stdout and the stderr expectations FAIL on TS. The ts adapter maps `--build` to `--preset` and never the reverse, so `--preset` reaches the oracle unchanged.",
+  "project": {
+    "files": {
+      ".jitso/briefs/b.md": {
+        "from": "brief.md"
+      }
+    }
+  },
+  "steps": [
+    {
+      "run": [
+        "launch",
+        "--preset",
+        "haiku-explorer",
+        "--brief",
+        "{{PROJECT}}/.jitso/briefs/b.md",
+        "--mode",
+        "direct",
+        "--dry-run"
+      ],
+      "expect": {
+        "exit": 2,
+        "stdout": [
+          {
+            "empty": true
+          }
+        ],
+        "stderr": [
+          "JITSO REJECTED: unknown argument \"--preset\"",
+          {
+            "line_count": 1
+          }
+        ],
+        "orca_calls": {
+          "empty": true
+        },
+        "files": [
+          {
+            "path": ".jitso/launches",
+            "exists": false
+          }
+        ]
+      }
+    }
+  ]
+}

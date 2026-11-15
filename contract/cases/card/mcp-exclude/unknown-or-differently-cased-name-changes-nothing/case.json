@@ -1,6 +1,6 @@
 {
   "id": "card/mcp-exclude/unknown-or-differently-cased-name-changes-nothing",
-  "title": "excluding a name the preset does not list, or with another case, leaves the MCP part untouched",
+  "title": "excluding a name the build does not list, or with another case, leaves the MCP part untouched",
   "source": [
     "cli/jitso/launch.test.ts: runLaunch mcp = profile.mcp.filter(name => !args.mcpExclude.includes(name))"
   ],
@@ -23,7 +23,7 @@
     {
       "run": [
         "launch",
-        "--preset",
+        "--build",
         "sonnet-tester",
         "--brief",
         "{{PROJECT}}/.jitso/briefs/brief.md",

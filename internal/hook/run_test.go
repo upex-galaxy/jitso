@@ -62,9 +62,9 @@ func TestRunGuard(t *testing.T) {
 		wantDeny    string
 	}{
 		{"denies a direct worker-start", deny, env, "(denied: orchestration worker-start)"},
-		{"names the launcher of a project without a jitso script", deny, env, "Use: jitso launch --preset"},
+		{"names the launcher of a project without a jitso script", deny, env, "Use: jitso launch --build"},
 		{"lets ls pass", `{"tool_name":"Bash","tool_input":{"command":"ls"}}`, env, ""},
-		{"lets the own launcher pass", `{"tool_name":"Bash","tool_input":{"command":"` + self + ` launch --preset p"}}`, env, ""},
+		{"lets the own launcher pass", `{"tool_name":"Bash","tool_input":{"command":"` + self + ` launch --build p"}}`, env, ""},
 		{"fails open on bad JSON", `not json`, env, ""},
 		{"fails open on an empty input", ``, env, ""},
 		{"fails open on a non-object", `[]`, env, ""},
@@ -94,7 +94,7 @@ func TestRunGuardNamesTheBunScript(t *testing.T) {
 		t.Fatal(err)
 	}
 	got := runWith(RunGuard, `{"tool_name":"Bash","tool_input":{"command":"orca agent launch"}}`, map[string]string{"CLAUDE_PROJECT_DIR": project}, "/x/jitso")
-	if !strings.Contains(got, "Use: bun run jitso launch --preset") || !strings.Contains(got, "(denied: agent launch)") {
+	if !strings.Contains(got, "Use: bun run jitso launch --build") || !strings.Contains(got, "(denied: agent launch)") {
 		t.Errorf("got %q", got)
 	}
 }
@@ -148,7 +148,7 @@ func TestRunDispatchGuard(t *testing.T) {
 		env         map[string]string
 		decision    string
 	}{
-		{"allows the launcher line", bash(self + " launch --preset p --brief b --mode direct"), env, "allow"},
+		{"allows the launcher line", bash(self + " launch --build p --brief b --mode direct"), env, "allow"},
 		{"denies another command", bash("ls"), env, "deny"},
 		{"allows a brief", `{"tool_name":"Write","tool_input":{"file_path":"` + dir + `/briefs/a.md"},"cwd":"` + dir + `"}`, env, "allow"},
 		{"denies a write outside the briefs", `{"tool_name":"Write","tool_input":{"file_path":"` + home + `/a.md"},"cwd":"` + dir + `"}`, env, "deny"},

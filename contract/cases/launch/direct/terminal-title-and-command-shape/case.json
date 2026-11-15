@@ -1,6 +1,6 @@
 {
   "id": "launch/direct/terminal-title-and-command-shape",
-  "title": "the terminal title is '[jitso:<id>] <preset>' and --command is the quoted absolute path of run.sh",
+  "title": "the terminal title is '[jitso:<id>] <build>' and --command is the quoted absolute path of run.sh",
   "source": [
     "cli/jitso/launch.test.ts: '--command is the quoted absolute path of run.sh and the title carries the mark'"
   ],
@@ -15,7 +15,7 @@
     {
       "run": [
         "launch",
-        "--preset",
+        "--build",
         "haiku-explorer",
         "--brief",
         "{{PROJECT}}/.jitso/briefs/brief.md",

@@ -76,7 +76,7 @@ Replaced in every string of the case at run time (argv, stdin, env values, file 
 | `{{PROJECT}}` | real path of the project dir |
 | `{{HOME}}` | the sandbox HOME (real path) |
 | `{{BIN}}` | the sandbox folder holding the fakes |
-| `{{JITSO}}` | the command line, as one string of words, that a hook or a shell would use to start the implementation under test in this sandbox. Supplied by the adapter (section 9). It exists so a case can write the launcher line a hook must judge, such as `{{JITSO}} launch --preset ...`, without naming one implementation. As one element of a `run` argv it is a single word with spaces in it, not a command |
+| `{{JITSO}}` | the command line, as one string of words, that a hook or a shell would use to start the implementation under test in this sandbox. Supplied by the adapter (section 9). It exists so a case can write the launcher line a hook must judge, such as `{{JITSO}} launch --build ...`, without naming one implementation. As one element of a `run` argv it is a single word with spaces in it, not a command |
 | `{{WORKTREE_<name>}}` | the real path of the linked worktree a `git_worktree` step of the case creates (section 6.5). It is known in every section, also before that step runs: the path is fixed, the folder appears when the step runs |
 | `{{<NAME>}}` | any value a previous step captured, section 6 |
 | `{{var}}`, `{{index}}` | from `for_each` |
@@ -172,7 +172,7 @@ A missing file or log is empty text. A capture whose regex does not match is a f
 ### 6.1 `run`: the CLI
 
 ```json
-{ "run": ["launch", "--preset", "haiku-explorer"], "stdin": "", "env": {}, "cwd": ".",
+{ "run": ["launch", "--build", "haiku-explorer"], "stdin": "", "env": {}, "cwd": ".",
   "capture": { "LAUNCH_ID": { "from": "stdout", "regex": "JITSO (L\\d{8}T\\d{6}-[0-9a-f]{4})", "group": 1 } },
   "expect": { } }
 ```

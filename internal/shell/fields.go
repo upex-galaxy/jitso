@@ -16,7 +16,7 @@ var (
 // launchFields is the allowlist per launcher field (the oracle's
 // checkLaunchField table): plain characters only, never starting with "-".
 var launchFields = map[string]*regexp.Regexp{
-	"preset":      regexp.MustCompile(`^[a-z][a-z0-9-]{0,63}$`),
+	"build":       regexp.MustCompile(`^[a-z][a-z0-9-]{0,63}$`),
 	"run":         orcaID,
 	"task":        orcaID,
 	"parent":      launchID,

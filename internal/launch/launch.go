@@ -59,7 +59,7 @@ type Deps struct {
 // build, the brief and the parent are validated it prints the card; a dry run
 // stops there. A real launch then executes (see execute).
 func Run(a Args, d Deps) error {
-	p, err := profile.Resolve(profile.Request{Preset: a.Preset, Fields: a.Fields}, d.Catalog)
+	p, err := profile.Resolve(profile.Request{Build: a.Build, Fields: a.Fields}, d.Catalog)
 	if err != nil {
 		return err
 	}
@@ -94,7 +94,7 @@ func Run(a Args, d Deps) error {
 	}
 	id := ID(d.Now(), random)
 	if !p.Build.Budget.Set {
-		return fail.Envf("preset %s has no budget mapping", p.Build.ID)
+		return fail.Envf("build %s has no budget mapping", p.Build.ID)
 	}
 	pkg, _ := os.ReadFile(filepath.Join(d.Root.Primary, "package.json"))
 	cardText := card.Render(Card(id, a.Mode, p, mcp, card.LaunchCommand(pkg)))

@@ -14,9 +14,9 @@
     "var": "command",
     "values": [
       "ls",
-      "bun run jitso launch --preset haiku-explorer --brief /h/b/a.md --mode direct",
-      "bun cli/jitso/index.ts launch --preset haiku-explorer --brief /h/b/a.md --mode direct",
-      "bun /tmp/evil/cli/jitso/index.ts launch --preset haiku-explorer --brief /h/b/a.md --mode direct",
+      "bun run jitso launch --build haiku-explorer --brief /h/b/a.md --mode direct",
+      "bun cli/jitso/index.ts launch --build haiku-explorer --brief /h/b/a.md --mode direct",
+      "bun /tmp/evil/cli/jitso/index.ts launch --build haiku-explorer --brief /h/b/a.md --mode direct",
       "cat /etc/passwd"
     ]
   },

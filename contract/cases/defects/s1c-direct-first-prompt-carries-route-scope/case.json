@@ -1,5 +1,5 @@
 {
-  "title": "in direct mode the first prompt passed to claude carries the ROUTE-SCOPE: line of the preset",
+  "title": "in direct mode the first prompt passed to claude carries the ROUTE-SCOPE: line of the build",
   "source": [
     "intended: PLAN.md defect S1 (the first prompt is what the router can read in time); the TS prompt is only 'Read <brief> and follow it exactly.'"
   ],
@@ -11,7 +11,7 @@
     "go": "pass"
   },
   "defect": "S1",
-  "intent": "INTENDED behavior (defect S1, route_scope). The router reads a scope with the regex (?:^|[.!?])[ \\t>*-]*ROUTE-SCOPE:([^\\n]*), so the card line must start with ROUTE-SCOPE: (with the colon, at a line start or after . ! ?) and list the preset ids comma separated. On the TS binary today the card writes 'ROUTE-SCOPE <ids>' with no colon, after a '|' separator, so the matcher finds nothing and this case FAILS on TS. In direct mode the LAST claude argument is the first prompt, and it must carry the same scope; on TS it is only 'Read <brief> and follow it exactly.', so last_arg has no ROUTE-SCOPE line and this case FAILS on TS.",
+  "intent": "INTENDED behavior (defect S1, route_scope). The router reads a scope with the regex (?:^|[.!?])[ \\t>*-]*ROUTE-SCOPE:([^\\n]*), so the card line must start with ROUTE-SCOPE: (with the colon, at a line start or after . ! ?) and list the build ids comma separated. On the TS binary today the card writes 'ROUTE-SCOPE <ids>' with no colon, after a '|' separator, so the matcher finds nothing and this case FAILS on TS. In direct mode the LAST claude argument is the first prompt, and it must carry the same scope; on TS it is only 'Read <brief> and follow it exactly.', so last_arg has no ROUTE-SCOPE line and this case FAILS on TS.",
   "project": {
     "files": {
       ".jitso/briefs/brief.md": {
@@ -23,7 +23,7 @@
     {
       "run": [
         "launch",
-        "--preset",
+        "--build",
         "sonnet-automator",
         "--brief",
         "{{PROJECT}}/.jitso/briefs/brief.md",

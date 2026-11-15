@@ -7,7 +7,6 @@
   "for_each": {
     "var": "flag",
     "values": [
-      "preset",
       "brief",
       "mode",
       "run",

@@ -35,12 +35,12 @@ func load(t *testing.T) *catalog.Catalog {
 		"jitso/jitso.yaml":                          {Data: []byte(config)},
 		".agents/instructions/agent-ticket-work.md": {Data: []byte("---\nid: ticket-work\n---\n")},
 		".agents/instructions/agent-code.md":        {Data: []byte("---\nid: code-quickref\n---\n")},
-		"jitso/presets/explorer.yaml":               {Data: []byte(build("explorer"))},
-		"jitso/presets/draft.yaml":                  {Data: []byte(build("draft", "status: candidate"))},
-		"jitso/presets/plan.yaml":                   {Data: []byte(build("plan", "tier: subagent", "prompt: You plan."))},
-		"jitso/presets/worker.yaml":                 {Data: []byte(build("worker", "subagents: [plan]", "model: claude-sonnet-5-5", "effort: medium", "mcp: [dbhub]", "route_scope: [ticket-work, code-quickref]"))},
-		"jitso/presets/tester.yaml":                 {Data: []byte(build("tester", "requires: [ticket_key, env]"))},
-		"jitso/presets/mixed-scope.yaml":            {Data: []byte(build("mixed-scope", "route_scope: [none, ticket-work]"))},
+		"jitso/builds/explorer.yaml":                {Data: []byte(build("explorer"))},
+		"jitso/builds/draft.yaml":                   {Data: []byte(build("draft", "status: candidate"))},
+		"jitso/builds/plan.yaml":                    {Data: []byte(build("plan", "tier: subagent", "prompt: You plan."))},
+		"jitso/builds/worker.yaml":                  {Data: []byte(build("worker", "subagents: [plan]", "model: claude-sonnet-5-5", "effort: medium", "mcp: [dbhub]", "route_scope: [ticket-work, code-quickref]"))},
+		"jitso/builds/tester.yaml":                  {Data: []byte(build("tester", "requires: [ticket_key, env]"))},
+		"jitso/builds/mixed-scope.yaml":             {Data: []byte(build("mixed-scope", "route_scope: [none, ticket-work]"))},
 	}
 	cat, err := catalog.Load(fsys)
 	if err != nil {
@@ -64,18 +64,18 @@ func TestResolve(t *testing.T) {
 		req    Request
 		reason string
 	}{
-		{"ok", Request{Preset: "explorer"}, ""},
-		{"unknown", Request{Preset: "wizard"}, `unknown preset "wizard"`},
-		{"not approved", Request{Preset: "draft"}, `preset "draft" is candidate, not approved`},
-		{"subagent tier", Request{Preset: "plan"}, `preset "plan" has tier subagent: it is not launched alone, a worker lists it in its subagents`},
-		{"none mixed", Request{Preset: "mixed-scope"}, `"none" cannot be combined with route-scope ids`},
-		{"unknown field", Request{Preset: "explorer", Fields: fields("ticket_key", "PRJ-1")}, `unknown field "ticket_key" for preset "explorer"`},
-		{"invalid field", Request{Preset: "tester", Fields: fields("ticket_key", "prj-1", "env", "x")}, "field ticket_key has an invalid value"},
-		{"trailing newline is invalid", Request{Preset: "tester", Fields: fields("ticket_key", "PRJ-1\n", "env", "x")}, "field ticket_key has an invalid value"},
-		{"missing in requires order", Request{Preset: "tester"}, "missing ticket_key"},
-		{"second missing", Request{Preset: "tester", Fields: fields("ticket_key", "PRJ-1")}, "missing env"},
-		{"index-like names come first", Request{Preset: "tester", Fields: fields("ticket_key", "bad", "7", "x")}, `unknown field "7" for preset "tester"`},
-		{"all given", Request{Preset: "tester", Fields: fields("env", "staging", "ticket_key", "PRJ-1")}, ""},
+		{"ok", Request{Build: "explorer"}, ""},
+		{"unknown", Request{Build: "wizard"}, `unknown build "wizard"`},
+		{"not approved", Request{Build: "draft"}, `build "draft" is candidate, not approved`},
+		{"subagent tier", Request{Build: "plan"}, `build "plan" has tier subagent: it is not launched alone, a worker lists it in its subagents`},
+		{"none mixed", Request{Build: "mixed-scope"}, `"none" cannot be combined with route-scope ids`},
+		{"unknown field", Request{Build: "explorer", Fields: fields("ticket_key", "PRJ-1")}, `unknown field "ticket_key" for build "explorer"`},
+		{"invalid field", Request{Build: "tester", Fields: fields("ticket_key", "prj-1", "env", "x")}, "field ticket_key has an invalid value"},
+		{"trailing newline is invalid", Request{Build: "tester", Fields: fields("ticket_key", "PRJ-1\n", "env", "x")}, "field ticket_key has an invalid value"},
+		{"missing in requires order", Request{Build: "tester"}, "missing ticket_key"},
+		{"second missing", Request{Build: "tester", Fields: fields("ticket_key", "PRJ-1")}, "missing env"},
+		{"index-like names come first", Request{Build: "tester", Fields: fields("ticket_key", "bad", "7", "x")}, `unknown field "7" for build "tester"`},
+		{"all given", Request{Build: "tester", Fields: fields("env", "staging", "ticket_key", "PRJ-1")}, ""},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -94,7 +94,7 @@ func TestResolve(t *testing.T) {
 }
 
 func TestResolveProfile(t *testing.T) {
-	p, err := Resolve(Request{Preset: "worker"}, load(t))
+	p, err := Resolve(Request{Build: "worker"}, load(t))
 	if err != nil {
 		t.Fatal(err)
 	}

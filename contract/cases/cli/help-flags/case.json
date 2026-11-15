@@ -5,6 +5,12 @@
     "cli/jitso/index.test.ts: '--help lists every subcommand and exits 0'",
     "cli/jitso/index.ts: main (`--help` and `-h` branch)"
   ],
+  "status": {
+    "ts": "xfail",
+    "go": "pass"
+  },
+  "defect": "N-10",
+  "intent": "INTENDED behavior (defect N-10, build vocabulary; docs/decisions.md D6). The usage lists the catalog command group as `build` in place of `presets`. The oracle usage still lists `presets  list the approved presets` and has no `build` word, so the `build` expectation FAILS on TS.",
   "for_each": {
     "var": "flag",
     "values": [
@@ -26,7 +32,7 @@
           "reap",
           "tree",
           "analyze",
-          "presets",
+          "build",
           "--help"
         ],
         "stderr": [

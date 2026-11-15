@@ -15,7 +15,7 @@ const ts = "2026-11-13T14:22:33.000Z"
 func str(s string) *string { return &s }
 
 func launch(id string) *LaunchEvent {
-	return &LaunchEvent{ID: id, Root: id, TS: ts, Mode: "direct", Preset: "haiku-explorer", PresetVersion: 1,
+	return &LaunchEvent{ID: id, Root: id, TS: ts, Mode: "direct", Build: "haiku-explorer", BuildVersion: 1,
 		Orca: OrcaRef{Terminal: "term_fake", Title: "[jitso:" + id + "] haiku-explorer"}}
 }
 
@@ -122,7 +122,7 @@ func TestAppendRejectsInvalid(t *testing.T) {
 	}{
 		{"spanish mode", func() Record { l := launch("L20261113T142233-ab12"); l.Mode = "directo"; return l }(), "invalid launch event: mode must be one of direct|fleet"},
 		{"bad ts", func() Record { l := launch("L20261113T142233-ab12"); l.TS = "not a date"; return l }(), "invalid launch event: ts must be an ISO timestamp"},
-		{"empty preset", func() Record { l := launch("L20261113T142233-ab12"); l.Preset = ""; return l }(), "invalid launch event: preset must be a non-empty string"},
+		{"empty preset", func() Record { l := launch("L20261113T142233-ab12"); l.Build = ""; return l }(), "invalid launch event: preset must be a non-empty string"},
 		{"bad source", &EndEvent{ID: "x", TS: ts, Source: "nope", OutcomeReported: "none"}, "invalid end event: source must be one of worker_done|session_end_hook|jitso_close|reap"},
 		{"bad kind", &RuleBreakEvent{TS: ts, Kind: "x", Evidence: "e"}, "invalid rule_break event: kind must be one of"},
 	}
@@ -215,9 +215,9 @@ func TestFold(t *testing.T) {
 	s := newStore(t)
 	a, b := "L20261113T142233-aaaa", "L20261113T142233-bbbb"
 	first := launch(a)
-	first.Preset = "first"
+	first.Build = "first"
 	second := launch(a)
-	second.Preset = "second"
+	second.Build = "second"
 	recs := []Record{
 		first,
 		&EndEvent{ID: "L20261113T142233-cccc", TS: ts, Source: "reap", OutcomeReported: "none"},

@@ -11,19 +11,19 @@ func TestRender(t *testing.T) {
 		in   Input
 		want string
 	}{
-		{"direct, no lists", Input{ID: "L20261113T142233-a3f9", Role: "operator", Type: "explorer", Mode: "direct", Preset: "haiku-explorer",
-			PresetVersion: "1", Model: "claude-haiku-5-5", Effort: "low", RouteScope: []string{"none"}, LaunchCommand: CommandPlain,
+		{"direct, no lists", Input{ID: "L20261113T142233-a3f9", Role: "operator", Type: "explorer", Mode: "direct", Build: "haiku-explorer",
+			BuildVersion: "1", Model: "claude-haiku-5-5", Effort: "low", RouteScope: []string{"none"}, LaunchCommand: CommandPlain,
 			BudgetTokens: 250000, BudgetUSD: 0.5},
-			"JITSO L20261113T142233-a3f9 | operator/explorer | mode direct (asks you) | preset haiku-explorer v1\n" +
+			"JITSO L20261113T142233-a3f9 | operator/explorer | mode direct (asks you) | build haiku-explorer v1\n" +
 				"model claude-haiku-5-5 effort low | bypass | MCP none | skill none\n" +
 				"subagents unrestricted (harness default)\n" +
 				"ROUTE-SCOPE: none\n" +
 				"launch: jitso launch\n" +
 				"budget 250k tokens (100%), list cap US$ 0.50 | reports to: you | log .jitso/launches.jsonl"},
-		{"fleet, lists", Input{ID: "L1", Role: "operator", Type: "automator", Mode: "fleet", Preset: "sonnet-automator", PresetVersion: "2",
+		{"fleet, lists", Input{ID: "L1", Role: "operator", Type: "automator", Mode: "fleet", Build: "sonnet-automator", BuildVersion: "2",
 			Model: "m", Effort: "medium", MCP: []string{"dbhub", "openapi"}, SkillsFirst: []string{"a", "b"}, Subagents: []string{"plan", "code"},
 			RouteScope: []string{"code-quickref", "ticket-work"}, LaunchCommand: CommandBunRun, BudgetTokens: 400000, BudgetUSD: 6},
-			"JITSO L1 | operator/automator | mode fleet (asks your conductor) | preset sonnet-automator v2\n" +
+			"JITSO L1 | operator/automator | mode fleet (asks your conductor) | build sonnet-automator v2\n" +
 				"model m effort medium | bypass | MCP dbhub,openapi | skill a,b\n" +
 				"subagents plan,code (suggested; others allowed)\n" +
 				"ROUTE-SCOPE: code-quickref,ticket-work\n" +

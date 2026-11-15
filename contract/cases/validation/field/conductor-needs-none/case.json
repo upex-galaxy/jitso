@@ -1,9 +1,15 @@
 {
   "id": "validation/field/conductor-needs-none",
-  "title": "a preset that requires nothing launches (dry run) with no --field at all",
+  "title": "a build that requires nothing launches (dry run) with no --field at all",
   "source": [
     "cli/jitso/profile.test.ts: 'the conductor resolves with no required field'"
   ],
+  "status": {
+    "ts": "xfail",
+    "go": "pass"
+  },
+  "defect": "N-10",
+  "intent": "INTENDED behavior (defect N-10, build vocabulary; docs/decisions.md D6). The launch card header ends `| build <id> v<n>`. The oracle still prints `| preset <id> v<n>`, so the stdout expectation that names the header FAILS on TS.",
   "project": {
     "files": {
       ".jitso/briefs/b.md": {
@@ -15,7 +21,7 @@
     {
       "run": [
         "launch",
-        "--preset",
+        "--build",
         "sonnet-conductor",
         "--brief",
         "{{PROJECT}}/.jitso/briefs/b.md",
@@ -26,7 +32,7 @@
       "expect": {
         "exit": 0,
         "stdout": [
-          "preset sonnet-conductor v1",
+          "build sonnet-conductor v1",
           "dry run: nothing was written"
         ],
         "orca_calls": {

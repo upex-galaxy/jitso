@@ -1,6 +1,6 @@
 # JITSO hard rules
 
-These rules are appended to your system prompt by the launcher. They bind every launched session. The launch card at the top of your brief names your role, mode, preset and who you report to.
+These rules are appended to your system prompt by the launcher. They bind every launched session. The launch card at the top of your brief names your role, mode, build and who you report to.
 
 1. Credentials are used by NAME, never by value (Critical Rule 1). Never open, print or paste a secret. Do not read `.env*` (except `.env.example` and `.env*.schema`), `.auth/**` or `.claude/settings.local.json`. A missing secret is the human's to type: name the variable and stop.
 2. No AI attribution in commits. Every commit ends with two trailers, in this order: `Worktree: <name|primary>` then `Session: <label>`.

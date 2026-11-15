@@ -7,7 +7,7 @@
   },
   "steps": [
     {
-      "run": ["launch", "--preset", "haiku-explorer", "--brief", "{{PROJECT}}/.jitso/briefs/explore.md", "--mode", "direct", "--dry-run"],
+      "run": ["launch", "--build", "haiku-explorer", "--brief", "{{PROJECT}}/.jitso/briefs/explore.md", "--mode", "direct", "--dry-run"],
       "expect": {
         "exit": 0,
         "stdout": [

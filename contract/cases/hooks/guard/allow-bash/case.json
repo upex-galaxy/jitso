@@ -7,8 +7,8 @@
   "for_each": {
     "var": "command",
     "values": [
-      "bun run jitso launch --preset sonnet-tester --brief /x/brief.md --mode fleet --run r1 --task t1",
-      "jitso launch --preset p --brief b --mode direct",
+      "bun run jitso launch --build sonnet-tester --brief /x/brief.md --mode fleet --run r1 --task t1",
+      "jitso launch --build p --brief b --mode direct",
       "orca orchestration worker-list --run r1 --json",
       "orca terminal create --worktree w --title t",
       "orca terminal create --worktree w --command bash",

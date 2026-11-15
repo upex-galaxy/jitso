@@ -76,7 +76,7 @@ func verdictOf(secretReads int, checks []catalog.SuccessCheck) (verdict, reason 
 	if len(checks) > 0 && evaluated == len(checks) {
 		verdict = "success"
 	}
-	return verdict, fmt.Sprintf("preset success checks %d of %d evaluated here; the rest need the destination", evaluated, len(checks))
+	return verdict, fmt.Sprintf("build success checks %d of %d evaluated here; the rest need the destination", evaluated, len(checks))
 }
 
 func byID(id string, prices Prices, d Deps) (string, error) {
@@ -101,8 +101,9 @@ func byID(id string, prices Prices, d Deps) (string, error) {
 		return "", err
 	}
 	var checks []catalog.SuccessCheck
-	if preset, _ := l.Launch.String("preset"); preset != "" {
-		if b, ok := cat.Find(preset); ok {
+	// The registry log keeps its v1 key "preset" for the build id (decision B3-5).
+	if build, _ := l.Launch.String("preset"); build != "" {
+		if b, ok := cat.Find(build); ok {
 			checks = b.Success
 		}
 	}

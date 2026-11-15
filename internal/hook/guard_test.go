@@ -71,7 +71,7 @@ func TestLaunchWord(t *testing.T) {
 
 func TestGuardReason(t *testing.T) {
 	got := GuardReason("jitso launch", "agent launch")
-	for _, want := range []string{"jitso launch --preset <id>", "(denied: agent launch)"} {
+	for _, want := range []string{"jitso launch --build <id>", "(denied: agent launch)"} {
 		if !strings.Contains(got, want) {
 			t.Errorf("reason %q lacks %q", got, want)
 		}

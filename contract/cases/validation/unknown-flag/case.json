@@ -12,7 +12,7 @@
       "--help",
       "-h",
       "--dry-runs",
-      "--Preset",
+      "--Build",
       "-p",
       "positional"
     ]
@@ -21,7 +21,7 @@
     {
       "run": [
         "launch",
-        "--preset",
+        "--build",
         "haiku-explorer",
         "--brief",
         "{{PROJECT}}/.jitso/briefs/b.md",

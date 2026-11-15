@@ -1,5 +1,5 @@
 {
-  "title": "a preset with agents_md: full launches claude without CLAUDE_CODE_DISABLE_CLAUDE_MDS in its environment",
+  "title": "a build with agents_md: full launches claude without CLAUDE_CODE_DISABLE_CLAUDE_MDS in its environment",
   "source": [
     "jitso/presets/sonnet-automator.yaml agents_md: full; PLAN.md defect S2 (the full half passes on TS today: the field is only logged)"
   ],
@@ -17,7 +17,7 @@
     {
       "run": [
         "launch",
-        "--preset",
+        "--build",
         "sonnet-automator",
         "--brief",
         "{{PROJECT}}/.jitso/briefs/brief.md",

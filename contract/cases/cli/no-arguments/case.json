@@ -4,6 +4,12 @@
   "source": [
     "cli/jitso/index.test.ts: 'no arguments prints the usage and exits 0'"
   ],
+  "status": {
+    "ts": "xfail",
+    "go": "pass"
+  },
+  "defect": "N-10",
+  "intent": "INTENDED behavior (defect N-10, build vocabulary; docs/decisions.md D6). The usage lists the catalog command group as `build` in place of `presets`. The oracle usage still lists `presets  list the approved presets` and has no `build` word, so the `build` expectation FAILS on TS.",
   "steps": [
     {
       "run": [],
@@ -16,7 +22,7 @@
           "reap",
           "tree",
           "analyze",
-          "presets"
+          "build"
         ],
         "stderr": [
           {

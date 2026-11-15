@@ -30,41 +30,42 @@ func TestDispatchGuardCommands(t *testing.T) {
 		allowed       bool
 	}{
 		{"bare launch", "/opt/jitso launch", true},
-		{"preset brief mode", launch + "--preset p --brief /h/b/a.md --mode direct", true},
-		{"all flags", launch + "--preset p --brief b --mode direct --field a=b --field c=d --worktree w --mcp-exclude m --dry-run", true},
+		{"build brief mode", launch + "--build p --brief /h/b/a.md --mode direct", true},
+		{"all flags", launch + "--build p --brief b --mode direct --field a=b --field c=d --worktree w --mcp-exclude m --dry-run", true},
 		{"other program", "ls", false},
-		{"bun run form", "bun run jitso launch --preset p", false},
-		{"program in front", "python3 /opt/jitso launch --preset p", false},
-		{"foreign launcher", "/tmp/evil/jitso launch --preset p", false},
-		{"relative launcher", "jitso launch --preset p", false},
-		{"env prefix", "FOO=bar /opt/jitso launch --preset p", false},
+		{"bun run form", "bun run jitso launch --build p", false},
+		{"program in front", "python3 /opt/jitso launch --build p", false},
+		{"foreign launcher", "/tmp/evil/jitso launch --build p", false},
+		{"relative launcher", "jitso launch --build p", false},
+		{"env prefix", "FOO=bar /opt/jitso launch --build p", false},
 		{"other subcommand", "/opt/jitso close L1", false},
 		{"only the launcher", "/opt/jitso", false},
-		{"semicolon", launch + "--preset p; ls", false},
-		{"substitution", launch + "--preset $(whoami)", false},
-		{"backtick", launch + "--preset `whoami`", false},
-		{"pipe", launch + "--preset p | cat", false},
-		{"and", launch + "--preset p && ls", false},
-		{"redirect", launch + "--preset p > /tmp/x", false},
-		{"newline", launch + "--preset p\nls", false},
-		{"quote", launch + "--preset 'p'", false},
-		{"double space", launch + "--preset p  --dry-run", false},
-		{"trailing space", launch + "--preset p ", false},
-		{"fleet", launch + "--preset p --mode fleet", false},
-		{"upper-case mode", launch + "--preset p --mode DIRECT", false},
-		{"unknown flag", launch + "--preset p --model m", false},
-		{"stray word", launch + "--preset p stray", false},
-		{"flag without value", launch + "--preset p --mode", false},
-		{"value that is a flag", launch + "--preset --brief x", false},
+		{"semicolon", launch + "--build p; ls", false},
+		{"substitution", launch + "--build $(whoami)", false},
+		{"backtick", launch + "--build `whoami`", false},
+		{"pipe", launch + "--build p | cat", false},
+		{"and", launch + "--build p && ls", false},
+		{"redirect", launch + "--build p > /tmp/x", false},
+		{"newline", launch + "--build p\nls", false},
+		{"quote", launch + "--build 'p'", false},
+		{"double space", launch + "--build p  --dry-run", false},
+		{"trailing space", launch + "--build p ", false},
+		{"fleet", launch + "--build p --mode fleet", false},
+		{"upper-case mode", launch + "--build p --mode DIRECT", false},
+		{"unknown flag", launch + "--build p --model m", false},
+		{"stray word", launch + "--build p stray", false},
+		{"flag without value", launch + "--build p --mode", false},
+		{"value that is a flag", launch + "--build --brief x", false},
 		{"empty command", "", false},
-		{"quoted launcher with space", "'/opt/jitso' launch --preset p", false}, // no space inside: not needed
-		{"quoted brief with space", launch + "--preset p --brief '/h/my dir/a.md' --mode direct", true},
-		{"quoted brief with two spaces", launch + "--preset p --brief '/h/my  dir/a.md'", false},
-		{"quoted brief with dollar", launch + "--preset p --brief '/h/my $dir/a.md'", false},
-		{"quoted brief glued to text", launch + "--preset p --brief '/h/my dir'/a.md", false},
-		{"quoted brief unterminated", launch + "--preset p --brief '/h/my dir", false},
-		{"quoted brief starting with a dash", launch + "--preset p --brief '-x y'", false},
+		{"quoted launcher with space", "'/opt/jitso' launch --build p", false}, // no space inside: not needed
+		{"quoted brief with space", launch + "--build p --brief '/h/my dir/a.md' --mode direct", true},
+		{"quoted brief with two spaces", launch + "--build p --brief '/h/my  dir/a.md'", false},
+		{"quoted brief with dollar", launch + "--build p --brief '/h/my $dir/a.md'", false},
+		{"quoted brief glued to text", launch + "--build p --brief '/h/my dir'/a.md", false},
+		{"quoted brief unterminated", launch + "--build p --brief '/h/my dir", false},
+		{"quoted brief starting with a dash", launch + "--build p --brief '-x y'", false},
 		{"quoted value of another flag", launch + "--field 'a=b c'", false},
+		{"old preset flag", launch + "--preset p --brief b --mode direct", false},
 		{"quoted flag", launch + "'--dry-run'", false},
 		{"quoted subcommand", "/opt/jitso 'launch x'", false},
 	}
@@ -84,12 +85,12 @@ func TestDispatchGuardQuotedLauncher(t *testing.T) {
 	g.Launcher = "/opt/my tools/jitso"
 	g.IsOwn = isOwnAt("/opt/my tools/jitso")
 	for command, allowed := range map[string]bool{
-		"'/opt/my tools/jitso' launch --preset p --brief /h/b/a.md --mode direct": true,
-		"'/opt/my tools/jitso' launch":                                            true,
-		"/opt/my tools/jitso launch --preset p":                                   false,
-		"'/opt/my tools/other' launch --preset p":                                 false,
-		"'/opt/my tools/jitso' close L1":                                          false,
-		"'/opt/my tools/jitso' launch --preset p; ls":                             false,
+		"'/opt/my tools/jitso' launch --build p --brief /h/b/a.md --mode direct": true,
+		"'/opt/my tools/jitso' launch":                                           true,
+		"/opt/my tools/jitso launch --build p":                                   false,
+		"'/opt/my tools/other' launch --build p":                                 false,
+		"'/opt/my tools/jitso' close L1":                                         false,
+		"'/opt/my tools/jitso' launch --build p; ls":                             false,
 	} {
 		problem := g.Problem(payload("Bash", map[string]any{"command": command}, g.DispatchDir))
 		if (problem == "") != allowed {
@@ -163,5 +164,13 @@ func TestDispatchGuardSession(t *testing.T) {
 				t.Errorf("Problem = %q, want it to contain %q", got, tt.want)
 			}
 		})
+	}
+}
+
+func TestDispatchGuardRejectsThePresetFlag(t *testing.T) {
+	g := testGuard()
+	problem := g.Problem(payload("Bash", map[string]any{"command": "/opt/jitso launch --preset p --brief b --mode direct"}, g.DispatchDir))
+	if problem != `flag "--preset" is not allowed` {
+		t.Errorf("problem %q", problem)
 	}
 }

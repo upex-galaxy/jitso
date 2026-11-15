@@ -18,7 +18,7 @@ var (
 	briefName = regexp.MustCompile(`(?i)^[a-z0-9][\w.-]*\.md$`)
 	// valueFlags are the flags of `launch` that take a value, which the
 	// dispatcher may use. `--dry-run` takes none.
-	valueFlags = map[string]bool{"--preset": true, "--brief": true, "--mode": true, "--field": true, "--worktree": true, "--mcp-exclude": true}
+	valueFlags = map[string]bool{"--build": true, "--brief": true, "--mode": true, "--field": true, "--worktree": true, "--mcp-exclude": true}
 )
 
 // DispatchGuard judges what the dispatcher's claude may do: Bash for exactly

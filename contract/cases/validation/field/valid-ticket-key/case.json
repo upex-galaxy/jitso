@@ -5,6 +5,12 @@
     "cli/jitso/profile.test.ts: 'the tester with its key and overrides inside the allowlists'",
     "cli/jitso/launch.test.ts: 'sonnet-tester with its key launches with the MCP file and no tools flag'"
   ],
+  "status": {
+    "ts": "xfail",
+    "go": "pass"
+  },
+  "defect": "N-10",
+  "intent": "INTENDED behavior (defect N-10, build vocabulary; docs/decisions.md D6). The launch card header ends `| build <id> v<n>`. The oracle still prints `| preset <id> v<n>`, so the stdout expectation that names the header FAILS on TS.",
   "project": {
     "files": {
       ".jitso/briefs/b.md": {
@@ -13,7 +19,7 @@
     }
   },
   "for_each": {
-    "var": "preset",
+    "var": "build",
     "values": [
       "sonnet-tester",
       "sonnet-automator"
@@ -23,8 +29,8 @@
     {
       "run": [
         "launch",
-        "--preset",
-        "{{preset}}",
+        "--build",
+        "{{build}}",
         "--brief",
         "{{PROJECT}}/.jitso/briefs/b.md",
         "--mode",
@@ -36,7 +42,7 @@
       "expect": {
         "exit": 0,
         "stdout": [
-          "preset {{preset}} v1",
+          "build {{build}} v1",
           "dry run: nothing was written"
         ],
         "stderr": [

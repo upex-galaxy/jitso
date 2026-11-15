@@ -29,8 +29,8 @@ const (
 // when its flag was not given, which is not the same as an empty value: an
 // empty --run is given and fails its allowlist.
 type Args struct {
-	Preset string
-	Brief  string
+	Build string
+	Brief string
 	// Mode is direct or fleet.
 	Mode     string
 	Run      *string
@@ -46,11 +46,11 @@ type Args struct {
 }
 
 // valueFlags are the flags that take the next word as their value, whatever
-// it is (TS-ODDITIES L11: --preset --dry-run takes "--dry-run").
-var valueFlags = []string{"preset", "brief", "mode", "run", "task", "parent", "worktree", "mcp-exclude", "field", "brief-language"}
+// it is (TS-ODDITIES L11: --build --dry-run takes "--dry-run").
+var valueFlags = []string{"build", "brief", "mode", "run", "task", "parent", "worktree", "mcp-exclude", "field", "brief-language"}
 
 // Parse reads the words after `launch`. It rejects an unknown word, a flag
-// without a value, a malformed --field, a missing --preset or --brief, a bad
+// without a value, a malformed --field, a missing --build or --brief, a bad
 // --brief-language and a --mode other than direct or fleet, in that order.
 // A later value of a flag replaces an earlier one; --mcp-exclude and --field
 // accumulate.
@@ -89,8 +89,8 @@ func Parse(argv []string) (Args, error) {
 		}
 	}
 	var ok bool
-	if a.Preset, ok = values["preset"]; !ok {
-		return Args{}, fail.Rejected("--preset is required")
+	if a.Build, ok = values["build"]; !ok {
+		return Args{}, fail.Rejected("--build is required")
 	}
 	if a.Brief, ok = values["brief"]; !ok {
 		return Args{}, fail.Rejected("--brief is required")
@@ -119,7 +119,7 @@ func optional(values map[string]string, name string) *string {
 }
 
 // Check runs the launcher field allowlists on every value a model controls
-// besides the brief (preset, run, task, parent, worktree, each mcp-exclude,
+// besides the brief (build, run, task, parent, worktree, each mcp-exclude,
 // in that order), then requires --run and --task in fleet mode. It needs no
 // project, so it runs before anything is read.
 func (a Args) Check() error {
@@ -127,7 +127,7 @@ func (a Args) Check() error {
 		name  string
 		value *string
 	}
-	checks := []field{{"preset", &a.Preset}, {"run", a.Run}, {"task", a.Task}, {"parent", a.Parent}, {"worktree", a.Worktree}}
+	checks := []field{{"build", &a.Build}, {"run", a.Run}, {"task", a.Task}, {"parent", a.Parent}, {"worktree", a.Worktree}}
 	for i := range a.MCPExclude {
 		checks = append(checks, field{"mcp-exclude", &a.MCPExclude[i]})
 	}

@@ -19,7 +19,7 @@
     {
       "run": [
         "launch",
-        "--preset",
+        "--build",
         "sonnet-conductor",
         "--brief",
         "{{PROJECT}}/.jitso/briefs/brief.md",

@@ -1,0 +1,36 @@
+{
+  "id": "validation/build/flag-without-value",
+  "title": "--build given as the last argument is rejected: it needs a value",
+  "source": [
+    "intended: docs/decisions.md D6 (the launch flag is --build); the other value flags are pinned by validation/flag-without-value"
+  ],
+  "status": {
+    "ts": "xfail",
+    "go": "pass"
+  },
+  "defect": "N-10",
+  "intent": "INTENDED behavior (defect N-10, build vocabulary; docs/decisions.md D6). `launch --build` with no value exits 2 with `JITSO REJECTED:` and `--build needs a value`. The oracle still prints `--preset needs a value`, so the second stderr expectation FAILS on TS.",
+  "steps": [
+    {
+      "run": [
+        "launch",
+        "--build"
+      ],
+      "expect": {
+        "exit": 2,
+        "stdout": [
+          {
+            "empty": true
+          }
+        ],
+        "stderr": [
+          "JITSO REJECTED:",
+          "--build needs a value"
+        ],
+        "orca_calls": {
+          "empty": true
+        }
+      }
+    }
+  ]
+}

@@ -4,6 +4,12 @@
   "source": [
     ".agents/hooks/jitso-dispatch-guard.test.ts: 'lets the launcher through, alone', 'with a required field', 'lets a dry run through'"
   ],
+  "status": {
+    "ts": "xfail",
+    "go": "pass"
+  },
+  "defect": "N-10",
+  "intent": "INTENDED behavior (defect N-10, build vocabulary; docs/decisions.md D6). The dispatch guard allows the launcher line with the flag `--build`, since that is the flag the launcher takes. The oracle guard still allows `--preset` only: it denies `--build` with `flag \"--build\" is not allowed`, so the allow decision FAILS on TS.",
   "home": {
     "files": {
       ".jitso/dispatch-cwd/briefs/.keep": "",
@@ -13,11 +19,11 @@
   "for_each": {
     "var": "tail",
     "values": [
-      "--preset haiku-explorer --brief /h/b/a.md --mode direct",
-      "--preset sonnet-tester --brief /h/b/a.md --mode direct --field ticket_key=PRJ-120",
-      "--preset haiku-explorer --brief /h/b/a.md --mode direct --dry-run",
-      "--preset haiku-explorer --brief /h/b/a.md --mode direct --worktree wt-1 --mcp-exclude dbhub",
-      "--preset haiku-explorer --brief /h/b/a.md --mode direct --field ticket_key=PRJ-1 --field env=staging"
+      "--build haiku-explorer --brief /h/b/a.md --mode direct",
+      "--build sonnet-tester --brief /h/b/a.md --mode direct --field ticket_key=PRJ-120",
+      "--build haiku-explorer --brief /h/b/a.md --mode direct --dry-run",
+      "--build haiku-explorer --brief /h/b/a.md --mode direct --worktree wt-1 --mcp-exclude dbhub",
+      "--build haiku-explorer --brief /h/b/a.md --mode direct --field ticket_key=PRJ-1 --field env=staging"
     ]
   },
   "steps": [

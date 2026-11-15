@@ -11,7 +11,7 @@
         "hook_event_name": "PreToolUse",
         "tool_name": "Bash",
         "tool_input": {
-          "command": "{{JITSO}} launch --preset haiku-explorer --brief /x/b.md --mode direct"
+          "command": "{{JITSO}} launch --build haiku-explorer --brief /x/b.md --mode direct"
         },
         "cwd": "{{PROJECT}}"
       },

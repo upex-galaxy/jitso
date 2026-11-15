@@ -144,7 +144,7 @@ const id = "L20261115T010203-abab"
 
 func TestRunDirect(t *testing.T) {
 	s := newSandbox(t)
-	if err := s.run(t, "--preset", "haiku-explorer", "--brief", s.briefPath, "--mode", "direct"); err != nil {
+	if err := s.run(t, "--build", "haiku-explorer", "--brief", s.briefPath, "--mode", "direct"); err != nil {
 		t.Fatal(err)
 	}
 	if len(s.out) != 1 || !strings.HasPrefix(s.out[0], "JITSO "+id+" | operator/explorer | mode direct (asks you)") || len(s.warn) != 0 {
@@ -196,7 +196,7 @@ func TestRunDirect(t *testing.T) {
 
 func TestRunDryRun(t *testing.T) {
 	s := newSandbox(t)
-	if err := s.run(t, "--preset", "sonnet-automator", "--brief", s.briefPath, "--mode", "fleet", "--run", "r", "--task", "t",
+	if err := s.run(t, "--build", "sonnet-automator", "--brief", s.briefPath, "--mode", "fleet", "--run", "r", "--task", "t",
 		"--field", "ticket_key=PRJ-1", "--dry-run"); err != nil {
 		t.Fatal(err)
 	}
@@ -231,7 +231,7 @@ func TestRunFailuresRemoveOnlyTheirFolder(t *testing.T) {
 		{"worker-start", func(s *sandbox) {
 			s.orca.fail = map[string]bool{"orchestration worker-start": true, "terminal close": true}
 		},
-			[]string{"--preset", "haiku-explorer", "--mode", "fleet", "--run", "r", "--task", "t"}, "fake failure",
+			[]string{"--build", "haiku-explorer", "--mode", "fleet", "--run", "r", "--task", "t"}, "fake failure",
 			[]string{"terminal create", "terminal wait", "terminal read", "orchestration worker-start", "terminal close"}},
 		{"busy lock", func(s *sandbox) {
 			s.store.LockTimeout = 0
@@ -244,7 +244,7 @@ func TestRunFailuresRemoveOnlyTheirFolder(t *testing.T) {
 			tt.edit(s)
 			argv := tt.argv
 			if argv == nil {
-				argv = []string{"--preset", "haiku-explorer", "--mode", "direct"}
+				argv = []string{"--build", "haiku-explorer", "--mode", "direct"}
 			}
 			err := s.run(t, append(argv, "--brief", s.briefPath)...)
 			if err == nil || !strings.Contains(err.Error(), tt.reason) {
@@ -278,7 +278,7 @@ func TestRunTrust(t *testing.T) {
 			s := newSandbox(t)
 			s.orca.cwd = filepath.Join(s.home, ".jitso", "dispatch-cwd")
 			s.orca.screens = tt.screens
-			if err := s.run(t, "--preset", "haiku-explorer", "--brief", s.briefPath, "--mode", "direct"); err != nil {
+			if err := s.run(t, "--build", "haiku-explorer", "--brief", s.briefPath, "--mode", "direct"); err != nil {
 				t.Fatal(err)
 			}
 			events, _ := s.store.Events()
@@ -301,9 +301,9 @@ func TestRunRejectsBeforeWriting(t *testing.T) {
 		argv   []string
 		reason string
 	}{
-		{"subagent tier", []string{"--preset", "plan"}, `preset "plan" has tier subagent`},
-		{"missing field", []string{"--preset", "sonnet-tester"}, "missing ticket_key"},
-		{"unknown parent", []string{"--preset", "haiku-explorer", "--parent", "L20260101T000000-ffff", "--dry-run"}, "unknown parent launch L20260101T000000-ffff"},
+		{"subagent tier", []string{"--build", "plan"}, `build "plan" has tier subagent`},
+		{"missing field", []string{"--build", "sonnet-tester"}, "missing ticket_key"},
+		{"unknown parent", []string{"--build", "haiku-explorer", "--parent", "L20260101T000000-ffff", "--dry-run"}, "unknown parent launch L20260101T000000-ffff"},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

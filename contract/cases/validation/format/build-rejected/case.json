@@ -1,0 +1,52 @@
+{
+  "id": "validation/format/build-rejected",
+  "title": "--build must be a lowercase kebab id of at most 64 characters",
+  "source": [
+    "cli/jitso/shell.ts: FIELD_PATTERNS.preset"
+  ],
+  "status": {
+    "ts": "xfail",
+    "go": "pass"
+  },
+  "defect": "N-10",
+  "intent": "INTENDED behavior (defect N-10, build vocabulary; docs/decisions.md D6). A launch id that is not a lowercase kebab id is rejected with `invalid value for --build`. The oracle still prints `invalid value for --preset`, so the stderr expectation FAILS on TS.",
+  "for_each": {
+    "var": "v",
+    "values": [
+      "Haiku-explorer",
+      "1explorer",
+      "-explorer",
+      "a_b",
+      "a.b",
+      "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+    ]
+  },
+  "steps": [
+    {
+      "run": [
+        "launch",
+        "--build",
+        "{{v}}",
+        "--brief",
+        "{{PROJECT}}/.jitso/briefs/b.md",
+        "--mode",
+        "direct"
+      ],
+      "expect": {
+        "exit": 2,
+        "stdout": [
+          {
+            "empty": true
+          }
+        ],
+        "stderr": [
+          "JITSO REJECTED:",
+          "invalid value for --build"
+        ],
+        "orca_calls": {
+          "empty": true
+        }
+      }
+    }
+  ]
+}

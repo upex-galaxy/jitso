@@ -16,7 +16,7 @@
       "input": {
         "tool_name": "Bash",
         "tool_input": {
-          "command": "{{JITSO}} launch --preset haiku-explorer --brief /h/b/a.md --mode direct"
+          "command": "{{JITSO}} launch --build haiku-explorer --brief /h/b/a.md --mode direct"
         }
       },
       "expect": {

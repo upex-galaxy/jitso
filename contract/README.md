@@ -9,7 +9,7 @@ the oracle; the Go binary must pass every case.
 | `SPEC.md` | the case format and the matchers (normative) |
 | `PLAN.md` | why it is built this way, the decisions, the three known defects |
 | `TS-ODDITIES.md` | behaviors the oracle has today that look accidental, with a proposal per row |
-| `fixtures/default/` | the base project every case copies (catalog, presets, hard rules, instruction stubs) |
+| `fixtures/default/` | the base project every case copies (catalog, builds, hard rules, instruction stubs) |
 | `cases/<area>/<slug>/case.json` | one case per folder |
 | `runner/` | the Go runner, standard library only |
 
@@ -78,18 +78,19 @@ The `XFAIL` cases, found with `grep -rl '"xfail"' cases`, are the known defects,
 
 | Defect | Where | Intended behavior |
 |---|---|---|
-| S1 `route_scope` | `defects/s1*`, `card/preset/*`, `launch/direct/files-written` | the card has six lines, with `ROUTE-SCOPE: <ids>` (the colon the router needs) on a line of its own after the subagents line, and the first prompt carries the same line |
+| S1 `route_scope` | `defects/s1*`, `card/build/*`, `launch/direct/files-written` | the card has six lines, with `ROUTE-SCOPE: <ids>` (the colon the router needs) on a line of its own after the subagents line, and the first prompt carries the same line |
 | S2 `agents_md` | `defects/s2*` | `agents_md: exclude` launches `claude` with `CLAUDE_CODE_DISABLE_CLAUDE_MDS=1` |
 | S3 `subagents` | `defects/s3*` | a worker build's `subagents` reach `claude` as `--agents <json>` with exactly those keys, each entry carrying the `description`, `prompt`, `model` and `tools` of the subagent-tier build (`tier: subagent`) of that name |
 | N-1 project root | `project/outside-git` | the project is the git primary checkout of the cwd; outside one the command exits 3 |
 | N-2 failed launch | the failed-launch cases of `launch/orca-failure`, `launch/trust`, `launch/fleet` and `launch/mcp-json`, and `registry/lock-busy-fails-the-launch` (TS-ODDITIES L2) | a launch that fails before its registry line leaves no `.jitso/launches/<id>/` folder behind; the exit code, the stderr text, the empty registry and the orca calls stay as they are |
 | N-3 trust timeout | `launch/trust/dialog-that-never-clears-is-a-timeout` (TS-ODDITIES L3) | a trust dialog that never clears still exits 0 and registers the launch, and stderr carries a warning that names the trust dialog and says it did not clear (the case pins the regex, `intent` has the exact wording rule) |
 | N-4 modes | `validation/mode/legacy-alias-*`, `registry/spanish-mode-alias-is-read` (TS-ODDITIES L8) | only `direct` and `fleet` exist: `launch --mode directo` and `--mode flota` exit 2 (`JITSO REJECTED: --mode must be direct or fleet`) and write nothing, and a registry line with either value is an invalid line, ignored like any other |
-| N-5 tiers: launch and listing | `validation/tier/*`, `cli/presets-list/{hides-subagent-tier,hides-unapproved,order-and-count}`, `project/subfolder-cwd`, `project/linked-worktree/presets-list-finds-the-primary-catalog`, `dispatch/system-prompt-catalog` | a subagent-tier build is not launchable alone (`launch --preset plan` exits 2, `JITSO REJECTED:`, names the tier) and is not listed by `presets list` or offered in the dispatcher catalog |
+| N-5 tiers: launch and listing | `validation/tier/*`, `build/list/{hides-subagent-tier,hides-unapproved,order-and-count}`, `project/subfolder-cwd`, `project/linked-worktree/build-list-finds-the-primary-catalog`, `dispatch/system-prompt-catalog` | a subagent-tier build is not launchable alone (`launch --build plan` exits 2, `JITSO REJECTED:`, names the tier) and is not listed by `build list` or offered in the dispatcher catalog |
 | N-6 tiers: subagent names | `validation/subagents/*` | a worker whose `subagents` names a missing build, or a build that is not subagent tier, is a catalog error: exit 3, stderr names the file and the subagent |
 | N-7 dispatcher project handoff | `project/dispatcher-handoff/*`, `dispatch/hands-the-project-to-claude` | `JITSO_PROJECT` names the project: a launch from a cwd outside git succeeds with it, a `JITSO_PROJECT` that is not a git checkout exits 3 naming the folder, and the dispatcher starts `claude` with the variable set |
 | N-8 dispatcher launcher word | `dispatch/prompt-launch-line-is-the-guarded-launcher` | the prompt's launch line starts with the launcher itself, no `bun` word, and is the line the dispatch guard allows |
 | N-9 quoted words | `hooks/dispatch-guard/bash-allows-quoted-words` | the dispatch guard allows a single-quoted word only when it holds a space, for the launcher and the value of `--brief`; every other quote stays denied (`hooks/dispatch-guard/bash-denies-misused-quotes`) |
+| N-10 build vocabulary | `cli/presets-is-unknown`, `validation/old-preset-flag-is-unknown`, `build/list/old-presets-folder-is-ignored`, `build/usage`, `validation/build/flag-without-value`, `hooks/guard/deny-reason-names-the-build-flag`, and the cases that pin a renamed message: `smoke/help`, `cli/help-flags`, `cli/no-arguments`, `project/subfolder-launch-dry-run`, `analyze/by-id-{clean-transcript-verdict-unknown,unknown-build-is-verdict-unknown,verdict-success-when-every-check-is-evaluable}`, `validation/build/{unknown,not-approved}`, `validation/field/{conductor-needs-none,unknown-for-build,valid-ticket-key}`, `validation/{flag-takes-next-word-as-value,required/{missing-build,no-flags},format/build-rejected,hostile/build}`, `hooks/dispatch-guard/bash-allows-the-launcher` | a profile is a build: the launch flag is `--build`, the catalog folder is `jitso/builds/`, the catalog commands are `jitso build <subcommand>`, and every message says build. `--preset`, `presets` and `jitso/presets/` are unknown, with no alias (docs/decisions.md D6). The registry log keeps its `preset` and `preset_version` keys. The oracle keeps the old spelling, and the ts adapter maps the new one to it in one direction (SPEC.md section 9), so only the cases that pin renamed output are `xfail` |
 
 For the Go port every case must `PASS`: set `status.go` to `pass` (the default) and keep
 `status.ts` as `xfail` until the oracle is retired.

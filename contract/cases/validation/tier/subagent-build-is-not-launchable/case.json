@@ -9,7 +9,7 @@
     "go": "pass"
   },
   "defect": "N-5",
-  "intent": "INTENDED behavior (defect N-5, tiers; docs/decisions.md, owner 2026-11-15). The build `plan` has `tier: subagent`, so `launch --preset plan` is rejected by validation: exit 2, one stderr line `JITSO REJECTED: ...` that names the build and the tier, nothing on stdout, nothing written, no registry line, orca never called. The TS binary does not know tiers: it treats plan as a normal approved preset, so the launch succeeds, writes a launch folder and a registry line and calls orca (the exit, the stderr and the orca expectations FAIL on TS).",
+  "intent": "INTENDED behavior (defect N-5, tiers; docs/decisions.md, owner 2026-11-15). The build `plan` has `tier: subagent`, so `launch --build plan` is rejected by validation: exit 2, one stderr line `JITSO REJECTED: ...` that names the build and the tier, nothing on stdout, nothing written, no registry line, orca never called. The TS binary does not know tiers: it treats plan as a normal approved build, so the launch succeeds, writes a launch folder and a registry line and calls orca (the exit, the stderr and the orca expectations FAIL on TS).",
   "project": {
     "files": {
       ".jitso/briefs/b.md": {
@@ -21,7 +21,7 @@
     {
       "run": [
         "launch",
-        "--preset",
+        "--build",
         "plan",
         "--brief",
         "{{PROJECT}}/.jitso/briefs/b.md",

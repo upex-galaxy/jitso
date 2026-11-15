@@ -16,7 +16,7 @@
     {
       "run": [
         "launch",
-        "--preset",
+        "--build",
         "haiku-explorer",
         "--brief",
         "{{HOME}}/.jitso/dispatch-cwd/briefs/brief.md",

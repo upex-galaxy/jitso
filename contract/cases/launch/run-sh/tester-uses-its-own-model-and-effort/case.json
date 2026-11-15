@@ -1,6 +1,6 @@
 {
   "id": "launch/run-sh/tester-uses-its-own-model-and-effort",
-  "title": "executing run.sh of sonnet-tester starts claude with that preset's model and effort and not the explorer tool list",
+  "title": "executing run.sh of sonnet-tester starts claude with that build's model and effort and not the explorer tool list",
   "source": [
     "cli/jitso/launch.test.ts: 'sonnet-tester with its key launches with the MCP file and no tools flag'"
   ],
@@ -18,7 +18,7 @@
     {
       "run": [
         "launch",
-        "--preset",
+        "--build",
         "sonnet-tester",
         "--brief",
         "{{PROJECT}}/.jitso/briefs/brief.md",

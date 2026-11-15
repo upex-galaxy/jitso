@@ -1,5 +1,5 @@
 {
-  "title": "the dry-run card of sonnet-automator carries ROUTE-SCOPE: with the colon and the preset ids",
+  "title": "the dry-run card of sonnet-automator carries ROUTE-SCOPE: with the colon and the build ids",
   "source": [
     "intended: PLAN.md defect S1 (route_scope); the TS card prints 'ROUTE-SCOPE' without a colon (cli/jitso/card.ts)"
   ],
@@ -8,7 +8,7 @@
     "go": "pass"
   },
   "defect": "S1",
-  "intent": "INTENDED behavior (defect S1, route_scope). The router reads a scope with the regex (?:^|[.!?])[ \\t>*-]*ROUTE-SCOPE:([^\\n]*), so the card line must start with ROUTE-SCOPE: (with the colon, at a line start or after . ! ?) and list the preset ids comma separated. On the TS binary today the card writes 'ROUTE-SCOPE <ids>' with no colon, after a '|' separator, so the matcher finds nothing and this case FAILS on TS.",
+  "intent": "INTENDED behavior (defect S1, route_scope). The router reads a scope with the regex (?:^|[.!?])[ \\t>*-]*ROUTE-SCOPE:([^\\n]*), so the card line must start with ROUTE-SCOPE: (with the colon, at a line start or after . ! ?) and list the build ids comma separated. On the TS binary today the card writes 'ROUTE-SCOPE <ids>' with no colon, after a '|' separator, so the matcher finds nothing and this case FAILS on TS.",
   "project": {
     "files": {
       ".jitso/briefs/brief.md": {
@@ -20,7 +20,7 @@
     {
       "run": [
         "launch",
-        "--preset",
+        "--build",
         "sonnet-automator",
         "--brief",
         "{{PROJECT}}/.jitso/briefs/brief.md",

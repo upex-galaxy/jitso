@@ -1,5 +1,5 @@
 // Package catalog loads and validates a project's builds: the allowlists in
-// jitso/jitso.yaml, the builds in jitso/presets/*.yaml, and the route ids that
+// jitso/jitso.yaml, the builds in jitso/builds/*.yaml, and the route ids that
 // the front matter of .agents/instructions/agent-*.md declares.
 //
 // Every read goes through an io/fs.FS rooted at the primary checkout
@@ -16,10 +16,10 @@ import (
 
 // Paths inside the project.
 const (
-	ConfigPath       = "jitso/jitso.yaml"
-	PresetsDir       = "jitso/presets"
-	InstructionsDir  = ".agents/instructions"
-	presetsExtension = ".yaml"
+	ConfigPath      = "jitso/jitso.yaml"
+	BuildsDir       = "jitso/builds"
+	InstructionsDir = ".agents/instructions"
+	buildsExtension = ".yaml"
 )
 
 // Catalog is a loaded, valid catalog.
@@ -108,10 +108,12 @@ func LoadConfig(fsys fs.FS) (Config, error) {
 	return cfg, nil
 }
 
-// FileError is an invalid catalog file. Its text is the oracle's:
-// `preset <file> is invalid: <problems joined by "; ">`.
+// FileError is an invalid catalog file. Its text is
+// `build <display path> is invalid: <problems joined by "; ">`, for example
+// `build jitso/builds/broken.yaml is invalid: ...`.
 type FileError struct {
-	// File is the file name under jitso/presets/, or ConfigPath.
+	// File is the path of the file from the project root (for a build,
+	// jitso/builds/<name>), or ConfigPath.
 	File     string
 	Problems []string
 }
@@ -120,7 +122,7 @@ func (e *FileError) Error() string {
 	if e.File == ConfigPath {
 		return e.File + " is invalid: " + strings.Join(e.Problems, "; ")
 	}
-	return "preset " + e.File + " is invalid: " + strings.Join(e.Problems, "; ")
+	return "build " + e.File + " is invalid: " + strings.Join(e.Problems, "; ")
 }
 
 // Load reads and validates the whole catalog. It fails on the first invalid
@@ -136,35 +138,35 @@ func Load(fsys fs.FS) (*Catalog, error) {
 	if err != nil {
 		return nil, err
 	}
-	entries, err := fs.ReadDir(fsys, PresetsDir)
+	entries, err := fs.ReadDir(fsys, BuildsDir)
 	if err != nil {
 		return nil, err
 	}
 	names := make([]string, 0, len(entries))
 	for _, e := range entries {
-		if strings.HasSuffix(e.Name(), presetsExtension) {
+		if strings.HasSuffix(e.Name(), buildsExtension) {
 			names = append(names, e.Name())
 		}
 	}
 	slices.Sort(names)
 	cat := &Catalog{Config: cfg, RouteIDs: ids}
 	for _, name := range names {
-		data, err := fs.ReadFile(fsys, path.Join(PresetsDir, name))
+		data, err := fs.ReadFile(fsys, path.Join(BuildsDir, name))
 		if err != nil {
 			return nil, err
 		}
 		raw, err := decodeYAML(data)
 		if err != nil {
-			return nil, &FileError{File: name, Problems: []string{err.Error()}}
+			return nil, &FileError{File: path.Join(BuildsDir, name), Problems: []string{err.Error()}}
 		}
 		if problems := ValidateBuild(raw, cfg, ids); len(problems) > 0 {
-			return nil, &FileError{File: name, Problems: problems}
+			return nil, &FileError{File: path.Join(BuildsDir, name), Problems: problems}
 		}
 		cat.Builds = append(cat.Builds, buildFrom(name, raw.(*Map)))
 	}
 	for _, b := range cat.Builds {
 		if problems := cat.subagentProblems(&b); len(problems) > 0 {
-			return nil, &FileError{File: b.File, Problems: problems}
+			return nil, &FileError{File: path.Join(BuildsDir, b.File), Problems: problems}
 		}
 	}
 	return cat, nil

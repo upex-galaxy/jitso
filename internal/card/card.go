@@ -20,15 +20,15 @@ type Input struct {
 	Role string
 	Type string
 	// Mode is direct or fleet.
-	Mode          string
-	Preset        string
-	PresetVersion string
-	Model         string
-	Effort        string
-	MCP           []string
-	SkillsFirst   []string
-	Subagents     []string
-	RouteScope    []string
+	Mode         string
+	Build        string
+	BuildVersion string
+	Model        string
+	Effort       string
+	MCP          []string
+	SkillsFirst  []string
+	Subagents    []string
+	RouteScope   []string
 	// LaunchCommand starts another session in the project (LaunchCommand).
 	LaunchCommand string
 	// BudgetTokens and BudgetUSD are the build's budget.
@@ -38,7 +38,7 @@ type Input struct {
 
 // Render is the card text, six lines without a trailing newline:
 //
-//	JITSO <id> | <role>/<type> | mode <mode> (<who it asks>) | preset <preset> v<version>
+//	JITSO <id> | <role>/<type> | mode <mode> (<who it asks>) | build <build> v<version>
 //	model <model> effort <effort> | bypass | MCP <list> | skill <list>
 //	subagents <names or unrestricted>
 //	ROUTE-SCOPE: <ids>
@@ -50,7 +50,7 @@ func Render(in Input) string {
 		asks, reports = "asks you", "you"
 	}
 	return strings.Join([]string{
-		"JITSO " + in.ID + " | " + in.Role + "/" + in.Type + " | mode " + in.Mode + " (" + asks + ") | preset " + in.Preset + " v" + in.PresetVersion,
+		"JITSO " + in.ID + " | " + in.Role + "/" + in.Type + " | mode " + in.Mode + " (" + asks + ") | build " + in.Build + " v" + in.BuildVersion,
 		"model " + in.Model + " effort " + in.Effort + " | bypass | MCP " + list(in.MCP) + " | skill " + list(in.SkillsFirst),
 		"subagents " + subagents(in.Subagents),
 		ScopeLine(in.RouteScope),

@@ -2,12 +2,11 @@ package catalog
 
 import "github.com/upex-galaxy/jitso/internal/jsconv"
 
-// Build is one validated file of jitso/presets/ (a "preset" in the contract's
-// words, a "build" in the product's). Text fields hold the String() of the
+// Build is one validated file of jitso/builds/. Text fields hold the String() of the
 // decoded value, or "" when the key is missing; Raw keeps the decoded file for
 // anything that needs the value as written.
 type Build struct {
-	// File is the file name under jitso/presets/, for example haiku-explorer.yaml.
+	// File is the file name under jitso/builds/, for example haiku-explorer.yaml.
 	File string
 	// Raw is the decoded file.
 	Raw *Map

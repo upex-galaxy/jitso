@@ -1,0 +1,51 @@
+{
+  "id": "validation/build/unknown",
+  "title": "a well-formed build id that is not in the catalog is rejected by name",
+  "source": [
+    "cli/jitso/profile.test.ts: '1. an unknown preset'"
+  ],
+  "status": {
+    "ts": "xfail",
+    "go": "pass"
+  },
+  "defect": "N-10",
+  "intent": "INTENDED behavior (defect N-10, build vocabulary; docs/decisions.md D6). The rejection of an id that is not in the catalog reads `unknown build \"<id>\"`. The oracle still prints `unknown preset \"<id>\"`, so the stderr expectation FAILS on TS.",
+  "for_each": {
+    "var": "p",
+    "values": [
+      "wizard",
+      "haiku",
+      "a",
+      "sonnet-tester-2",
+      "haiku-explorer-"
+    ]
+  },
+  "steps": [
+    {
+      "run": [
+        "launch",
+        "--build",
+        "{{p}}",
+        "--brief",
+        "{{PROJECT}}/.jitso/briefs/b.md",
+        "--mode",
+        "direct"
+      ],
+      "expect": {
+        "exit": 2,
+        "stdout": [
+          {
+            "empty": true
+          }
+        ],
+        "stderr": [
+          "JITSO REJECTED:",
+          "unknown build \"{{p}}\""
+        ],
+        "orca_calls": {
+          "empty": true
+        }
+      }
+    }
+  ]
+}

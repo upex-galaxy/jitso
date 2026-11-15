@@ -39,9 +39,9 @@ func TestLauncherIs(t *testing.T) {
 		want    bool
 	}{
 		{"jitso launch", true},
-		{"jitso launch --preset p", true},
-		{"bun run jitso launch --preset p", true},
-		{"/opt/jitso launch --preset p", true},
+		{"jitso launch --build p", true},
+		{"bun run jitso launch --build p", true},
+		{"/opt/jitso launch --build p", true},
 		{"FOO=bar BAZ=a=b jitso launch", true},
 		{"FOO=bar /opt/jitso launch", true},
 		{"jitso", false},
@@ -72,7 +72,7 @@ func TestLauncherBashVerb(t *testing.T) {
 		{"plain ls", "ls", ""},
 		{"git and ls", "git status && ls", ""},
 		{"echo claude", "echo claude", ""},
-		{"launch alone", "/opt/jitso launch --preset p --brief b --mode direct", ""},
+		{"launch alone", "/opt/jitso launch --build p --brief b --mode direct", ""},
 		{"worker-start", "orca orchestration worker-start --run r1", "orchestration worker-start"},
 		{"worker-start with extra spaces", "orca   orchestration    worker-start", "orchestration worker-start"},
 		{"worker-start with tab", "orca orchestration\tworker-start", "orchestration worker-start"},

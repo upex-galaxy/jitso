@@ -1,6 +1,6 @@
 {
   "id": "launch/mcp-json/missing-repo-config-exits-3",
-  "title": "a project without .mcp.json cannot launch a real session, even a preset with no MCP servers; no launch folder is left behind",
+  "title": "a project without .mcp.json cannot launch a real session, even a build with no MCP servers; no launch folder is left behind",
   "source": [
     "cli/jitso/launch.ts: launchForReal reads .mcp.json before building mcp.json (odd: haiku-explorer lists no server)",
     "intended: TS-ODDITIES L2 (owner decision 2026-11-15): a failed launch leaves no launch folder; the TS binary leaves it on disk"
@@ -24,7 +24,7 @@
     {
       "run": [
         "launch",
-        "--preset",
+        "--build",
         "haiku-explorer",
         "--brief",
         "{{PROJECT}}/.jitso/briefs/brief.md",

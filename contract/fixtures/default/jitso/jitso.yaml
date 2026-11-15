@@ -1,4 +1,4 @@
-# JITSO allowlists (ADR-0027). A preset, and any override a dispatcher asks for,
+# JITSO allowlists (ADR-0027). A build, and any override a dispatcher asks for,
 # may name only what is listed here. `cli/jitso/catalog.test.ts` asserts that every
 # entry exists in this repo: skills under `.agents/skills/`, MCP servers in
 # `.mcp.json`, Sonnet/Opus ids in `.agents/project.yaml` (`orchestration:`).
