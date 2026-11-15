@@ -1,0 +1,23 @@
+{
+  "skill_name": "contract-driven-development",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "fix S1 in the go port: the launch card has to print ROUTE-SCOPE: with the colon",
+      "expected_output": "Finds the existing defects/s1* cases instead of writing new ones, confirms they are XFAIL on the oracle, plans the Go change, keeps status.ts xfail and status.go pass, runs the port with --filter '^defects/s1', and does not edit the oracle.",
+      "files": []
+    },
+    {
+      "id": 2,
+      "prompt": "I ran the contract against the TS binary and got XPASS on launch/trust/dialog-that-never-clears-is-a-timeout, what do I do",
+      "expected_output": "Treats the XPASS as suspicious because the oracle is frozen, reruns the case with -v, checks whether the case still discriminates, and does not promote it to pass without finding the cause.",
+      "files": []
+    },
+    {
+      "id": 3,
+      "prompt": "jitso launch --help should print the launch usage instead of 'unknown argument', can you make that change",
+      "expected_output": "Recognizes TS-ODDITIES L10 (a fix row), plans a case edit with status ts xfail / go pass, runs it on the oracle to see XFAIL, implements it in Go, and marks the L10 row decided in the same change; asks for the plan OK before editing.",
+      "files": []
+    }
+  ]
+}

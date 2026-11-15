@@ -1,0 +1,23 @@
+{
+  "skill_name": "go-development",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "let's start the go module for the jitso cli, set up the folders and a main.go",
+      "expected_output": "Does not invent a layout and start writing: proposes a layout plan (separate module from contract/runner, internal packages, hook subcommands) for the owner's OK first, stdlib only, and names the checks it will run.",
+      "files": []
+    },
+    {
+      "id": 2,
+      "prompt": "the runner needs to parse YAML now, add gopkg.in/yaml.v3",
+      "expected_output": "Stops before adding the dependency: explains it needs the owner's OK, measures or offers to measure the stripped binary size before and after, and checks whether JSON or the stdlib covers the need.",
+      "files": []
+    },
+    {
+      "id": 3,
+      "prompt": "I changed proc_other.go in the runner, make sure it still builds on windows",
+      "expected_output": "Runs go test, go vet and the gofmt check in contract/runner, then cross-compiles with GOOS=windows GOARCH=amd64 into a scratch directory, and says a cross-compile proves the build constraints, not that it runs on Windows.",
+      "files": []
+    }
+  ]
+}
