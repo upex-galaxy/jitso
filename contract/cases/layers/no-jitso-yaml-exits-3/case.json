@@ -1,0 +1,74 @@
+{
+  "id": "layers/no-jitso-yaml-exits-3",
+  "title": "a project without jitso/jitso.yaml has no allowlists: every catalog command exits 3 with a message that says what to create, whatever the other layers hold",
+  "source": [
+    "intended: builds come from layers (repo, trusted parent folders, user folder), nearest wins (docs/decisions.md)"
+  ],
+  "status": {
+    "ts": "xfail",
+    "go": "pass"
+  },
+  "defect": "N-12",
+  "intent": "INTENDED behavior (defect N-12, build layers). The allowlists every build is validated against come from the launching project's jitso/jitso.yaml; without it no layer can be validated, so build list and launch exit 3 with `jitso: jitso/jitso.yaml is missing: this project has no JITSO allowlists (create it with jitso build new <id>)`, even when the user folder holds builds. The oracle fails on the missing file with its own error text, so the case FAILS on it: the stderr text differs.",
+  "project": {
+    "files": {
+      ".jitso/briefs/brief.md": {
+        "from": "brief.md"
+      },
+      "jitso/jitso.yaml": null
+    }
+  },
+  "home": {
+    "files": {
+      ".jitso/builds/shared-scan.yaml": {
+        "from": "shared-scan.yaml"
+      }
+    }
+  },
+  "steps": [
+    {
+      "run": [
+        "build",
+        "list"
+      ],
+      "expect": {
+        "exit": 3,
+        "stdout": [
+          {
+            "empty": true
+          }
+        ],
+        "stderr": [
+          {
+            "contains": "jitso: jitso/jitso.yaml is missing: this project has no JITSO allowlists (create it with jitso build new <id>)"
+          }
+        ]
+      }
+    },
+    {
+      "run": [
+        "launch",
+        "--build",
+        "haiku-explorer",
+        "--brief",
+        "{{PROJECT}}/.jitso/briefs/brief.md",
+        "--mode",
+        "direct",
+        "--dry-run"
+      ],
+      "expect": {
+        "exit": 3,
+        "stdout": [
+          {
+            "empty": true
+          }
+        ],
+        "stderr": [
+          {
+            "contains": "jitso: jitso/jitso.yaml is missing: this project has no JITSO allowlists (create it with jitso build new <id>)"
+          }
+        ]
+      }
+    }
+  ]
+}

@@ -1,0 +1,99 @@
+{
+  "id": "layers/user-build-is-checked-against-this-repo",
+  "title": "a user build is validated against the launching project's allowlists: invalid here it is skipped with a warning, and launching it is rejected",
+  "source": [
+    "intended: builds come from layers (repo, trusted parent folders, user folder), nearest wins (docs/decisions.md)"
+  ],
+  "status": {
+    "ts": "xfail",
+    "go": "pass"
+  },
+  "defect": "N-12",
+  "intent": "INTENDED behavior (defect N-12, build layers). Every build of every layer is validated against the project that launches it (its jitso/jitso.yaml and its instruction route ids), not against the folder the build lives in. A user build whose model is not in this project's allowlist is skipped by build list with one stderr warning (`jitso: warning: skipped build user <path>: <problems>`), `launch --build <id>` is rejected (exit 2) with the same problems, and the project's own builds keep working with a clean stderr. The oracle has no user layer, so build list prints no warning and the case FAILS on it: the warning line is missing.",
+  "project": {
+    "files": {
+      ".jitso/briefs/brief.md": {
+        "from": "brief.md"
+      }
+    }
+  },
+  "home": {
+    "files": {
+      ".jitso/builds/future.yaml": {
+        "from": "future.yaml"
+      }
+    }
+  },
+  "steps": [
+    {
+      "run": [
+        "build",
+        "list"
+      ],
+      "expect": {
+        "exit": 0,
+        "stderr": [
+          {
+            "contains": "jitso: warning: skipped build user ~/.jitso/builds/future.yaml: model \"claude-future-9\" is not in the allowlist"
+          },
+          {
+            "line_count": 1
+          }
+        ],
+        "stdout": [
+          {
+            "not_contains": "future"
+          },
+          {
+            "regex": "(?m)^- haiku-explorer: "
+          }
+        ]
+      }
+    },
+    {
+      "run": [
+        "launch",
+        "--build",
+        "future",
+        "--brief",
+        "{{PROJECT}}/.jitso/briefs/brief.md",
+        "--mode",
+        "direct",
+        "--dry-run"
+      ],
+      "expect": {
+        "exit": 2,
+        "stdout": [
+          {
+            "empty": true
+          }
+        ],
+        "stderr": [
+          {
+            "contains": "JITSO REJECTED: build \"future\" from user ~/.jitso/builds/future.yaml is invalid here: model \"claude-future-9\" is not in the allowlist"
+          }
+        ]
+      }
+    },
+    {
+      "run": [
+        "launch",
+        "--build",
+        "haiku-explorer",
+        "--brief",
+        "{{PROJECT}}/.jitso/briefs/brief.md",
+        "--mode",
+        "direct",
+        "--dry-run"
+      ],
+      "expect": {
+        "exit": 0,
+        "stderr": [
+          {
+            "empty": true
+          }
+        ]
+      }
+    }
+  ]
+}

@@ -1,0 +1,14 @@
+# JITSO allowlists. A build, and any override a dispatcher asks for, may name only what is listed here.
+# Fill each list with the exact names your project uses. Models are full ids, never aliases.
+# Skills are folders under .agents/skills/, MCP servers are the ones in .mcp.json, tools are harness tool names.
+version: 1
+
+models: []
+
+efforts: []
+
+mcp: []
+
+skills: []
+
+tools: []

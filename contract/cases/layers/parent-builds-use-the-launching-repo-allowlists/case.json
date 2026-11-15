@@ -1,0 +1,128 @@
+{
+  "id": "layers/parent-builds-use-the-launching-repo-allowlists",
+  "title": "a parent build is validated against the project that launches it: here the nested project has no ticket-work instruction, so the parent's sonnet-tester is skipped there and valid in the outer project",
+  "source": [
+    "intended: builds come from layers (repo, trusted parent folders, user folder), nearest wins (docs/decisions.md)"
+  ],
+  "status": {
+    "ts": "xfail",
+    "go": "pass"
+  },
+  "defect": "N-12",
+  "intent": "INTENDED behavior (defect N-12, build layers). A build from a trusted parent folder is checked against the allowlists and the instruction route ids of the project that launches it, never against the folder it lives in. The outer fixture's sonnet-tester routes to ticket-work and local-context-pbi, which the nested project does not declare: from the nested project build list warns that it was skipped and launching it is rejected (exit 2, `is invalid here`), while the same build launches from the outer project. The oracle knows no parent layer and no nested project, so it prints no warning and the case FAILS on it. The oracle also resolves its project from its own script folder, so from a nested checkout it reads the outer fixture catalog (defect N-1) and fails here as well.",
+  "project": {
+    "files": {
+      "nested/jitso/jitso.yaml": {
+        "from": "nested-jitso.yaml"
+      },
+      "nested/jitso/builds/solo.yaml": {
+        "from": "nested-solo.yaml"
+      },
+      "nested/.agents/instructions/agent-project.md": {
+        "from": "nested-agent-project.md"
+      },
+      "nested/.jitso/briefs/brief.md": {
+        "from": "brief.md"
+      },
+      ".jitso/briefs/brief.md": {
+        "from": "brief.md"
+      }
+    }
+  },
+  "home": {
+    "files": {
+      ".jitso/config.yaml": "version: 1\ntrusted_parents:\n  - \"{{PROJECT}}\"\n"
+    }
+  },
+  "steps": [
+    {
+      "git_init": {
+        "path": "nested"
+      },
+      "expect": {
+        "files": [
+          {
+            "path": "nested/.git",
+            "exists": true
+          }
+        ]
+      }
+    },
+    {
+      "run": [
+        "build",
+        "list"
+      ],
+      "cwd": "nested",
+      "expect": {
+        "exit": 0,
+        "stderr": [
+          {
+            "contains": "jitso: warning: skipped build parent {{PROJECT}}/jitso/builds/sonnet-tester.yaml: route_scope id \"ticket-work\" is not an instruction section; route_scope id \"local-context-pbi\" is not an instruction section"
+          }
+        ],
+        "stdout": [
+          {
+            "not_contains": "sonnet-tester"
+          },
+          {
+            "contains": "- haiku-explorer: "
+          }
+        ]
+      }
+    },
+    {
+      "run": [
+        "launch",
+        "--build",
+        "sonnet-tester",
+        "--brief",
+        "{{PROJECT}}/nested/.jitso/briefs/brief.md",
+        "--mode",
+        "direct",
+        "--field",
+        "ticket_key=PRJ-1",
+        "--dry-run"
+      ],
+      "cwd": "nested",
+      "expect": {
+        "exit": 2,
+        "stdout": [
+          {
+            "empty": true
+          }
+        ],
+        "stderr": [
+          {
+            "contains": "JITSO REJECTED: build \"sonnet-tester\" from parent {{PROJECT}}/jitso/builds/sonnet-tester.yaml is invalid here: route_scope id \"ticket-work\" is not an instruction section; route_scope id \"local-context-pbi\" is not an instruction section"
+          }
+        ]
+      }
+    },
+    {
+      "run": [
+        "launch",
+        "--build",
+        "sonnet-tester",
+        "--brief",
+        "{{PROJECT}}/.jitso/briefs/brief.md",
+        "--mode",
+        "direct",
+        "--field",
+        "ticket_key=PRJ-1",
+        "--dry-run"
+      ],
+      "expect": {
+        "exit": 0,
+        "stdout": [
+          {
+            "contains": "| build sonnet-tester v1"
+          },
+          {
+            "not_contains": "(parent)"
+          }
+        ]
+      }
+    }
+  ]
+}

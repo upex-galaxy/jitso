@@ -84,10 +84,16 @@ func Real(path string) string {
 	return path
 }
 
+// UserDir is the user's own jitso folder, <home>/.jitso: the dispatcher's
+// folder, the user's builds and the user config live in it.
+func UserDir(home string) string {
+	return filepath.Join(home, ".jitso")
+}
+
 // DispatchDir is the fixed folder the dispatcher runs from:
 // <home>/.jitso/dispatch-cwd, outside every checkout.
 func DispatchDir(home string) string {
-	return filepath.Join(home, ".jitso", "dispatch-cwd")
+	return filepath.Join(UserDir(home), "dispatch-cwd")
 }
 
 // Self is the real path of the running executable (symlinks resolved), the

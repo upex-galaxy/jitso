@@ -1,0 +1,92 @@
+{
+  "id": "layers/subagents-resolve-with-the-same-lookup",
+  "title": "the subagents a user worker lists resolve through the same layers as every build: the project's plan wins over the user folder's plan and reaches claude as --agents",
+  "source": [
+    "intended: builds come from layers (repo, trusted parent folders, user folder), nearest wins (docs/decisions.md)"
+  ],
+  "tags": [
+    "posix"
+  ],
+  "status": {
+    "ts": "xfail",
+    "go": "pass"
+  },
+  "defect": "N-12",
+  "intent": "INTENDED behavior (defect N-12, build layers). A worker's subagent names are resolved with the layered lookup from the launching project, so a user worker that lists plan gets the project's plan (its description, prompt, model and tools), not the user folder's plan.yaml, which the project's build shadows. The oracle has no user layer: it rejects the user worker as an unknown preset and the case FAILS on it.",
+  "project": {
+    "files": {
+      ".jitso/briefs/brief.md": {
+        "from": "brief.md"
+      }
+    }
+  },
+  "home": {
+    "files": {
+      ".jitso/builds/user-team.yaml": {
+        "from": "user-team.yaml"
+      },
+      ".jitso/builds/plan.yaml": {
+        "from": "user-plan.yaml"
+      }
+    }
+  },
+  "steps": [
+    {
+      "run": [
+        "launch",
+        "--build",
+        "user-team",
+        "--brief",
+        "{{PROJECT}}/.jitso/briefs/brief.md",
+        "--mode",
+        "direct"
+      ],
+      "capture": {
+        "LAUNCH_ID": {
+          "from": "stdout",
+          "regex": "JITSO (L\\d{8}T\\d{6}-[0-9a-f]{4})",
+          "group": 1
+        }
+      },
+      "expect": {
+        "exit": 0,
+        "stdout": [
+          {
+            "contains": "| build user-team v1 (user)"
+          }
+        ]
+      }
+    },
+    {
+      "exec": "run_sh",
+      "launch": "{{LAUNCH_ID}}",
+      "expect": {
+        "exit": 0,
+        "claude": {
+          "ran": true,
+          "argv_contains": [
+            "--agents"
+          ],
+          "json_arg_after": {
+            "--agents": [
+              {
+                "path": "",
+                "keys_exact": [
+                  "plan"
+                ]
+              },
+              {
+                "path": "plan.prompt",
+                "equals": "You are the planner of this session. Read the approved test plan and the code it touches, then return a short numbered list of the steps to automate, each naming the file it changes. Never edit, create or delete a file."
+              },
+              {
+                "path": "plan.model",
+                "equals": "claude-haiku-5-5"
+              }
+            ]
+          }
+        }
+      }
+    }
+  ]
+}

@@ -1,0 +1,62 @@
+{
+  "id": "rules/one-rules-file-missing-exits-3",
+  "title": "a project that has jitso/hard-rules/ but lacks style.md is an environment error naming the file, and no launch is registered",
+  "source": [
+    "cli/jitso/launch.ts: the hard-rules files are read from the project and a missing one throws",
+    "intended: TS-ODDITIES L2 (defect N-2): a failed launch leaves no launch folder; the TS binary leaves an empty one"
+  ],
+  "status": {
+    "ts": "xfail",
+    "go": "pass"
+  },
+  "defect": "N-2",
+  "intent": "INTENDED behavior (TS-ODDITIES L2, owner decision 2026-11-15, defect N-2). A launch that fails before its registry line leaves no launch folder behind. The exit code, the stderr text naming style.md, the empty registry and the absent Orca calls are the oracle's own and hold on both implementations; the TS binary leaves an empty .jitso/launches/<id>/ on disk, so the launch-folder check is the only expectation that FAILS on TS.",
+  "project": {
+    "files": {
+      ".jitso/briefs/brief.md": {
+        "from": "brief.md"
+      },
+      "jitso/hard-rules/style.md": null
+    }
+  },
+  "steps": [
+    {
+      "run": [
+        "launch",
+        "--build",
+        "haiku-explorer",
+        "--brief",
+        "{{PROJECT}}/.jitso/briefs/brief.md",
+        "--mode",
+        "direct"
+      ],
+      "expect": {
+        "exit": 3,
+        "stdout": [
+          {
+            "empty": true
+          }
+        ],
+        "stderr": [
+          {
+            "contains": "style.md"
+          }
+        ],
+        "registry": {
+          "count": 0
+        },
+        "orca_calls": {
+          "empty": true
+        },
+        "files": [
+          {
+            "path": ".jitso/launches",
+            "entries": {
+              "count": 0
+            }
+          }
+        ]
+      }
+    }
+  ]
+}

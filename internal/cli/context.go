@@ -94,14 +94,17 @@ func (c *Context) Project() (project.Root, error) {
 	return *c.root, nil
 }
 
-// Catalog loads the project's catalog once, from its primary checkout.
+// Catalog loads the project's layered catalog once: its own builds from the
+// primary checkout, the builds of the trusted parent folders and the user's
+// folder under $HOME (the layers and the trust are computed from the primary's
+// real path and ~/.jitso/config.yaml).
 func (c *Context) Catalog() (*catalog.Catalog, error) {
 	if c.catalog == nil && c.catalogErr == nil {
 		root, err := c.Project()
 		if err != nil {
 			return nil, err
 		}
-		c.catalog, c.catalogErr = catalog.Load(os.DirFS(root.Primary))
+		c.catalog, c.catalogErr = catalog.LoadLayers(os.DirFS(root.Primary), root.Primary, c.Home())
 	}
 	return c.catalog, c.catalogErr
 }

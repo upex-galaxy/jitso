@@ -31,8 +31,14 @@ type LaunchEvent struct {
 	Type     string  `json:"type"`
 	// Build and BuildVersion keep the v1 log keys "preset" and
 	// "preset_version": a storage schema is not renamed with the vocabulary.
-	Build          string   `json:"preset"`
-	BuildVersion   any      `json:"preset_version"`
+	Build        string `json:"preset"`
+	BuildVersion any    `json:"preset_version"`
+	// BuildLayer, BuildFile and BuildSHA256 name the file the session was
+	// launched from: its layer (repo, parent or user), its real absolute path
+	// and the SHA-256 of its bytes.
+	BuildLayer     string   `json:"build_layer"`
+	BuildFile      string   `json:"build_file"`
+	BuildSHA256    string   `json:"build_sha256"`
 	Harness        string   `json:"harness"`
 	Model          string   `json:"model"`
 	Effort         string   `json:"effort"`

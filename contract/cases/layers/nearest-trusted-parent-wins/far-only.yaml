@@ -1,0 +1,22 @@
+# Build written by a layers case.
+id: far-only
+version: 1
+status: approved
+role: operator
+type: scanner
+work_kind: repo-scan
+description: A build that only the far parent has.
+harness: claude
+model: claude-haiku-5-5
+effort: low
+mode_default: direct
+agents_md: exclude
+route_scope: [none]
+skills_first: []
+tools: [Read, Glob, Grep]
+mcp: []
+requires: []
+budget: { tokens: 150000, usd_list_cap: 0.30 }
+success:
+  - { check: answer_delivered }
+  - { check: no_rule_breaks }

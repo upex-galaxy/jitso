@@ -9,6 +9,7 @@ package profile
 
 import (
 	"slices"
+	"strings"
 
 	"github.com/upex-galaxy/jitso/internal/catalog"
 	"github.com/upex-galaxy/jitso/internal/fail"
@@ -36,7 +37,9 @@ type Profile struct {
 	Fields    Fields
 }
 
-// Resolve validates req against cat, in the oracle's order: the build exists,
+// Resolve validates req against cat, in the oracle's order: the build exists
+// (the nearest layer that has the id; invalid for this project is a rejection
+// that names the file and its problems, defect N-12),
 // is approved, is not subagent tier (a subagent-tier build is never launched
 // alone, defect N-5), its model and effort are allowlisted, every MCP server
 // is known, the route scope is valid, every field is required by the build
@@ -46,6 +49,11 @@ type Profile struct {
 func Resolve(req Request, cat *catalog.Catalog) (Profile, error) {
 	b, ok := cat.Find(req.Build)
 	if !ok {
+		// The nearest file with this id exists but is invalid for this
+		// project: the id is unusable here, and a farther file is not used.
+		if s, invalid := cat.Invalid(req.Build); invalid {
+			return Profile{}, fail.Rejectedf(`build "%s" from %s %s is invalid here: %s`, s.ID, s.Layer, s.Display, strings.Join(s.Problems, "; "))
+		}
 		return Profile{}, fail.Rejectedf(`unknown build "%s"`, req.Build)
 	}
 	if b.Status != "approved" {

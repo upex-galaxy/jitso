@@ -1,0 +1,19 @@
+# JITSO build template, tier subagent. This is a DRAFT: it is not valid until every empty value is filled.
+# A subagent is never launched alone: a worker or a conductor lists its id in subagents and hands it work.
+# Its model and effort must be listed in jitso/jitso.yaml, and so must every tool it names.
+# Fill each empty value, then check the build with: jitso build validate <id>.
+# A subagent does not take route_scope, success, budget, skills_first, mcp, requires or subagents.
+id: <id>
+version: 1
+status: draft
+tier: subagent
+# description: one sentence the parent session reads to decide when to use this subagent.
+description:
+# prompt: the instructions the subagent runs with. Plain text, written for the subagent alone.
+prompt:
+# model: a full model id from the models list of jitso/jitso.yaml. Never an alias.
+model:
+# effort: a value from the efforts list of jitso/jitso.yaml.
+effort:
+# tools: [a, b] limits the tools the subagent may use, from the tools list of jitso/jitso.yaml. Without it the subagent inherits its parent's tools.
+# tools: []

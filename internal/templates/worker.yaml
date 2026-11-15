@@ -1,0 +1,39 @@
+# JITSO build template, tier worker. This is a DRAFT: it is not valid until every empty value is filled.
+# A worker is one session started alone with: jitso launch --build <id> --brief <file>.
+# Every model, effort, skill, MCP server and tool named here must be listed in jitso/jitso.yaml.
+# Fill each empty value, then check the build with: jitso build validate <id>.
+id: <id>
+version: 1
+status: draft
+tier: worker
+role: operator
+# type: a short word for the kind of work (for example explorer, tester, automator).
+type:
+# work_kind: a short slug for the work this build does (for example repo-exploration).
+work_kind:
+# description: one sentence a dispatcher reads to choose this build.
+description:
+harness: claude
+# model: a full model id from the models list of jitso/jitso.yaml. Never an alias.
+model:
+# effort: a value from the efforts list of jitso/jitso.yaml.
+effort:
+mode_default: direct
+agents_md: full
+# route_scope: ids of instruction sections, or [none] for no extra instructions.
+route_scope: [none]
+# skills_first: skills the session loads before any other work, from the skills list of jitso/jitso.yaml.
+skills_first: []
+# tools: [a, b] limits the tools the session may use, from the tools list of jitso/jitso.yaml. Without it the harness default applies.
+# tools: []
+# mcp: MCP servers from the mcp list of jitso/jitso.yaml.
+mcp: []
+# subagents: names of subagent-tier builds this worker may hand work to. Each must be an approved build.
+subagents: []
+# requires: fields the launch must be given with --field name=value (for example ticket_key).
+requires: []
+# budget: a mapping with the two numbers a launch needs: { tokens: <number>, usd_list_cap: <number> }.
+budget:
+# success: the checks that say whether a launch did its job. Known checks: answer_delivered, jira_comment_on, xray_execution_with_env, no_rule_breaks.
+success:
+  - { check: answer_delivered }

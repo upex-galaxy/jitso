@@ -1,0 +1,93 @@
+{
+  "id": "layers/trusted-parent-is-a-layer",
+  "title": "a folder listed in trusted_parents of ~/.jitso/config.yaml that contains the project is a layer: its builds are listed and launchable from the nested project",
+  "source": [
+    "intended: builds come from layers (repo, trusted parent folders, user folder), nearest wins (docs/decisions.md)"
+  ],
+  "status": {
+    "ts": "xfail",
+    "go": "pass"
+  },
+  "defect": "N-12",
+  "intent": "INTENDED behavior (defect N-12, build layers). The user config ~/.jitso/config.yaml lists trusted parent folders. A trusted folder that strictly contains the project (here the outer fixture project contains the nested checkout the commands run in) is a layer after the project's own builds: its jitso/builds files are listed with ` (from parent <path>)`, validated against the nested project's allowlists, and launch marks the card header `(parent)`. The nested project's own build comes first (nearest wins). The oracle also resolves its project from its own script folder, so from a nested checkout it reads the outer fixture catalog (defect N-1) and fails here as well.",
+  "project": {
+    "files": {
+      "nested/jitso/jitso.yaml": {
+        "from": "nested-jitso.yaml"
+      },
+      "nested/jitso/builds/solo.yaml": {
+        "from": "nested-solo.yaml"
+      },
+      "nested/.agents/instructions/agent-project.md": {
+        "from": "nested-agent-project.md"
+      },
+      "nested/.jitso/briefs/brief.md": {
+        "from": "brief.md"
+      }
+    }
+  },
+  "home": {
+    "files": {
+      ".jitso/config.yaml": "version: 1\ntrusted_parents:\n  - \"{{PROJECT}}\"\n"
+    }
+  },
+  "steps": [
+    {
+      "git_init": {
+        "path": "nested"
+      },
+      "expect": {
+        "files": [
+          {
+            "path": "nested/.git",
+            "exists": true
+          }
+        ]
+      }
+    },
+    {
+      "run": [
+        "build",
+        "list"
+      ],
+      "cwd": "nested",
+      "expect": {
+        "exit": 0,
+        "stdout": [
+          {
+            "regex": "(?s)^- solo: claude-haiku-5-5 low\\. .+\\n- haiku-explorer: "
+          },
+          {
+            "contains": "requires: nothing (from parent {{PROJECT}}/jitso/builds/haiku-explorer.yaml)\n"
+          }
+        ],
+        "stderr": [
+          {
+            "contains": "jitso: warning: skipped build parent "
+          }
+        ]
+      }
+    },
+    {
+      "run": [
+        "launch",
+        "--build",
+        "haiku-explorer",
+        "--brief",
+        "{{PROJECT}}/nested/.jitso/briefs/brief.md",
+        "--mode",
+        "direct",
+        "--dry-run"
+      ],
+      "cwd": "nested",
+      "expect": {
+        "exit": 0,
+        "stdout": [
+          {
+            "contains": "| build haiku-explorer v1 (parent)"
+          }
+        ]
+      }
+    }
+  ]
+}

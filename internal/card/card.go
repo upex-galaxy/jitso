@@ -23,12 +23,15 @@ type Input struct {
 	Mode         string
 	Build        string
 	BuildVersion string
-	Model        string
-	Effort       string
-	MCP          []string
-	SkillsFirst  []string
-	Subagents    []string
-	RouteScope   []string
+	// Layer is where the build file lives: repo, parent or user. The header
+	// names it for a parent or user build; "" and repo print nothing.
+	Layer       string
+	Model       string
+	Effort      string
+	MCP         []string
+	SkillsFirst []string
+	Subagents   []string
+	RouteScope  []string
 	// LaunchCommand starts another session in the project (LaunchCommand).
 	LaunchCommand string
 	// BudgetTokens and BudgetUSD are the build's budget.
@@ -38,7 +41,7 @@ type Input struct {
 
 // Render is the card text, six lines without a trailing newline:
 //
-//	JITSO <id> | <role>/<type> | mode <mode> (<who it asks>) | build <build> v<version>
+//	JITSO <id> | <role>/<type> | mode <mode> (<who it asks>) | build <build> v<version>[ (<layer>)]
 //	model <model> effort <effort> | bypass | MCP <list> | skill <list>
 //	subagents <names or unrestricted>
 //	ROUTE-SCOPE: <ids>
@@ -49,8 +52,12 @@ func Render(in Input) string {
 	if in.Mode == "direct" {
 		asks, reports = "asks you", "you"
 	}
+	layer := ""
+	if in.Layer != "" && in.Layer != "repo" {
+		layer = " (" + in.Layer + ")"
+	}
 	return strings.Join([]string{
-		"JITSO " + in.ID + " | " + in.Role + "/" + in.Type + " | mode " + in.Mode + " (" + asks + ") | build " + in.Build + " v" + in.BuildVersion,
+		"JITSO " + in.ID + " | " + in.Role + "/" + in.Type + " | mode " + in.Mode + " (" + asks + ") | build " + in.Build + " v" + in.BuildVersion + layer,
 		"model " + in.Model + " effort " + in.Effort + " | bypass | MCP " + list(in.MCP) + " | skill " + list(in.SkillsFirst),
 		"subagents " + subagents(in.Subagents),
 		ScopeLine(in.RouteScope),

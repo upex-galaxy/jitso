@@ -1,0 +1,115 @@
+{
+  "id": "layers/card-and-registry-name-the-layer",
+  "title": "a launch of a user build prints the layer on the card and the registry line records the layer, the real file and the SHA-256 of its bytes; a project build records the layer repo",
+  "source": [
+    "intended: builds come from layers (repo, trusted parent folders, user folder), nearest wins (docs/decisions.md)"
+  ],
+  "status": {
+    "ts": "xfail",
+    "go": "pass"
+  },
+  "defect": "N-12",
+  "intent": "INTENDED behavior (defect N-12, build layers). Every launch line of the registry gains build_layer (repo, parent or user), build_file (the real absolute path of the build file) and build_sha256 (the SHA-256 of the file's bytes, not of anything re-encoded), so a record names exactly which file a session was launched from. The card header of a parent or user build ends with ` (<layer>)`, and card.txt holds the same header; a project build has no suffix. The registry keeps its preset and preset_version keys (docs/decisions.md). The oracle knows no layers: it rejects the user build as an unknown preset and the case FAILS on it.",
+  "project": {
+    "files": {
+      ".jitso/briefs/brief.md": {
+        "from": "brief.md"
+      }
+    }
+  },
+  "home": {
+    "files": {
+      ".jitso/builds/shared-scan.yaml": {
+        "from": "shared-scan.yaml"
+      }
+    }
+  },
+  "steps": [
+    {
+      "run": [
+        "launch",
+        "--build",
+        "shared-scan",
+        "--brief",
+        "{{PROJECT}}/.jitso/briefs/brief.md",
+        "--mode",
+        "direct"
+      ],
+      "capture": {
+        "LAUNCH_ID": {
+          "from": "stdout",
+          "regex": "JITSO (L\\d{8}T\\d{6}-[0-9a-f]{4})",
+          "group": 1
+        }
+      },
+      "expect": {
+        "exit": 0,
+        "stdout": [
+          {
+            "contains": "| build shared-scan v1 (user)\n"
+          }
+        ],
+        "files": [
+          {
+            "path": ".jitso/launches/{{LAUNCH_ID}}/card.txt",
+            "contains": [
+              "| build shared-scan v1 (user)\n"
+            ]
+          }
+        ],
+        "registry": {
+          "count": 1,
+          "events": [
+            {
+              "at": 0,
+              "event": "launch",
+              "fields": {
+                "preset": "shared-scan",
+                "preset_version": 1,
+                "build_layer": "user",
+                "build_file": "{{HOME}}/.jitso/builds/shared-scan.yaml",
+                "build_sha256": "0d53cd1b501d0f73dc2587f0469a127bbde4c5cdd94eac6691904ededea8a097"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "run": [
+        "launch",
+        "--build",
+        "haiku-explorer",
+        "--brief",
+        "{{PROJECT}}/.jitso/briefs/brief.md",
+        "--mode",
+        "direct"
+      ],
+      "expect": {
+        "exit": 0,
+        "stdout": [
+          {
+            "regex": "\\| build haiku-explorer v1\\n"
+          }
+        ],
+        "registry": {
+          "count": 2,
+          "events": [
+            {
+              "at": 1,
+              "event": "launch",
+              "fields": {
+                "preset": "haiku-explorer",
+                "build_layer": "repo",
+                "build_file": "{{PROJECT}}/jitso/builds/haiku-explorer.yaml",
+                "build_sha256": {
+                  "regex": "^[0-9a-f]{64}$"
+                }
+              }
+            }
+          ]
+        }
+      }
+    }
+  ]
+}

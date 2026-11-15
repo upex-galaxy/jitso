@@ -10,6 +10,7 @@ import (
 	"github.com/upex-galaxy/jitso/internal/jsonx"
 	"github.com/upex-galaxy/jitso/internal/orca"
 	"github.com/upex-galaxy/jitso/internal/project"
+	"github.com/upex-galaxy/jitso/internal/rules"
 	"github.com/upex-galaxy/jitso/internal/shell"
 	"github.com/upex-galaxy/jitso/internal/trust"
 )
@@ -66,15 +67,9 @@ func writeFolder(p prepared, d Deps, dir string) (folder, error) {
 	}
 	f.argv = spec.Argv
 
-	parts := make([]string, len(HardRules))
-	for i, rel := range HardRules {
-		data, err := os.ReadFile(filepath.Join(d.Root.Primary, rel))
-		if err != nil {
-			return folder{}, err
-		}
-		parts[i] = string(data)
+	if f.rules, err = rules.Load(os.DirFS(d.Root.Primary)); err != nil {
+		return folder{}, err
 	}
-	f.rules = Rules(parts)
 
 	mcpJSON, err := jsonx.MarshalIndent(spec.MCPConfig, "  ")
 	if err != nil {

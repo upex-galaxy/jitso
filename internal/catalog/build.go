@@ -6,8 +6,18 @@ import "github.com/upex-galaxy/jitso/internal/jsconv"
 // decoded value, or "" when the key is missing; Raw keeps the decoded file for
 // anything that needs the value as written.
 type Build struct {
-	// File is the file name under jitso/builds/, for example haiku-explorer.yaml.
+	// File is the file name under its builds folder, for example haiku-explorer.yaml.
 	File string
+	// Layer is where the file lives: repo, parent or user. It is empty only for
+	// a Build made by hand (tests), which reads as repo.
+	Layer Layer
+	// Display is the file as people see it: jitso/builds/<file> for the
+	// project's own builds, ~/.jitso/builds/<file> for the user's.
+	Display string
+	// Path is the real absolute path of the file.
+	Path string
+	// SHA256 is the hex SHA-256 of the file's bytes.
+	SHA256 string
 	// Raw is the decoded file.
 	Raw *Map
 
@@ -65,6 +75,14 @@ type SuccessCheck struct {
 type Param struct {
 	Key   string
 	Value string
+}
+
+// LayerWord is the layer word of the build, repo for a build made by hand.
+func (b *Build) LayerWord() Layer {
+	if b.Layer == "" {
+		return LayerRepo
+	}
+	return b.Layer
 }
 
 // Launchable is true for a build that `jitso launch` and the dispatcher may

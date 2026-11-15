@@ -110,6 +110,12 @@ func TestResolveOutsideGit(t *testing.T) {
 	}
 }
 
+func TestUserDir(t *testing.T) {
+	if got := UserDir("/h"); got != "/h/.jitso" {
+		t.Errorf("got %s", got)
+	}
+}
+
 func TestDispatchDir(t *testing.T) {
 	if got := DispatchDir("/h"); got != "/h/.jitso/dispatch-cwd" {
 		t.Errorf("got %s", got)

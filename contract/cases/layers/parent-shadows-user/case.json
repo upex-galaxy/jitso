@@ -1,0 +1,76 @@
+{
+  "id": "layers/parent-shadows-user",
+  "title": "a trusted parent's build shadows a user build with the same id, and the user folder still supplies the ids the parent does not have",
+  "source": [
+    "intended: builds come from layers (repo, trusted parent folders, user folder), nearest wins (docs/decisions.md)"
+  ],
+  "status": {
+    "ts": "xfail",
+    "go": "pass"
+  },
+  "defect": "N-12",
+  "intent": "INTENDED behavior (defect N-12, build layers). The layer order is the project, each trusted parent (nearest first), then the user folder. The parent's haiku-explorer is the build of that id, so the user folder's copy (another description) is not listed; the user-only build is, after the parent's builds, with its own origin. The oracle knows no layers and no nested project, so the case FAILS on it. The oracle also resolves its project from its own script folder, so from a nested checkout it reads the outer fixture catalog (defect N-1) and fails here as well.",
+  "project": {
+    "files": {
+      "nested/jitso/jitso.yaml": {
+        "from": "nested-jitso.yaml"
+      },
+      "nested/jitso/builds/solo.yaml": {
+        "from": "nested-solo.yaml"
+      },
+      "nested/.agents/instructions/agent-project.md": {
+        "from": "nested-agent-project.md"
+      }
+    }
+  },
+  "home": {
+    "files": {
+      ".jitso/config.yaml": "version: 1\ntrusted_parents:\n  - \"{{PROJECT}}\"\n",
+      ".jitso/builds/haiku-explorer.yaml": {
+        "from": "user-haiku-explorer.yaml"
+      },
+      ".jitso/builds/user-only.yaml": {
+        "from": "user-only.yaml"
+      }
+    }
+  },
+  "steps": [
+    {
+      "git_init": {
+        "path": "nested"
+      },
+      "expect": {
+        "files": [
+          {
+            "path": "nested/.git",
+            "exists": true
+          }
+        ]
+      }
+    },
+    {
+      "run": [
+        "build",
+        "list"
+      ],
+      "cwd": "nested",
+      "expect": {
+        "exit": 0,
+        "stdout": [
+          {
+            "contains": "- haiku-explorer: claude-haiku-5-5 low. Read-only search of the repo that returns file paths and line numbers. requires: nothing (from parent {{PROJECT}}/jitso/builds/haiku-explorer.yaml)\n"
+          },
+          {
+            "not_contains": "USER COPY"
+          },
+          {
+            "not_contains": "from user ~/.jitso/builds/haiku-explorer"
+          },
+          {
+            "regex": "(?s)\\(from parent .+\\n- user-only: .+ \\(from user ~/\\.jitso/builds/user-only\\.yaml\\)\\n$"
+          }
+        ]
+      }
+    }
+  ]
+}

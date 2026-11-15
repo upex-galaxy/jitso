@@ -32,9 +32,6 @@ const (
 	FileCard  = "card.txt"
 )
 
-// HardRules are the two project files joined into core.md, in order.
-var HardRules = []string{"jitso/hard-rules/core.md", "jitso/hard-rules/style.md"}
-
 // ID is a launch id, L<yyyymmdd>T<hhmmss>-<4 hex>, from the UTC time and two
 // random bytes.
 func ID(now time.Time, random [2]byte) string {
@@ -52,6 +49,7 @@ func Card(id, mode string, p profile.Profile, mcp []string, launchCommand string
 		Mode:          mode,
 		Build:         b.ID,
 		BuildVersion:  raw("version"),
+		Layer:         string(b.LayerWord()),
 		Model:         p.Model,
 		Effort:        p.Effort,
 		MCP:           mcp,
@@ -72,11 +70,6 @@ func BriefFile(cardText string, skillsFirst []string, briefText string) string {
 		skills = "Load first: " + strings.Join(skillsFirst, ", ") + "\n\n"
 	}
 	return cardText + "\n\n" + skills + briefText
-}
-
-// Rules is core.md: the hard-rule files joined with one newline, as read.
-func Rules(files []string) string {
-	return strings.Join(files, "\n")
 }
 
 // FirstPrompt is the first prompt of a direct launch: the pointer to the
@@ -175,6 +168,9 @@ func Event(in EventInput) *registry.LaunchEvent {
 		Type:           b.Type,
 		Build:          b.ID,
 		BuildVersion:   b.Version,
+		BuildLayer:     string(b.LayerWord()),
+		BuildFile:      b.Path,
+		BuildSHA256:    b.SHA256,
 		Harness:        in.Harness,
 		Model:          in.Profile.Model,
 		Effort:         in.Profile.Effort,

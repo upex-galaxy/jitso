@@ -1,0 +1,78 @@
+{
+  "id": "layers/sibling-is-never-a-parent",
+  "title": "a trusted folder that only shares a name prefix with the project's folder, or sits next to it, is never a parent",
+  "source": [
+    "intended: builds come from layers (repo, trusted parent folders, user folder), nearest wins (docs/decisions.md)"
+  ],
+  "status": {
+    "ts": "xfail",
+    "go": "pass"
+  },
+  "defect": "N-12",
+  "intent": "INTENDED behavior (defect N-12, build layers). A trusted folder is a parent only when the project's real path is strictly inside it. The config trusts zone (which contains the project: the positive control, listed as a parent), zone/nes (a name prefix of the project's folder zone/nested, which a plain string-prefix check would accept) and zone/other (a sibling): only the project's own build and zone's build are listed, and the trap and sibling builds never are. The oracle knows no layers and no nested project, so the case FAILS on it. The oracle also resolves its project from its own script folder, so from a nested checkout it reads the outer fixture catalog (defect N-1) and fails here as well.",
+  "project": {
+    "files": {
+      "zone/nested/jitso/jitso.yaml": {
+        "from": "nested-jitso.yaml"
+      },
+      "zone/nested/jitso/builds/solo.yaml": {
+        "from": "nested-solo.yaml"
+      },
+      "zone/nested/.agents/instructions/agent-project.md": {
+        "from": "nested-agent-project.md"
+      },
+      "zone/jitso/builds/zone-build.yaml": {
+        "from": "zone-build.yaml"
+      },
+      "zone/nes/jitso/builds/trap.yaml": {
+        "from": "trap.yaml"
+      },
+      "zone/other/jitso/builds/trap.yaml": {
+        "from": "trap.yaml"
+      }
+    }
+  },
+  "home": {
+    "files": {
+      ".jitso/config.yaml": "version: 1\ntrusted_parents:\n  - \"{{PROJECT}}/zone\"\n  - \"{{PROJECT}}/zone/nes\"\n  - \"{{PROJECT}}/zone/other\"\n"
+    }
+  },
+  "steps": [
+    {
+      "git_init": {
+        "path": "zone/nested"
+      },
+      "expect": {
+        "files": [
+          {
+            "path": "zone/nested/.git",
+            "exists": true
+          }
+        ]
+      }
+    },
+    {
+      "run": [
+        "build",
+        "list"
+      ],
+      "cwd": "zone/nested",
+      "expect": {
+        "exit": 0,
+        "stderr": [
+          {
+            "empty": true
+          }
+        ],
+        "stdout": [
+          {
+            "regex": "(?s)^- solo: [^\\n]+\\n- zone-build: [^\\n]+ \\(from parent [^\\n]+/zone/jitso/builds/zone-build\\.yaml\\)\\n$"
+          },
+          {
+            "not_contains": "trap"
+          }
+        ]
+      }
+    }
+  ]
+}

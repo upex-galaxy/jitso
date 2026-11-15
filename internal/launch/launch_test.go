@@ -335,3 +335,17 @@ func TestEventFlags(t *testing.T) {
 		t.Errorf("direct flags %q", e.Flags)
 	}
 }
+
+// The launch event names the file the session was launched from.
+func TestEventNamesTheBuildFile(t *testing.T) {
+	b := &catalog.Build{ID: "x", Version: 1, Layer: catalog.LayerUser, Path: "/h/.jitso/builds/x.yaml", SHA256: "abc"}
+	in := EventInput{ID: id, Args: Args{Mode: ModeFleet, BriefLanguage: "en"}, Argv: []string{"claude"}}
+	in.Profile.Build = b
+	if e := Event(in); e.BuildLayer != "user" || e.BuildFile != "/h/.jitso/builds/x.yaml" || e.BuildSHA256 != "abc" {
+		t.Errorf("event %+v", e)
+	}
+	b.Layer = ""
+	if e := Event(in); e.BuildLayer != "repo" {
+		t.Errorf("a build made by hand reads as repo, got %q", e.BuildLayer)
+	}
+}

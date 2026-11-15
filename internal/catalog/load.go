@@ -7,11 +7,13 @@
 package catalog
 
 import (
+	"errors"
 	"io/fs"
 	"path"
 	"regexp"
-	"slices"
 	"strings"
+
+	"github.com/upex-galaxy/jitso/internal/fail"
 )
 
 // Paths inside the project.
@@ -22,16 +24,42 @@ const (
 	buildsExtension = ".yaml"
 )
 
-// Catalog is a loaded, valid catalog.
+// Catalog is a loaded catalog: the builds of every layer that are valid for
+// the project that loaded it.
 type Catalog struct {
 	Config Config
-	// Builds are all builds, every tier and status, sorted by file name.
+	// Builds are the build of every id that is valid here: for each id the file
+	// of the nearest layer. They come in layer order (the project, each trusted
+	// parent nearest first, the user folder) and by file name inside a layer.
+	// Every tier and status is here.
 	Builds []Build
 	// RouteIDs are the valid route-scope ids, in file name order.
 	RouteIDs []string
+	// Skipped are the parent and user files that are invalid for this project
+	// and so are no build here. A file is listed when it is the build of its id
+	// (the nearest file with that id) or has no id; a farther file that a
+	// nearer one shadows is not used and not listed.
+	Skipped []Skipped
 }
 
-// Find is the first build with the given id.
+// Skipped is an outer-layer file that is invalid for the launching project.
+type Skipped struct {
+	// ID is the file's id, "" when it has none.
+	ID      string
+	Layer   Layer
+	Display string
+	// Problems are what is wrong with it here.
+	Problems []string
+}
+
+// Warning is the line `build list` prints on stderr for the skipped file:
+// `jitso: warning: skipped build <layer> <display path>: <problems joined by "; ">`.
+func (s Skipped) Warning() string {
+	return "jitso: warning: skipped build " + string(s.Layer) + " " + s.Display + ": " + strings.Join(s.Problems, "; ")
+}
+
+// Find is the build with the given id: the file of the nearest layer that has
+// it. An id whose nearest file is invalid here has no build (see Invalid).
 func (c *Catalog) Find(id string) (*Build, bool) {
 	for i := range c.Builds {
 		if c.Builds[i].ID == id {
@@ -41,8 +69,22 @@ func (c *Catalog) Find(id string) (*Build, bool) {
 	return nil, false
 }
 
+// Invalid is the skipped file that is the build of id: the id is unusable in
+// this project, and farther files with the same id are not used.
+func (c *Catalog) Invalid(id string) (*Skipped, bool) {
+	if id == "" {
+		return nil, false
+	}
+	for i := range c.Skipped {
+		if c.Skipped[i].ID == id {
+			return &c.Skipped[i], true
+		}
+	}
+	return nil, false
+}
+
 // Launchable are the builds `jitso launch` may start and the dispatcher may
-// offer: approved and not subagent tier, in file name order.
+// offer: approved and not subagent tier, in catalog order.
 func (c *Catalog) Launchable() []Build {
 	var out []Build
 	for _, b := range c.Builds {
@@ -53,8 +95,9 @@ func (c *Catalog) Launchable() []Build {
 	return out
 }
 
-// SubagentsOf resolves the subagents b lists, in its order. Load already
-// checked that each name is a subagent-tier build.
+// SubagentsOf resolves the subagents b lists, in its order, with the same
+// layered lookup as every build. Load already checked that each name is a
+// subagent-tier build.
 func (c *Catalog) SubagentsOf(b *Build) []*Build {
 	out := make([]*Build, 0, len(b.Subagents))
 	for _, name := range b.Subagents {
@@ -95,6 +138,9 @@ func RouteIDs(fsys fs.FS) ([]string, error) {
 func LoadConfig(fsys fs.FS) (Config, error) {
 	data, err := fs.ReadFile(fsys, ConfigPath)
 	if err != nil {
+		if errors.Is(err, fs.ErrNotExist) {
+			return Config{}, fail.Envf("%s is missing: this project has no JITSO allowlists (create it with jitso build new <id>)", ConfigPath)
+		}
 		return Config{}, err
 	}
 	raw, err := decodeYAML(data)
@@ -125,61 +171,56 @@ func (e *FileError) Error() string {
 	return "build " + e.File + " is invalid: " + strings.Join(e.Problems, "; ")
 }
 
-// Load reads and validates the whole catalog. It fails on the first invalid
-// build file in file name order (the oracle's rule), then on the first build
-// whose subagents do not all name a subagent-tier build. The catalog is
-// validated as a whole: one invalid file fails every command that loads it.
+// Load reads the catalog of the project's own builds only (fsys is its
+// primary checkout), with no parent and no user layer.
 func Load(fsys fs.FS) (*Catalog, error) {
-	cfg, err := LoadConfig(fsys)
-	if err != nil {
-		return nil, err
-	}
-	ids, err := RouteIDs(fsys)
-	if err != nil {
-		return nil, err
-	}
-	entries, err := fs.ReadDir(fsys, BuildsDir)
-	if err != nil {
-		return nil, err
-	}
-	names := make([]string, 0, len(entries))
-	for _, e := range entries {
-		if strings.HasSuffix(e.Name(), buildsExtension) {
-			names = append(names, e.Name())
-		}
-	}
-	slices.Sort(names)
-	cat := &Catalog{Config: cfg, RouteIDs: ids}
-	for _, name := range names {
-		data, err := fs.ReadFile(fsys, path.Join(BuildsDir, name))
-		if err != nil {
-			return nil, err
-		}
-		raw, err := decodeYAML(data)
-		if err != nil {
-			return nil, &FileError{File: path.Join(BuildsDir, name), Problems: []string{err.Error()}}
-		}
-		if problems := ValidateBuild(raw, cfg, ids); len(problems) > 0 {
-			return nil, &FileError{File: path.Join(BuildsDir, name), Problems: problems}
-		}
-		cat.Builds = append(cat.Builds, buildFrom(name, raw.(*Map)))
-	}
-	for _, b := range cat.Builds {
-		if problems := cat.subagentProblems(&b); len(problems) > 0 {
-			return nil, &FileError{File: path.Join(BuildsDir, b.File), Problems: problems}
-		}
-	}
-	return cat, nil
+	return LoadLayers(fsys, "", "")
 }
 
-// subagentProblems checks that each name b lists is a subagent-tier build of
-// this catalog (docs/decisions.md, tiers).
-func (c *Catalog) subagentProblems(b *Build) []string {
-	var problems []string
-	for _, name := range b.Subagents {
-		if s, ok := c.Find(name); !ok || s.Tier != TierSubagent {
-			problems = append(problems, `subagent "`+name+`" is not a subagent-tier build`)
+// LoadLayers reads the layered catalog of a project. fsys is its primary
+// checkout, primary the real path of that checkout and home $HOME; the layers
+// are computed from them (see Sources and LoadUserConfig). An empty primary
+// loads the project layer only.
+//
+// The project's own files keep the whole-catalog rule: it fails on the first
+// invalid build file in file name order (the oracle's rule), then on the first
+// build whose subagents do not all name a subagent-tier build, so one invalid
+// file fails every command that loads it. A parent or user file that is
+// invalid for this project is skipped instead (Catalog.Skipped): a build that
+// is valid in one project and not in another must not break the other.
+func LoadLayers(fsys fs.FS, primary, home string) (*Catalog, error) {
+	res, err := Scan(fsys, primary, home)
+	if err != nil {
+		return nil, err
+	}
+	return res.Catalog()
+}
+
+// Catalog turns the scan into the catalog of the project, or the error of its
+// first invalid file.
+func (r *Result) Catalog() (*Catalog, error) {
+	for _, f := range r.Files {
+		if f.Layer == LayerRepo && f.loadProblems > 0 {
+			return nil, &FileError{File: f.Display, Problems: f.Problems[:f.loadProblems]}
 		}
 	}
-	return problems
+	for _, f := range r.Files {
+		if f.Layer == LayerRepo && len(f.Problems) > f.loadProblems {
+			return nil, &FileError{File: f.Display, Problems: f.Problems[f.loadProblems:]}
+		}
+	}
+	cat := &Catalog{Config: r.Config, RouteIDs: r.RouteIDs}
+	for _, f := range r.Files {
+		if f.ShadowedBy != nil {
+			continue
+		}
+		if !f.Valid() {
+			cat.Skipped = append(cat.Skipped, Skipped{ID: f.ID, Layer: f.Layer, Display: f.Display, Problems: f.Problems})
+			continue
+		}
+		b := buildFrom(f.Name, f.Raw)
+		b.Layer, b.Display, b.Path, b.SHA256 = f.Layer, f.Display, f.Path, f.SHA256
+		cat.Builds = append(cat.Builds, b)
+	}
+	return cat, nil
 }

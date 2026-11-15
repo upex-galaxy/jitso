@@ -1,0 +1,69 @@
+{
+  "id": "layers/no-repo-builds-folder",
+  "title": "a project with no jitso/builds folder has an empty project layer, and the user layer still works",
+  "source": [
+    "intended: builds come from layers (repo, trusted parent folders, user folder), nearest wins (docs/decisions.md)"
+  ],
+  "status": {
+    "ts": "xfail",
+    "go": "pass"
+  },
+  "defect": "N-12",
+  "intent": "INTENDED behavior (defect N-12, build layers). A missing jitso/builds folder is an empty project layer, not an error: the user folder's builds are still listed and launchable. The oracle reads the project catalog folder and fails when it is missing, so the case FAILS on it (no list, no exit 0).",
+  "project": {
+    "files": {
+      ".jitso/briefs/brief.md": {
+        "from": "brief.md"
+      },
+      "jitso/builds": null
+    }
+  },
+  "home": {
+    "files": {
+      ".jitso/builds/shared-scan.yaml": {
+        "from": "shared-scan.yaml"
+      }
+    }
+  },
+  "steps": [
+    {
+      "run": [
+        "build",
+        "list"
+      ],
+      "expect": {
+        "exit": 0,
+        "stderr": [
+          {
+            "empty": true
+          }
+        ],
+        "stdout": [
+          {
+            "regex": "^- shared-scan: claude-haiku-5-5 low\\. [^\\n]+ \\(from user ~/\\.jitso/builds/shared-scan\\.yaml\\)\\n$"
+          }
+        ]
+      }
+    },
+    {
+      "run": [
+        "launch",
+        "--build",
+        "shared-scan",
+        "--brief",
+        "{{PROJECT}}/.jitso/briefs/brief.md",
+        "--mode",
+        "direct",
+        "--dry-run"
+      ],
+      "expect": {
+        "exit": 0,
+        "stdout": [
+          {
+            "contains": "| build shared-scan v1 (user)"
+          }
+        ]
+      }
+    }
+  ]
+}

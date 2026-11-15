@@ -1,0 +1,24 @@
+# Build written by a layers case.
+id: plan
+version: 1
+status: approved
+tier: subagent
+role: operator
+type: scanner
+work_kind: repo-scan
+description: USER PLAN, shadowed by the project's plan.
+prompt: USER PLAN PROMPT, never used.
+harness: claude
+model: claude-haiku-5-5
+effort: low
+mode_default: direct
+agents_md: exclude
+route_scope: [none]
+skills_first: []
+tools: [Read, Glob, Grep]
+mcp: []
+requires: []
+budget: { tokens: 150000, usd_list_cap: 0.30 }
+success:
+  - { check: answer_delivered }
+  - { check: no_rule_breaks }

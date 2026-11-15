@@ -1,0 +1,73 @@
+{
+  "id": "layers/repo-cannot-declare-trust",
+  "title": "trust declared in the project's own .jitso/config.yaml, or in the nested project's, changes nothing: only ~/.jitso/config.yaml can trust a parent",
+  "source": [
+    "intended: builds come from layers (repo, trusted parent folders, user folder), nearest wins (docs/decisions.md)"
+  ],
+  "status": {
+    "ts": "xfail",
+    "go": "pass"
+  },
+  "defect": "N-12",
+  "intent": "INTENDED behavior (defect N-12, build layers). Trust flows outside in: a project cannot widen its own catalog by naming a parent. Both the outer project and the nested checkout carry a .jitso/config.yaml that trusts the outer folder, and the user config does not exist, so from the nested project only its own build is listed, plus the user folder's builds (the positive control). The oracle has no user layer and no nested project, so the case FAILS on it. The oracle also resolves its project from its own script folder, so from a nested checkout it reads the outer fixture catalog (defect N-1) and fails here as well.",
+  "project": {
+    "files": {
+      "nested/jitso/jitso.yaml": {
+        "from": "nested-jitso.yaml"
+      },
+      "nested/jitso/builds/solo.yaml": {
+        "from": "nested-solo.yaml"
+      },
+      "nested/.agents/instructions/agent-project.md": {
+        "from": "nested-agent-project.md"
+      },
+      ".jitso/config.yaml": "version: 1\ntrusted_parents:\n  - \"{{PROJECT}}\"\n",
+      "nested/.jitso/config.yaml": "version: 1\ntrusted_parents:\n  - \"{{PROJECT}}\"\n"
+    }
+  },
+  "home": {
+    "files": {
+      ".jitso/builds/shared-scan.yaml": {
+        "from": "shared-scan.yaml"
+      }
+    }
+  },
+  "steps": [
+    {
+      "git_init": {
+        "path": "nested"
+      },
+      "expect": {
+        "files": [
+          {
+            "path": "nested/.git",
+            "exists": true
+          }
+        ]
+      }
+    },
+    {
+      "run": [
+        "build",
+        "list"
+      ],
+      "cwd": "nested",
+      "expect": {
+        "exit": 0,
+        "stderr": [
+          {
+            "empty": true
+          }
+        ],
+        "stdout": [
+          {
+            "regex": "^- solo: [^\\n]+\\n- shared-scan: [^\\n]+ \\(from user ~/\\.jitso/builds/shared-scan\\.yaml\\)\\n$"
+          },
+          {
+            "not_contains": "haiku-explorer"
+          }
+        ]
+      }
+    }
+  ]
+}

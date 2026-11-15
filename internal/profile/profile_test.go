@@ -166,3 +166,24 @@ func TestFieldsKeys(t *testing.T) {
 		t.Error("get, has or len")
 	}
 }
+
+// An id whose nearest file is invalid for this project is rejected with the
+// file and its problems, not reported as unknown (defect N-12).
+func TestResolveInvalidHere(t *testing.T) {
+	cat := load(t)
+	cat.Skipped = []catalog.Skipped{
+		{ID: "future", Layer: catalog.LayerUser, Display: "~/.jitso/builds/future.yaml", Problems: []string{`model "x" is not in the allowlist`, `effort "y" is not in the allowlist`}},
+		{ID: "", Layer: catalog.LayerParent, Display: "/p/jitso/builds/noid.yaml", Problems: []string{"id must be kebab-case"}},
+	}
+	_, err := Resolve(Request{Build: "future"}, cat)
+	want := `JITSO REJECTED: build "future" from user ~/.jitso/builds/future.yaml is invalid here: model "x" is not in the allowlist; effort "y" is not in the allowlist`
+	if err == nil || err.Error() != want {
+		t.Errorf("got %v\nwant %s", err, want)
+	}
+	if _, err := Resolve(Request{Build: "nobody"}, cat); err == nil || err.Error() != `JITSO REJECTED: unknown build "nobody"` {
+		t.Errorf("unknown: %v", err)
+	}
+	if _, err := Resolve(Request{Build: ""}, cat); err == nil || err.Error() != `JITSO REJECTED: unknown build ""` {
+		t.Errorf("empty id must not match a file without an id: %v", err)
+	}
+}

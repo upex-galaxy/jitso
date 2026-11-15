@@ -30,6 +30,23 @@ func TestRender(t *testing.T) {
 				"launch: bun run jitso launch\n" +
 				"budget 400k tokens (100%), list cap US$ 6.00 | reports to: your conductor | log .jitso/launches.jsonl"},
 	}
+	// The header names the layer of a parent or user build, and only those.
+	base := Input{ID: "L1", Role: "operator", Type: "explorer", Mode: "direct", Build: "b", BuildVersion: "1", Model: "m", Effort: "low", LaunchCommand: CommandPlain}
+	for _, layer := range []string{"", "repo", "parent", "user"} {
+		in := base
+		in.Layer = layer
+		want := "JITSO L1 | operator/explorer | mode direct (asks you) | build b v1"
+		if layer == "parent" || layer == "user" {
+			want += " (" + layer + ")"
+		}
+		tests = append(tests, struct {
+			name string
+			in   Input
+			want string
+		}{"layer " + layer, in, want + "\n" + "model m effort low | bypass | MCP none | skill none\n" +
+			"subagents unrestricted (harness default)\nROUTE-SCOPE: none\nlaunch: jitso launch\n" +
+			"budget 0k tokens (100%), list cap US$ 0.00 | reports to: you | log .jitso/launches.jsonl"})
+	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			if got := Render(tt.in); got != tt.want {
