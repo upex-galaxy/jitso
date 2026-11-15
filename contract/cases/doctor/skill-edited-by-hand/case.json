@@ -1,0 +1,47 @@
+{
+  "id": "doctor/skill-edited-by-hand",
+  "title": "an installed skill that was edited by hand gets a warning that names it",
+  "source": [
+    "intended: B4B5-DESIGN.md B4-22 and the doctor spec (defect N-20): a read-only health check"
+  ],
+  "status": {
+    "ts": "xfail",
+    "go": "pass"
+  },
+  "defect": "N-20",
+  "intent": "INTENDED behavior (defect N-20, B4.5). After `install skill --scope project --yes` and an edit of `.agents/skills/jitso/SKILL.md`, doctor prints a `warn skill-project:` line that says `edited by hand` and names the file, and exits 0. The oracle has no `doctor` command: it answers `unknown command \"doctor\"` on stderr with exit 2 and prints nothing on stdout, so every pinned line FAILS on it.",
+  "steps": [
+    {
+      "run": [
+        "install",
+        "skill",
+        "--scope",
+        "project",
+        "--yes"
+      ],
+      "expect": {
+        "exit": 0
+      }
+    },
+    {
+      "write": {
+        "project": {
+          ".agents/skills/jitso/SKILL.md": "mine\n"
+        }
+      }
+    },
+    {
+      "run": [
+        "doctor"
+      ],
+      "expect": {
+        "exit": 0,
+        "stdout": [
+          {
+            "regex": "(?m)^warn skill-project: .*edited by hand.*SKILL\\.md"
+          }
+        ]
+      }
+    }
+  ]
+}

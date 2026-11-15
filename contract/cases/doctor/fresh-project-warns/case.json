@@ -1,0 +1,45 @@
+{
+  "id": "doctor/fresh-project-warns",
+  "title": "a project that never adopted JITSO gets warnings for the hook, the skill and the instructions, and no failure",
+  "source": [
+    "intended: B4B5-DESIGN.md B4-22 and the doctor spec (defect N-20): a read-only health check"
+  ],
+  "status": {
+    "ts": "xfail",
+    "go": "pass"
+  },
+  "defect": "N-20",
+  "intent": "INTENDED behavior (defect N-20, B4.5). On the default project (a catalog, no hook, no skill, no instruction block) doctor exits 0: `warn hooks: not registered`, `warn skill-project: not installed`, `warn instructions: ...`, `ok   catalog: ...`, and not one `fail` line. A warning never breaks a script. The oracle has no `doctor` command: it answers `unknown command \"doctor\"` on stderr with exit 2 and prints nothing on stdout, so every pinned line FAILS on it.",
+  "steps": [
+    {
+      "run": [
+        "doctor"
+      ],
+      "expect": {
+        "exit": 0,
+        "stdout": [
+          {
+            "regex": "(?m)^warn hooks: not registered"
+          },
+          {
+            "regex": "(?m)^warn skill-project: not installed"
+          },
+          {
+            "regex": "(?m)^warn instructions: "
+          },
+          {
+            "regex": "(?m)^ok   catalog: "
+          },
+          {
+            "not_regex": "(?m)^fail "
+          }
+        ],
+        "stderr": [
+          {
+            "empty": true
+          }
+        ]
+      }
+    }
+  ]
+}

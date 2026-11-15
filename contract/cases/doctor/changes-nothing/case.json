@@ -1,0 +1,53 @@
+{
+  "id": "doctor/changes-nothing",
+  "title": "doctor writes no file and makes no orca call",
+  "source": [
+    "intended: B4B5-DESIGN.md B4-22 and the doctor spec (defect N-20): a read-only health check"
+  ],
+  "status": {
+    "ts": "xfail",
+    "go": "pass"
+  },
+  "defect": "N-20",
+  "intent": "INTENDED behavior (defect N-20, B4.5). After a doctor run the project holds no `.claude`, no `.agents/skills`, no `AGENTS.md`, no `.jitso` folder at all (so no backup), and the fake orca was never called: orca is looked up on PATH, never run. The oracle has no `doctor` command: it answers `unknown command \"doctor\"` on stderr with exit 2 and prints nothing on stdout, so every pinned line FAILS on it.",
+  "steps": [
+    {
+      "run": [
+        "doctor"
+      ],
+      "expect": {
+        "exit": 0,
+        "stdout": [
+          {
+            "regex": "(?m)^doctor: [0-9]+ ok"
+          }
+        ],
+        "files": [
+          {
+            "path": ".claude",
+            "exists": false
+          },
+          {
+            "path": ".agents/skills",
+            "exists": false
+          },
+          {
+            "path": "AGENTS.md",
+            "exists": false
+          },
+          {
+            "path": ".jitso",
+            "exists": false
+          },
+          {
+            "path": ".jitso/backups",
+            "exists": false
+          }
+        ],
+        "orca_calls": {
+          "empty": true
+        }
+      }
+    }
+  ]
+}

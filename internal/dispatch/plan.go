@@ -21,6 +21,11 @@ const (
 // separated by single spaces (a space makes the prompt quote the launcher).
 var launcherPath = regexp.MustCompile(`^[\w@%+=:,./-]+(?: [\w@%+=:,./-]+)*$`)
 
+// LauncherPathOK reports whether the dispatch guard can allow the launcher
+// path: `jitso doctor` asks it of the running binary, BuildPlan of the one it
+// plans for.
+func LauncherPathOK(path string) bool { return launcherPath.MatchString(path) }
+
 // CheckRequest is the request as the dispatcher takes it: trimmed, never
 // empty, and never starting with a dash (it is the last argument of claude and
 // must not pass for a flag). A bad request is a rejection (exit 2).
@@ -60,7 +65,7 @@ type PlanInput struct {
 // registered on Bash and Write, and the request as the last argument.
 func BuildPlan(in PlanInput) (Plan, error) {
 	briefs := BriefsDir(in.DispatchDir)
-	if !launcherPath.MatchString(in.Launcher) {
+	if !LauncherPathOK(in.Launcher) {
 		return Plan{}, fail.Envf("the dispatch guard cannot allow the launcher path %q: only letters, digits, single spaces and . _ - / @ %% + = : , are supported", in.Launcher)
 	}
 	launcher, err := shell.Word(in.Launcher)

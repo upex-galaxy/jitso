@@ -1,0 +1,38 @@
+{
+  "id": "doctor/hook-command-not-on-path",
+  "title": "a registered hook whose jitso is not on PATH fails the hooks check",
+  "source": [
+    "intended: B4B5-DESIGN.md B4-22 and the doctor spec (defect N-20): a read-only health check"
+  ],
+  "status": {
+    "ts": "xfail",
+    "go": "pass"
+  },
+  "defect": "N-20",
+  "intent": "INTENDED behavior (defect N-20, B4.5). After `setup hook --yes` the hook command is the bare word `jitso`. With no `jitso` on the sandbox PATH the guard cannot start (and lets every call through), so doctor prints `fail hooks: jitso is not on PATH` and exits 3. The oracle has no `doctor` command: it answers `unknown command \"doctor\"` on stderr with exit 2 and prints nothing on stdout, so every pinned line FAILS on it.",
+  "steps": [
+    {
+      "run": [
+        "setup",
+        "hook",
+        "--yes"
+      ],
+      "expect": {
+        "exit": 0
+      }
+    },
+    {
+      "run": [
+        "doctor"
+      ],
+      "expect": {
+        "exit": 3,
+        "stdout": [
+          {
+            "regex": "(?m)^fail hooks: jitso is not on PATH"
+          }
+        ]
+      }
+    }
+  ]
+}
