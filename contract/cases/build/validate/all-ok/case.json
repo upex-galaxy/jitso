@@ -1,0 +1,43 @@
+{
+  "id": "build/validate/all-ok",
+  "title": "build validate prints one ok line per build file in layer order then file name, then a summary line, and exits 0",
+  "source": [
+    "intended: docs/decisions.md (build validate: a tolerant check of every build of every layer, one line per file, problem lines, one summary line)"
+  ],
+  "status": {
+    "ts": "xfail",
+    "go": "pass"
+  },
+  "defect": "N-13",
+  "intent": "INTENDED behavior (defect N-13, build validate). Without an id it checks every build file of every layer and prints one line per file, `<ok|invalid> <id> <layer> <display path>`, in layer order and by file name inside a layer, then `checked <n> builds: <a> ok, <b> invalid`. The default fixture has seven build files, all valid, so the command exits 0, prints nothing on stderr and never calls orca. The oracle has no `build validate` (and the runner maps only `build list`): it answers `unknown command` on stderr with exit 2, so every expectation that needs the command's output FAILS on it.",
+  "steps": [
+    {
+      "run": [
+        "build",
+        "validate"
+      ],
+      "expect": {
+        "exit": 0,
+        "stdout": [
+          {
+            "regex": "(?m)^ok code repo jitso/builds/code\\.yaml\nok haiku-explorer repo jitso/builds/haiku-explorer\\.yaml\nok plan repo jitso/builds/plan\\.yaml\nok sonnet-automator repo jitso/builds/sonnet-automator\\.yaml\nok sonnet-conductor repo jitso/builds/sonnet-conductor\\.yaml\nok sonnet-tester repo jitso/builds/sonnet-tester\\.yaml\nok verifier repo jitso/builds/verifier\\.yaml\nchecked 7 builds: 7 ok, 0 invalid$"
+          },
+          {
+            "line_count": 8
+          },
+          {
+            "not_regex": "(?m)^invalid "
+          }
+        ],
+        "stderr": [
+          {
+            "empty": true
+          }
+        ],
+        "orca_calls": {
+          "empty": true
+        }
+      }
+    }
+  ]
+}

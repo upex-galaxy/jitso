@@ -9,7 +9,7 @@
     "go": "pass"
   },
   "defect": "N-10",
-  "intent": "INTENDED behavior (defect N-10, build vocabulary; docs/decisions.md D6). The catalog commands live under one command group, `jitso build <subcommand>`. With no subcommand it exits 2 and prints `jitso build: missing subcommand`, a blank line and the build usage on stderr; with a subcommand it does not know it prints `jitso build: unknown subcommand \"<x>\"` and the same usage; `--help` and `-h` print the usage on stdout and exit 0. The oracle has no `build` command at all (its catalog command is `presets`): it answers `unknown command` on stderr with exit 2, so the `missing subcommand` and `unknown subcommand` expectations and the `--help` exit code FAIL on TS.",
+  "intent": "INTENDED behavior (defect N-10, build vocabulary; docs/decisions.md D6). The catalog commands live under one command group, `jitso build <subcommand>`. With no subcommand it exits 2 and prints `jitso build: missing subcommand`, a blank line and the build usage on stderr; with a subcommand it does not know it prints `jitso build: unknown subcommand \"<x>\"` and the same usage; `--help` and `-h` print the usage on stdout and exit 0. The oracle has no `build` command at all (its catalog command is `presets`): it answers `unknown command` on stderr with exit 2, so the `missing subcommand` and `unknown subcommand` expectations and the `--help` exit code FAIL on TS. The build usage also lists `validate [<id>]` (defect N-13).",
   "steps": [
     {
       "run": [
@@ -25,7 +25,8 @@
         "stderr": [
           "jitso build: missing subcommand",
           "Usage: jitso build",
-          "list"
+          "list",
+          "validate [<id>]"
         ],
         "orca_calls": {
           "empty": true
@@ -47,7 +48,8 @@
         "stderr": [
           "jitso build: unknown subcommand \"show\"",
           "Usage: jitso build",
-          "list"
+          "list",
+          "validate [<id>]"
         ],
         "orca_calls": {
           "empty": true
@@ -63,7 +65,8 @@
         "exit": 0,
         "stdout": [
           "Usage: jitso build",
-          "list"
+          "list",
+          "validate [<id>]"
         ],
         "stderr": [
           {
@@ -84,7 +87,8 @@
         "exit": 0,
         "stdout": [
           "Usage: jitso build",
-          "list"
+          "list",
+          "validate [<id>]"
         ],
         "stderr": [
           {

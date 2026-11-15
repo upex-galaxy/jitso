@@ -1,0 +1,98 @@
+{
+  "id": "build/validate/one-id",
+  "title": "build validate <id> checks only the winner of that id; an invalid file elsewhere does not matter, and an unknown id is rejected",
+  "source": [
+    "intended: docs/decisions.md (build validate: a tolerant check of every build of every layer, one line per file, problem lines, one summary line)"
+  ],
+  "status": {
+    "ts": "xfail",
+    "go": "pass"
+  },
+  "defect": "N-13",
+  "intent": "INTENDED behavior (defect N-13, build validate). With an id the command prints the winner of that id (its line, its problem lines) and the summary line counting that winner only. A valid id exits 0 even when another file of the project is invalid; an invalid winner exits 2 with its problem lines; an id no file has is a rejection, exit 2, one stderr line `JITSO REJECTED: unknown build \"<id>\"`, nothing on stdout. The oracle has no `build validate` (and the runner maps only `build list`): it answers `unknown command` on stderr with exit 2, so every expectation that needs the command's output FAILS on it.",
+  "project": {
+    "files": {
+      "jitso/builds/broken.yaml": {
+        "from": "broken.yaml"
+      }
+    }
+  },
+  "steps": [
+    {
+      "run": [
+        "build",
+        "validate",
+        "haiku-explorer"
+      ],
+      "expect": {
+        "exit": 0,
+        "stdout": [
+          {
+            "regex": "(?m)^ok haiku-explorer repo jitso/builds/haiku-explorer\\.yaml\nchecked 1 builds: 1 ok, 0 invalid$"
+          },
+          {
+            "line_count": 2
+          }
+        ],
+        "stderr": [
+          {
+            "empty": true
+          }
+        ],
+        "orca_calls": {
+          "empty": true
+        }
+      }
+    },
+    {
+      "run": [
+        "build",
+        "validate",
+        "broken"
+      ],
+      "expect": {
+        "exit": 2,
+        "stdout": [
+          {
+            "regex": "(?m)^invalid broken repo jitso/builds/broken\\.yaml\n  model \"gpt-9\" is not in the allowlist\n  effort \"extreme\" is not in the allowlist\nchecked 1 builds: 0 ok, 1 invalid$"
+          },
+          {
+            "line_count": 4
+          }
+        ],
+        "stderr": [
+          {
+            "empty": true
+          }
+        ],
+        "orca_calls": {
+          "empty": true
+        }
+      }
+    },
+    {
+      "run": [
+        "build",
+        "validate",
+        "nope"
+      ],
+      "expect": {
+        "exit": 2,
+        "stdout": [
+          {
+            "empty": true
+          }
+        ],
+        "stderr": [
+          "JITSO REJECTED: unknown build \"nope\"",
+          {
+            "line_count": 1
+          }
+        ],
+        "orca_calls": {
+          "empty": true
+        }
+      }
+    }
+  ]
+}

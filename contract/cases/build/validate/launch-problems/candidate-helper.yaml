@@ -1,0 +1,13 @@
+# Subagent-tier build, status candidate, with no launch-only field: valid on its own.
+id: candidate-helper
+version: 1
+status: candidate
+tier: subagent
+role: operator
+type: helper
+work_kind: planning
+description: A helper that is still a candidate.
+prompt: You are a helper. Read the files you are told to and report what you found in one line.
+model: claude-haiku-5-5
+effort: low
+tools: [Read, Glob, Grep]

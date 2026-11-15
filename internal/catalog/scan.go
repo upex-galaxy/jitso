@@ -47,6 +47,18 @@ type File struct {
 // Valid is true when the file has no problem here.
 func (f *File) Valid() bool { return len(f.Problems) == 0 }
 
+// Build is the file as a build, with its layer, display path, real path and
+// hash. It is nil for a file that is not valid here: only a valid file is a
+// build, whether or not a nearer file shadows it.
+func (f *File) Build() *Build {
+	if !f.Valid() || f.Raw == nil {
+		return nil
+	}
+	b := buildFrom(f.Name, f.Raw)
+	b.Layer, b.Display, b.Path, b.SHA256 = f.Layer, f.Display, f.Path, f.SHA256
+	return &b
+}
+
 // Result is a tolerant scan of every layer.
 type Result struct {
 	Config   Config

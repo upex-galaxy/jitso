@@ -209,6 +209,15 @@ func (r *Result) Catalog() (*Catalog, error) {
 			return nil, &FileError{File: f.Display, Problems: f.Problems[f.loadProblems:]}
 		}
 	}
+	return r.Tolerant(), nil
+}
+
+// Tolerant is the catalog of the scan with no whole-catalog rule: the winner
+// of every id that is valid here is a build, and any other winner is skipped,
+// whatever its layer. `build validate` uses it to resolve the subagents a file
+// lists while it reports the invalid files itself; Catalog is Tolerant after
+// the project's own files passed.
+func (r *Result) Tolerant() *Catalog {
 	cat := &Catalog{Config: r.Config, RouteIDs: r.RouteIDs}
 	for _, f := range r.Files {
 		if f.ShadowedBy != nil {
@@ -218,9 +227,7 @@ func (r *Result) Catalog() (*Catalog, error) {
 			cat.Skipped = append(cat.Skipped, Skipped{ID: f.ID, Layer: f.Layer, Display: f.Display, Problems: f.Problems})
 			continue
 		}
-		b := buildFrom(f.Name, f.Raw)
-		b.Layer, b.Display, b.Path, b.SHA256 = f.Layer, f.Display, f.Path, f.SHA256
-		cat.Builds = append(cat.Builds, b)
+		cat.Builds = append(cat.Builds, *f.Build())
 	}
-	return cat, nil
+	return cat
 }

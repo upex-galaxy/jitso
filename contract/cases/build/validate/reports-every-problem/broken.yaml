@@ -1,0 +1,21 @@
+# Build written by a build validate case: two problems.
+id: broken
+version: 1
+status: approved
+role: operator
+type: scanner
+work_kind: repo-scan
+description: A build with a model and an effort the allowlists do not know.
+harness: claude
+model: gpt-9
+effort: extreme
+mode_default: direct
+agents_md: exclude
+route_scope: [none]
+skills_first: []
+tools: [Read, Glob, Grep]
+mcp: []
+requires: []
+budget: { tokens: 150000, usd_list_cap: 0.30 }
+success:
+  - { check: answer_delivered }

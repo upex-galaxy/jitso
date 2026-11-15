@@ -63,8 +63,7 @@ func Run(a Args, d Deps) error {
 	if err != nil {
 		return err
 	}
-	harnessName := jsString(p.Build, "harness")
-	adapter, ok := Adapters[harnessName]
+	adapter, harnessName, ok := adapterOf(p.Build)
 	if !ok {
 		return fail.Rejectedf(`no adapter for harness "%s"`, harnessName)
 	}

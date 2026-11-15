@@ -617,3 +617,32 @@ func sha256Hex(data []byte) string {
 	sum := sha256.Sum256(data)
 	return hex.EncodeToString(sum[:])
 }
+
+// Tolerant never fails: an invalid file of the project is skipped and has no
+// Build, where Load fails on it; a valid file has a Build with its origin.
+func TestTolerantAndBuild(t *testing.T) {
+	broken := strings.Replace(validBuild, "id: haiku-explorer", "id: broken", 1)
+	broken = strings.Replace(broken, "model: claude-haiku-5-5", "model: nope", 1)
+	fsys := testFS(map[string]string{"a-ok.yaml": validBuild, "b-broken.yaml": broken})
+	if _, err := Load(fsys); err == nil {
+		t.Fatal("Load must fail on the invalid repo file")
+	}
+	res, err := Scan(fsys, "", "")
+	if err != nil {
+		t.Fatal(err)
+	}
+	cat := res.Tolerant()
+	if len(cat.Builds) != 1 || cat.Builds[0].ID != "haiku-explorer" || cat.Builds[0].Display != "jitso/builds/a-ok.yaml" {
+		t.Errorf("builds: %+v", cat.Builds)
+	}
+	if len(cat.Skipped) != 1 || cat.Skipped[0].ID != "broken" {
+		t.Errorf("skipped: %+v", cat.Skipped)
+	}
+	if f := res.Winner("broken"); f == nil || f.Build() != nil {
+		t.Errorf("an invalid file has no Build: %+v", f)
+	}
+	b := res.Winner("haiku-explorer").Build()
+	if b == nil || b.File != "a-ok.yaml" || b.Layer != LayerRepo || b.SHA256 == "" {
+		t.Errorf("Build: %+v", b)
+	}
+}
