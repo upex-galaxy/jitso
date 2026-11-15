@@ -1,0 +1,51 @@
+{
+  "id": "setup/instructions/claude-md-with-the-import-in-code",
+  "title": "an @AGENTS.md inside a code span or a fenced block is not an import: CLAUDE.md still gets the block",
+  "source": [
+    "intended: docs/decisions.md D8 (setup instructions, defect N-18): a delimited, reversible JITSO block in the instruction files agents read"
+  ],
+  "status": {
+    "ts": "xfail",
+    "go": "pass"
+  },
+  "defect": "N-18",
+  "intent": "INTENDED behavior (defect N-18, setup instructions). Claude Code does not follow an `@path` inside a code span or a code block, so a `CLAUDE.md` that only quotes `@AGENTS.md` that way does not import it. The block is written to both files. The oracle has no `setup` command: it answers `unknown command \"setup\"` on stderr with exit 2 and prints nothing on stdout, so every expectation that needs this output or file effect FAILS on it.",
+  "project": {
+    "files": {
+      "CLAUDE.md": "# Claude\n\nUse `@AGENTS.md` to import.\n\n```\n@AGENTS.md\n```\n"
+    }
+  },
+  "steps": [
+    {
+      "run": [
+        "setup",
+        "instructions",
+        "--yes"
+      ],
+      "expect": {
+        "exit": 0,
+        "stdout": [
+          "created AGENTS.md",
+          "wrote CLAUDE.md",
+          {
+            "regex": "jitso setup instructions: done\\n$"
+          }
+        ],
+        "stderr": [
+          {
+            "not_contains": "unknown command"
+          }
+        ],
+        "files": [
+          {
+            "path": "CLAUDE.md",
+            "contains": [
+              "BEGIN JITSO block=1 added=1:",
+              "Use `@AGENTS.md` to import."
+            ]
+          }
+        ]
+      }
+    }
+  ]
+}

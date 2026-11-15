@@ -87,7 +87,7 @@ func init() {
 	Register(Command{
 		Name:    "setup",
 		Order:   82,
-		Summary: "register the jitso guard hook in this project",
+		Summary: "register the guard hook and the instructions block in this project",
 		Run: func(ctx *Context, args []string) error {
 			return setupGroup().Run(ctx, args)
 		},

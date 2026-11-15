@@ -1,0 +1,74 @@
+{
+  "id": "setup/instructions/remove-round-trip-absent",
+  "title": "a block jitso created in a new AGENTS.md is removed together with the file",
+  "source": [
+    "intended: docs/decisions.md D8 (setup instructions, defect N-18): a delimited, reversible JITSO block in the instruction files agents read"
+  ],
+  "status": {
+    "ts": "xfail",
+    "go": "pass"
+  },
+  "defect": "N-18",
+  "intent": "INTENDED behavior (defect N-18, setup instructions). With no `AGENTS.md`, `setup instructions --yes` creates it (`added=new`) and `--remove --yes` deletes the file again, after a backup of the file as it was, since nothing else was in it. The oracle has no `setup` command: it answers `unknown command \"setup\"` on stderr with exit 2 and prints nothing on stdout, so every expectation that needs this output or file effect FAILS on it.",
+  "steps": [
+    {
+      "run": [
+        "setup",
+        "instructions",
+        "--yes"
+      ],
+      "expect": {
+        "exit": 0,
+        "stdout": [
+          "created AGENTS.md"
+        ],
+        "stderr": [
+          {
+            "not_contains": "unknown command"
+          }
+        ],
+        "files": [
+          {
+            "path": "AGENTS.md",
+            "contains": [
+              "added=new"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "run": [
+        "setup",
+        "instructions",
+        "--remove",
+        "--yes"
+      ],
+      "expect": {
+        "exit": 0,
+        "stdout": [
+          "--- a/AGENTS.md",
+          "+++ /dev/null",
+          {
+            "regex": "backed up AGENTS\\.md to \\.jitso/backups/\\d{8}T\\d{6}Z-[0-9a-f]{4}/AGENTS\\.md\\n"
+          },
+          "removed AGENTS.md",
+          {
+            "regex": "jitso setup instructions: done\\n$"
+          }
+        ],
+        "stderr": [
+          {
+            "not_contains": "unknown command"
+          }
+        ],
+        "files": [
+          {
+            "path": "AGENTS.md",
+            "exists": false
+          }
+        ]
+      }
+    }
+  ]
+}

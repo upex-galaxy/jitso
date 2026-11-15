@@ -1,0 +1,76 @@
+{
+  "id": "setup/instructions/help",
+  "title": "setup instructions --help and -h print the usage with its flags, and setup --help lists it",
+  "source": [
+    "intended: docs/decisions.md D8 (setup instructions, defect N-18): a delimited, reversible JITSO block in the instruction files agents read"
+  ],
+  "status": {
+    "ts": "xfail",
+    "go": "pass"
+  },
+  "defect": "N-18",
+  "intent": "INTENDED behavior (defect N-18, setup instructions). `jitso setup instructions --help` (and `-h`) print the usage of the setup group on stdout, with the `instructions` line, `--scope`, `--remove`, `--dry-run` and `--yes` documented, exit 0, empty stderr, nothing written. `jitso setup --help` lists it too. The oracle has no `setup` command: it answers `unknown command \"setup\"` on stderr with exit 2 and prints nothing on stdout, so every expectation that needs this output or file effect FAILS on it.",
+  "steps": [
+    {
+      "run": [
+        "setup",
+        "instructions",
+        "--help"
+      ],
+      "expect": {
+        "exit": 0,
+        "stdout": [
+          "jitso setup instructions [--scope project|user] [--remove] [--dry-run] [--yes]",
+          "--scope   project (default) or user",
+          "--remove  remove the block; the rest of each file stays byte for byte"
+        ],
+        "stderr": [
+          {
+            "empty": true
+          }
+        ],
+        "files": [
+          {
+            "path": "AGENTS.md",
+            "exists": false
+          }
+        ]
+      }
+    },
+    {
+      "run": [
+        "setup",
+        "instructions",
+        "-h"
+      ],
+      "expect": {
+        "exit": 0,
+        "stdout": [
+          "jitso setup instructions [--scope project|user] [--remove] [--dry-run] [--yes]"
+        ],
+        "stderr": [
+          {
+            "empty": true
+          }
+        ]
+      }
+    },
+    {
+      "run": [
+        "setup",
+        "--help"
+      ],
+      "expect": {
+        "exit": 0,
+        "stdout": [
+          "jitso setup instructions [--scope project|user] [--remove] [--dry-run] [--yes]"
+        ],
+        "stderr": [
+          {
+            "empty": true
+          }
+        ]
+      }
+    }
+  ]
+}

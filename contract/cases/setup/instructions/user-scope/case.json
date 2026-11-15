@@ -1,0 +1,141 @@
+{
+  "id": "setup/instructions/user-scope",
+  "title": "--scope user writes ~/.claude/CLAUDE.md, ~/.codex/AGENTS.md when the folder exists and an existing ~/.config/opencode/AGENTS.md; --remove undoes it",
+  "source": [
+    "intended: docs/decisions.md D8 (setup instructions, defect N-18): a delimited, reversible JITSO block in the instruction files agents read"
+  ],
+  "status": {
+    "ts": "xfail",
+    "go": "pass"
+  },
+  "defect": "N-18",
+  "intent": "INTENDED behavior (defect N-18, setup instructions). With a `~/.codex` folder and an existing `~/.config/opencode/AGENTS.md`, `setup instructions --scope user --yes` run from the home folder creates `~/.claude/CLAUDE.md` and `~/.codex/AGENTS.md` (`added=new`), appends the block to the opencode file after a backup under `~/.jitso/backups/<id>/`, and writes nothing in a project. The preview and the lines use `~/...`. `--remove --yes` deletes the two created files and the `~/.claude` folder jitso made, keeps `~/.codex` (it holds a config), and gives the opencode file its original bytes. The oracle has no `setup` command: it answers `unknown command \"setup\"` on stderr with exit 2 and prints nothing on stdout, so every expectation that needs this output or file effect FAILS on it.",
+  "project": {
+    "files": {
+      ".golden/golden-new.md": {
+        "from": "golden-new.md"
+      },
+      ".golden/golden-appended.md": {
+        "from": "golden-appended.md"
+      }
+    }
+  },
+  "home": {
+    "files": {
+      ".codex/config.toml": "model = \"x\"\n",
+      ".config/opencode/AGENTS.md": "# oc\n"
+    }
+  },
+  "steps": [
+    {
+      "run": [
+        "setup",
+        "instructions",
+        "--scope",
+        "user",
+        "--yes"
+      ],
+      "cwd": "{{HOME}}",
+      "capture": {
+        "NEW": {
+          "from": "file",
+          "path": ".golden/golden-new.md",
+          "regex": "(?s)^(.*)$"
+        },
+        "APPENDED": {
+          "from": "file",
+          "path": ".golden/golden-appended.md",
+          "regex": "(?s)^(.*)$"
+        }
+      },
+      "expect": {
+        "exit": 0,
+        "stdout": [
+          "+++ b/~/.claude/CLAUDE.md",
+          "created ~/.claude/CLAUDE.md",
+          "created ~/.codex/AGENTS.md",
+          "wrote ~/.config/opencode/AGENTS.md",
+          {
+            "regex": "backed up ~/\\.config/opencode/AGENTS\\.md to ~/\\.jitso/backups/\\d{8}T\\d{6}Z-[0-9a-f]{4}/\\.config/opencode/AGENTS\\.md\\n"
+          },
+          {
+            "regex": "jitso setup instructions: done\\n$"
+          }
+        ],
+        "stderr": [
+          {
+            "not_contains": "unknown command"
+          }
+        ],
+        "files": [
+          {
+            "path": "{{HOME}}/.claude/CLAUDE.md",
+            "equals": "{{NEW}}"
+          },
+          {
+            "path": "{{HOME}}/.codex/AGENTS.md",
+            "equals": "{{NEW}}"
+          },
+          {
+            "path": "{{HOME}}/.config/opencode/AGENTS.md",
+            "equals": "{{APPENDED}}"
+          },
+          {
+            "path": "AGENTS.md",
+            "exists": false
+          },
+          {
+            "path": "{{HOME}}/AGENTS.md",
+            "exists": false
+          }
+        ]
+      }
+    },
+    {
+      "run": [
+        "setup",
+        "instructions",
+        "--scope",
+        "user",
+        "--remove",
+        "--yes"
+      ],
+      "cwd": "{{HOME}}",
+      "expect": {
+        "exit": 0,
+        "stdout": [
+          "removed ~/.claude/CLAUDE.md",
+          "removed ~/.claude",
+          "removed ~/.codex/AGENTS.md",
+          "wrote ~/.config/opencode/AGENTS.md",
+          {
+            "regex": "jitso setup instructions: done\\n$"
+          }
+        ],
+        "stderr": [
+          {
+            "not_contains": "unknown command"
+          }
+        ],
+        "files": [
+          {
+            "path": "{{HOME}}/.claude",
+            "exists": false
+          },
+          {
+            "path": "{{HOME}}/.codex/AGENTS.md",
+            "exists": false
+          },
+          {
+            "path": "{{HOME}}/.codex/config.toml",
+            "equals": "model = \"x\"\n"
+          },
+          {
+            "path": "{{HOME}}/.config/opencode/AGENTS.md",
+            "equals": "# oc\n"
+          }
+        ]
+      }
+    }
+  ]
+}

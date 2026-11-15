@@ -1,0 +1,67 @@
+{
+  "id": "setup/instructions/creates-agents-md",
+  "title": "setup instructions --yes creates AGENTS.md holding the JITSO block, marked added=new",
+  "source": [
+    "intended: docs/decisions.md D8 (setup instructions, defect N-18): a delimited, reversible JITSO block in the instruction files agents read"
+  ],
+  "status": {
+    "ts": "xfail",
+    "go": "pass"
+  },
+  "defect": "N-18",
+  "intent": "INTENDED behavior (defect N-18, setup instructions). In a project with no instruction file, `jitso setup instructions --yes` creates `AGENTS.md` with the JITSO block (BEGIN line with `block=1 added=new`, the text, END line) and one line break after it, and previews it as a new file. No backup is made, because nothing existed. `CLAUDE.md` is not created. The oracle has no `setup` command: it answers `unknown command \"setup\"` on stderr with exit 2 and prints nothing on stdout, so every expectation that needs this output or file effect FAILS on it.",
+  "project": {
+    "files": {
+      ".golden/golden-new.md": {
+        "from": "golden-new.md"
+      }
+    }
+  },
+  "steps": [
+    {
+      "run": [
+        "setup",
+        "instructions",
+        "--yes"
+      ],
+      "capture": {
+        "WANT": {
+          "from": "file",
+          "path": ".golden/golden-new.md",
+          "regex": "(?s)^(.*)$"
+        }
+      },
+      "expect": {
+        "exit": 0,
+        "stdout": [
+          "--- /dev/null",
+          "+++ b/AGENTS.md",
+          "+<!-- BEGIN JITSO block=1 added=new:",
+          "created AGENTS.md",
+          {
+            "regex": "jitso setup instructions: done\\n$"
+          }
+        ],
+        "stderr": [
+          {
+            "not_contains": "unknown command"
+          }
+        ],
+        "files": [
+          {
+            "path": "AGENTS.md",
+            "equals": "{{WANT}}"
+          },
+          {
+            "path": "CLAUDE.md",
+            "exists": false
+          },
+          {
+            "path": ".jitso/backups",
+            "exists": false
+          }
+        ]
+      }
+    }
+  ]
+}

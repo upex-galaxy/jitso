@@ -1,0 +1,127 @@
+{
+  "id": "setup/instructions/remove-round-trip",
+  "title": "setup instructions --yes then --remove --yes gives back the original bytes of the file, whatever it ended with",
+  "source": [
+    "intended: docs/decisions.md D8 (setup instructions, defect N-18): a delimited, reversible JITSO block in the instruction files agents read"
+  ],
+  "status": {
+    "ts": "xfail",
+    "go": "pass"
+  },
+  "defect": "N-18",
+  "intent": "INTENDED behavior (defect N-18, setup instructions). For each original (empty, no final line break, a final line break, CRLF, a block quoted inside a fenced code block, a lone BEGIN inside a tilde fence, a final blank line, a single line break), the first run adds the block recording in `added=` how many line breaks it put before it, and `--remove --yes` deletes the block lines and exactly that many breaks, so the file equals its original again. Markers inside a fenced code block are not real markers. The oracle has no `setup` command: it answers `unknown command \"setup\"` on stderr with exit 2 and prints nothing on stdout, so every expectation that needs this output or file effect FAILS on it.",
+  "project": {
+    "files": {
+      "AGENTS.md": "{{seed}}"
+    }
+  },
+  "for_each": {
+    "vars": [
+      "seed",
+      "added"
+    ],
+    "rows": [
+      [
+        "",
+        "0"
+      ],
+      [
+        "# Project\n\nRules.",
+        "2"
+      ],
+      [
+        "# Project\n\nRules.\n",
+        "1"
+      ],
+      [
+        "# Project\r\n\r\nRules.\r\n",
+        "1"
+      ],
+      [
+        "# Notes\n\n```md\n<!-- BEGIN JITSO block=9 added=0 -->\nan example of a block\n<!-- END JITSO block=9 -->\n```\n",
+        "1"
+      ],
+      [
+        "# Notes\n\n~~~\n<!-- BEGIN JITSO block=9 added=0 -->\nan example with no end\n~~~\n\nMore text\n",
+        "1"
+      ],
+      [
+        "# Project\n\nRules.\n\n",
+        "1"
+      ],
+      [
+        "\n",
+        "1"
+      ]
+    ],
+    "ids": [
+      "empty",
+      "no-trailing-newline",
+      "trailing-newline",
+      "crlf",
+      "block-quoted-in-a-fence",
+      "lone-begin-in-a-tilde-fence",
+      "ends-with-a-blank-line",
+      "one-line-break"
+    ]
+  },
+  "steps": [
+    {
+      "run": [
+        "setup",
+        "instructions",
+        "--yes"
+      ],
+      "expect": {
+        "exit": 0,
+        "stdout": [
+          "+<!-- BEGIN JITSO block=1 added={{added}}:",
+          {
+            "regex": "jitso setup instructions: done\\n$"
+          }
+        ],
+        "stderr": [
+          {
+            "not_contains": "unknown command"
+          }
+        ],
+        "files": [
+          {
+            "path": "AGENTS.md",
+            "contains": [
+              "<!-- BEGIN JITSO block=1 added={{added}}: managed by"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "run": [
+        "setup",
+        "instructions",
+        "--remove",
+        "--yes"
+      ],
+      "expect": {
+        "exit": 0,
+        "stdout": [
+          "wrote AGENTS.md",
+          {
+            "regex": "jitso setup instructions: done\\n$"
+          }
+        ],
+        "stderr": [
+          {
+            "not_contains": "unknown command"
+          }
+        ],
+        "files": [
+          {
+            "path": "AGENTS.md",
+            "equals": "{{seed}}"
+          }
+        ]
+      }
+    }
+  ]
+}

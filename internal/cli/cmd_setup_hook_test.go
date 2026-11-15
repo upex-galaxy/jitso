@@ -186,7 +186,7 @@ func TestSetupUsageAnswers(t *testing.T) {
 		stdout string // a prefix; "" means empty
 		stderr string // a prefix; "" means empty
 	}{
-		{"missing", []string{"setup"}, 2, "", "jitso setup: missing what to set up (hook)\n\n" + head},
+		{"missing", []string{"setup"}, 2, "", "jitso setup: missing what to set up (hook, instructions)\n\n" + head},
 		{"help", []string{"setup", "--help"}, 0, head, ""},
 		{"short help", []string{"setup", "-h"}, 0, head, ""},
 		{"hook help", []string{"setup", "hook", "--help"}, 0, head, ""},

@@ -1,0 +1,109 @@
+{
+  "id": "setup/instructions/appends-to-agents-md",
+  "title": "an existing AGENTS.md ending in a line break gets one blank line and the block (added=1), after a backup of the old bytes",
+  "source": [
+    "intended: docs/decisions.md D8 (setup instructions, defect N-18): a delimited, reversible JITSO block in the instruction files agents read"
+  ],
+  "status": {
+    "ts": "xfail",
+    "go": "pass"
+  },
+  "defect": "N-18",
+  "intent": "INTENDED behavior (defect N-18, setup instructions). `AGENTS.md` is `# Project`, a blank line and `Rules.`, ending in a line break. The command saves those bytes under `.jitso/backups/<id>/AGENTS.md` (with a manifest for `setup instructions` and a self-ignoring `.gitignore`), then writes the original, one extra line break, the block with `added=1` and a line break. The oracle has no `setup` command: it answers `unknown command \"setup\"` on stderr with exit 2 and prints nothing on stdout, so every expectation that needs this output or file effect FAILS on it.",
+  "project": {
+    "files": {
+      "AGENTS.md": {
+        "from": "seed.md"
+      },
+      ".golden/seed.md": {
+        "from": "seed.md"
+      },
+      ".golden/golden.md": {
+        "from": "golden.md"
+      }
+    }
+  },
+  "steps": [
+    {
+      "run": [
+        "setup",
+        "instructions",
+        "--yes"
+      ],
+      "capture": {
+        "WANT": {
+          "from": "file",
+          "path": ".golden/golden.md",
+          "regex": "(?s)^(.*)$"
+        },
+        "SEED": {
+          "from": "file",
+          "path": ".golden/seed.md",
+          "regex": "(?s)^(.*)$"
+        },
+        "BACKUP": {
+          "from": "stdout",
+          "regex": "backed up AGENTS\\.md to (\\.jitso/backups/\\d{8}T\\d{6}Z-[0-9a-f]{4}/AGENTS\\.md)"
+        },
+        "BACKUP_DIR": {
+          "from": "stdout",
+          "regex": "backed up AGENTS\\.md to (\\.jitso/backups/\\d{8}T\\d{6}Z-[0-9a-f]{4})/"
+        }
+      },
+      "expect": {
+        "exit": 0,
+        "stdout": [
+          "+++ b/AGENTS.md",
+          "+<!-- BEGIN JITSO block=1 added=1:",
+          {
+            "regex": "backed up AGENTS\\.md to \\.jitso/backups/\\d{8}T\\d{6}Z-[0-9a-f]{4}/AGENTS\\.md\\n"
+          },
+          "wrote AGENTS.md",
+          {
+            "regex": "jitso setup instructions: done\\n$"
+          }
+        ],
+        "stderr": [
+          {
+            "not_contains": "unknown command"
+          }
+        ],
+        "files": [
+          {
+            "path": "AGENTS.md",
+            "equals": "{{WANT}}"
+          },
+          {
+            "path": "{{BACKUP}}",
+            "equals": "{{SEED}}"
+          },
+          {
+            "path": ".jitso/backups/.gitignore",
+            "equals": "*\n"
+          },
+          {
+            "path": "{{BACKUP_DIR}}/manifest.json",
+            "json": [
+              {
+                "path": "command",
+                "equals": "setup instructions"
+              },
+              {
+                "path": "scope",
+                "equals": "project"
+              },
+              {
+                "path": "files.0.path",
+                "equals": "AGENTS.md"
+              },
+              {
+                "path": "files.0.existed",
+                "equals": true
+              }
+            ]
+          }
+        ]
+      }
+    }
+  ]
+}

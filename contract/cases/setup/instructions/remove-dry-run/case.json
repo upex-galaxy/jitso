@@ -1,0 +1,66 @@
+{
+  "id": "setup/instructions/remove-dry-run",
+  "title": "--remove --dry-run prints the removal diff and leaves the file as it is",
+  "source": [
+    "intended: docs/decisions.md D8 (setup instructions, defect N-18): a delimited, reversible JITSO block in the instruction files agents read"
+  ],
+  "status": {
+    "ts": "xfail",
+    "go": "pass"
+  },
+  "defect": "N-18",
+  "intent": "INTENDED behavior (defect N-18, setup instructions). After the block is written, `--remove --dry-run` previews the lines that would go (`-<!-- BEGIN JITSO ...`), ends with the dry-run line and exit 0, and the file keeps its bytes. The oracle has no `setup` command: it answers `unknown command \"setup\"` on stderr with exit 2 and prints nothing on stdout, so every expectation that needs this output or file effect FAILS on it.",
+  "project": {
+    "files": {
+      "AGENTS.md": "# Project\n"
+    }
+  },
+  "steps": [
+    {
+      "run": [
+        "setup",
+        "instructions",
+        "--yes"
+      ],
+      "capture": {
+        "BEFORE": {
+          "from": "file",
+          "path": "AGENTS.md",
+          "regex": "(?s)^(.*)$"
+        }
+      },
+      "expect": {
+        "exit": 0,
+        "stdout": [
+          "wrote AGENTS.md"
+        ],
+        "stderr": [
+          {
+            "not_contains": "unknown command"
+          }
+        ]
+      }
+    },
+    {
+      "run": [
+        "setup",
+        "instructions",
+        "--remove",
+        "--dry-run"
+      ],
+      "expect": {
+        "exit": 0,
+        "stdout": [
+          "-<!-- BEGIN JITSO block=1 added=1:",
+          "jitso setup instructions: dry run, nothing written"
+        ],
+        "files": [
+          {
+            "path": "AGENTS.md",
+            "equals": "{{BEFORE}}"
+          }
+        ]
+      }
+    }
+  ]
+}

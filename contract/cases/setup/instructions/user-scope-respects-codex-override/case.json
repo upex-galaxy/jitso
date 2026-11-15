@@ -1,0 +1,60 @@
+{
+  "id": "setup/instructions/user-scope-respects-codex-override",
+  "title": "a non-empty Codex AGENTS.override.md is skipped with a warning, an empty one is not",
+  "source": [
+    "intended: docs/decisions.md D8 (setup instructions, defect N-18): a delimited, reversible JITSO block in the instruction files agents read"
+  ],
+  "status": {
+    "ts": "xfail",
+    "go": "pass"
+  },
+  "defect": "N-18",
+  "intent": "INTENDED behavior (defect N-18, setup instructions). Codex reads `AGENTS.override.md` instead of `AGENTS.md` when it has content. With one that does, `--scope user` warns on stderr (naming `AGENTS.override.md`), does not create `~/.codex/AGENTS.md`, and still writes `~/.claude/CLAUDE.md`. The oracle has no `setup` command: it answers `unknown command \"setup\"` on stderr with exit 2 and prints nothing on stdout, so every expectation that needs this output or file effect FAILS on it.",
+  "home": {
+    "files": {
+      ".codex/AGENTS.override.md": "x\n"
+    }
+  },
+  "steps": [
+    {
+      "run": [
+        "setup",
+        "instructions",
+        "--scope",
+        "user",
+        "--yes"
+      ],
+      "cwd": "{{HOME}}",
+      "expect": {
+        "exit": 0,
+        "stdout": [
+          "created ~/.claude/CLAUDE.md",
+          {
+            "regex": "jitso setup instructions: done\\n$"
+          },
+          {
+            "not_contains": ".codex/AGENTS.md"
+          }
+        ],
+        "stderr": [
+          {
+            "not_contains": "unknown command"
+          },
+          {
+            "equals": "jitso: warning: ~/.codex/AGENTS.override.md is not empty, so Codex reads it instead of AGENTS.md; the JITSO block was not written to ~/.codex/AGENTS.md\n"
+          }
+        ],
+        "files": [
+          {
+            "path": "{{HOME}}/.codex/AGENTS.md",
+            "exists": false
+          },
+          {
+            "path": "{{HOME}}/.codex/AGENTS.override.md",
+            "equals": "x\n"
+          }
+        ]
+      }
+    }
+  ]
+}

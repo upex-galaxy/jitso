@@ -1,0 +1,44 @@
+{
+  "id": "setup/instructions/needs-yes-without-a-terminal",
+  "title": "without --yes and without a terminal the command shows the diff, refuses (exit 2) and writes nothing",
+  "source": [
+    "intended: docs/decisions.md D8 (setup instructions, defect N-18): a delimited, reversible JITSO block in the instruction files agents read"
+  ],
+  "status": {
+    "ts": "xfail",
+    "go": "pass"
+  },
+  "defect": "N-18",
+  "intent": "INTENDED behavior (defect N-18, setup instructions). The contract runs with no terminal on standard input. `setup instructions` shows the preview on stdout, then exits 2 with `JITSO REJECTED: this changes files: read the preview above, then run it again with --yes, or in a terminal to answer the prompt; nothing written` on stderr. No file is created. The oracle has no `setup` command: it answers `unknown command \"setup\"` on stderr with exit 2 and prints nothing on stdout, so every expectation that needs this output or file effect FAILS on it.",
+  "steps": [
+    {
+      "run": [
+        "setup",
+        "instructions"
+      ],
+      "expect": {
+        "exit": 2,
+        "stdout": [
+          "--- /dev/null",
+          "+++ b/AGENTS.md",
+          "+<!-- BEGIN JITSO block=1 added=new:"
+        ],
+        "stderr": [
+          {
+            "equals": "JITSO REJECTED: this changes files: read the preview above, then run it again with --yes, or in a terminal to answer the prompt; nothing written\n"
+          }
+        ],
+        "files": [
+          {
+            "path": "AGENTS.md",
+            "exists": false
+          },
+          {
+            "path": ".jitso",
+            "exists": false
+          }
+        ]
+      }
+    }
+  ]
+}

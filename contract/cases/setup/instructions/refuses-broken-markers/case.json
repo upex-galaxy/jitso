@@ -1,0 +1,113 @@
+{
+  "id": "setup/instructions/refuses-broken-markers",
+  "title": "a file with a broken JITSO block is an environment error (exit 3) that names the file and a line, for both the apply and the remove",
+  "source": [
+    "intended: docs/decisions.md D8 (setup instructions, defect N-18): a delimited, reversible JITSO block in the instruction files agents read"
+  ],
+  "status": {
+    "ts": "xfail",
+    "go": "pass"
+  },
+  "defect": "N-18",
+  "intent": "INTENDED behavior (defect N-18, setup instructions). A BEGIN without an END, an END without a BEGIN, an END before its BEGIN, two blocks and a BEGIN inside a block are refused: exit 3, `jitso: AGENTS.md has a broken JITSO block (<problem> at line <n>); fix or remove the marker lines by hand; nothing written` on stderr, empty stdout, the file untouched, no backup. `--remove` refuses them the same way. The oracle has no `setup` command: it answers `unknown command \"setup\"` on stderr with exit 2 and prints nothing on stdout, so every expectation that needs this output or file effect FAILS on it.",
+  "project": {
+    "files": {
+      "AGENTS.md": "{{seed}}"
+    }
+  },
+  "for_each": {
+    "vars": [
+      "seed",
+      "problem",
+      "line"
+    ],
+    "rows": [
+      [
+        "# A\n\n<!-- BEGIN JITSO block=1 added=1 -->\ntext\n",
+        "a BEGIN without an END",
+        "3"
+      ],
+      [
+        "# A\n\n<!-- END JITSO block=1 -->\n",
+        "an END without a BEGIN",
+        "3"
+      ],
+      [
+        "# A\n<!-- END JITSO block=1 -->\n<!-- BEGIN JITSO block=1 added=1 -->\ntext\n",
+        "an END before its BEGIN",
+        "2"
+      ],
+      [
+        "# A\n<!-- BEGIN JITSO block=1 added=1 -->\nx\n<!-- END JITSO block=1 -->\n\n<!-- BEGIN JITSO block=1 added=1 -->\ny\n<!-- END JITSO block=1 -->\n",
+        "a second block",
+        "6"
+      ],
+      [
+        "# A\n<!-- BEGIN JITSO block=1 added=1 -->\nx\n<!-- BEGIN JITSO block=1 added=1 -->\ny\n<!-- END JITSO block=1 -->\n",
+        "a BEGIN inside a block",
+        "4"
+      ]
+    ],
+    "ids": [
+      "begin-only",
+      "end-only",
+      "end-before-begin",
+      "two-blocks",
+      "begin-inside-a-block"
+    ]
+  },
+  "steps": [
+    {
+      "run": [
+        "setup",
+        "instructions",
+        "--yes"
+      ],
+      "expect": {
+        "exit": 3,
+        "stdout": [
+          {
+            "empty": true
+          }
+        ],
+        "stderr": [
+          {
+            "equals": "jitso: AGENTS.md has a broken JITSO block ({{problem}} at line {{line}}); fix or remove the marker lines by hand; nothing written\n"
+          }
+        ],
+        "files": [
+          {
+            "path": "AGENTS.md",
+            "equals": "{{seed}}"
+          },
+          {
+            "path": ".jitso/backups",
+            "exists": false
+          }
+        ]
+      }
+    },
+    {
+      "run": [
+        "setup",
+        "instructions",
+        "--remove",
+        "--yes"
+      ],
+      "expect": {
+        "exit": 3,
+        "stderr": [
+          {
+            "equals": "jitso: AGENTS.md has a broken JITSO block ({{problem}} at line {{line}}); fix or remove the marker lines by hand; nothing written\n"
+          }
+        ],
+        "files": [
+          {
+            "path": "AGENTS.md",
+            "equals": "{{seed}}"
+          }
+        ]
+      }
+    }
+  ]
+}

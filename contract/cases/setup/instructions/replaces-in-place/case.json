@@ -1,0 +1,64 @@
+{
+  "id": "setup/instructions/replaces-in-place",
+  "title": "an older or hand-written block is replaced where it stands, keeping its added= value and every byte outside it",
+  "source": [
+    "intended: docs/decisions.md D8 (setup instructions, defect N-18): a delimited, reversible JITSO block in the instruction files agents read"
+  ],
+  "status": {
+    "ts": "xfail",
+    "go": "pass"
+  },
+  "defect": "N-18",
+  "intent": "INTENDED behavior (defect N-18, setup instructions). The file has a block marked `block=0 added=1` (no tail text) between two sections. `setup instructions --yes` replaces the lines from BEGIN to END with the current block (`block=1`, the same `added=1`) and leaves `# A`, the blank lines and `# After` byte for byte. The oracle has no `setup` command: it answers `unknown command \"setup\"` on stderr with exit 2 and prints nothing on stdout, so every expectation that needs this output or file effect FAILS on it.",
+  "project": {
+    "files": {
+      "AGENTS.md": {
+        "from": "seed.md"
+      },
+      ".golden/seed.md": {
+        "from": "seed.md"
+      },
+      ".golden/golden.md": {
+        "from": "golden.md"
+      }
+    }
+  },
+  "steps": [
+    {
+      "run": [
+        "setup",
+        "instructions",
+        "--yes"
+      ],
+      "capture": {
+        "WANT": {
+          "from": "file",
+          "path": ".golden/golden.md",
+          "regex": "(?s)^(.*)$"
+        }
+      },
+      "expect": {
+        "exit": 0,
+        "stdout": [
+          "-old",
+          "+## JITSO",
+          "wrote AGENTS.md",
+          {
+            "regex": "jitso setup instructions: done\\n$"
+          }
+        ],
+        "stderr": [
+          {
+            "not_contains": "unknown command"
+          }
+        ],
+        "files": [
+          {
+            "path": "AGENTS.md",
+            "equals": "{{WANT}}"
+          }
+        ]
+      }
+    }
+  ]
+}

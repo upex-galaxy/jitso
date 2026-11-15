@@ -1,0 +1,59 @@
+{
+  "id": "setup/instructions/user-scope-codex-home",
+  "title": "CODEX_HOME names the Codex folder",
+  "source": [
+    "intended: docs/decisions.md D8 (setup instructions, defect N-18): a delimited, reversible JITSO block in the instruction files agents read"
+  ],
+  "status": {
+    "ts": "xfail",
+    "go": "pass"
+  },
+  "defect": "N-18",
+  "intent": "INTENDED behavior (defect N-18, setup instructions). With `CODEX_HOME` set to an existing folder under the home, the Codex file is `$CODEX_HOME/AGENTS.md`, and `~/.codex` is not used. The oracle has no `setup` command: it answers `unknown command \"setup\"` on stderr with exit 2 and prints nothing on stdout, so every expectation that needs this output or file effect FAILS on it.",
+  "home": {
+    "files": {
+      "alt-codex/config.toml": "x = 1\n"
+    }
+  },
+  "steps": [
+    {
+      "run": [
+        "setup",
+        "instructions",
+        "--scope",
+        "user",
+        "--yes"
+      ],
+      "cwd": "{{HOME}}",
+      "env": {
+        "CODEX_HOME": "{{HOME}}/alt-codex"
+      },
+      "expect": {
+        "exit": 0,
+        "stdout": [
+          "created ~/alt-codex/AGENTS.md",
+          {
+            "regex": "jitso setup instructions: done\\n$"
+          }
+        ],
+        "stderr": [
+          {
+            "not_contains": "unknown command"
+          }
+        ],
+        "files": [
+          {
+            "path": "{{HOME}}/alt-codex/AGENTS.md",
+            "contains": [
+              "BEGIN JITSO block=1 added=new:"
+            ]
+          },
+          {
+            "path": "{{HOME}}/.codex",
+            "exists": false
+          }
+        ]
+      }
+    }
+  ]
+}
