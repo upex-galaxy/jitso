@@ -187,6 +187,94 @@ func TestBuildSave(t *testing.T) {
 	}
 }
 
+func TestAdoption(t *testing.T) {
+	l := Launcher{IsOwn: isOwnAt("/opt/tools/jitso-go")}
+	// The command goes through Segments first, as the guard does.
+	verbs := []string{"setup", "install"}
+	forms := []struct{ name, launcher string }{
+		{"bare word", "jitso"},
+		{"bun run", "bun run jitso"},
+		{"a path ending in jitso", "/usr/local/bin/jitso"},
+		{"a relative path", "./jitso"},
+		{"after assignments", "FOO=1 BAR=2 jitso"},
+		{"env prefix", "env FOO=1 jitso"},
+		{"own path", "/opt/tools/jitso-go"},
+		{"own path after assignments", "A=1 /opt/tools/jitso-go"},
+	}
+	for _, verb := range verbs {
+		for _, f := range forms {
+			t.Run(verb+" "+f.name, func(t *testing.T) {
+				command := f.launcher + " " + verb + " hook --yes"
+				if got, ok := firstAdoption(l, command); !ok || got != "jitso "+verb {
+					t.Errorf("Adoption(%q) = %q, %v; want %q, true", command, got, ok, "jitso "+verb)
+				}
+			})
+		}
+	}
+	tests := []struct {
+		name, command, want string
+	}{
+		{"after cd", "cd a && jitso install skill --yes", "jitso install"},
+		{"after a semicolon", "ls; jitso setup hook --remove", "jitso setup"},
+		{"after a newline", "echo ok\njitso setup hook", "jitso setup"},
+		{"in a subshell", "(jitso setup hook --yes)", "jitso setup"},
+		{"in a command substitution", "echo $(jitso install skill --yes)", "jitso install"},
+		{"inside sh -c single quotes", "sh -c 'jitso setup hook --remove'", "jitso setup"},
+		{"inside bash -c double quotes", `bash -c "jitso install skill --scope user"`, "jitso install"},
+		{"padded and tabbed", "jitso \t setup\thook", "jitso setup"},
+		{"the verb alone", "jitso setup", "jitso setup"},
+		{"own path inside sh -c", "sh -c '/opt/tools/jitso-go install skill --yes'", "jitso install"},
+		{"a commit message that holds the words is denied", `git commit -m "jitso setup hook"`, "jitso setup"},
+		{"echo of the words is denied", "echo jitso install skill", "jitso install"},
+		{"a dry run that comes after the command", "jitso setup hook --dry-run", ""},
+		{"a dry run among other flags", "jitso install skill --scope user --dry-run --yes", ""},
+		{"a dry run of the own path", "/opt/tools/jitso-go setup hook --dry-run", ""},
+		{"a dry run after assignments", "FOO=1 jitso install skill --dry-run", ""},
+		{"a dry run word before the command does not exempt", "--dry-run jitso setup hook --yes", "jitso setup"},
+		{"a dry run in another segment does not exempt", "echo --dry-run; jitso setup hook --yes", "jitso setup"},
+		{"a dry run in a quoted argument of another command does not exempt", `echo '--dry-run' && jitso install skill --yes`, "jitso install"},
+		{"a dry run behind sh -c does not exempt", "sh -c 'jitso setup hook --yes' --dry-run", "jitso setup"},
+		{"a dry run behind eval does not exempt", "eval jitso install skill --yes --dry-run", "jitso install"},
+		{"a dry run behind bun run exempts", "bun run jitso setup hook --dry-run", ""},
+		{"a dry run of a path exempts", "/usr/local/bin/jitso setup hook --dry-run", ""},
+		{"a dry run inside a longer word does not exempt", "jitso setup hook --dry-run=false --yes", "jitso setup"},
+		{"a dry run after a hyphen does not exempt", "jitso setup hook --no--dry-run", "jitso setup"},
+		{"doctor", "jitso doctor", ""},
+		{"version", "jitso version", ""},
+		{"the version flag", "jitso --version", ""},
+		{"build list", "jitso build list", ""},
+		{"build new", "jitso build new x", ""},
+		{"launch", "jitso launch --build x", ""},
+		{"setup as a flag value", "jitso launch --build setup", ""},
+		{"another word that starts with setup", "jitso setup-x", ""},
+		{"another word that starts with install", "jitso installer", ""},
+		{"a longer word ends in jitso", "my-jitso setup hook", ""},
+		{"the words in another order", "jitso hook setup", ""},
+		{"a file named setup", "cat jitso/setup.yaml", ""},
+		{"only the verb", "echo setup install", ""},
+		{"another program with the own name inside a word", "/opt/tools/jitso-go-x setup hook", ""},
+		{"empty", "", ""},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, ok := firstAdoption(l, tt.command)
+			if got != tt.want || ok != (tt.want != "") {
+				t.Errorf("Adoption(%q) = %q, %v; want %q", tt.command, got, ok, tt.want)
+			}
+		})
+	}
+}
+
+// firstAdoption is the first segment of command that Adoption reports.
+func firstAdoption(l Launcher, command string) (string, bool) {
+	for _, s := range Segments(command) {
+		if verb, ok := l.Adoption(s); ok {
+			return verb, true
+		}
+	}
+	return "", false
+}
+
 func TestBashDenial(t *testing.T) {
 	l := Launcher{IsOwn: isOwnAt("/opt/jitso")}
 	tests := []struct {
@@ -198,6 +286,16 @@ func TestBashDenial(t *testing.T) {
 		{"launch before save in another order", "orca orchestration worker-start; jitso build save y", Denial{Verb: "orchestration worker-start"}},
 		{"own launch is allowed", "/opt/jitso launch --build b", Denial{}},
 		{"own save is denied", "/opt/jitso build save z", Denial{Verb: VerbBuildSave, SaveID: "z"}},
+		{"setup", "jitso setup hook --yes", Denial{Verb: VerbSetup}},
+		{"install", "bun run jitso install skill --scope user --yes", Denial{Verb: VerbInstall}},
+		{"own setup", "/opt/jitso setup hook --remove", Denial{Verb: VerbSetup}},
+		{"setup dry run is allowed", "jitso setup hook --dry-run", Denial{}},
+		{"install dry run is allowed", "jitso install skill --scope user --dry-run", Denial{}},
+		{"doctor and version are allowed", "jitso doctor && jitso version", Denial{}},
+		{"setup after a launch segment", "jitso launch --build b && jitso setup hook --yes", Denial{Verb: VerbSetup}},
+		{"launch before setup in another order", "orca orchestration worker-start; jitso setup hook", Denial{Verb: "orchestration worker-start"}},
+		{"save before setup", "jitso setup hook --yes; jitso build save x", Denial{Verb: VerbSetup}},
+		{"a dry run does not hide a save in the same line", "jitso setup hook --dry-run && jitso build save x", Denial{Verb: VerbBuildSave, SaveID: "x"}},
 		{"nothing", "ls", Denial{}},
 	}
 	for _, tt := range tests {

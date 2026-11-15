@@ -30,6 +30,10 @@ var (
 	// Segments has already removed the quotes, so `sh -c 'jitso build save x'`
 	// reads `sh -c jitso build save x`.
 	buildSave = regexp.MustCompile(`(?:^|[ /])jitso build save\b`)
+	// adoption is the words `jitso setup` or `jitso install` as a word of their
+	// own, found like buildSave. The verb is a whole word: `jitso setup-x` is
+	// another command.
+	adoption = regexp.MustCompile(`(?:^|[ /])jitso (setup|install)(?: |$)`)
 	// buildIDWord is a word that can be a build id.
 	buildIDWord = regexp.MustCompile(`^[a-z][a-z0-9-]{0,63}$`)
 )
@@ -37,6 +41,16 @@ var (
 // VerbBuildSave is the verb the guard names when it denies `jitso build save`,
 // as `(denied: jitso build save)` ends the reason.
 const VerbBuildSave = "jitso build save"
+
+// The verbs the guard names when it denies an adoption command, as
+// `(denied: jitso setup)` or `(denied: jitso install)` ends the reason.
+const (
+	VerbSetup   = "jitso setup"
+	VerbInstall = "jitso install"
+)
+
+// dryRunFlag is the word that makes an adoption command only read.
+const dryRunFlag = "--dry-run"
 
 // Segments splits a shell line into its commands: cut at every separator,
 // quotes removed, runs of whitespace collapsed, empty parts dropped.
@@ -103,6 +117,62 @@ func (l Launcher) BuildSave(segment string) (id string, ok bool) {
 		}
 	}
 	return "", false
+}
+
+// Adoption reports whether segment runs `jitso setup` or `jitso install`, the
+// commands only the owner runs: they change the project's hooks, instruction
+// files and skill files. It finds them like BuildSave (the bare word,
+// `bun run jitso`, a path ending in jitso, this executable's path, after
+// NAME=value words, inside `sh -c '...'`) and judges the text, not the program.
+// verb is VerbSetup or VerbInstall. A segment that runs jitso directly and
+// holds the standalone word --dry-run after the command is a dry run, which
+// writes nothing, so it is not an adoption; behind `sh -c` or another
+// wrapper the flag proves nothing and the segment is still denied.
+func (l Launcher) Adoption(segment string) (verb string, ok bool) {
+	var rest string
+	direct := false
+	if at := adoption.FindStringSubmatchIndex(segment); at != nil {
+		verb, rest = "jitso "+segment[at[2]:at[3]], segment[at[1]:]
+		direct = directPrefix(segment[:at[0]], segment[at[0]] == '/')
+	} else {
+		words := strings.Split(segment, " ")
+		for i, w := range words {
+			if l.IsOwn != nil && i+1 < len(words) && (words[i+1] == "setup" || words[i+1] == "install") && l.IsOwn(w) {
+				verb, rest = "jitso "+words[i+1], strings.Join(words[i+2:], " ")
+				direct = directPrefix(strings.Join(words[:i], " "), false)
+				break
+			}
+		}
+	}
+	if verb == "" {
+		return "", false
+	}
+	if direct {
+		for _, w := range strings.Fields(rest) {
+			if w == dryRunFlag {
+				return "", false
+			}
+		}
+	}
+	return verb, true
+}
+
+// directPrefix reports whether the text before the launcher word runs jitso
+// itself, so a --dry-run among its arguments reaches jitso: only NAME=value
+// words, `bun run`, and (when the launcher word is a path, pathTail) the
+// folder part of that path. Anything else (`sh -c`, `eval`, `xargs`) may hand
+// the arguments to another program, so it never earns the dry-run exemption.
+func directPrefix(prefix string, pathTail bool) bool {
+	words := strings.Fields(prefix)
+	for i, w := range words {
+		switch {
+		case isAssignment(w), w == "bun", w == "run":
+		case pathTail && i == len(words)-1 && (strings.HasPrefix(w, "/") || strings.HasPrefix(w, ".") || strings.HasPrefix(w, "~")):
+		default:
+			return false
+		}
+	}
+	return true
 }
 
 // saveID is the draft id among the words after `build save`: the first word
@@ -186,12 +256,15 @@ type Denial struct {
 }
 
 // BashDenial is the denial of the first segment of command that launches an
-// agent outside jitso or runs `jitso build save`; the zero Denial when none
-// does.
+// agent outside jitso or runs `jitso build save`, `jitso setup` or
+// `jitso install` (other than a dry run); the zero Denial when none does.
 func (l Launcher) BashDenial(command string) Denial {
 	for _, segment := range Segments(command) {
 		if id, ok := l.BuildSave(segment); ok {
 			return Denial{Verb: VerbBuildSave, SaveID: id}
+		}
+		if verb, ok := l.Adoption(segment); ok {
+			return Denial{Verb: verb}
 		}
 		if verb := l.LaunchVerb(segment); verb != "" {
 			return Denial{Verb: verb}

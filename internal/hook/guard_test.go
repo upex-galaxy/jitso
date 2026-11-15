@@ -42,6 +42,11 @@ func TestGuardVerb(t *testing.T) {
 		{"build save", bash("jitso build save x"), VerbBuildSave},
 		{"build save by own path", bash("/opt/jitso build save x --confirm abc"), VerbBuildSave},
 		{"build draft", bash("jitso build draft x.yaml"), ""},
+		{"setup", bash("jitso setup hook --remove --yes"), VerbSetup},
+		{"install by own path", bash("/opt/jitso install skill --scope user --yes"), VerbInstall},
+		{"setup dry run", bash("jitso setup hook --dry-run"), ""},
+		{"doctor", bash("jitso doctor"), ""},
+		{"setup in a Write is not Bash", map[string]any{"tool_name": "Write", "tool_input": map[string]any{"command": "jitso setup hook"}}, ""},
 		{"build save in a Write is not Bash", map[string]any{"tool_name": "Write", "tool_input": map[string]any{"command": "jitso build save x"}}, ""},
 	}
 	for _, tt := range tests {
@@ -94,6 +99,10 @@ func TestDenialReason(t *testing.T) {
 			"JITSO: only the owner saves a draft as a build; ask the owner to run: jitso build save scout (denied: jitso build save)"},
 		{"save with a script", Denial{Verb: VerbBuildSave, SaveID: "<id>"}, script,
 			"JITSO: only the owner saves a draft as a build; ask the owner to run: bun run jitso build save <id> (denied: jitso build save)"},
+		{"setup", Denial{Verb: VerbSetup}, nil,
+			"JITSO: only the owner changes the JITSO setup; ask the owner to run it in a terminal (denied: jitso setup)"},
+		{"install with a script", Denial{Verb: VerbInstall}, script,
+			"JITSO: only the owner changes the JITSO setup; ask the owner to run it in a terminal (denied: jitso install)"},
 		{"launch", Denial{Verb: "agent launch"}, nil, GuardReason("jitso launch", "agent launch")},
 	}
 	for _, tt := range tests {

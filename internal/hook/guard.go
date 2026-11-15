@@ -9,8 +9,9 @@ import (
 var orcaTool = regexp.MustCompile(`^mcp__.*orca.*__`)
 
 // Guard is what the guard refuses in a PreToolUse payload: a launch of an
-// agent outside jitso, or a `jitso build save` (the owner saves a draft as a
-// build, an agent never does), the zero Denial when it refuses nothing (the
+// agent outside jitso, a `jitso build save` (the owner saves a draft as a
+// build, an agent never does) or a `jitso setup` or `jitso install` that is not
+// a dry run (the owner changes the setup), the zero Denial when it refuses nothing (the
 // guard then stays silent). Bash commands are judged segment by segment; the
 // tools of an MCP server whose name contains orca by tool name and arguments.
 // Every other tool, and any field of the wrong type, passes: the guard protects
@@ -38,6 +39,9 @@ func (l Launcher) GuardVerb(input map[string]any) string {
 func (d Denial) Reason(packageJSON []byte) string {
 	if d.Verb == VerbBuildSave {
 		return SaveReason(LauncherWord(packageJSON), d.SaveID)
+	}
+	if d.Verb == VerbSetup || d.Verb == VerbInstall {
+		return AdoptionReason(d.Verb)
 	}
 	return GuardReason(LaunchWord(packageJSON), d.Verb)
 }
@@ -113,4 +117,11 @@ func GuardReason(launchWord, verb string) string {
 func SaveReason(launcherWord, id string) string {
 	return "JITSO: only the owner saves a draft as a build; ask the owner to run: " + launcherWord +
 		" build save " + id + " (denied: " + VerbBuildSave + ")"
+}
+
+// AdoptionReason is the deny text for `jitso setup` and `jitso install`: it
+// tells the model that only the owner changes the setup, and names the verb
+// that was denied (VerbSetup or VerbInstall).
+func AdoptionReason(verb string) string {
+	return "JITSO: only the owner changes the JITSO setup; ask the owner to run it in a terminal (denied: " + verb + ")"
 }

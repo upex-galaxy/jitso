@@ -74,7 +74,9 @@ func (d Deps) own() (self string, isOwn func(string) bool) {
 
 // RunGuard is `jitso hook guard`: in a project that has jitso/jitso.yaml it
 // denies the ways of launching an agent that skip the launch registry and any
-// `jitso build save` (only the owner saves a draft as a build), and on
+// `jitso build save` (only the owner saves a draft as a build) and any
+// `jitso setup` or `jitso install` that is not a dry run (only the owner changes
+// the setup), and on
 // SessionEnd it ends the launch of the closing session. It fails open: input
 // it cannot read, or a project without a catalog, prints nothing.
 func RunGuard(d Deps) {
