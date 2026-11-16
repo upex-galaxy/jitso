@@ -5,9 +5,8 @@ real, measured, and covered by a passing case, but several look like accidents r
 design. The Go port must either match them or change the case on purpose. Each row has a
 proposed call; a row marked DECIDED carries the owner's call, every other row is still a proposal.
 The end of a row's Proposal cell says what became of it: **DONE (<defect id>)** when the contract and the
-Go port implement the call (`contract/README.md` has the defect), **OPEN (fix, not done)** for a `fix` row
-nobody has taken up (the port keeps the oracle behavior and the case pins it), **OPEN (owner)** for an
-`ask` row still waiting for the owner. A `keep` row has no marker: the port does what the oracle does.
+Go port implement the call (`contract/README.md` has the defect). Every `fix` row is DONE, and no row waits
+for the owner. A `keep` row has no marker: the port does what the oracle does.
 
 Legend: **keep** = intended, port it as is. **fix** = change the case and the port.
 **ask** = a product decision for the owner.
@@ -76,4 +75,4 @@ Legend: **keep** = intended, port it as is. **fix** = change the case and the po
 
 ## Known defects (xfail on `ts`, see PLAN.md)
 
-S1 to S3 and N-1 to N-30: `README.md` lists every one with its cases and the intended behavior, and is the place to read them. Of the rows above, L1, L2, L3, L6, L7, L8, L10, L11, B1, R1, R3, R4, R6, R7, R10, C4, H5 and the settled halves of C1, H2 and H3 are defects there.
+S1 to S3 and N-1 to N-32: `README.md` lists every one with its cases and the intended behavior, and is the place to read them. Of the rows above, L1, L2, L3, L4, L6, L7, L8, L10, L11, B1, R1, R3, R4, R6, R7, R10, C4, H5 and the settled halves of C1, H2 and H3 are defects there.

@@ -22,7 +22,7 @@ JITSO is a strategy for orchestrating agents based on builds: a build is an appr
 | `scripts/`, `packaging/`, `.github/workflows/` | packaging, the install script and its offline test, the Homebrew formula template and its filler, the release workflow |
 | `.session/` | local history and handoffs, gitignored, mostly Spanish: never commit it, never quote it or its tracker keys in committed files |
 
-Not done: `jitso tree` (it answers "not implemented yet"), the first release and every outward step of `docs/release.md` (no remote, no tag, nothing published; the release workflow has never run), a real Orca run, the real Claude Code interactive path, a Linux run of the contract suite, and Windows testing. The oracle lives outside this repo, in `cli/jitso/` of a checkout of the original QA boilerplate.
+Not done: the first release and every outward step of `docs/release.md` (no remote, no tag, nothing published; the release workflow has never run), a real Orca run, the real Claude Code interactive path, a Linux run of the contract suite, and Windows testing. The oracle lives outside this repo, in `cli/jitso/` of a checkout of the original QA boilerplate.
 
 ## 3. Which skill to load
 

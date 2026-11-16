@@ -66,7 +66,7 @@ Credentials by name, never by value. Stay inside the brief and the card's route 
 
 ## Exit codes
 
-`0` done. `2` rejected, printed as `JITSO REJECTED: <reason>`: fix the input. `3` environment, printed as `jitso: <reason>`: something around the command is wrong (no git checkout, a missing file, Orca). `jitso doctor` is designed to report that state in one pass but this binary may not have it yet. Messages and fixes: `references/troubleshooting.md`.
+`0` done. `2` rejected, printed as `JITSO REJECTED: <reason>`: fix the input. `3` environment, printed as `jitso: <reason>`: something around the command is wrong (no git checkout, a missing file, Orca). `jitso doctor` reports that state in one pass and changes nothing. Messages and fixes: `references/troubleshooting.md`.
 
 ## References
 

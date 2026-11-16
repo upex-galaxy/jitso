@@ -47,7 +47,6 @@ Two prefixes tell you whose problem it is. `JITSO REJECTED: <reason>` (exit 2) m
 | `terminal <handle> is still open after close`, or an Orca error from `jitso close` | the terminal was not closed. Nothing was written: the launch is still running and has no `footer.txt`. Run `jitso close` again, or tell the human |
 | an Orca error, `terminal <handle> did not reach ... ; it was closed` | Orca did not answer or the harness never became ready. The launch folder was removed. Try once more, then report the message |
 | `jitso: ~/.jitso/config.yaml is invalid: <problem>` | the owner's trust file is broken. Tell the owner |
-| `unknown command "doctor"` | this binary does not have `doctor` yet (below) |
 
 ## What the hook denies
 
@@ -63,9 +62,9 @@ The match for the last two is on text, so a commit message that holds those word
 
 A bare `claude`, `codex` or `opencode` typed in a shell is not matched by the guard. It is still forbidden by the hard rules, because it makes a session with no card, no registry line and no budget.
 
-## `jitso doctor` (design, not in this binary yet)
+## `jitso doctor`
 
-Checked against the usage of this version: `jitso doctor` answers `unknown command "doctor"`. The design is a read-only check that prints one line per check, `ok`, `warn` or `fail`, then a summary line, and exits 0 when nothing fails and 3 when a check fails. It takes no argument. Once it exists, run it first when something is off. What the design says each check means:
+A read-only check that prints one line per check, `ok`, `warn` or `fail`, then a summary line, and exits 0 when nothing fails and 3 when a check fails. It takes no argument. Run it first when something is off. What each check means:
 
 | Check | A `warn` or `fail` means | What to do |
 |---|---|---|
@@ -81,5 +80,3 @@ Checked against the usage of this version: `jitso doctor` answers `unknown comma
 | `hooks` | the guard is not registered, only on some events, the file is untracked, hooks are disabled, or the registered command does not resolve | the guard is off, so nothing denies a bad launch. Ask the owner to run `jitso setup hook` |
 | `skill-project`, `skill-user` | the jitso skill is missing, out of date, or edited by hand | ask the owner to run `jitso install skill --scope project` (or `user`) |
 | `instructions`, `instructions-user` | the JITSO block is missing or an older version in the instruction files | ask the owner to run `jitso setup instructions` |
-
-Until `doctor` exists, check by hand: `jitso build validate`, `jitso version`, whether `.claude/settings.json` has the guard, and whether `jitso/jitso.yaml` and `.mcp.json` are there.
