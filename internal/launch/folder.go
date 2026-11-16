@@ -130,10 +130,15 @@ func repoServers(path string) (map[string]any, error) {
 	return servers, nil
 }
 
-// answerTrust handles the trust dialog of the new terminal. The trusted set
-// is checked against the folder Orca reports, not --worktree (TS-ODDITIES L4).
-func answerTrust(adapter harness.Adapter, d Deps, term orca.Terminal) (trust.Outcome, error) {
-	policy := trust.Policy{Primary: d.Root.Primary, DispatchDir: project.DispatchDir(d.Home), Extra: d.TrustExtra}
+// trustPolicy is the set of folders a launch may run in.
+func trustPolicy(d Deps) trust.Policy {
+	return trust.Policy{Primary: d.Root.Primary, DispatchDir: project.DispatchDir(d.Home), Extra: d.TrustExtra}
+}
+
+// answerTrust handles the trust dialog of the new terminal. The folder Orca
+// reports was already checked by trust.Policy.Place, so the dialog is
+// confirmed for a trusted folder (TS-ODDITIES L4, defect N-22).
+func answerTrust(adapter harness.Adapter, d Deps, policy trust.Policy, term orca.Terminal) (trust.Outcome, error) {
 	screen := terminalScreen{orca: d.Orca, handle: term.Handle}
 	return trust.Handle(adapter.TrustDialog(), screen, trust.Clock{Now: d.Now, Sleep: d.Sleep}, policy.Trusted(term.WorktreePath))
 }

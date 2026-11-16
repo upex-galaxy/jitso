@@ -1,8 +1,10 @@
-// Package trust answers the trust-this-folder dialog of a freshly started
-// session. The dialog appears even in bypass mode, and Enter alone picks
-// "No, exit". The launcher confirms it only for a worktree of the primary
-// checkout, the fixed dispatcher folder, or a folder the caller configured
-// (tests); anywhere else it refuses and leaves the dialog alone.
+// Package trust decides where a launch may run and answers the
+// trust-this-folder dialog of a freshly started session. A launch runs only in
+// a worktree of the primary checkout, the fixed dispatcher folder, or a folder
+// the caller configured (tests): Precheck and Place enforce it on every launch
+// (defect N-22), whether or not a dialog shows. The dialog appears even in
+// bypass mode, and Enter alone picks "No, exit"; Handle confirms it only for a
+// trusted folder and leaves it alone anywhere else.
 package trust
 
 import (
@@ -56,11 +58,77 @@ func (p Policy) Trusted(dir string) bool {
 	if dir == "" {
 		return false
 	}
+	return slices.Contains(p.allowed(), real(dir))
+}
+
+// allowed are the real paths of every folder a launch may run in.
+func (p Policy) allowed() []string {
 	list := append(append(worktrees(p.Primary), p.DispatchDir), p.Extra...)
 	for i := range list {
 		list[i] = real(list[i])
 	}
-	return slices.Contains(list, real(dir))
+	return list
+}
+
+// SelectorPath is the folder a --worktree selector names: P of path:<P> and
+// of id:<id>::<P> (Orca's own worktreeId), cleaned. ok is false for any other
+// selector or none, which names no path.
+func SelectorPath(selector string) (path string, ok bool) {
+	if rest, found := strings.CutPrefix(selector, "path:"); found {
+		return filepath.Clean(rest), true
+	}
+	if rest, found := strings.CutPrefix(selector, "id:"); found {
+		if _, p, found := strings.Cut(rest, "::"); found {
+			return filepath.Clean(p), true
+		}
+	}
+	return "", false
+}
+
+// Precheck is "" when the selector may be used, else the rejection text
+// without the "JITSO REJECTED: " prefix. A selector that names a path must
+// name an absolute path of a worktree of this repo; any other selector has no
+// pre-check.
+func (p Policy) Precheck(selector string) string {
+	path, ok := SelectorPath(selector)
+	if !ok {
+		return ""
+	}
+	if !filepath.IsAbs(path) {
+		return "--worktree " + selector + " must name an absolute path"
+	}
+	if !slices.Contains(p.allowed(), real(path)) {
+		return "--worktree " + selector + " names " + path + ", which is not a worktree of this repo"
+	}
+	return ""
+}
+
+// Place is "" when the folder Orca reported (reported, "" when none) may run
+// the launch for selector, else the rejection text without the prefix. The
+// folder must be a trusted one and, when the selector names a path, must be
+// that path.
+func (p Policy) Place(reported, selector string) string {
+	list := p.allowed()
+	if reported != "" && slices.Contains(list, real(reported)) {
+		path, ok := SelectorPath(selector)
+		if !ok || real(path) == real(reported) {
+			return ""
+		}
+	}
+	return Untrusted(reported, selector)
+}
+
+// Untrusted is the rejection text for a folder that may not run the launch.
+// It names the path the selector asked for when the selector names one.
+func Untrusted(reported, selector string) string {
+	folder := reported
+	if folder == "" {
+		folder = "(unknown)"
+	}
+	if path, ok := SelectorPath(selector); ok {
+		return "untrusted folder " + folder + ": --worktree asked for " + path + "; the terminal was closed"
+	}
+	return "untrusted folder " + folder + ": a launch runs only in a worktree of this repo; the terminal was closed"
 }
 
 // worktrees are the folders `git worktree list --porcelain` reports for the

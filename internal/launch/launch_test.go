@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"errors"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"reflect"
 	"strings"
@@ -75,6 +76,9 @@ type sandbox struct {
 	out, warn             []string
 	store                 *registry.FileStore
 	orca                  *fakeOrca
+	// extra is the trusted folder the tests add; a test that needs the real
+	// worktree list of a repository clears it.
+	extra []string
 }
 
 func newSandbox(t *testing.T) *sandbox {
@@ -98,6 +102,7 @@ func newSandbox(t *testing.T) *sandbox {
 		}
 	}
 	s.orca.cwd = s.root
+	s.extra = []string{s.root}
 	s.store = registry.NewFileStore(filepath.Join(s.root, ".jitso"))
 	return s
 }
@@ -118,7 +123,7 @@ func (s *sandbox) run(t *testing.T, argv ...string) error {
 	now := time.Date(2026, 11, 15, 1, 2, 3, 4_000_000, time.UTC)
 	return Run(a, Deps{
 		Root: project.Root{Primary: s.root, Checkout: s.root}, Catalog: cat, Registry: s.store, Orca: s.orca,
-		Home: s.home, Cwd: s.root,
+		Home: s.home, Cwd: s.root, TrustExtra: s.extra,
 		Now:   func() time.Time { return now },
 		Sleep: func(d time.Duration) { now = now.Add(d) },
 		Rand:  bytes.NewReader(bytes.Repeat([]byte{0xab}, 64)),
@@ -224,10 +229,19 @@ func TestRunFailuresRemoveOnlyTheirFolder(t *testing.T) {
 			"terminal term_fake did not reach tui-idle in 90 s; it was closed", []string{"terminal create", "terminal wait", "terminal close"}},
 		{"read failure", func(s *sandbox) { s.orca.fail = map[string]bool{"terminal read": true} }, nil, "fake failure",
 			[]string{"terminal create", "terminal wait", "terminal read", "terminal close"}},
-		{"refused", func(s *sandbox) { s.orca.cwd = s.home; s.orca.screens = []string{dialogScreen} }, nil, "JITSO REJECTED: untrusted folder ",
-			[]string{"terminal create", "terminal wait", "terminal read", "terminal close"}},
-		{"refused without a folder", func(s *sandbox) { s.orca.cwd = ""; s.orca.screens = []string{dialogScreen} }, nil, "untrusted folder (unknown):",
-			[]string{"terminal create", "terminal wait", "terminal read", "terminal close"}},
+		{"refused with a dialog", func(s *sandbox) { s.orca.cwd = s.home; s.orca.screens = []string{dialogScreen} }, nil, "JITSO REJECTED: untrusted folder ",
+			[]string{"terminal create", "terminal close"}},
+		{"refused without a dialog", func(s *sandbox) { s.orca.cwd = s.home }, nil, "JITSO REJECTED: untrusted folder ",
+			[]string{"terminal create", "terminal close"}},
+		{"refused without a folder", func(s *sandbox) { s.orca.cwd = "" }, nil, "untrusted folder (unknown):",
+			[]string{"terminal create", "terminal close"}},
+		{"refused before the idle wait", func(s *sandbox) { s.orca.cwd = s.home; s.orca.idle = false }, nil, "JITSO REJECTED: untrusted folder ",
+			[]string{"terminal create", "terminal close"}},
+		{"refused with a failing close", func(s *sandbox) { s.orca.cwd = s.home; s.orca.fail = map[string]bool{"terminal close": true} }, nil, "JITSO REJECTED: untrusted folder ",
+			[]string{"terminal create", "terminal close"}},
+		{"fleet refused before worker-start", func(s *sandbox) { s.orca.cwd = s.home },
+			[]string{"--build", "haiku-explorer", "--mode", "fleet", "--run", "r", "--task", "t"}, "JITSO REJECTED: untrusted folder ",
+			[]string{"terminal create", "terminal close"}},
 		{"worker-start", func(s *sandbox) {
 			s.orca.fail = map[string]bool{"orchestration worker-start": true, "terminal close": true}
 		},
@@ -258,6 +272,90 @@ func TestRunFailuresRemoveOnlyTheirFolder(t *testing.T) {
 			}
 			if events, _ := s.store.Events(); len(events) != 0 || len(s.out) != 0 {
 				t.Errorf("%d events, out %q", len(events), s.out)
+			}
+		})
+	}
+}
+
+// gitRepo makes the sandbox project a real repository with one linked worktree
+// and returns the real path of the linked worktree. The folder check then
+// reads the real worktree list, not the tests' extra folder.
+func (s *sandbox) gitRepo(t *testing.T) string {
+	t.Helper()
+	s.extra = nil
+	linked := filepath.Join(filepath.Dir(s.root), "linked")
+	for _, args := range [][]string{
+		{"init", "-q"},
+		{"-c", "user.name=t", "-c", "user.email=t@example.invalid", "-c", "commit.gpgsign=false", "commit", "-q", "--allow-empty", "-m", "init"},
+		{"worktree", "add", "-q", "-b", "x", linked},
+	} {
+		cmd := exec.Command("git", args...)
+		cmd.Dir = s.root
+		cmd.Env = append(os.Environ(), "GIT_CONFIG_GLOBAL=/dev/null", "GIT_CONFIG_NOSYSTEM=1")
+		if out, err := cmd.CombinedOutput(); err != nil {
+			t.Fatalf("git %v: %v\n%s", args, err, out)
+		}
+	}
+	return linked
+}
+
+// The folder Orca reports is checked on every launch against the real worktree
+// list, and against the path a --worktree selector names (defect N-22).
+func TestRunWorktreeSelector(t *testing.T) {
+	tests := []struct {
+		name      string
+		selector  func(root, linked, home string) string
+		cwd       func(root, linked, home string) string
+		reason    string
+		wantCalls []string
+	}{
+		{"no selector in the primary", nil, func(root, _, _ string) string { return root }, "", []string{"terminal create", "terminal wait", "terminal read"}},
+		{"no selector in a linked worktree", nil, func(_, linked, _ string) string { return linked }, "", []string{"terminal create", "terminal wait", "terminal read"}},
+		{"path selector honoured", func(_, linked, _ string) string { return "path:" + linked }, func(_, linked, _ string) string { return linked }, "", []string{"terminal create", "terminal wait", "terminal read"}},
+		{"id selector honoured", func(_, linked, _ string) string { return "id:fake-uuid::" + linked }, func(_, linked, _ string) string { return linked }, "", []string{"terminal create", "terminal wait", "terminal read"}},
+		{"path selector with another worktree", func(_, linked, _ string) string { return "path:" + linked }, func(root, _, _ string) string { return root },
+			"--worktree asked for ", []string{"terminal create", "terminal close"}},
+		{"name selector outside the repo", func(_, _, _ string) string { return "wt-1" }, func(_, _, home string) string { return home },
+			"a launch runs only in a worktree of this repo", []string{"terminal create", "terminal close"}},
+		{"path selector outside the repo is refused before Orca", func(_, _, home string) string { return "path:" + home }, nil,
+			"which is not a worktree of this repo", nil},
+		{"relative path selector is refused before Orca", func(_, _, _ string) string { return "path:rel/x" }, nil, "must name an absolute path", nil},
+	}
+	for _, tt := range tests {
+		// The selector allowlist has no comma, so no test name may have one:
+		// t.TempDir() puts the name in the project path.
+		t.Run(tt.name, func(t *testing.T) {
+			s := newSandbox(t)
+			linked := s.gitRepo(t)
+			linked, _ = filepath.EvalSymlinks(linked)
+			if tt.cwd != nil {
+				s.orca.cwd = tt.cwd(s.root, linked, s.home)
+			}
+			argv := []string{"--build", "haiku-explorer", "--mode", "direct", "--brief", s.briefPath}
+			if tt.selector != nil {
+				argv = append(argv, "--worktree", tt.selector(s.root, linked, s.home))
+			}
+			err := s.run(t, argv...)
+			if tt.reason == "" {
+				if err != nil {
+					t.Fatal(err)
+				}
+			} else if err == nil || !strings.HasPrefix(err.Error(), "JITSO REJECTED: ") || !strings.Contains(err.Error(), tt.reason) {
+				t.Fatalf("err %v, want %q", err, tt.reason)
+			}
+			if !reflect.DeepEqual(s.orca.calls, tt.wantCalls) {
+				t.Errorf("calls %q, want %q", s.orca.calls, tt.wantCalls)
+			}
+			wantDirs := 1
+			if tt.reason == "" {
+				wantDirs = 2
+			}
+			if got := s.launchDirs(t); len(got) != wantDirs {
+				t.Errorf("launch folders %q", got)
+			}
+			events, _ := s.store.Events()
+			if (tt.reason == "") != (len(events) == 1) {
+				t.Errorf("%d events", len(events))
 			}
 		})
 	}

@@ -26,7 +26,9 @@ Two prefixes tell you whose problem it is. `JITSO REJECTED: <reason>` (exit 2) m
 | `unknown launch <id>` (close, analyze) | the id is not in this project's log. Check the primary checkout's `.jitso/launches.jsonl` |
 | `launch <id> has no transcript on disk yet` | analyze needs the worker's transcript file. Wait for the session to write one |
 | `usage: jitso close <launch_id>`, `usage: jitso reap [--run <run_id>]...` | the arguments are wrong. These commands have no `--help` |
-| `untrusted folder <path>: ...the terminal was closed` | the terminal opened in a folder that is not a worktree of this repo. Check `--worktree` |
+| `untrusted folder <path>: a launch runs only in a worktree of this repo; the terminal was closed` | Orca opened the terminal in a folder that is not a worktree of this repo, or reported none (`(unknown)`). The folder is checked on every launch, with or without the trust dialog. Check `--worktree` |
+| `untrusted folder <path>: --worktree asked for <path>; the terminal was closed` | `--worktree` names a path and Orca opened the terminal somewhere else. Name the worktree you want, or drop the flag |
+| `--worktree <selector> must name an absolute path`, `--worktree <selector> names <path>, which is not a worktree of this repo` | a `path:` or `id:<id>::<path>` selector was rejected before anything was written or Orca was called. Use an absolute path of a worktree of this repo |
 | `draft <...> is invalid: <problems>`, `build "<id>" already exists (<layer> <path>): a draft needs an id no build has` | fix the draft, or pick an id no saved build has |
 | `saving a build needs the owner: run "jitso build save <id>" in a terminal` | not yours to run. Show the owner the draft and ask |
 

@@ -1,0 +1,60 @@
+{
+  "id": "launch/trust/path-selector-outside-the-repo-is-refused-before-orca",
+  "title": "a path: selector naming a folder that is not a worktree of the repo is rejected before any Orca call",
+  "source": [
+    "intended: TS-ODDITIES L4 (owner decision, defect N-22): the folder Orca reports is checked on every launch"
+  ],
+  "status": {
+    "ts": "xfail",
+    "go": "pass"
+  },
+  "defect": "N-22",
+  "intent": "INTENDED behavior (TS-ODDITIES L4, owner decision, defect N-22). A real launch checks a path-naming selector before it writes anything or calls Orca: a folder that is not a worktree of this repo exits 2 with no Orca call, no launch folder and no registry line. The TS binary forwards the selector to Orca and launches (exit 0).",
+  "project": {
+    "files": {
+      ".jitso/briefs/brief.md": {
+        "from": "brief.md"
+      }
+    }
+  },
+  "steps": [
+    {
+      "run": [
+        "launch",
+        "--build",
+        "haiku-explorer",
+        "--brief",
+        "{{PROJECT}}/.jitso/briefs/brief.md",
+        "--mode",
+        "direct",
+        "--worktree",
+        "path:{{HOME}}/elsewhere"
+      ],
+      "expect": {
+        "exit": 2,
+        "stdout": [
+          {
+            "empty": true
+          }
+        ],
+        "stderr": [
+          {
+            "equals": "JITSO REJECTED: --worktree path:{{HOME}}/elsewhere names {{HOME}}/elsewhere, which is not a worktree of this repo\n"
+          }
+        ],
+        "orca_calls": {
+          "empty": true
+        },
+        "registry": {
+          "count": 0
+        },
+        "files": [
+          {
+            "path": ".jitso/launches",
+            "exists": false
+          }
+        ]
+      }
+    }
+  ]
+}

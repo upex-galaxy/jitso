@@ -27,7 +27,7 @@
         "--task",
         "task_1",
         "--worktree",
-        "id:fake-uuid::/fake/cwd"
+        "id:fake-uuid::{{PROJECT}}"
       ],
       "capture": {
         "LAUNCH_ID": {
@@ -52,7 +52,7 @@
                 "terminal",
                 "create",
                 "--worktree",
-                "id:fake-uuid::/fake/cwd",
+                "id:fake-uuid::{{PROJECT}}",
                 "--title",
                 "[jitso:{{LAUNCH_ID}}] haiku-explorer",
                 "--command",
@@ -94,7 +94,7 @@
                 "--terminal",
                 "term_fake",
                 "--worktree",
-                "id:fake-uuid::/fake/cwd"
+                "id:fake-uuid::{{PROJECT}}"
               ]
             }
           ]
@@ -106,7 +106,7 @@
               "at": 0,
               "event": "launch",
               "fields": {
-                "worktree": "id:fake-uuid::/fake/cwd"
+                "worktree": "id:fake-uuid::{{PROJECT}}"
               }
             }
           ]

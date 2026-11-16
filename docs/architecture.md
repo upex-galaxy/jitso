@@ -32,7 +32,7 @@ What the CLI does, split by responsibility. "Pure" means no file, process, clock
 | Shell and `run.sh` text | `shell.ts` | quoting, script text, terminal title | none | `internal/shell` |
 | Harness adapter | `adapters/claude.ts`, `adapters/types.ts` | argv, env, MCP file, transcript path, trust dialog detection | session id (random) | `internal/harness`, `internal/harness/claude` |
 | Orca client | `orca.ts` | response parsing, `worktreeId` path | runs `orca ... --json` | `internal/orca` |
-| Trust dialog | `trust.ts` | the dialog state machine, exact real-path match | `git worktree list`, screen reads, key sends, clock | `internal/trust` |
+| Trust dialog and folder check | `trust.ts` | the dialog state machine, exact real-path match, and the folder check on every launch (N-22): `SelectorPath`, `Precheck` (before any Orca call) and `Place` (right after `terminal create`) | `git worktree list`, screen reads, key sends, clock | `internal/trust` |
 | Registry | `log.ts` | event validation, folding events into launches | append under a `mkdir` lock, read the file | `internal/registry` |
 | Launch execution | `launch.ts` (`launchForReal`) | the plan: files, argv, event | files, Orca, registry | `internal/launch` |
 | Close | `close.ts` | none worth isolating | Orca, registry, footer file | `internal/closeout` |
@@ -155,6 +155,7 @@ The dispatcher registers the dispatch guard in `--settings` as the command `'<ow
 |---|---|---|
 | L2 (N-2) | the execute step creates `.jitso/launches/<id>/` with `os.Mkdir` (so the folder is new) and removes exactly that folder when anything fails before the registry line is appended: a file write, terminal create, idle timeout, a refused trust dialog, `worker-start`, a stuck lock. A terminal it opened is closed first, as today. After the line is written, nothing is removed | `internal/launch` (execute) |
 | L3 (N-3) | trust outcome `timeout` keeps exit 0 and the registry line with `trust_dialog: timeout`, and prints one stderr line, for example `jitso: the trust dialog of terminal <handle> did not clear in 10 s; the launch is registered` | `internal/launch`, outcome from `internal/trust` |
+| L4 (N-22) | `execute` builds one `trust.Policy` and checks the folder on every launch: `Precheck` of the `--worktree` selector before the launch folder is made, `Place` of the folder Orca reports right after `terminal create` and before the idle wait. A failure closes the terminal and rejects with exit 2, so the deferred removal of L2 leaves no folder and no registry line. The trust dialog is answered after that, for a folder that already passed | `internal/trust` (pure), `internal/launch` (execute, `answerTrust`) |
 | L8 (N-4) | `direct` and `fleet` are the only mode values: `launch --mode` rejects anything else (exit 2, `--mode must be direct or fleet`) and the registry validator treats a line with another mode as invalid, so readers skip it. No alias table exists anywhere | `internal/launch`, `internal/registry` |
 
 ### S1 `route_scope`

@@ -142,7 +142,15 @@ type prepared struct {
 // appended (TS-ODDITIES L2): a file, the terminal, the idle wait, a refused
 // trust dialog, worker-start, the registry lock. A terminal it opened is
 // closed first. Once the line is written nothing is removed.
+//
+// The folder is checked on every launch (defect N-22): a selector that names a
+// path is checked before anything is written or Orca is called, and the folder
+// Orca reports is checked right after terminal create, before the idle wait.
 func execute(p prepared, d Deps) (err error) {
+	policy := trustPolicy(d)
+	if why := policy.Precheck(deref(p.args.Worktree)); why != "" {
+		return fail.Rejected(why)
+	}
 	launches := filepath.Join(d.Root.StateDir(), "launches")
 	if err := os.MkdirAll(launches, 0o755); err != nil {
 		return err
@@ -167,23 +175,23 @@ func execute(p prepared, d Deps) (err error) {
 		return err
 	}
 	abandon := func() { _ = d.Orca.CloseTerminal(term.Handle) }
+	if why := policy.Place(term.WorktreePath, deref(p.args.Worktree)); why != "" {
+		abandon()
+		return fail.Rejected(why)
+	}
 
 	if !d.Orca.WaitIdle(term.Handle, IdleTimeoutMS) {
 		abandon()
 		return fail.Envf("terminal %s did not reach %s in %d s; it was closed", term.Handle, p.adapter.Readiness(), IdleTimeoutMS/1000)
 	}
-	outcome, err := answerTrust(p.adapter, d, term)
+	outcome, err := answerTrust(p.adapter, d, policy, term)
 	if err != nil {
 		abandon()
 		return err
 	}
 	if outcome == trust.Refused {
 		abandon()
-		folder := term.WorktreePath
-		if folder == "" {
-			folder = "(unknown)"
-		}
-		return fail.Rejectedf("untrusted folder %s: the launcher answers the trust dialog only for a worktree of this repo or the dispatcher directory; the terminal was closed", folder)
+		return fail.Rejected(trust.Untrusted(term.WorktreePath, deref(p.args.Worktree)))
 	}
 	if p.args.Mode == ModeFleet {
 		start := []string{"orchestration", "worker-start", "--run", deref(p.args.Run), "--task", deref(p.args.Task), "--terminal", term.Handle}

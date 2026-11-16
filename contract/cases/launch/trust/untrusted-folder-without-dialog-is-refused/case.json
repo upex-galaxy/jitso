@@ -1,0 +1,70 @@
+{
+  "id": "launch/trust/untrusted-folder-without-dialog-is-refused",
+  "title": "an untrusted folder is refused even when no trust dialog shows: no dialog is no pass",
+  "source": [
+    "intended: TS-ODDITIES L4 (owner decision, defect N-22): the folder Orca reports is checked on every launch"
+  ],
+  "status": {
+    "ts": "xfail",
+    "go": "pass"
+  },
+  "defect": "N-22",
+  "intent": "INTENDED behavior (TS-ODDITIES L4, owner decision, defect N-22). The folder Orca reports is compared with the worktrees of the repo on every launch, whether or not the trust dialog shows. A folder outside the repo exits 2, closes the terminal, writes no registry line and leaves no launch folder. The TS binary launches (exit 0, trust_dialog absent) because it compares only when the dialog shows.",
+  "project": {
+    "files": {
+      ".jitso/briefs/brief.md": {
+        "from": "brief.md"
+      }
+    }
+  },
+  "orca": {
+    "cwd": "{{HOME}}/elsewhere"
+  },
+  "steps": [
+    {
+      "run": [
+        "launch",
+        "--build",
+        "haiku-explorer",
+        "--brief",
+        "{{PROJECT}}/.jitso/briefs/brief.md",
+        "--mode",
+        "direct"
+      ],
+      "capture": {
+        "LAUNCH_ID": {
+          "from": "orca_log",
+          "regex": "\\[jitso:(L\\d{8}T\\d{6}-[0-9a-f]{4})\\]"
+        }
+      },
+      "expect": {
+        "exit": 2,
+        "stdout": [
+          {
+            "empty": true
+          }
+        ],
+        "stderr": [
+          {
+            "contains": "JITSO REJECTED: untrusted folder {{HOME}}/elsewhere: a launch runs only in a worktree of this repo; the terminal was closed"
+          }
+        ],
+        "orca_calls": {
+          "verbs": [
+            "terminal create",
+            "terminal close"
+          ]
+        },
+        "registry": {
+          "count": 0
+        },
+        "files": [
+          {
+            "path": ".jitso/launches/{{LAUNCH_ID}}",
+            "exists": false
+          }
+        ]
+      }
+    }
+  ]
+}

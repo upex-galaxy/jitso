@@ -19,7 +19,7 @@ Legend: **keep** = intended, port it as is. **fix** = change the case and the po
 | L1 | `.mcp.json` is required even for a preset with no MCP servers; missing or broken file exits 3 (`launch/mcp-json/`) | DECIDED (owner, 2026-11-15): fix (reserved defect N-26): read it only when the preset lists servers **OPEN (fix, not done)**: the Go port still requires the file. |
 | L2 | A failed launch leaves `.jitso/launches/<id>/` on disk with no registry line, so `reap` never sees it (`launch/`) | DECIDED (owner, 2026-11-15): fix. Go removes the launch folder when anything fails before the registry line. The failed-launch cases under `cases/launch/` change in the same step, cases first. Cases: defect N-2, `xfail` on `ts` (`launch/orca-failure/*`, `launch/trust/read-failure-closes-the-terminal`, `launch/trust/send-failure-closes-the-terminal`, `launch/fleet/worker-start-*`, `launch/mcp-json/*-exits-3`) **DONE (N-2)** |
 | L3 | A trust dialog that never clears still exits 0 and writes the registry line (`launch/trust/dialog-that-never-clears-is-a-timeout`) | DECIDED (owner, 2026-11-15): keep exit 0 and register the launch, but print a warning on stderr that the dialog did not clear (option beaten: exit 3 and close the terminal). The timeout case gains a `stderr` expectation. Case: defect N-3, `xfail` on `ts` (`launch/trust/dialog-that-never-clears-is-a-timeout`) **DONE (N-3)** |
-| L4 | The trust check uses the folder Orca reports, not `--worktree` (`launch/trust/`) | DECIDED (owner, 2026-11-15): superseded, check always (see docs/decisions.md, defect N-22); the earlier proposal was keep **OPEN (fix, not done)** |
+| L4 | The trust check uses the folder Orca reports, not `--worktree` (`launch/trust/`) | DECIDED (owner, 2026-11-15): superseded, check always (see docs/decisions.md, defect N-22); the earlier proposal was keep **DONE (N-22)** |
 | L5 | `--parent` is validated before `--dry-run`: an unknown parent exits 2 even on a dry run | keep |
 | L6 | `--mcp-exclude` with an unknown or differently cased name is ignored silently | DECIDED (owner, 2026-11-15): fix (reserved defect N-26): warn on stderr **OPEN (fix, not done)** |
 | L7 | An empty `jitso` script value in `package.json` counts as declared (`card/launch-line/`) | DECIDED (owner, 2026-11-15): fix (reserved defect N-26): require a non-empty string **OPEN (fix, not done)** |
@@ -76,4 +76,4 @@ Legend: **keep** = intended, port it as is. **fix** = change the case and the po
 
 ## Known defects (xfail on `ts`, see PLAN.md)
 
-S1 to S3 and N-1 to N-21: `README.md` lists every one with its cases and the intended behavior, and is the place to read them. Of the rows above, L2, L3, L8, C4 and the settled halves of C1, H2 and H3 are defects there.
+S1 to S3 and N-1 to N-22: `README.md` lists every one with its cases and the intended behavior, and is the place to read them. Of the rows above, L2, L3, L8, C4 and the settled halves of C1, H2 and H3 are defects there.

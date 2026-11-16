@@ -1,0 +1,77 @@
+{
+  "id": "launch/trust/fleet-refusal-skips-worker-start",
+  "title": "a refused fleet launch never adopts the terminal: no orchestration worker-start",
+  "source": [
+    "intended: TS-ODDITIES L4 (owner decision, defect N-22): the folder Orca reports is checked on every launch"
+  ],
+  "status": {
+    "ts": "xfail",
+    "go": "pass"
+  },
+  "defect": "N-22",
+  "intent": "INTENDED behavior (TS-ODDITIES L4, owner decision, defect N-22). In fleet mode the folder check runs before worker-start, so a terminal in the wrong folder is closed and never handed to the orchestration run. The TS binary adopts it (exit 0) because no dialog shows.",
+  "project": {
+    "files": {
+      ".jitso/briefs/brief.md": {
+        "from": "brief.md"
+      }
+    }
+  },
+  "orca": {
+    "cwd": "{{HOME}}/elsewhere"
+  },
+  "steps": [
+    {
+      "run": [
+        "launch",
+        "--build",
+        "haiku-explorer",
+        "--brief",
+        "{{PROJECT}}/.jitso/briefs/brief.md",
+        "--mode",
+        "fleet",
+        "--run",
+        "run_1",
+        "--task",
+        "task_1"
+      ],
+      "capture": {
+        "LAUNCH_ID": {
+          "from": "orca_log",
+          "regex": "\\[jitso:(L\\d{8}T\\d{6}-[0-9a-f]{4})\\]"
+        }
+      },
+      "expect": {
+        "exit": 2,
+        "stdout": [
+          {
+            "empty": true
+          }
+        ],
+        "stderr": [
+          {
+            "contains": "untrusted folder {{HOME}}/elsewhere"
+          }
+        ],
+        "orca_calls": {
+          "verbs": [
+            "terminal create",
+            "terminal close"
+          ],
+          "none": [
+            "orchestration worker-start"
+          ]
+        },
+        "registry": {
+          "count": 0
+        },
+        "files": [
+          {
+            "path": ".jitso/launches/{{LAUNCH_ID}}",
+            "exists": false
+          }
+        ]
+      }
+    }
+  ]
+}

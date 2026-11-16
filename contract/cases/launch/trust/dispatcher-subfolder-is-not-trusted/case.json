@@ -2,8 +2,15 @@
   "id": "launch/trust/dispatcher-subfolder-is-not-trusted",
   "title": "a subfolder of the dispatcher folder is not trusted",
   "source": [
-    "cli/jitso/trust.test.ts: isTrustedDir compares exact real paths"
+    "cli/jitso/trust.test.ts: isTrustedDir compares exact real paths",
+    "intended: TS-ODDITIES L4 (owner decision, defect N-22): the folder Orca reports is checked on every launch"
   ],
+  "status": {
+    "ts": "xfail",
+    "go": "pass"
+  },
+  "defect": "N-22",
+  "intent": "INTENDED behavior (TS-ODDITIES L4, owner decision, defect N-22). The launch compares the folder Orca reports with the worktrees of the repo right after terminal create, before the idle wait, so a refused launch calls only terminal create and terminal close, sends no key and writes no registry line. The stderr text keeps its prefix and tail. The TS binary compares the folder only when the trust dialog shows, and only after the idle wait and a screen read, so it calls terminal wait and terminal read first.",
   "project": {
     "files": {
       ".jitso/briefs/brief.md": {
@@ -46,8 +53,6 @@
         "orca_calls": {
           "verbs": [
             "terminal create",
-            "terminal wait",
-            "terminal read",
             "terminal close"
           ],
           "calls": [
@@ -70,29 +75,6 @@
               "at": 1,
               "argv": [
                 "terminal",
-                "wait",
-                "--terminal",
-                "term_fake",
-                "--for",
-                "tui-idle",
-                "--timeout-ms",
-                "90000"
-              ]
-            },
-            {
-              "at": 2,
-              "argv": [
-                "terminal",
-                "read",
-                "--terminal",
-                "term_fake",
-                "--screen"
-              ]
-            },
-            {
-              "at": 3,
-              "argv": [
-                "terminal",
                 "close",
                 "--terminal",
                 "term_fake"
@@ -100,7 +82,9 @@
             }
           ],
           "none": [
-            "terminal send"
+            "terminal send",
+            "terminal wait",
+            "terminal read"
           ]
         },
         "registry": {
