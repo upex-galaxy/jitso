@@ -157,10 +157,15 @@ The launch line also ends with `--worktree {{WORKTREE}}` (N-23): `dispatch.Build
 
 | Row | Design | Where |
 |---|---|---|
+| L1 (N-26) | `writeFolder` reads the repo `.mcp.json` only when the launch's MCP list, after `--mcp-exclude`, is not empty; otherwise the harness spec gets no repo table and `mcp.json` is `{"mcpServers": {}}`. A missing or broken file still fails a launch that names a server, with exit 3 | `internal/launch` (`folder.go`) |
 | L2 (N-2) | the execute step creates `.jitso/launches/<id>/` with `os.Mkdir` (so the folder is new) and removes exactly that folder when anything fails before the registry line is appended: a file write, terminal create, idle timeout, a refused trust dialog, `worker-start`, a stuck lock. A terminal it opened is closed first, as today. After the line is written, nothing is removed | `internal/launch` (execute) |
 | L3 (N-3) | trust outcome `timeout` keeps exit 0 and the registry line with `trust_dialog: timeout`, and prints one stderr line, for example `jitso: the trust dialog of terminal <handle> did not clear in 10 s; the launch is registered` | `internal/launch`, outcome from `internal/trust` |
 | L4 (N-22) | `execute` builds one `trust.Policy` and checks the folder on every launch: `Precheck` of the `--worktree` selector before the launch folder is made, `Place` of the folder Orca reports right after `terminal create` and before the idle wait. A failure closes the terminal and rejects with exit 2, so the deferred removal of L2 leaves no folder and no registry line. The trust dialog is answered after that, for a folder that already passed. The dispatcher folder is not allowed (N-23) | `internal/trust` (pure), `internal/launch` (execute, `answerTrust`) |
+| L6 (N-26) | after the build, the brief, the parent and the budget have passed and before the card is printed, `Run` calls the pure `UnknownExcludes(mcp, exclude)` and prints one stderr line per distinct `--mcp-exclude` value that is not exactly a name of the build's `mcp` list, with a `did you mean` hint for a case-only match. Dry run and real launch alike; nothing is excluded and the exit code is unchanged | `internal/launch` (`plan.go`, `launch.go`) |
+| L7 (N-26) | one predicate, `card.DeclaresJitsoScript(packageJSON)`: `scripts.jitso` is a JSON string that is not blank. `card.LaunchCommand` and the guard's `hook.LauncherWord` both call it, so the card and the deny reason name the same launcher | `internal/card`, `internal/hook` |
 | L8 (N-4) | `direct` and `fleet` are the only mode values: `launch --mode` rejects anything else (exit 2, `--mode must be direct or fleet`) and the registry validator treats a line with another mode as invalid, so readers skip it. No alias table exists anywhere | `internal/launch`, `internal/registry` |
+| L10 (N-26) | `runLaunch` prints the `launchUsage` constant on stdout and returns when the first word after `launch` is `--help` or `-h`, before `launch.Parse`, so no project, catalog or Orca is needed. Any other position leaves the word to `Parse` as an unknown argument. `close`, `reap`, `analyze` and `tree` have no help screen | `internal/cli` (`cmd_launch.go`) |
+| L11 (N-26) | in `launch.Parse` a value flag whose next word starts with `--`, or that is last, is `--<flag> needs a value`; a value that starts with a single `-` is taken | `internal/launch` (`args.go`) |
 
 ### S1 `route_scope`
 
@@ -283,6 +288,7 @@ Each block after milestone 8 is its own contract change, cases first, run agains
 | Adoption: `install skill`, `setup hook`, `setup instructions`, the adoption guard | N-16 to N-19 | `adopt`, `settingsjson`, `instructions`, `skill`, `hook`, `cli` | `^(install/\|setup/\|hooks/guard/(deny-adoption-commands\|allows-read-only-jitso)\|hooks/dispatch-guard/bash-denies-adoption-commands\|cli/usage/)` |
 | `doctor` | N-20 | `doctor`, `cli` | `^(doctor/\|cli/usage/)` |
 | `version` | N-21 | `version`, `cli` | `^cli/(version/\|usage/)` |
+| Launch arguments: `.mcp.json` only when needed, exclusion warning, blank script, `launch --help`, `--` values | N-26 | `launch`, `card`, `hook`, `cli` | `^(launch/mcp-json/\|card/(mcp-exclude\|launch-line)/\|validation/\|hooks/guard/blank-jitso-script)` |
 | Release files: packaging, install script, workflow, formula template | none (no case) | `scripts/`, `.github/`, `packaging/` | `scripts/test-install.sh` (offline), and the steps of `docs/release.md` section 3 |
 
 The pipes inside the table are escaped for Markdown; the filter is the text without the backslashes.

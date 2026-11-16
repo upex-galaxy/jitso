@@ -21,9 +21,11 @@ jitso launch --build <id> --brief <file> --mode direct|fleet [--run <run> --task
 | `--brief-language` | `en` (default), `es` or `any`. Only change it when the project's briefs are not in English |
 | `--dry-run` | validate and print the card, write nothing, never call Orca |
 
-A value that starts with `--` is read as the value of the flag before it, so write `--build <id>` with a real id. Old spellings are unknown: `--preset` is `JITSO REJECTED: unknown argument "--preset"`.
+A flag whose next word starts with `--` has no value: `launch --build --dry-run` is `JITSO REJECTED: --build needs a value`. Old spellings are unknown: `--preset` is `JITSO REJECTED: unknown argument "--preset"`.
 
-`launch --help` is not a help screen: it is the same rejection as any unknown argument. `jitso build --help` and `jitso install skill --help` do print usage.
+`jitso launch --help` (or `-h`) as the first word after `launch` prints the usage on stdout and exits 0, in any folder. Anywhere else `--help` is an unknown argument. `jitso build --help` and `jitso install skill --help` print usage too; `close`, `reap` and `analyze` have no help screen.
+
+An `--mcp-exclude` name that is not exactly one of the build's MCP servers excludes nothing and prints one warning on stderr, for example `jitso: warning: --mcp-exclude "DBHUB" is not an MCP server of build sonnet-tester (did you mean "dbhub"?); nothing excluded`. The launch goes on.
 
 ## Dry run first
 
@@ -79,7 +81,7 @@ If anything fails before step 5, the launcher closes the terminal it opened and 
 ## Preconditions
 
 - You are inside a git checkout of the project, and `jitso/jitso.yaml` exists (the allowlists). A linked worktree works: the project is its primary checkout.
-- A real launch also needs `.mcp.json` in the project, even for a build that names no MCP server (read from the code, not measured here).
+- A real launch reads `.mcp.json` in the project only when it still names an MCP server after `--mcp-exclude`. A build with no servers needs no `.mcp.json`.
 - `JITSO_PROJECT` names the project when set. The dispatcher uses it. You should not need it.
 
 ## The dispatcher

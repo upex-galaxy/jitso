@@ -1,0 +1,80 @@
+{
+  "id": "card/mcp-exclude/unknown-or-differently-cased-name-warns",
+  "title": "excluding a name the build does not list, or with another case, leaves the MCP part untouched and warns on stderr",
+  "source": [
+    "cli/jitso/launch.test.ts: runLaunch mcp = profile.mcp.filter(name => !args.mcpExclude.includes(name))",
+    "intended: TS-ODDITIES L6 (defect N-26)"
+  ],
+  "project": {
+    "files": {
+      ".jitso/briefs/brief.md": {
+        "from": "brief.md"
+      }
+    }
+  },
+  "for_each": {
+    "vars": [
+      "name",
+      "hint"
+    ],
+    "rows": [
+      [
+        "unlisted",
+        ""
+      ],
+      [
+        "DBHUB",
+        " (did you mean \"dbhub\"?)"
+      ],
+      [
+        "nonexistent-server",
+        ""
+      ]
+    ],
+    "ids": [
+      "unlisted",
+      "case",
+      "unknown"
+    ]
+  },
+  "steps": [
+    {
+      "run": [
+        "launch",
+        "--build",
+        "sonnet-tester",
+        "--brief",
+        "{{PROJECT}}/.jitso/briefs/brief.md",
+        "--mode",
+        "direct",
+        "--field",
+        "ticket_key=PRJ-123",
+        "--mcp-exclude",
+        "{{name}}",
+        "--dry-run"
+      ],
+      "expect": {
+        "exit": 0,
+        "stdout": [
+          {
+            "regex": "(?m)^model\\ claude\\-sonnet\\-5\\-5\\ effort\\ medium\\ \\|\\ bypass\\ \\|\\ MCP\\ dbhub,openapi\\ \\|\\ skill\\ sprint\\-testing$"
+          }
+        ],
+        "stderr": [
+          {
+            "equals": "jitso: warning: --mcp-exclude \"{{name}}\" is not an MCP server of build sonnet-tester{{hint}}; nothing excluded\n"
+          }
+        ],
+        "orca_calls": {
+          "empty": true
+        }
+      }
+    }
+  ],
+  "status": {
+    "ts": "xfail",
+    "go": "pass"
+  },
+  "defect": "N-26",
+  "intent": "INTENDED behavior (TS-ODDITIES L6, defect N-26). An --mcp-exclude value that is not exactly an MCP server of the build changes nothing (the card still shows MCP dbhub,openapi) and prints one warning on stderr: `jitso: warning: --mcp-exclude \"<name>\" is not an MCP server of build <id>; nothing excluded`, with ` (did you mean \"<server>\"?)` before the semicolon when the name differs from a server only by case. The launch goes on, exit 0. The oracle prints nothing on stderr, so the stderr expectation FAILS on TS."
+}

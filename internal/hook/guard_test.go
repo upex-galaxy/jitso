@@ -66,6 +66,8 @@ func TestLaunchWord(t *testing.T) {
 		{"no script", `{"scripts":{}}`, "jitso launch"},
 		{"no scripts", `{}`, "jitso launch"},
 		{"script not a string", `{"scripts":{"jitso":5}}`, "jitso launch"},
+		{"empty script", `{"scripts":{"jitso":""}}`, "jitso launch"},
+		{"blank script", `{"scripts":{"jitso":"  "}}`, "jitso launch"},
 		{"not json", `nope`, "jitso launch"},
 		{"missing file", ``, "jitso launch"},
 	}
@@ -84,6 +86,9 @@ func TestLauncherWord(t *testing.T) {
 	}
 	if got := LauncherWord(nil); got != "jitso" {
 		t.Errorf("without package.json: %q", got)
+	}
+	if got := LauncherWord([]byte(`{"scripts":{"jitso":" "}}`)); got != "jitso" {
+		t.Errorf("with a blank script: %q", got)
 	}
 }
 

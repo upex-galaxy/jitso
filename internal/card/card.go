@@ -82,19 +82,28 @@ const (
 
 // LaunchCommand is the command that starts another session in the project,
 // from the content of its package.json: `bun run jitso launch` when the file
-// declares a string `jitso` script (any string, even empty), else
-// `jitso launch`. A missing or unusable file is the plain command.
+// declares a jitso script (DeclaresJitsoScript), else `jitso launch`. A
+// missing or unusable file is the plain command.
 func LaunchCommand(packageJSON []byte) string {
-	var pkg any
-	if json.Unmarshal(packageJSON, &pkg) != nil {
-		return CommandPlain
-	}
-	root, _ := pkg.(map[string]any)
-	scripts, _ := root["scripts"].(map[string]any)
-	if _, ok := scripts["jitso"].(string); ok {
+	if DeclaresJitsoScript(packageJSON) {
 		return CommandBunRun
 	}
 	return CommandPlain
+}
+
+// DeclaresJitsoScript is true when the package.json declares a `jitso` script:
+// a JSON string with a value that is not blank (TS-ODDITIES L7, defect N-26).
+// The card and the guard hook share it. A missing or unusable file declares
+// nothing.
+func DeclaresJitsoScript(packageJSON []byte) bool {
+	var pkg struct {
+		Scripts map[string]any `json:"scripts"`
+	}
+	if json.Unmarshal(packageJSON, &pkg) != nil {
+		return false
+	}
+	script, ok := pkg.Scripts["jitso"].(string)
+	return ok && strings.TrimSpace(script) != ""
 }
 
 func list(items []string) string {

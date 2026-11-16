@@ -1,0 +1,83 @@
+{
+  "id": "launch/mcp-json/build-without-servers-needs-no-repo-config",
+  "title": "a launch that names no MCP server after --mcp-exclude reads no .mcp.json, so a missing or broken file does not stop it",
+  "source": [
+    "intended: TS-ODDITIES L1 (defect N-26)"
+  ],
+  "status": {
+    "ts": "xfail",
+    "go": "pass"
+  },
+  "defect": "N-26",
+  "intent": "INTENDED behavior (TS-ODDITIES L1, defect N-26). The repo .mcp.json is read only when the launch still names an MCP server after --mcp-exclude. A build without servers launches in a project that has no .mcp.json, and a build whose servers are all excluded launches with a .mcp.json that is not JSON. The launch's mcp.json is then {\"mcpServers\": {}}. The oracle reads the file for every launch, so it exits 3 at step 1 and the whole case FAILS on TS.",
+  "project": {
+    "files": {
+      ".jitso/briefs/brief.md": {
+        "from": "brief.md"
+      },
+      ".mcp.json": null
+    }
+  },
+  "steps": [
+    {
+      "run": [
+        "launch",
+        "--build",
+        "haiku-explorer",
+        "--brief",
+        "{{PROJECT}}/.jitso/briefs/brief.md",
+        "--mode",
+        "direct"
+      ],
+      "capture": {
+        "LAUNCH_ID": {
+          "from": "stdout",
+          "regex": "JITSO (L\\d{8}T\\d{6}-[0-9a-f]{4})",
+          "group": 1
+        }
+      },
+      "expect": {
+        "exit": 0,
+        "files": [
+          {
+            "path": ".jitso/launches/{{LAUNCH_ID}}/mcp.json",
+            "equals": "{\n  \"mcpServers\": {}\n}\n"
+          }
+        ],
+        "registry": {
+          "count": 1
+        }
+      }
+    },
+    {
+      "write": {
+        "project": {
+          ".mcp.json": "{not json"
+        }
+      }
+    },
+    {
+      "run": [
+        "launch",
+        "--build",
+        "sonnet-tester",
+        "--brief",
+        "{{PROJECT}}/.jitso/briefs/brief.md",
+        "--mode",
+        "direct",
+        "--field",
+        "ticket_key=PRJ-123",
+        "--mcp-exclude",
+        "dbhub",
+        "--mcp-exclude",
+        "openapi"
+      ],
+      "expect": {
+        "exit": 0,
+        "registry": {
+          "count": 2
+        }
+      }
+    }
+  ]
+}

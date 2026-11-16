@@ -44,6 +44,12 @@ func TestRun(t *testing.T) {
 		{"build list needs the project", []string{"build", "list"}, 3, "", "jitso: the cwd must not be read"},
 		{"request needs the project", []string{"test PRJ-1", "now"}, 3, "", "jitso: the cwd must not be read"},
 		{"launch checks its arguments before the project", []string{"launch"}, 2, "", "JITSO REJECTED: --build is required"},
+		{"launch --help prints the usage", []string{"launch", "--help"}, 0, "Usage: jitso launch --build <id> --brief <file> --mode direct|fleet [options]\n\nLaunches a worker", ""},
+		{"launch -h with later words", []string{"launch", "-h", "--build", "x", "bogus"}, 0, "  --mcp-exclude <name>         leave one MCP server", ""},
+		{"launch usage ends with --dry-run", []string{"launch", "--help"}, 0, "open nothing, write nothing\n", ""},
+		{"launch help only as the first word", []string{"launch", "--build", "x", "--help"}, 2, "", `unknown argument "--help"`},
+		{"launch value starting with two dashes", []string{"launch", "--build", "--dry-run"}, 2, "", "JITSO REJECTED: --build needs a value"},
+		{"close keeps rejecting --help", []string{"close", "--help"}, 2, "", "JITSO REJECTED:"},
 		{"hook needs a name", []string{"hook"}, 2, "", "jitso hook: expected one of guard or dispatch-guard"},
 	}
 	for _, tt := range tests {

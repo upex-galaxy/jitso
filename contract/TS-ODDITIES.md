@@ -16,17 +16,17 @@ Legend: **keep** = intended, port it as is. **fix** = change the case and the po
 
 | # | Behavior (case folder) | Proposal |
 |---|---|---|
-| L1 | `.mcp.json` is required even for a preset with no MCP servers; missing or broken file exits 3 (`launch/mcp-json/`) | DECIDED (owner, 2026-11-15): fix (reserved defect N-26): read it only when the preset lists servers **OPEN (fix, not done)**: the Go port still requires the file. |
+| L1 | `.mcp.json` is required even for a preset with no MCP servers; missing or broken file exits 3 (`launch/mcp-json/`) | DECIDED (owner, 2026-11-15): fix (reserved defect N-26): read it only when the preset lists servers **DONE (N-26)**: the file is read only when the launch still names a server after `--mcp-exclude`. |
 | L2 | A failed launch leaves `.jitso/launches/<id>/` on disk with no registry line, so `reap` never sees it (`launch/`) | DECIDED (owner, 2026-11-15): fix. Go removes the launch folder when anything fails before the registry line. The failed-launch cases under `cases/launch/` change in the same step, cases first. Cases: defect N-2, `xfail` on `ts` (`launch/orca-failure/*`, `launch/trust/read-failure-closes-the-terminal`, `launch/trust/send-failure-closes-the-terminal`, `launch/fleet/worker-start-*`, `launch/mcp-json/*-exits-3`) **DONE (N-2)** |
 | L3 | A trust dialog that never clears still exits 0 and writes the registry line (`launch/trust/dialog-that-never-clears-is-a-timeout`) | DECIDED (owner, 2026-11-15): keep exit 0 and register the launch, but print a warning on stderr that the dialog did not clear (option beaten: exit 3 and close the terminal). The timeout case gains a `stderr` expectation. Case: defect N-3, `xfail` on `ts` (`launch/trust/dialog-that-never-clears-is-a-timeout`) **DONE (N-3)** |
 | L4 | The trust check uses the folder Orca reports, not `--worktree` (`launch/trust/`) | DECIDED (owner, 2026-11-15): superseded, check always (see docs/decisions.md, defect N-22); the earlier proposal was keep **DONE (N-22)** |
 | L5 | `--parent` is validated before `--dry-run`: an unknown parent exits 2 even on a dry run | keep |
-| L6 | `--mcp-exclude` with an unknown or differently cased name is ignored silently | DECIDED (owner, 2026-11-15): fix (reserved defect N-26): warn on stderr **OPEN (fix, not done)** |
-| L7 | An empty `jitso` script value in `package.json` counts as declared (`card/launch-line/`) | DECIDED (owner, 2026-11-15): fix (reserved defect N-26): require a non-empty string **OPEN (fix, not done)** |
+| L6 | `--mcp-exclude` with an unknown or differently cased name is ignored silently | DECIDED (owner, 2026-11-15): fix (reserved defect N-26): warn on stderr **DONE (N-26)**: one line per distinct unknown name, with a `did you mean` hint for a case-only difference; the launch goes on. |
+| L7 | An empty `jitso` script value in `package.json` counts as declared (`card/launch-line/`) | DECIDED (owner, 2026-11-15): fix (reserved defect N-26): require a non-empty string **DONE (N-26)**: a string that is blank is not declared either, on the card and in the guard. |
 | L8 | The legacy modes `directo` and `flota` are accepted by `launch` and normalized (`validation/mode`, tag `legacy-alias`; registry lines too) | DECIDED (owner, 2026-11-15): neither read nor accept. Go knows only `direct` and `fleet` everywhere, registry lines included (options beaten: read old lines but reject on input; keep both as TS). The `legacy-alias` cases and `registry/spanish-mode-alias-is-read` flip. Cases: defect N-4, `xfail` on `ts` (`validation/mode/legacy-alias-directo`, `validation/mode/legacy-alias-flota`, `registry/spanish-mode-alias-is-read`) **DONE (N-4)** |
 | L9 | `--mode` has no default; omitting it is an error | keep |
-| L10 | `launch --help` and `-h` are "unknown argument", exit 2 | DECIDED (owner, 2026-11-15): fix (reserved defect N-26): print usage for `launch` **OPEN (fix, not done)** |
-| L11 | `--preset --dry-run` takes `--dry-run` as the preset value (the flag is `--build` in the contract since N-10, so the case is `validation/flag-takes-next-word-as-value`) | DECIDED (owner, 2026-11-15): fix (reserved defect N-26): a value may not start with `--` **OPEN (fix, not done)** |
+| L10 | `launch --help` and `-h` are "unknown argument", exit 2 | DECIDED (owner, 2026-11-15): fix (reserved defect N-26): print usage for `launch` **DONE (N-26)**: as the first word only; anywhere else it stays an unknown argument. |
+| L11 | `--preset --dry-run` takes `--dry-run` as the preset value (the flag is `--build` in the contract since N-10, so the case is `validation/flag-takes-next-word-as-value`) | DECIDED (owner, 2026-11-15): fix (reserved defect N-26): a value may not start with `--` **DONE (N-26)**: the message is `--<flag> needs a value`. |
 | L12 | Every launch calls `terminal read` once even when the folder is trusted (`launch/direct/orca-call-order`) | keep, or drop if the port reads the screen only when needed |
 
 ## Brief
@@ -76,4 +76,4 @@ Legend: **keep** = intended, port it as is. **fix** = change the case and the po
 
 ## Known defects (xfail on `ts`, see PLAN.md)
 
-S1 to S3 and N-1 to N-29: `README.md` lists every one with its cases and the intended behavior, and is the place to read them. Of the rows above, L2, L3, L8, C4, H5 and the settled halves of C1, H2 and H3 are defects there.
+S1 to S3 and N-1 to N-29: `README.md` lists every one with its cases and the intended behavior, and is the place to read them. Of the rows above, L1, L2, L3, L6, L7, L8, L10, L11, C4, H5 and the settled halves of C1, H2 and H3 are defects there.

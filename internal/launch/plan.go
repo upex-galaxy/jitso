@@ -4,6 +4,7 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"path/filepath"
+	"slices"
 	"strings"
 	"time"
 
@@ -81,7 +82,7 @@ func FirstPrompt(briefPath string, routeScope []string) string {
 }
 
 // MCPAfterExclude is the build's MCP list without the excluded names (exact
-// matches; an unknown name changes nothing).
+// matches; an unknown name changes nothing, and Run warns about it).
 func MCPAfterExclude(mcp, exclude []string) []string {
 	out := []string{}
 	for _, name := range mcp {
@@ -95,6 +96,40 @@ func MCPAfterExclude(mcp, exclude []string) []string {
 		if !excluded {
 			out = append(out, name)
 		}
+	}
+	return out
+}
+
+// Unknown is an --mcp-exclude value that is not an MCP server of the build.
+type Unknown struct {
+	Name string
+	// Hint is the server of the build that differs from Name only by case,
+	// "" for none.
+	Hint string
+}
+
+// UnknownExcludes are the distinct --mcp-exclude values that are not exactly
+// one of the build's MCP servers, in the order first given (TS-ODDITIES L6,
+// defect N-26). The match is against the build's list, not .mcp.json.
+func UnknownExcludes(mcp, exclude []string) []Unknown {
+	var out []Unknown
+	seen := map[string]bool{}
+	for _, name := range exclude {
+		if seen[name] {
+			continue
+		}
+		seen[name] = true
+		if slices.Contains(mcp, name) {
+			continue
+		}
+		u := Unknown{Name: name}
+		for _, server := range mcp {
+			if strings.EqualFold(server, name) {
+				u.Hint = server
+				break
+			}
+		}
+		out = append(out, u)
 	}
 	return out
 }

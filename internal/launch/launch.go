@@ -56,8 +56,9 @@ type Deps struct {
 }
 
 // Run launches a, already parsed and checked (Parse, Args.Check). After the
-// build, the brief and the parent are validated it prints the card; a dry run
-// stops there. A real launch then executes (see execute).
+// build, the brief and the parent are validated it warns about each
+// --mcp-exclude name the build does not list (stderr, the launch goes on) and
+// prints the card; a dry run stops there. A real launch then executes (see execute).
 func Run(a Args, d Deps) error {
 	p, err := profile.Resolve(profile.Request{Build: a.Build, Fields: a.Fields}, d.Catalog)
 	if err != nil {
@@ -97,6 +98,13 @@ func Run(a Args, d Deps) error {
 	}
 	pkg, _ := os.ReadFile(filepath.Join(d.Root.Primary, "package.json"))
 	cardText := card.Render(Card(id, a.Mode, p, mcp, card.LaunchCommand(pkg)))
+	for _, u := range UnknownExcludes(p.MCP, a.MCPExclude) {
+		hint := ""
+		if u.Hint != "" {
+			hint = ` (did you mean "` + u.Hint + `"?)`
+		}
+		d.Warn("jitso: warning: --mcp-exclude \"" + u.Name + "\" is not an MCP server of build " + p.Build.ID + hint + "; nothing excluded")
+	}
 	if a.DryRun {
 		d.Out(cardText)
 		d.Out(DryRunLine)

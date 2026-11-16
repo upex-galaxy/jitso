@@ -1,0 +1,86 @@
+{
+  "id": "validation/value-starting-with-two-dashes-is-missing",
+  "title": "a value flag followed by a word that starts with -- is missing its value, whichever flag it is",
+  "source": [
+    "cli/jitso/launch.ts: parseLaunchArgs (the value is argv[i+1], whatever it is)",
+    "intended: TS-ODDITIES L11 (defect N-26)"
+  ],
+  "status": {
+    "ts": "xfail",
+    "go": "pass"
+  },
+  "defect": "N-26",
+  "intent": "INTENDED behavior (TS-ODDITIES L11, defect N-26). A value flag whose next word starts with -- (or that is last) is rejected with `JITSO REJECTED: --<flag> needs a value`, exit 2, nothing else on stderr. A value that starts with a single - is still taken. The oracle takes the next word as the value and rejects it with another message in every row, so the stderr expectation FAILS on TS.",
+  "steps": [
+    {
+      "run": [
+        "launch",
+        "--build",
+        "haiku-explorer",
+        "--brief",
+        "{{PROJECT}}/.jitso/briefs/b.md",
+        "--mode",
+        "direct",
+        "{{flag}}",
+        "--dry-run"
+      ],
+      "expect": {
+        "exit": 2,
+        "stdout": [
+          {
+            "empty": true
+          }
+        ],
+        "orca_calls": {
+          "empty": true
+        },
+        "stderr": [
+          "JITSO REJECTED: {{flag}} needs a value",
+          {
+            "line_count": 1
+          }
+        ]
+      }
+    },
+    {
+      "run": [
+        "launch",
+        "--build",
+        "--dry-run",
+        "--brief",
+        "{{PROJECT}}/.jitso/briefs/b.md",
+        "--mode",
+        "direct"
+      ],
+      "expect": {
+        "exit": 2,
+        "stdout": [
+          {
+            "empty": true
+          }
+        ],
+        "orca_calls": {
+          "empty": true
+        },
+        "stderr": [
+          "JITSO REJECTED: --build needs a value"
+        ]
+      }
+    }
+  ],
+  "for_each": {
+    "var": "flag",
+    "values": [
+      "--build",
+      "--brief",
+      "--mode",
+      "--run",
+      "--task",
+      "--parent",
+      "--worktree",
+      "--mcp-exclude",
+      "--field",
+      "--brief-language"
+    ]
+  }
+}

@@ -80,7 +80,7 @@ Key: R required, O optional (validated when present), U optional and unused by t
 | `budget` | mapping with `tokens` and `usd_list_cap` | L | U | validate: `budget must be a mapping with tokens and usd_list_cap`; launch: `build <id> has no budget mapping` (exit 3) |
 | `harness` | a harness with an adapter (`Adapters` in `internal/launch`) | L | U | validate: `harness "<h>" has no adapter`; launch: `no adapter for harness "<h>"` (exit 2) |
 | `skills_first` | list, each in `skills` | O | E | `skill "<s>" is not in the allowlist`; `skills_first must be empty in a subagent-tier build` |
-| `mcp` | list, each in `mcp` | O | E | `mcp "<m>" is not in the allowlist`; `mcp must be empty in a subagent-tier build` |
+| `mcp` | list, each in `mcp`; a launch reads the project's `.mcp.json` only when it still names a server after `--mcp-exclude` | O | E | `mcp "<m>" is not in the allowlist`; `mcp must be empty in a subagent-tier build` |
 | `requires` | list of field names the launch must supply | O | E | `required field "<f>" has no pattern`; `requires must be empty in a subagent-tier build` |
 | `subagents` | list of kebab-case names, each a subagent-tier build | O | E | `subagents must be a list of kebab-case names`; `subagent "<s>" is not a subagent-tier build`; `a subagent-tier build cannot list subagents` |
 | listed subagent status | each listed subagent is `approved`; a draft worker may also list drafts | L | n/a | launch: `JITSO REJECTED: build "<w>" lists subagent "<s>", which is <status>, not approved`; validate: `subagent "<s>" is <status>, not approved` |

@@ -77,7 +77,10 @@ func TestLaunchCommand(t *testing.T) {
 		want string
 	}{
 		{`{"scripts": {"jitso": "bun cli/jitso/index.ts"}}`, CommandBunRun},
-		{`{"scripts": {"jitso": ""}}`, CommandBunRun},
+		{`{"scripts": {"jitso": ""}}`, CommandPlain},
+		{`{"scripts": {"jitso": "   "}}`, CommandPlain},
+		{`{"scripts": {"jitso": "\t\n"}}`, CommandPlain},
+		{`{"scripts": {"jitso": " bun x "}}`, CommandBunRun},
 		{`{"scripts": {}}`, CommandPlain},
 		{`{"scripts": {"jitso": 5}}`, CommandPlain},
 		{`{"scripts": null}`, CommandPlain},
@@ -88,6 +91,28 @@ func TestLaunchCommand(t *testing.T) {
 	} {
 		if got := LaunchCommand([]byte(tt.pkg)); got != tt.want {
 			t.Errorf("LaunchCommand(%q) = %q, want %q", tt.pkg, got, tt.want)
+		}
+	}
+}
+
+func TestDeclaresJitsoScript(t *testing.T) {
+	for _, tt := range []struct {
+		pkg  string
+		want bool
+	}{
+		{`{"scripts": {"jitso": "bun cli/jitso/index.ts"}}`, true},
+		{`{"scripts": {"jitso": "x"}}`, true},
+		{`{"scripts": {"jitso": ""}}`, false},
+		{`{"scripts": {"jitso": " \u00a0 "}}`, false},
+		{`{"scripts": {"jitso": null}}`, false},
+		{`{"scripts": {"jitso": ["x"]}}`, false},
+		{`{"scripts": {"other": "x"}}`, false},
+		{`{"scripts": "x"}`, false},
+		{`{not json`, false},
+		{``, false},
+	} {
+		if got := DeclaresJitsoScript([]byte(tt.pkg)); got != tt.want {
+			t.Errorf("DeclaresJitsoScript(%q) = %v, want %v", tt.pkg, got, tt.want)
 		}
 	}
 }

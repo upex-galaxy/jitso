@@ -45,12 +45,13 @@ type Args struct {
 	DryRun        bool
 }
 
-// valueFlags are the flags that take the next word as their value, whatever
-// it is (TS-ODDITIES L11: --build --dry-run takes "--dry-run").
+// valueFlags are the flags that take the next word as their value. A word
+// that starts with -- is never a value: the flag is missing its value
+// (TS-ODDITIES L11, defect N-26).
 var valueFlags = []string{"build", "brief", "mode", "run", "task", "parent", "worktree", "mcp-exclude", "field", "brief-language"}
 
 // Parse reads the words after `launch`. It rejects an unknown word, a flag
-// without a value, a malformed --field, a missing --build or --brief, a bad
+// without a value (none left, or the next word starts with --), a malformed --field, a missing --build or --brief, a bad
 // --brief-language and a --mode other than direct or fleet, in that order.
 // A later value of a flag replaces an earlier one; --mcp-exclude and --field
 // accumulate.
@@ -70,7 +71,7 @@ func Parse(argv []string) (Args, error) {
 		if !slices.Contains(valueFlags, name) {
 			return Args{}, fail.Rejected(`unknown argument "` + flag + `"`)
 		}
-		if i+1 >= len(argv) {
+		if i+1 >= len(argv) || strings.HasPrefix(argv[i+1], "--") {
 			return Args{}, fail.Rejected("--" + name + " needs a value")
 		}
 		i++

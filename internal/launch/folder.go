@@ -32,12 +32,17 @@ type folder struct {
 }
 
 // writeFolder writes brief.md, core.md, mcp.json, card.txt and run.sh into
-// dir, in the oracle's order of failure: the repo MCP table and the named
-// servers first, then the hard rules, then the files.
+// dir, in the oracle's order of failure: the repo MCP table (when a server is
+// named) and the named servers first, then the hard rules, then the files.
 func writeFolder(p prepared, d Deps, dir string) (folder, error) {
-	servers, err := repoServers(filepath.Join(d.Root.Primary, RepoMCPFile))
-	if err != nil {
-		return folder{}, err
+	// The repo table is read only when the launch names a server after
+	// --mcp-exclude (TS-ODDITIES L1, defect N-26).
+	var servers map[string]any
+	var err error
+	if len(p.mcp) > 0 {
+		if servers, err = repoServers(filepath.Join(d.Root.Primary, RepoMCPFile)); err != nil {
+			return folder{}, err
+		}
 	}
 	f := folder{brief: filepath.Join(dir, FileBrief)}
 	if f.sessionID, err = p.adapter.NewSessionID(d.Rand); err != nil {
@@ -108,10 +113,10 @@ func writeFolder(p prepared, d Deps, dir string) (folder, error) {
 	return f, nil
 }
 
-// repoServers reads the mcpServers table of the project's .mcp.json. The file
-// is required even for a build with no servers (TS-ODDITIES L1). A top level
-// that is not an object, or no table, is an empty table: a named server then
-// fails as unknown.
+// repoServers reads the mcpServers table of the project's .mcp.json; the
+// caller asks for it only when the launch names a server. A missing or broken
+// file is an error. A top level that is not an object, or no table, is an
+// empty table: a named server then fails as unknown.
 func repoServers(path string) (map[string]any, error) {
 	data, err := os.ReadFile(path)
 	if err != nil {

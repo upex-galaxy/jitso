@@ -213,6 +213,10 @@ func TestRunDryRun(t *testing.T) {
 	}
 }
 
+// namesServers is a launch of a build that lists MCP servers, so it reads the
+// repo .mcp.json.
+var namesServers = []string{"--build", "sonnet-tester", "--mode", "direct", "--field", "ticket_key=PRJ-1"}
+
 func TestRunFailuresRemoveOnlyTheirFolder(t *testing.T) {
 	tests := []struct {
 		name      string
@@ -221,8 +225,8 @@ func TestRunFailuresRemoveOnlyTheirFolder(t *testing.T) {
 		reason    string
 		wantCalls []string
 	}{
-		{"missing .mcp.json", func(s *sandbox) { os.Remove(filepath.Join(s.root, ".mcp.json")) }, nil, "no such file", nil},
-		{"null .mcp.json", func(s *sandbox) { os.WriteFile(filepath.Join(s.root, ".mcp.json"), []byte("null"), 0o644) }, nil, "null", nil},
+		{"missing .mcp.json", func(s *sandbox) { os.Remove(filepath.Join(s.root, ".mcp.json")) }, namesServers, "no such file", nil},
+		{"null .mcp.json", func(s *sandbox) { os.WriteFile(filepath.Join(s.root, ".mcp.json"), []byte("null"), 0o644) }, namesServers, "null", nil},
 		{"missing rules", func(s *sandbox) { os.Remove(filepath.Join(s.root, "jitso", "hard-rules", "style.md")) }, nil, "style.md", nil},
 		{"terminal create", func(s *sandbox) { s.orca.fail = map[string]bool{"terminal create": true} }, nil, "fake failure", []string{"terminal create"}},
 		{"idle timeout survives a failing close", func(s *sandbox) { s.orca.idle = false; s.orca.fail = map[string]bool{"terminal close": true} }, nil,
@@ -279,6 +283,103 @@ func TestRunFailuresRemoveOnlyTheirFolder(t *testing.T) {
 				t.Errorf("%d events, out %q", len(events), s.out)
 			}
 		})
+	}
+}
+
+// TestRunReadsRepoMCPOnlyWhenAServerIsNamed pins TS-ODDITIES L1 (defect N-26):
+// .mcp.json is read when the launch names a server after --mcp-exclude, and
+// only then.
+func TestRunReadsRepoMCPOnlyWhenAServerIsNamed(t *testing.T) {
+	both := []string{"--mcp-exclude", "dbhub", "--mcp-exclude", "openapi"}
+	tests := []struct {
+		name    string
+		mcpJSON *string // nil removes the file
+		argv    []string
+		fails   bool
+	}{
+		{"no server, no file", nil, []string{"--build", "haiku-explorer", "--mode", "direct"}, false},
+		{"no server, broken file", ptr("{not json"), []string{"--build", "haiku-explorer", "--mode", "direct"}, false},
+		{"servers all excluded, broken file", ptr("{not json"), append(append([]string{}, namesServers...), both...), false},
+		{"one server left, no file", nil, append(append([]string{}, namesServers...), "--mcp-exclude", "dbhub"), true},
+		{"servers named, no file", nil, namesServers, true},
+		{"servers named, broken file", ptr("{not json"), namesServers, true},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			s := newSandbox(t)
+			path := filepath.Join(s.root, ".mcp.json")
+			if tt.mcpJSON == nil {
+				os.Remove(path)
+			} else if err := os.WriteFile(path, []byte(*tt.mcpJSON), 0o644); err != nil {
+				t.Fatal(err)
+			}
+			err := s.run(t, append(tt.argv, "--brief", s.briefPath)...)
+			if tt.fails {
+				if err == nil {
+					t.Fatal("a launch that names a server needs .mcp.json")
+				}
+				return
+			}
+			if err != nil {
+				t.Fatal(err)
+			}
+			dirs := s.launchDirs(t)
+			if len(dirs) != 2 {
+				t.Fatalf("launch folders %q", dirs)
+			}
+		})
+	}
+}
+
+func ptr(s string) *string { return &s }
+
+func TestUnknownExcludes(t *testing.T) {
+	mcp := []string{"dbhub", "openapi"}
+	tests := []struct {
+		name    string
+		exclude []string
+		want    []Unknown
+	}{
+		{"none given", nil, nil},
+		{"exact names", []string{"dbhub", "openapi"}, nil},
+		{"unlisted", []string{"unlisted"}, []Unknown{{Name: "unlisted"}}},
+		{"case only", []string{"DBHUB"}, []Unknown{{Name: "DBHUB", Hint: "dbhub"}}},
+		{"a repeated value warns once", []string{"x", "dbhub", "x", "x"}, []Unknown{{Name: "x"}}},
+		{"order of first use", []string{"zed", "OpenAPI", "abc"}, []Unknown{{Name: "zed"}, {Name: "OpenAPI", Hint: "openapi"}, {Name: "abc"}}},
+		{"a build without servers", []string{"dbhub"}, []Unknown{{Name: "dbhub"}}},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			list := mcp
+			if tt.name == "a build without servers" {
+				list = nil
+			}
+			if got := UnknownExcludes(list, tt.exclude); !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("got %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+// TestRunWarnsOnUnknownExclusions pins TS-ODDITIES L6 (defect N-26): one
+// stderr line per distinct name that is not a server of the build; the card
+// and the exit code do not change.
+func TestRunWarnsOnUnknownExclusions(t *testing.T) {
+	s := newSandbox(t)
+	argv := append(append([]string{}, namesServers...), "--brief", s.briefPath, "--dry-run",
+		"--mcp-exclude", "DBHUB", "--mcp-exclude", "nope", "--mcp-exclude", "DBHUB", "--mcp-exclude", "openapi")
+	if err := s.run(t, argv...); err != nil {
+		t.Fatal(err)
+	}
+	want := []string{
+		`jitso: warning: --mcp-exclude "DBHUB" is not an MCP server of build sonnet-tester (did you mean "dbhub"?); nothing excluded`,
+		`jitso: warning: --mcp-exclude "nope" is not an MCP server of build sonnet-tester; nothing excluded`,
+	}
+	if !reflect.DeepEqual(s.warn, want) {
+		t.Errorf("warnings %q, want %q", s.warn, want)
+	}
+	if len(s.out) != 2 || !strings.Contains(s.out[0], "| MCP dbhub |") {
+		t.Errorf("out %q", s.out)
 	}
 }
 

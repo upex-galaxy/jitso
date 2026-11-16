@@ -1,9 +1,10 @@
 package hook
 
 import (
-	"encoding/json"
 	"regexp"
 	"strings"
+
+	"github.com/upex-galaxy/jitso/internal/card"
 )
 
 var orcaTool = regexp.MustCompile(`^mcp__.*orca.*__`)
@@ -95,16 +96,12 @@ func truthy(v any) bool {
 }
 
 // LauncherWord is the command another session runs jitso with in a project:
-// `bun run jitso` when its package.json declares a `jitso` script (the binary
-// is not on PATH there), else `jitso`.
+// `bun run jitso` when its package.json declares a `jitso` script that is not
+// blank (the binary is not on PATH there), else `jitso`. The card decides the
+// same way (card.DeclaresJitsoScript).
 func LauncherWord(packageJSON []byte) string {
-	var pkg struct {
-		Scripts map[string]any `json:"scripts"`
-	}
-	if json.Unmarshal(packageJSON, &pkg) == nil {
-		if _, ok := pkg.Scripts["jitso"].(string); ok {
-			return "bun run jitso"
-		}
+	if card.DeclaresJitsoScript(packageJSON) {
+		return "bun run jitso"
 	}
 	return "jitso"
 }

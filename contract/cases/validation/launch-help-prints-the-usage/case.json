@@ -1,0 +1,73 @@
+{
+  "id": "validation/launch-help-prints-the-usage",
+  "title": "launch --help or -h as the first word prints the launch usage on stdout and exits 0, in or outside a git checkout, touching nothing",
+  "source": [
+    "cli/jitso/launch.ts: parseLaunchArgs (`--help` is not in the value flags)",
+    "intended: TS-ODDITIES L10 (defect N-26)"
+  ],
+  "steps": [
+    {
+      "run": [
+        "launch",
+        "{{flag}}"
+      ],
+      "expect": {
+        "exit": 0,
+        "stdout": [
+          {
+            "regex": "^Usage: jitso launch --build <id> --brief <file> --mode direct\\|fleet \\[options\\]\n"
+          },
+          "--mcp-exclude <name>",
+          "--dry-run"
+        ],
+        "stderr": [
+          {
+            "empty": true
+          }
+        ],
+        "orca_calls": {
+          "empty": true
+        },
+        "files": [
+          {
+            "path": ".jitso/launches",
+            "exists": false
+          }
+        ]
+      }
+    },
+    {
+      "run": [
+        "launch",
+        "{{flag}}"
+      ],
+      "cwd": "{{HOME}}",
+      "expect": {
+        "exit": 0,
+        "stdout": [
+          {
+            "regex": "^Usage: jitso launch --build <id> --brief <file> --mode direct\\|fleet \\[options\\]\n"
+          }
+        ],
+        "stderr": [
+          {
+            "empty": true
+          }
+        ]
+      }
+    }
+  ],
+  "status": {
+    "ts": "xfail",
+    "go": "pass"
+  },
+  "defect": "N-26",
+  "intent": "INTENDED behavior (TS-ODDITIES L10, defect N-26). When the first word after `launch` is --help or -h, jitso prints the launch usage on stdout and exits 0: nothing on stderr, no project, catalog or Orca needed, no launch folder. Anywhere else the word stays an unknown argument (validation/unknown-flag keeps its --help and -h rows). The oracle rejects both words as an unknown argument with exit 2, so the exit code and the stdout expectations FAIL on TS.",
+  "for_each": {
+    "var": "flag",
+    "values": [
+      "--help",
+      "-h"
+    ]
+  }
+}

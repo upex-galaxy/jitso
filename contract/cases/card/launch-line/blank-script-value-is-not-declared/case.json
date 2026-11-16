@@ -1,0 +1,63 @@
+{
+  "id": "card/launch-line/blank-script-value-is-not-declared",
+  "title": "a jitso script whose value is empty or only spaces is not declared: the card names 'jitso launch'",
+  "source": [
+    "cli/jitso/launch.test.ts: resolveLaunchCommand checks typeof scripts.jitso === 'string'",
+    "intended: TS-ODDITIES L7 (defect N-26)"
+  ],
+  "project": {
+    "files": {
+      ".jitso/briefs/brief.md": {
+        "from": "brief.md"
+      },
+      "package.json": "{\"scripts\": {\"jitso\": \"{{v}}\"}}"
+    }
+  },
+  "steps": [
+    {
+      "run": [
+        "launch",
+        "--build",
+        "haiku-explorer",
+        "--brief",
+        "{{PROJECT}}/.jitso/briefs/brief.md",
+        "--mode",
+        "direct",
+        "--dry-run"
+      ],
+      "expect": {
+        "exit": 0,
+        "stdout": [
+          {
+            "regex": "(?m)^launch:\\ jitso\\ launch$"
+          }
+        ],
+        "stderr": [
+          {
+            "empty": true
+          }
+        ],
+        "orca_calls": {
+          "empty": true
+        }
+      }
+    }
+  ],
+  "status": {
+    "ts": "xfail",
+    "go": "pass"
+  },
+  "defect": "N-26",
+  "intent": "INTENDED behavior (TS-ODDITIES L7, defect N-26). package.json declares the jitso script only when scripts.jitso is a string that is not blank, so an empty value or a value of spaces leaves the card's launch line at `jitso launch`. The oracle prints `bun run jitso launch` for any string, so the stdout expectation FAILS on TS.",
+  "for_each": {
+    "var": "v",
+    "values": [
+      "",
+      "   "
+    ],
+    "ids": [
+      "empty",
+      "spaces"
+    ]
+  }
+}

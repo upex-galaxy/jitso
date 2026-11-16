@@ -9,8 +9,9 @@ Two prefixes tell you whose problem it is. `JITSO REJECTED: <reason>` (exit 2) m
 | `--build is required`, `--brief is required` | a required flag is missing |
 | `--mode must be direct or fleet` | `--mode` is required and has no default. A build's `mode_default` is not used |
 | `fleet mode requires --run and --task` | fleet needs both. Direct mode needs neither |
-| `unknown argument "<x>"` | a flag `launch` does not have, a stray word, or an old spelling such as `--preset`. `launch --help` ends here too |
-| `--<name> needs a value` | the flag is the last word, or you meant the next word to be its value |
+| `unknown argument "<x>"` | a flag `launch` does not have, a stray word, or an old spelling such as `--preset`. `--help` after the first word ends here too (as the first word it prints the usage) |
+| `--<name> needs a value` | the flag is the last word, or the next word starts with `--` (a value may not) |
+| `jitso: warning: --mcp-exclude "<name>" is not an MCP server of build <id>; nothing excluded` | a warning, exit 0: the build does not list that name, so nothing was left out. A `(did you mean "<server>"?)` hint means the name differs only by case. Fix the name if you meant to drop a server |
 | `--field must look like name=value` | write `--field ticket_key=PROJ-12` |
 | `missing ticket_key` (any field the build `requires`) | pass `--field ticket_key=<value>` |
 | `field ticket_key has an invalid value` | the value does not match the field's pattern. Read the build's description for the shape |
@@ -41,7 +42,7 @@ Two prefixes tell you whose problem it is. `JITSO REJECTED: <reason>` (exit 2) m
 | `build <file> is invalid: <problems>` | one file of the project's own `jitso/builds/` is broken, and it fails every catalog command. Run `jitso build validate` for every problem at once. Do not edit `jitso/builds/` yourself: report it |
 | `build <id> has no budget mapping` | a worker or conductor build needs `budget` with `tokens` and `usd_list_cap` |
 | `jitso: open <project>/jitso/prices.json: no such file or directory` | `analyze` needs the price table. Tell the owner |
-| `.mcp.json` missing or not valid JSON | a real launch reads it, even for a build with no MCP server |
+| `.mcp.json` missing or not valid JSON | a real launch reads it only when the launch still names an MCP server after `--mcp-exclude` |
 | `jitso: the trust dialog of terminal <handle> did not clear in 10 s; the launch is registered` | a warning with exit 0. Look at the terminal and tell the human |
 | an Orca error, `terminal <handle> did not reach ... ; it was closed` | Orca did not answer or the harness never became ready. The launch folder was removed. Try once more, then report the message |
 | `jitso: ~/.jitso/config.yaml is invalid: <problem>` | the owner's trust file is broken. Tell the owner |

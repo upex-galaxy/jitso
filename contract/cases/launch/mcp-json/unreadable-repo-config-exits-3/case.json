@@ -1,6 +1,6 @@
 {
   "id": "launch/mcp-json/unreadable-repo-config-exits-3",
-  "title": "a repo .mcp.json that is not valid JSON, or is missing, stops the launch with exit 3 and no orca call, even for a build without MCP servers; no launch folder is left behind",
+  "title": "a repo .mcp.json that is not valid JSON, or is empty, stops a launch that names MCP servers with exit 3 and no orca call; no launch folder is left behind",
   "source": [
     "cli/jitso/launch.ts: launchForReal reads and parses .mcp.json for every preset",
     "intended: TS-ODDITIES L2 (owner decision 2026-11-15): a failed launch leaves no launch folder; the TS binary leaves it on disk"
@@ -32,11 +32,13 @@
       "run": [
         "launch",
         "--build",
-        "haiku-explorer",
+        "sonnet-tester",
         "--brief",
         "{{PROJECT}}/.jitso/briefs/brief.md",
         "--mode",
-        "direct"
+        "direct",
+        "--field",
+        "ticket_key=PRJ-123"
       ],
       "expect": {
         "exit": 3,
