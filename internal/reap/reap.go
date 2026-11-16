@@ -100,9 +100,11 @@ func Run(extraRuns []string, d Deps) (string, error) {
 	return fmt.Sprintf("jitso reap: %d launch(es) marked ended, %d unlogged worker(s), %d analyzed", ended, unlogged, analyzed), nil
 }
 
-// endGone is phase 1. A launch with no terminal handle is never ended: it
-// cannot be matched against the list (R3 proposes to end it; the case pins
-// that it stays running).
+// endGone is phase 1. A launch whose terminal handle is not in the list is
+// ended, and so is one with no string handle at all (absent, null, a number):
+// it can never be matched against the list, so leaving it running would be
+// forever (TS-ODDITIES R3, defect N-28). Such a line is never written by
+// `jitso launch`; it comes from hand-made or foreign lines.
 func endGone(d Deps, live []string) (int, error) {
 	launches, err := registry.ReadLaunches(d.Store)
 	if err != nil {
@@ -114,7 +116,7 @@ func endGone(d Deps, live []string) (int, error) {
 			continue
 		}
 		terminal, ok := l.Launch.String("orca.terminal")
-		if !ok || slices.Contains(live, terminal) {
+		if ok && slices.Contains(live, terminal) {
 			continue
 		}
 		now := d.Now()
@@ -130,8 +132,10 @@ func endGone(d Deps, live []string) (int, error) {
 	return ended, nil
 }
 
-// auditWorkers is phase 2. The count it returns repeats on every reap; the
-// rule_break line is appended once per evidence text (R4).
+// auditWorkers is phase 2. It returns the number of rule_break lines this reap
+// wrote (TS-ODDITIES R4, defect N-28). A worker is keyed by its terminal handle
+// when it has one (so it is flagged once across runs and reaps) and by its
+// evidence text when it has none; a key already in the log is skipped.
 func auditWorkers(d Deps, extraRuns []string) (int, error) {
 	launches, err := registry.ReadLaunches(d.Store)
 	if err != nil {
@@ -158,8 +162,8 @@ func auditWorkers(d Deps, extraRuns []string) (int, error) {
 		marks = append(marks, "[jitso:"+l.ID+"]")
 	}
 
-	// The evidence already reported comes from the raw events: a rule_break
-	// with a null id belongs to no launch, so the fold drops it.
+	// The workers already reported come from the raw events: a rule_break with
+	// a null id belongs to no launch, so the fold drops it.
 	events, err := d.Store.Events()
 	if err != nil {
 		return 0, err
@@ -168,12 +172,14 @@ func auditWorkers(d Deps, extraRuns []string) (int, error) {
 	for _, e := range events {
 		if kind, _ := e.String("kind"); e.Kind() == registry.KindRuleBreak && kind == "unlogged_worker" {
 			if ev, ok := e.String("evidence"); ok {
-				known[ev] = true
+				for _, key := range keysOfEvidence(ev) {
+					known[key] = true
+				}
 			}
 		}
 	}
 
-	unlogged := 0
+	written := 0
 	for _, run := range runs {
 		res, err := d.Orca.Call([]string{"orchestration", "worker-list", "--run", run})
 		if err != nil {
@@ -185,23 +191,43 @@ func auditWorkers(d Deps, extraRuns []string) (int, error) {
 			if (hasHandle && handles[handle]) || marked(w, marks) {
 				continue
 			}
-			unlogged++
 			shown := "(no terminal handle)"
+			key := ""
 			if hasHandle {
 				shown = handle
+				key = "handle:" + handle
 			}
 			evidence := "worker " + shown + " in run " + run + " has no launch event"
-			if known[evidence] {
+			if !hasHandle {
+				key = "evidence:" + evidence
+			}
+			if known[key] || known["evidence:"+evidence] {
 				continue
 			}
-			known[evidence] = true
+			known[key] = true
+			known["evidence:"+evidence] = true
 			err := d.Store.Append(&registry.RuleBreakEvent{TS: jsonx.Time(d.Now()), Kind: "unlogged_worker", Evidence: evidence})
 			if err != nil {
 				return 0, err
 			}
+			written++
 		}
 	}
-	return unlogged, nil
+	return written, nil
+}
+
+// evidencePattern is the evidence text of an unlogged worker. Run ids hold no
+// space (runPattern), so the run is the last word before "has".
+var evidencePattern = regexp.MustCompile(`^worker (.+) in run ([^ ]+) has no launch event$`)
+
+// keysOfEvidence are the keys an unlogged_worker rule break already in the log
+// makes known: its evidence text, and the terminal handle it names, if any.
+func keysOfEvidence(evidence string) []string {
+	keys := []string{"evidence:" + evidence}
+	if m := evidencePattern.FindStringSubmatch(evidence); m != nil && m[1] != "(no terminal handle)" {
+		keys = append(keys, "handle:"+m[1])
+	}
+	return keys
 }
 
 // analyzeEnded is phase 3.

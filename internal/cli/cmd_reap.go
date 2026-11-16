@@ -39,7 +39,7 @@ func init() {
 				Orca:  ctx.Orca(),
 				Now:   now,
 				Analyze: func(id string) error {
-					_, err := analyze.Run([]string{id}, analyzeDeps)
+					_, err := analyze.Run(analyze.Request{ID: id}, analyzeDeps)
 					return err
 				},
 				Err: ctx.Warn,

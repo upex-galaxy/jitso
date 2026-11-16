@@ -1,6 +1,6 @@
 {
   "id": "analyze/non-secret-path-is-not-flagged",
-  "title": "allowed look-alikes (.env.example, *.schema, a file named environment) and tools that do not read are not counted",
+  "title": "allowed look-alikes (.env.example, *.schema, a file named environment), a write whose content only mentions a secret path, and tools that touch no path are not counted",
   "source": [
     "cli/jitso/analyze.test.ts: 'isSecretPath(...)' table (the false rows), through a transcript"
   ],
@@ -18,7 +18,7 @@
       "{\"type\":\"tool_use\",\"name\":\"Read\",\"input\":{\"file_path\":\"/repo/.env.example\"}}",
       "{\"type\":\"tool_use\",\"name\":\"Read\",\"input\":{\"file_path\":\"/repo/.env.staging.schema\"}}",
       "{\"type\":\"tool_use\",\"name\":\"Bash\",\"input\":{\"command\":\"git check-ignore -v .jitso/x\"}}",
-      "{\"type\":\"tool_use\",\"name\":\"Write\",\"input\":{\"file_path\":\"/repo/.env.fake-contract\",\"content\":\"x\"}}",
+      "{\"type\":\"tool_use\",\"name\":\"Write\",\"input\":{\"file_path\":\"/repo/notes.md\",\"content\":\"see .env.fake-contract\"}}",
       "{\"type\":\"tool_use\",\"name\":\"Read\",\"input\":{\"file_path\":5}}"
     ]
   },

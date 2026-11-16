@@ -164,8 +164,11 @@ func TestEndPhase(t *testing.T) {
 		{"gone terminal ends the launch", launch(idA, orcaRef("term_a", ""), ""), nil, 1, 2},
 		{"listed terminal stays running", launch(idA, orcaRef("term_a", ""), ""), []string{"term_a"}, 0, 1},
 		{"already ended is left alone", launch(idA, orcaRef("term_a", ""), "") + endOf(idA), nil, 0, 2},
-		{"no terminal handle is never reaped", launch(idA, `{"terminal":null,"title":"t"}`, ""), nil, 0, 1},
-		{"orca is null is never reaped", launch(idA, `null`, ""), nil, 0, 1},
+		{"a null terminal handle is ended", launch(idA, `{"terminal":null,"title":"t"}`, ""), nil, 1, 2},
+		{"an absent terminal handle is ended", launch(idA, `{"title":"t"}`, ""), nil, 1, 2},
+		{"a number as the handle is ended", launch(idA, `{"terminal":7}`, ""), []string{"7"}, 1, 2},
+		{"orca is null is ended", launch(idA, `null`, ""), nil, 1, 2},
+		{"a launch with no handle is ended even when others are listed", launch(idA, `{"terminal":null}`, "") + launch(idB, orcaRef("term_b", ""), ""), []string{"term_b"}, 1, 3},
 		{"only the gone one", launch(idA, orcaRef("term_a", ""), "") + launch(idB, orcaRef("term_b", ""), ""), []string{"term_b"}, 1, 3},
 	}
 	for _, tt := range tests {
@@ -277,9 +280,9 @@ func TestAuditPhase(t *testing.T) {
 func TestRuleBreakIsWrittenOnce(t *testing.T) {
 	f := &fakeOrca{live: []string{"term_logged", "term_rogue"}, workers: map[string]map[string]any{"run_1": workersResult(map[string]any{"agentTerminalHandle": "term_rogue"})}}
 	h := newHarness(t, launch(idA, orcaRef("term_logged", "run_1"), ""), f)
-	for i := 0; i < 2; i++ {
-		if out, err := Run(nil, h.deps); err != nil || out != summary(0, 1, 0) {
-			t.Fatalf("run %d: %q %v (the count repeats, the line does not)", i+1, out, err)
+	for i, want := range []int{1, 0} {
+		if out, err := Run(nil, h.deps); err != nil || out != summary(0, want, 0) {
+			t.Fatalf("run %d: %q %v (the count is what this reap wrote)", i+1, out, err)
 		}
 	}
 	if n := len(h.events(t)); n != 2 {
@@ -295,15 +298,55 @@ func TestRunOrderAndDedup(t *testing.T) {
 	}
 	h := newHarness(t, launch(idA, orcaRef("term_logged", "run_1"), ""), f)
 	out, err := Run([]string{"run_9", "run_8", "run_9", "run_1"}, h.deps)
-	if err != nil || out != summary(0, 3, 0) {
+	if err != nil || out != summary(0, 1, 0) {
 		t.Fatalf("out %q err %v", out, err)
 	}
 	want := []string{"terminal list", "orchestration worker-list run_9", "orchestration worker-list run_8", "orchestration worker-list run_1"}
 	if !reflect.DeepEqual(f.calls, want) {
 		t.Errorf("calls %v, want %v", f.calls, want)
 	}
-	if n := len(h.events(t)); n != 4 {
-		t.Errorf("%d events: one rule_break per run, want 4", n)
+	events := h.events(t)
+	if len(events) != 2 {
+		t.Fatalf("%d events: one rule_break for the worker across all runs, want 2", len(events))
+	}
+	if ev, _ := events[1].String("evidence"); ev != "worker term_rogue in run run_9 has no launch event" {
+		t.Errorf("the evidence names the first run it was seen in: %q", ev)
+	}
+}
+
+// TestUnloggedWorkerKeys pins TS-ODDITIES R4 (defect N-28): a worker with a
+// handle is flagged once across runs and across reaps, a worker with no handle
+// once per run, and a handle already named in the log is known.
+func TestUnloggedWorkerKeys(t *testing.T) {
+	rogue := workersResult(map[string]any{"agentTerminalHandle": "term_rogue"})
+	nameless := workersResult(map[string]any{"title": "nameless"})
+	old := `{"v":1,"event":"rule_break","id":null,"ts":"2026-11-13T14:30:00.000Z","kind":"unlogged_worker","evidence":"worker term_rogue in run run_old has no launch event"}` + "\n"
+	tests := []struct {
+		name     string
+		registry string
+		runs     []string
+		workers  map[string]map[string]any
+		written  int
+	}{
+		{"same handle in two runs", "", []string{"run_a", "run_b"}, map[string]map[string]any{"run_a": rogue, "run_b": rogue}, 1},
+		{"a handle named by an older line in another run", old, []string{"run_a"}, map[string]map[string]any{"run_a": rogue}, 0},
+		{"no handle in two runs is one line per run", "", []string{"run_a", "run_b"}, map[string]map[string]any{"run_a": nameless, "run_b": nameless}, 2},
+		{"no handle again in a known run", `{"v":1,"event":"rule_break","id":null,"ts":"2026-11-13T14:30:00.000Z","kind":"unlogged_worker","evidence":"worker (no terminal handle) in run run_a has no launch event"}` + "\n", []string{"run_a", "run_b"}, map[string]map[string]any{"run_a": nameless, "run_b": nameless}, 1},
+		{"another rule break kind is not a known worker", `{"v":1,"event":"rule_break","id":null,"ts":"2026-11-13T14:30:00.000Z","kind":"other","evidence":"worker term_rogue in run run_a has no launch event"}` + "\n", []string{"run_a"}, map[string]map[string]any{"run_a": rogue}, 1},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			f := &fakeOrca{workers: tt.workers}
+			h := newHarness(t, tt.registry, f)
+			before := len(h.events(t))
+			out, err := Run(tt.runs, h.deps)
+			if err != nil || out != summary(0, tt.written, 0) {
+				t.Fatalf("out %q err %v", out, err)
+			}
+			if n := len(h.events(t)) - before; n != tt.written {
+				t.Errorf("%d lines written, want %d", n, tt.written)
+			}
+		})
 	}
 }
 

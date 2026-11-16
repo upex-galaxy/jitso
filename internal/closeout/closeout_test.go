@@ -130,19 +130,19 @@ func TestRun(t *testing.T) {
 			code: 3, stderr: "jitso: orca terminal read failed: boom", calls: []string{"read term_a"}, events: 1,
 		},
 		{
-			name: "close failure leaves the launch ended", registry: running, orca: fakeOrca{closeErr: &orca.Error{Message: "orca terminal close failed: boom"}},
+			name: "close failure leaves the launch running", registry: running, orca: fakeOrca{closeErr: &orca.Error{Message: "orca terminal close failed: boom"}},
 			code: 3, stderr: "jitso: orca terminal close failed: boom", calls: []string{"read term_a", "close term_a"},
-			events: 2, footerOK: true,
+			events: 1,
 		},
 		{
 			name: "list failure", registry: running, orca: fakeOrca{listErr: &orca.Error{Message: "orca terminal list failed: boom"}},
 			code: 3, stderr: "jitso: orca terminal list failed: boom", calls: []string{"read term_a", "close term_a", "list"},
-			events: 2, footerOK: true,
+			events: 1,
 		},
 		{
 			name: "terminal still listed", registry: running, orca: fakeOrca{listed: []string{"term_a"}},
 			code: 3, stderr: "jitso: terminal term_a is still open after close", calls: []string{"read term_a", "close term_a", "list"},
-			events: 2, footerOK: true,
+			events: 1,
 		},
 		{
 			name: "another terminal listed is fine", registry: running, orca: fakeOrca{listed: []string{"term_b"}},
@@ -220,15 +220,32 @@ func TestRun(t *testing.T) {
 	}
 }
 
-func TestRunCloseFailureWrittenBeforeClose(t *testing.T) {
-	f := &fakeOrca{closeErr: errors.New("boom")}
+// TestRunWritesNothingUntilTheTerminalIsGone pins TS-ODDITIES R1 (defect N-28):
+// a failure at the close or the list leaves no footer.txt and no end event, and
+// a second close, once Orca answers, ends the launch.
+func TestRunWritesNothingUntilTheTerminalIsGone(t *testing.T) {
+	f := &fakeOrca{screen: "footer", closeErr: errors.New("boom")}
 	d, store := setup(t, launchLine("", `{"terminal":"term_a"}`, "2026-11-13T14:22:33.000Z"), f)
 	if _, err := Run(id, d); err == nil {
 		t.Fatal("expected an error")
 	}
 	launches, _ := registry.ReadLaunches(store)
-	if len(launches) != 1 || !launches[0].Ended() {
-		t.Error("the end event is written before the close is tried (R1 keeps the oracle's order)")
+	if len(launches) != 1 || launches[0].Ended() {
+		t.Error("the end event must not be written before the terminal is confirmed gone")
+	}
+	if _, err := os.Stat(filepath.Join(d.StateDir, "launches", id, "footer.txt")); err == nil {
+		t.Error("footer.txt must not be written before the terminal is confirmed gone")
+	}
+	f.closeErr = nil
+	if _, err := Run(id, d); err != nil {
+		t.Fatal(err)
+	}
+	launches, _ = registry.ReadLaunches(store)
+	if !launches[0].Ended() {
+		t.Error("the retry ends the launch")
+	}
+	if data, err := os.ReadFile(filepath.Join(d.StateDir, "launches", id, "footer.txt")); err != nil || string(data) != "footer\n" {
+		t.Errorf("footer %q err %v", data, err)
 	}
 }
 

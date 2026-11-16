@@ -167,6 +167,12 @@ The launch line also ends with `--worktree {{WORKTREE}}` (N-23): `dispatch.Build
 | L10 (N-26) | `runLaunch` prints the `launchUsage` constant on stdout and returns when the first word after `launch` is `--help` or `-h`, before `launch.Parse`, so no project, catalog or Orca is needed. Any other position leaves the word to `Parse` as an unknown argument. `close`, `reap`, `analyze` and `tree` have no help screen | `internal/cli` (`cmd_launch.go`) |
 | L11 (N-26) | in `launch.Parse` a value flag whose next word starts with `--`, or that is last, is `--<flag> needs a value`; a value that starts with a single `-` is taken | `internal/launch` (`args.go`) |
 | B1 (N-27) | the pure `countWords(text)` of `internal/brief`: the text is split on newlines, a line that starts with one to six `#` not followed by another `#` adds nothing, and every other whitespace-separated token that holds a letter is one word. `Check` uses it for `length` only; `language` keeps the letter runs of the whole lowered text | `internal/brief` (`check.go`) |
+| R1 (N-28) | `closeout.Run` reads the footer into memory, closes the terminal, lists the terminals and only then calls `record`, which creates the launch folder, writes `footer.txt` and appends the `end` event. A failure before `record` writes nothing | `internal/closeout` |
+| R3 (N-28) | `reap.endGone` skips a launch only when it has a string handle that is still listed; every other launch without an end event is ended as source `reap`, outcome `none` | `internal/reap` |
+| R4 (N-28) | `reap.auditWorkers` keys a worker by `handle:<h>` (or by its evidence text when it has no handle), rebuilds the known keys from every `unlogged_worker` line of the log (`keysOfEvidence`) and returns the number of lines it appended | `internal/reap` |
+| R6 (N-28) | `analyze.ParseArgs` returns a `Request`; `cmd_analyze.go` parses, then resolves the project, then `analyze.Run` loads the prices. `reap` builds a `Request` for its own analysis | `internal/analyze`, `internal/cli` |
+| R7 (N-28) | `pathTools` maps a tool name to the input keys that name its file: the read tools as before, `Write`, `Edit` and `MultiEdit` by `file_path`, `NotebookEdit` by `notebook_path`; the counter keeps the name `secret_path_reads` | `internal/analyze` (`secret.go`) |
+| R10 (N-28) | `budgetBreaks` gives the evidence of each exceeded limit; `byID` appends one `budget_over` rule break per limit not already in the log, lists them in `rule_breaks`, and `verdictOf` returns `fail` for a launch over budget | `internal/analyze` (`run.go`) |
 
 ### S1 `route_scope`
 
@@ -291,6 +297,7 @@ Each block after milestone 8 is its own contract change, cases first, run agains
 | `version` | N-21 | `version`, `cli` | `^cli/(version/\|usage/)` |
 | Launch arguments: `.mcp.json` only when needed, exclusion warning, blank script, `launch --help`, `--` values | N-26 | `launch`, `card`, `hook`, `cli` | `^(launch/mcp-json/\|card/(mcp-exclude\|launch-line)/\|validation/\|hooks/guard/blank-jitso-script)` |
 | Brief word count | N-27 | `brief` | `^brief/` |
+| Close, reap and analyze rows: close order, reap without a handle, unlogged workers once, analyze arguments first, secret writes, `budget_over` | N-28 | `closeout`, `reap`, `analyze`, `cli` | `^(close\|reap\|analyze)/` |
 | Release files: packaging, install script, workflow, formula template | none (no case) | `scripts/`, `.github/`, `packaging/` | `scripts/test-install.sh` (offline), and the steps of `docs/release.md` section 3 |
 
 The pipes inside the table are escaped for Markdown; the filter is the text without the backslashes.

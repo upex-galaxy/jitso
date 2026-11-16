@@ -1,7 +1,8 @@
-// Package closeout is `jitso close <launch_id>`: it saves the screen footer of
-// the launch's terminal, writes the end event, closes that one terminal (never
-// the worktree-wide close) and then reads the terminal list to confirm it is
-// gone, because a success code describes the call, not the outcome.
+// Package closeout is `jitso close <launch_id>`: it reads the screen footer of
+// the launch's terminal, closes that one terminal (never the worktree-wide
+// close), reads the terminal list to confirm it is gone, and only then saves
+// the footer and writes the end event, because a success code describes the
+// call, not the outcome.
 //
 // The package is named closeout so it does not shadow the close builtin.
 package closeout
@@ -55,9 +56,13 @@ func ParseArgs(args []string) (string, error) {
 // Any Orca or file failure is a plain error (exit 3). A launch that already has
 // an end event keeps it: no second event is written, but the terminal is still
 // closed and listed. A terminal Orca reports as stale (the owner closed it) is
-// treated as closed. The end event is written before the terminal is closed, so
-// when the close then fails the launch stays ended and the exit is 3 (R1: the
-// oracle's order, pinned by close/orca-close-failure-is-exit-3).
+// treated as closed.
+//
+// For a launch that is still running the order is: read the footer, close the
+// terminal, list the terminals, and only then write footer.txt and the end
+// event (TS-ODDITIES R1, defect N-28). A failure at any step writes nothing, so
+// the launch stays running: a later close retries cleanly, and reap ends it
+// once the terminal is gone.
 func Run(id string, d Deps) (string, error) {
 	launches, err := registry.ReadLaunches(d.Store)
 	if err != nil {
@@ -72,8 +77,9 @@ func Run(id string, d Deps) (string, error) {
 		return "", fail.Rejectedf("launch %s has no terminal handle", id)
 	}
 
+	var footer footerText
 	if !l.Ended() {
-		if err := end(l, handle, d); err != nil {
+		if footer, err = readFooter(handle, d); err != nil {
 			return "", err
 		}
 	}
@@ -87,27 +93,48 @@ func Run(id string, d Deps) (string, error) {
 	if slices.Contains(handles, handle) {
 		return "", fail.Envf("terminal %s is still open after close", handle)
 	}
+	if !l.Ended() {
+		if err := record(l, footer, d); err != nil {
+			return "", err
+		}
+	}
 	return "jitso: closed " + id + " (terminal " + handle + ")", nil
 }
 
-// end saves the footer and appends the end event. A terminal that is already
-// gone has no footer to save; the launch still ends, with footer_path null.
-func end(l *registry.Launch, handle string, d Deps) error {
+// footerText is the screen of the terminal read before it was closed; Found is
+// false for a terminal Orca reported as stale, which has no footer to save.
+type footerText struct {
+	Text  string
+	Found bool
+}
+
+// readFooter reads the terminal's screen. A terminal that is already gone has
+// no footer; any other error is returned.
+func readFooter(handle string, d Deps) (footerText, error) {
+	text, err := d.Orca.ReadScreen(handle)
+	switch {
+	case err == nil:
+		return footerText{Text: text, Found: true}, nil
+	case isStale(err):
+		return footerText{}, nil
+	}
+	return footerText{}, err
+}
+
+// record saves the footer and appends the end event, once the terminal is
+// confirmed gone. A launch with no footer still ends, with footer_path null.
+func record(l *registry.Launch, footer footerText, d Deps) error {
 	folder := filepath.Join(d.StateDir, "launches", l.ID)
 	if err := os.MkdirAll(folder, 0o755); err != nil {
 		return err
 	}
 	var footerPath *string
-	footer, err := d.Orca.ReadScreen(handle)
-	switch {
-	case err == nil:
+	if footer.Found {
 		path := filepath.Join(folder, "footer.txt")
-		if err := os.WriteFile(path, []byte(footer+"\n"), 0o644); err != nil {
+		if err := os.WriteFile(path, []byte(footer.Text+"\n"), 0o644); err != nil {
 			return err
 		}
 		footerPath = &path
-	case !isStale(err):
-		return err
 	}
 	ended := d.Now()
 	return d.Store.Append(&registry.EndEvent{

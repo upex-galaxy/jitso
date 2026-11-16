@@ -1,9 +1,16 @@
 {
   "id": "reap/run-flag-audits-a-run-the-registry-never-saw",
-  "title": "every --run is audited in the order given, before the runs the registry knows; a run named twice is listed once; the same rogue worker is flagged once per run",
+  "title": "every --run is audited in the order given, before the runs the registry knows; a run named twice is listed once; a rogue worker seen in several runs is flagged once",
   "source": [
-    "cli/jitso/reap.test.ts: '--run adds a run the registry has never seen; no run at all means no worker-list call'"
+    "cli/jitso/reap.test.ts: '--run adds a run the registry has never seen; no run at all means no worker-list call'",
+    "intended: TS-ODDITIES R4 (defect N-28)"
   ],
+  "status": {
+    "ts": "xfail",
+    "go": "pass"
+  },
+  "defect": "N-28",
+  "intent": "INTENDED behavior (TS-ODDITIES R4, defect N-28). A worker with a terminal handle is flagged once across every run and every reap (the first run it was seen in names the evidence), and the summary counts the rule_break lines this reap wrote. The oracle flags it once per run and counts three, so the stdout and registry expectations FAIL on TS.",
   "project": {
     "files": {
       ".jitso/launches.jsonl": "{\"v\":1,\"event\":\"launch\",\"id\":\"L20261113T142233-a3f9\",\"parent\":null,\"root\":\"L20261113T142233-a3f9\",\"depth\":0,\"ts\":\"2026-11-13T14:22:33.000Z\",\"mode\":\"direct\",\"preset\":\"haiku-explorer\",\"orca\":{\"run\":\"run_1\",\"task\":\"t\",\"terminal\":\"term_logged\",\"title\":\"t [jitso:L20261113T142233-a3f9]\"}}\n"
@@ -44,7 +51,7 @@
         "exit": 0,
         "stdout": [
           {
-            "regex": "(?m)^jitso reap: 0 launch\\(es\\) marked ended, 3 unlogged worker\\(s\\), 0 analyzed$"
+            "regex": "(?m)^jitso reap: 0 launch\\(es\\) marked ended, 1 unlogged worker\\(s\\), 0 analyzed$"
           }
         ],
         "orca_calls": {
@@ -81,6 +88,19 @@
                 "--run",
                 "run_1"
               ]
+            }
+          ]
+        },
+        "registry": {
+          "count": 2,
+          "events": [
+            {
+              "at": 1,
+              "event": "rule_break",
+              "fields": {
+                "kind": "unlogged_worker",
+                "evidence": "worker term_rogue in run run_9 has no launch event"
+              }
             }
           ]
         }

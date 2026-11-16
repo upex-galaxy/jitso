@@ -5,6 +5,7 @@ import (
 	"errors"
 	"os"
 	"path/filepath"
+	"reflect"
 	"strings"
 	"testing"
 	"time"
@@ -100,7 +101,18 @@ func TestTouchesSecret(t *testing.T) {
 	}{
 		{"read", "Read", map[string]any{"file_path": "/r/.env"}, true},
 		{"grep path", "Grep", map[string]any{"pattern": "x", "path": "/r/.env"}, true},
-		{"write is not counted", "Write", map[string]any{"file_path": "/r/.env"}, false},
+		{"write", "Write", map[string]any{"file_path": "/r/.env"}, true},
+		{"edit", "Edit", map[string]any{"file_path": "/r/.auth/s.json", "old_string": "a", "new_string": "b"}, true},
+		{"multiedit", "MultiEdit", map[string]any{"file_path": "/r/.claude/settings.local.json", "edits": []any{}}, true},
+		{"notebook edit", "NotebookEdit", map[string]any{"notebook_path": "/r/.env"}, true},
+		{"notebook edit by file_path is not its key", "NotebookEdit", map[string]any{"file_path": "/r/.env"}, false},
+		{"write by notebook_path is not its key", "Write", map[string]any{"notebook_path": "/r/.env"}, false},
+		{"write content is never read", "Write", map[string]any{"file_path": "/r/notes.md", "content": "see .env and .auth/x"}, false},
+		{"edit strings are never read", "Edit", map[string]any{"file_path": "/r/a.md", "old_string": ".env", "new_string": ".auth/x"}, false},
+		{"multiedit edits are never read", "MultiEdit", map[string]any{"file_path": "/r/a.md", "edits": []any{map[string]any{"new_string": ".env"}}}, false},
+		{"notebook source is never read", "NotebookEdit", map[string]any{"notebook_path": "/r/a.ipynb", "new_source": "x = '.env'"}, false},
+		{"write of an allowed look-alike", "Write", map[string]any{"file_path": "/r/.env.example"}, false},
+		{"an unknown tool touches nothing", "WebFetch", map[string]any{"file_path": "/r/.env"}, false},
 		{"bash", "Bash", map[string]any{"command": "cat .env"}, true},
 		{"bash other key", "Bash", map[string]any{"file_path": "/r/.env"}, false},
 		{"non-string input", "Read", map[string]any{"file_path": 5.0}, false},
@@ -273,7 +285,7 @@ func TestScan(t *testing.T) {
 		{"same id empty usage then real usage", `{"type":"assistant","message":{"id":"x","usage":{}}}` + "\n" + `{"type":"assistant","message":{"id":"x","usage":{"input_tokens":4}}}`, 1, 4, map[string]int{}, 0, 0},
 		{"object id is never deduplicated", `{"type":"assistant","message":{"id":{"a":1},"usage":{"input_tokens":4}}}` + "\n" + `{"type":"assistant","message":{"id":{"a":1},"usage":{"input_tokens":4}}}`, 2, 8, map[string]int{}, 0, 0},
 		{"no id and no uuid share one key", `{"type":"assistant","message":{"usage":{"input_tokens":4}}}` + "\n" + `{"type":"assistant","message":{"usage":{"input_tokens":4}}}`, 1, 4, map[string]int{}, 0, 0},
-		{"secret read counted per call", `{"type":"assistant","message":{"id":"a","content":[{"type":"tool_use","name":"Read","input":{"file_path":"/r/.env"}},{"type":"tool_use","name":"Read","input":{"file_path":"/r/.env.example"}},{"type":"tool_use","name":"Write","input":{"file_path":"/r/.env"}}]}}`, 0, 0, map[string]int{"Read": 2, "Write": 1}, 0, 1},
+		{"secret read and write counted per call", `{"type":"assistant","message":{"id":"a","content":[{"type":"tool_use","name":"Read","input":{"file_path":"/r/.env"}},{"type":"tool_use","name":"Read","input":{"file_path":"/r/.env.example"}},{"type":"tool_use","name":"Write","input":{"file_path":"/r/.env"}}]}}`, 0, 0, map[string]int{"Read": 2, "Write": 1}, 0, 2},
 		{"tool block without a string name is skipped", `{"type":"assistant","message":{"id":"a","content":["x",{"type":"tool_use","name":5},{"type":"tool_use"},{"type":"text"}]}}`, 0, 0, map[string]int{}, 0, 0},
 	}
 	for _, tt := range tests {
@@ -364,18 +376,22 @@ func TestVerdictOf(t *testing.T) {
 	tests := []struct {
 		name    string
 		reads   int
+		over    bool
 		checks  []catalog.SuccessCheck
 		verdict string
 		reason  string
 	}{
-		{"secret read fails", 2, check("no_rule_breaks"), "fail", "a tool call read a secret path"},
-		{"no checks is unknown", 0, nil, "unknown", "build success checks 0 of 0 evaluated here; the rest need the destination"},
-		{"only no_rule_breaks is success", 0, check("no_rule_breaks"), "success", "build success checks 1 of 1 evaluated here; the rest need the destination"},
-		{"one decidable of two is unknown", 0, check("no_rule_breaks", "answer_delivered"), "unknown", "build success checks 1 of 2 evaluated here; the rest need the destination"},
+		{"secret read fails", 2, false, check("no_rule_breaks"), "fail", "a tool call read a secret path"},
+		{"over budget fails", 0, true, check("no_rule_breaks"), "fail", "the launch went over its budget"},
+		{"over budget fails without checks", 0, true, nil, "fail", "the launch went over its budget"},
+		{"the secret reason comes first", 1, true, nil, "fail", "a tool call read a secret path"},
+		{"no checks is unknown", 0, false, nil, "unknown", "build success checks 0 of 0 evaluated here; the rest need the destination"},
+		{"only no_rule_breaks is success", 0, false, check("no_rule_breaks"), "success", "build success checks 1 of 1 evaluated here; the rest need the destination"},
+		{"one decidable of two is unknown", 0, false, check("no_rule_breaks", "answer_delivered"), "unknown", "build success checks 1 of 2 evaluated here; the rest need the destination"},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			v, r := verdictOf(tt.reads, tt.checks)
+			v, r := verdictOf(tt.reads, tt.over, tt.checks)
 			if v != tt.verdict || r != tt.reason {
 				t.Errorf("got %q %q, want %q %q", v, r, tt.verdict, tt.reason)
 			}
@@ -407,12 +423,21 @@ func runEnv(t *testing.T, launchExtra string, withTranscript bool) (Deps, *regis
 	return d, store, root
 }
 
+// runArgs is what the command does: parse the arguments, then run.
+func runArgs(args []string, d Deps) (string, error) {
+	req, err := ParseArgs(args)
+	if err != nil {
+		return "", err
+	}
+	return Run(req, d)
+}
+
 func jsonString(s string) string { b, _ := json.Marshal(s); return string(b) }
 
 func TestRunByID(t *testing.T) {
-	d, store, _ := runEnv(t, `,"budget":{"tokens":250000}`, true)
+	d, store, _ := runEnv(t, `,"budget":{"tokens":4000000}`, true)
 	const id = "L20261113T142233-a3f9"
-	out, err := Run([]string{id}, d)
+	out, err := runArgs([]string{id}, d)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -427,8 +452,8 @@ func TestRunByID(t *testing.T) {
 	if ev, _ := events[1].String("evidence"); ev != "2 tool call(s) touched a secret path" {
 		t.Errorf("evidence %q", ev)
 	}
-	if pct, _ := events[2].Number("budget_pct"); pct != 1242 {
-		t.Errorf("budget_pct %v, want 1242", pct)
+	if pct, _ := events[2].Number("budget_pct"); pct != 77.6 {
+		t.Errorf("budget_pct %v, want 77.6", pct)
 	}
 	if ts, _ := events[2].String("ts"); ts != "2026-11-14T01:02:03.456Z" {
 		t.Errorf("ts %q", ts)
@@ -437,7 +462,7 @@ func TestRunByID(t *testing.T) {
 		t.Errorf("price_table %q", table)
 	}
 	// A second run appends a second analyzed event but no second rule_break.
-	if _, err := Run([]string{id}, d); err != nil {
+	if _, err := runArgs([]string{id}, d); err != nil {
 		t.Fatal(err)
 	}
 	events, _ = store.Events()
@@ -466,7 +491,7 @@ func TestRunByIDBudget(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			d, store, _ := runEnv(t, tt.extra, true)
-			if _, err := Run([]string{"L20261113T142233-a3f9"}, d); err != nil {
+			if _, err := runArgs([]string{"L20261113T142233-a3f9"}, d); err != nil {
 				t.Fatal(err)
 			}
 			events, _ := store.Events()
@@ -502,7 +527,7 @@ func TestRunRejections(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			d, store, _ := runEnv(t, "", tt.transcript)
-			out, err := Run(tt.args, d)
+			out, err := runArgs(tt.args, d)
 			if fail.Code(err) != tt.code || !strings.Contains(fail.Text(err), tt.text) || out != "" {
 				t.Errorf("code %d text %q out %q, want %d %q", fail.Code(err), fail.Text(err), out, tt.code, tt.text)
 			}
@@ -513,19 +538,144 @@ func TestRunRejections(t *testing.T) {
 	}
 }
 
-func TestRunPricesFirst(t *testing.T) {
-	d, _, _ := runEnv(t, "", true)
+// TestRunPricesAfterArguments pins TS-ODDITIES R6 (defect N-28): the arguments
+// are checked before the price table, so a bad argument is a rejection even
+// when jitso/prices.json is missing, and a good one with no table is a plain
+// exit-3 error.
+func TestRunPricesAfterArguments(t *testing.T) {
+	d, store, _ := runEnv(t, "", true)
 	d.PricesPath = filepath.Join(t.TempDir(), "missing.json")
-	_, err := Run([]string{"../x"}, d)
+	if _, err := ParseArgs([]string{"../x"}); fail.Code(err) != 2 || fail.Text(err) != "JITSO REJECTED: "+Usage {
+		t.Errorf("a bad id is rejected before any file is read, got %v", err)
+	}
+	_, err := runArgs([]string{"L20261113T142233-a3f9"}, d)
 	var fe *fail.Error
 	if err == nil || errors.As(err, &fe) || fail.Code(err) != 3 {
-		t.Errorf("a missing prices file is a plain exit-3 error even for a bad id, got %v", err)
+		t.Errorf("a missing prices file is a plain exit-3 error for a good id, got %v", err)
+	}
+	if events, _ := store.Events(); len(events) != 1 {
+		t.Error("nothing is written")
+	}
+}
+
+func TestParseArgs(t *testing.T) {
+	const id = "L20261113T142233-a3f9"
+	tests := []struct {
+		name string
+		args []string
+		want Request
+		ok   bool
+	}{
+		{"an id", []string{id}, Request{ID: id}, true},
+		{"a transcript", []string{"--transcript", "a.jsonl"}, Request{Transcript: "a.jsonl"}, true},
+		{"no arguments", nil, Request{}, false},
+		{"a short id", []string{"L1"}, Request{}, false},
+		{"two ids", []string{id, id}, Request{}, false},
+		{"a transcript with nothing", []string{"--transcript"}, Request{}, false},
+		{"a transcript that is not .jsonl", []string{"--transcript", "notes.txt"}, Request{}, false},
+		{"a transcript and more", []string{"--transcript", "a.jsonl", "b.jsonl"}, Request{}, false},
+		{"a transcript is not an id", []string{"--transcript", id}, Request{}, false},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := ParseArgs(tt.args)
+			if tt.ok != (err == nil) || got != tt.want {
+				t.Fatalf("got %+v, %v", got, err)
+			}
+			if !tt.ok && (fail.Code(err) != 2 || fail.Text(err) != "JITSO REJECTED: "+Usage) {
+				t.Errorf("rejection %q code %d", fail.Text(err), fail.Code(err))
+			}
+		})
+	}
+}
+
+// TestRunByIDBudgetOver pins TS-ODDITIES R10 (defect N-28): a launch over a
+// limit of its budget gets one budget_over rule break per limit, the verdict
+// fail, and a note on the summary line.
+func TestRunByIDBudgetOver(t *testing.T) {
+	const id = "L20261113T142233-a3f9"
+	// The transcript peaks at 3105000 tokens and costs 2.2 at list price.
+	tests := []struct {
+		name     string
+		budget   string
+		evidence []string
+		verdict  string
+		suffix   string
+	}{
+		{"within both", `{"tokens":4000000,"usd_list_cap":3}`, nil, "fail", " (2 secret-path read(s))"},
+		{"tokens only", `{"tokens":3000000,"usd_list_cap":3}`, []string{"peak context 3105000 tokens is over the budget of 3000000 tokens"}, "fail", " (2 secret-path read(s), over budget)"},
+		{"cost only", `{"tokens":4000000,"usd_list_cap":2}`, []string{"list cost US$ 2.2 is over the cap of US$ 2"}, "fail", " (2 secret-path read(s), over budget)"},
+		{"both", `{"tokens":3000000,"usd_list_cap":2}`, []string{"peak context 3105000 tokens is over the budget of 3000000 tokens", "list cost US$ 2.2 is over the cap of US$ 2"}, "fail", " (2 secret-path read(s), over budget)"},
+		{"exactly at the limit is not over", `{"tokens":3105000,"usd_list_cap":2.2}`, nil, "fail", " (2 secret-path read(s))"},
+		{"a zero limit is not checked", `{"tokens":0,"usd_list_cap":0}`, nil, "fail", " (2 secret-path read(s))"},
+		{"a limit that is not a number is not checked", `{"tokens":"5","usd_list_cap":"0.1"}`, nil, "fail", " (2 secret-path read(s))"},
+		{"no budget", `null`, nil, "fail", " (2 secret-path read(s))"},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			d, store, _ := runEnv(t, `,"budget":`+tt.budget, true)
+			out, err := runArgs([]string{id}, d)
+			if err != nil {
+				t.Fatal(err)
+			}
+			if want := "verdict " + tt.verdict + tt.suffix; !strings.HasSuffix(out, want) {
+				t.Errorf("out %q, want suffix %q", out, want)
+			}
+			events, _ := store.Events()
+			var got []string
+			for _, e := range events {
+				if k, _ := e.String("kind"); e.Kind() == registry.KindRuleBreak && k == "budget_over" {
+					ev, _ := e.String("evidence")
+					got = append(got, ev)
+				}
+			}
+			if !reflect.DeepEqual(got, tt.evidence) {
+				t.Errorf("budget_over evidence %q, want %q", got, tt.evidence)
+			}
+			if len(tt.evidence) > 0 {
+				// The secret rule break comes first, then the limits, then analyzed.
+				if k, _ := events[1].String("kind"); k != "secret_path_read" || events[len(events)-1].Kind() != registry.KindAnalyzed {
+					t.Errorf("order of events: %v", events)
+				}
+			}
+			// A second run repeats no rule break.
+			if _, err := runArgs([]string{id}, d); err != nil {
+				t.Fatal(err)
+			}
+			after, _ := store.Events()
+			if want := len(events) + 1; len(after) != want {
+				t.Errorf("second run wrote %d lines, want 1", len(after)-len(events))
+			}
+		})
+	}
+}
+
+// TestRunByIDOverBudgetWithoutSecrets is the same limit with a clean transcript:
+// the verdict is fail because of the budget alone.
+func TestRunByIDOverBudgetWithoutSecrets(t *testing.T) {
+	d, store, root := runEnv(t, `,"budget":{"tokens":5,"usd_list_cap":0.001}`, false)
+	write(t, filepath.Join(root, ".jitso", "transcripts", "t.jsonl"),
+		`{"type":"assistant","uuid":"u1","timestamp":"2026-11-13T05:00:00.000Z","message":{"id":"m1","model":"claude-haiku-5-5","usage":{"input_tokens":10,"output_tokens":5},"content":[]}}`+"\n")
+	out, err := runArgs([]string{"L20261113T142233-a3f9"}, d)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !strings.HasSuffix(out, "verdict fail (over budget)") {
+		t.Errorf("out %q", out)
+	}
+	events, _ := store.Events()
+	last := events[len(events)-1]
+	if reason, _ := last.String("verdict_reason"); reason != "the launch went over its budget" {
+		t.Errorf("verdict_reason %q", reason)
+	}
+	if pct, _ := last.Number("budget_pct"); pct != 200 {
+		t.Errorf("budget_pct %v", pct)
 	}
 }
 
 func TestRunTranscriptMode(t *testing.T) {
 	d, store, root := runEnv(t, "", true)
-	out, err := Run([]string{"--transcript", filepath.Join(root, ".jitso", "transcripts", "t.jsonl")}, d)
+	out, err := runArgs([]string{"--transcript", filepath.Join(root, ".jitso", "transcripts", "t.jsonl")}, d)
 	if err != nil {
 		t.Fatal(err)
 	}

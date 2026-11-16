@@ -51,16 +51,16 @@ Legend: **keep** = intended, port it as is. **fix** = change the case and the po
 
 | # | Behavior | Proposal |
 |---|---|---|
-| R1 | `close` writes the `end` event before closing the terminal; if the close then fails the launch is already ended and the exit is 3 (`close/orca-close-failure-is-exit-3`) | DECIDED (owner, 2026-11-15): fix (reserved defect N-28): close first, then write the event, or write it only on success **OPEN (fix, not done)** |
+| R1 | `close` writes the `end` event before closing the terminal; if the close then fails the launch is already ended and the exit is 3 (`close/orca-close-failure-is-exit-3`) | DECIDED (owner, 2026-11-15): fix (reserved defect N-28): close first, then write the event, or write it only on success **DONE (N-28)**: `close` reads the footer, closes, lists, and writes `footer.txt` and the `end` event only when the terminal is gone; a failure writes nothing. |
 | R2 | A second `close` on an ended launch exits 0, writes no second event, still calls `terminal close` and `terminal list` | keep |
-| R3 | `reap` never ends a launch that has no terminal handle (`reap/launch-without-terminal-is-never-reaped`) | DECIDED (owner, 2026-11-15): fix (reserved defect N-28): end it as `reap` with outcome `none` **OPEN (fix, not done)** |
-| R4 | The unlogged-worker count repeats on every `reap`; the rule-break line is appended once; with several `--run` values the same worker is flagged once per run | DECIDED (owner, 2026-11-15): fix (reserved defect N-28): de-duplicate per worker **OPEN (fix, not done)** |
+| R3 | `reap` never ends a launch that has no terminal handle (`reap/launch-without-terminal-is-never-reaped`) | DECIDED (owner, 2026-11-15): fix (reserved defect N-28): end it as `reap` with outcome `none` **DONE (N-28)**: the case is now `reap/launch-without-terminal-is-ended`. |
+| R4 | The unlogged-worker count repeats on every `reap`; the rule-break line is appended once; with several `--run` values the same worker is flagged once per run | DECIDED (owner, 2026-11-15): fix (reserved defect N-28): de-duplicate per worker **DONE (N-28)**: a worker with a handle is flagged once across runs and reaps, one with no handle once per run, and the summary counts the `rule_break` lines this reap wrote. |
 | R5 | `reap` swallows an analysis failure as exit 0 after printing `could not analyze <id>` | keep, report the count |
-| R6 | `analyze` loads `prices.json` before it checks its arguments, so a malformed id exits 3 when the file is missing | DECIDED (owner, 2026-11-15): fix (reserved defect N-28): validate arguments first (exit 2) **OPEN (fix, not done)** |
-| R7 | Secret-path reads count only `Read`, `Grep`, `Glob` and `Bash`; a `Write` to a secret-looking path counts 0 | DECIDED (owner, 2026-11-15): fix (reserved defect N-28): a `Write` to a secret-looking path counts in `analyze` **OPEN (fix, not done)** |
+| R6 | `analyze` loads `prices.json` before it checks its arguments, so a malformed id exits 3 when the file is missing | DECIDED (owner, 2026-11-15): fix (reserved defect N-28): validate arguments first (exit 2) **DONE (N-28)**: arguments, then the project, then `prices.json`. |
+| R7 | Secret-path reads count only `Read`, `Grep`, `Glob` and `Bash`; a `Write` to a secret-looking path counts 0 | DECIDED (owner, 2026-11-15): fix (reserved defect N-28): a `Write` to a secret-looking path counts in `analyze` **DONE (N-28)**: `Write`, `Edit`, `MultiEdit` and `NotebookEdit` count in `secret_path_reads`, which keeps its name. |
 | R8 | The first `launch` line wins for a duplicate id | keep |
 | R9 | A stuck registry lock makes a launch exit 3 after about 5 s and closes the terminal it just opened | keep |
-| R10 | `budget_over` is a valid rule-break kind but no code emits it; only `budget_pct` is written | DECIDED (owner, 2026-11-15): fix (reserved defect N-28): emit it (the audit also lists unenforced budgets) **OPEN (fix, not done)** |
+| R10 | `budget_over` is a valid rule-break kind but no code emits it; only `budget_pct` is written | DECIDED (owner, 2026-11-15): fix (reserved defect N-28): emit it (the audit also lists unenforced budgets) **DONE (N-28)**: one `budget_over` rule break per exceeded limit, and the verdict is then `fail`; the budget is detected after the session, not enforced. |
 
 ## Hooks and dispatcher
 
@@ -76,4 +76,4 @@ Legend: **keep** = intended, port it as is. **fix** = change the case and the po
 
 ## Known defects (xfail on `ts`, see PLAN.md)
 
-S1 to S3 and N-1 to N-29: `README.md` lists every one with its cases and the intended behavior, and is the place to read them. Of the rows above, L1, L2, L3, L6, L7, L8, L10, L11, B1, C4, H5 and the settled halves of C1, H2 and H3 are defects there.
+S1 to S3 and N-1 to N-29: `README.md` lists every one with its cases and the intended behavior, and is the place to read them. Of the rows above, L1, L2, L3, L6, L7, L8, L10, L11, B1, R1, R3, R4, R6, R7, R10, C4, H5 and the settled halves of C1, H2 and H3 are defects there.

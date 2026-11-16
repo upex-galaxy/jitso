@@ -1,9 +1,16 @@
 {
   "id": "close/orca-close-failure-is-exit-3",
-  "title": "an Orca failure on the close is exit 3 with the message; the end event was already written before the close was tried",
+  "title": "an Orca failure on the close is exit 3 with the message, and the launch is not ended",
   "source": [
-    "cli/jitso/close.test.ts: 'an orca failure exits 3 with the message'"
+    "cli/jitso/close.test.ts: 'an orca failure exits 3 with the message'",
+    "intended: TS-ODDITIES R1 (defect N-28)"
   ],
+  "status": {
+    "ts": "xfail",
+    "go": "pass"
+  },
+  "defect": "N-28",
+  "intent": "INTENDED behavior (TS-ODDITIES R1, defect N-28). A close that fails leaves the launch running: the footer and the end event are written only after the terminal is closed and `terminal list` no longer shows it, so a failure writes neither `footer.txt` nor an end event and a later close retries cleanly. The oracle writes the footer and the end event before it closes the terminal, so the registry count and the footer expectation FAIL on TS.",
   "project": {
     "files": {
       ".jitso/launches.jsonl": "{\"v\":1,\"event\":\"launch\",\"id\":\"L20261113T142233-a3f9\",\"parent\":null,\"root\":\"L20261113T142233-a3f9\",\"depth\":0,\"ts\":\"2026-11-13T14:22:33.000Z\",\"mode\":\"direct\",\"preset\":\"haiku-explorer\",\"orca\":{\"run\":null,\"task\":null,\"terminal\":\"term_fake\",\"title\":\"t [jitso:L20261113T142233-a3f9]\"}}\n"
@@ -42,18 +49,14 @@
           ]
         },
         "registry": {
-          "count": 2,
-          "events": [
-            {
-              "at": 1,
-              "event": "end",
-              "fields": {
-                "id": "L20261113T142233-a3f9",
-                "source": "jitso_close"
-              }
-            }
-          ]
-        }
+          "count": 1
+        },
+        "files": [
+          {
+            "path": ".jitso/launches/L20261113T142233-a3f9/footer.txt",
+            "exists": false
+          }
+        ]
       }
     }
   ]

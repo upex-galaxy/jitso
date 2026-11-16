@@ -1,0 +1,52 @@
+{
+  "id": "reap/launch-without-terminal-is-ended",
+  "title": "a launch with no terminal handle is ended by reap, as source reap with outcome none",
+  "source": [
+    "cli/jitso/reap.ts: `typeof terminal !== 'string' || live.includes(terminal)` (no unit test)",
+    "intended: TS-ODDITIES R3 (defect N-28)"
+  ],
+  "status": {
+    "ts": "xfail",
+    "go": "pass"
+  },
+  "defect": "N-28",
+  "intent": "INTENDED behavior (TS-ODDITIES R3, defect N-28). A launch with no end event whose orca.terminal is not a string (absent, null, a number) cannot be matched against the terminal list and would stay running forever, so reap ends it: source reap, outcome none, no footer. The oracle skips a launch without a string handle, so the stdout and registry expectations FAIL on TS.",
+  "project": {
+    "files": {
+      ".jitso/launches.jsonl": "{\"v\":1,\"event\":\"launch\",\"id\":\"L20261113T142233-a3f9\",\"parent\":null,\"root\":\"L20261113T142233-a3f9\",\"depth\":0,\"ts\":\"2026-11-13T14:22:33.000Z\",\"mode\":\"direct\",\"preset\":\"haiku-explorer\",\"orca\":{\"run\":null,\"task\":null,\"terminal\":null,\"title\":\"t\"}}\n"
+    }
+  },
+  "orca": {
+    "listed": []
+  },
+  "steps": [
+    {
+      "run": [
+        "reap"
+      ],
+      "expect": {
+        "exit": 0,
+        "stdout": [
+          {
+            "regex": "(?m)^jitso reap: 1 launch\\(es\\) marked ended, 0 unlogged worker\\(s\\), 0 analyzed$"
+          }
+        ],
+        "registry": {
+          "count": 2,
+          "events": [
+            {
+              "at": 1,
+              "event": "end",
+              "fields": {
+                "id": "L20261113T142233-a3f9",
+                "source": "reap",
+                "outcome_reported": "none",
+                "footer_path": null
+              }
+            }
+          ]
+        }
+      }
+    }
+  ]
+}

@@ -27,23 +27,44 @@ type Deps struct {
 	Now     func() time.Time
 }
 
-// Run is `jitso analyze`. It returns the text for stdout: the one-line summary
-// of `analyze <launch_id>` (which also appends events) or the indented JSON of
-// `analyze --transcript <file.jsonl>` (which writes nothing).
-//
-// The prices load first, before the arguments are looked at: a missing prices
-// file is exit 3 even for a malformed id (TS-ODDITIES R6 proposes to change it;
-// it is still the oracle's order).
-func Run(args []string, d Deps) (string, error) {
+// Request is what `jitso analyze` was asked: one launch id, or one transcript
+// file to analyze without writing anything.
+type Request struct {
+	// ID is the launch id of `analyze <launch_id>`; "" for a transcript.
+	ID string
+	// Transcript is the path of `analyze --transcript <file.jsonl>`.
+	Transcript string
+}
+
+// ParseArgs reads the arguments: one launch id of the exact form, or
+// `--transcript` and one path that ends in .jsonl, with nothing after. Anything
+// else is a rejection (exit 2). It needs no project and no price table, so it
+// runs before either is looked at (TS-ODDITIES R6, defect N-28).
+func ParseArgs(args []string) (Request, error) {
+	if len(args) > 0 && args[0] == "--transcript" {
+		if len(args) != 2 || !strings.HasSuffix(args[1], ".jsonl") {
+			return Request{}, fail.Rejected(Usage)
+		}
+		return Request{Transcript: args[1]}, nil
+	}
+	if len(args) != 1 || !registry.IsLaunchID(args[0]) {
+		return Request{}, fail.Rejected(Usage)
+	}
+	return Request{ID: args[0]}, nil
+}
+
+// Run is `jitso analyze` for a parsed request. It returns the text for stdout:
+// the one-line summary of `analyze <launch_id>` (which also appends events) or
+// the indented JSON of `analyze --transcript <file.jsonl>` (which writes
+// nothing). The price table loads first: a missing prices file is exit 3, after
+// the arguments and the project have passed.
+func Run(req Request, d Deps) (string, error) {
 	prices, err := LoadPrices(d.PricesPath)
 	if err != nil {
 		return "", err
 	}
-	if len(args) > 0 && args[0] == "--transcript" {
-		if len(args) != 2 || !strings.HasSuffix(args[1], ".jsonl") {
-			return "", fail.Rejected(Usage)
-		}
-		a, err := Session(args[1], prices)
+	if req.Transcript != "" {
+		a, err := Session(req.Transcript, prices)
 		if err != nil {
 			return "", fail.Rejected(err.Error())
 		}
@@ -53,16 +74,15 @@ func Run(args []string, d Deps) (string, error) {
 		}
 		return string(text), nil
 	}
-	if len(args) != 1 || !registry.IsLaunchID(args[0]) {
-		return "", fail.Rejected(Usage)
-	}
-	return byID(args[0], prices, d)
+	return byID(req.ID, prices, d)
 }
 
 // verdictOf is the verdict of an analysis against the build's success checks:
-// fail when a tool call read a secret path, success when every check of the
-// build is one that can be decided here (no_rule_breaks), otherwise unknown.
-func verdictOf(secretReads int, checks []catalog.SuccessCheck) (verdict, reason string) {
+// fail when a tool call touched a secret path or the launch went over its
+// budget (both are breaks of a rule the analyzer sees, so a success next to
+// them would be false), success when every check of the build is one that can
+// be decided here (no_rule_breaks), otherwise unknown.
+func verdictOf(secretReads int, overBudget bool, checks []catalog.SuccessCheck) (verdict, reason string) {
 	evaluated := 0
 	for _, c := range checks {
 		if c.Check == "no_rule_breaks" {
@@ -72,11 +92,31 @@ func verdictOf(secretReads int, checks []catalog.SuccessCheck) (verdict, reason 
 	if secretReads > 0 {
 		return "fail", "a tool call read a secret path"
 	}
+	if overBudget {
+		return "fail", "the launch went over its budget"
+	}
 	verdict = "unknown"
 	if len(checks) > 0 && evaluated == len(checks) {
 		verdict = "success"
 	}
 	return verdict, fmt.Sprintf("build success checks %d of %d evaluated here; the rest need the destination", evaluated, len(checks))
+}
+
+// budgetBreaks are the evidence texts of the limits the launch went over, the
+// token budget first, then the list cost cap (TS-ODDITIES R10, defect N-28).
+// A limit that is absent, not a number or not above zero is not checked. The
+// budget is detected after the session, never enforced during it.
+func budgetBreaks(l *registry.Launch, a Analysis) []string {
+	var out []string
+	if tokens, ok := l.Launch.Number("budget.tokens"); ok && tokens > 0 && a.MaxMainContextTokens > tokens {
+		out = append(out, fmt.Sprintf("peak context %s tokens is over the budget of %s tokens",
+			jsconv.Number(a.MaxMainContextTokens), jsconv.Number(tokens)))
+	}
+	if cap, ok := l.Launch.Number("budget.usd_list_cap"); ok && cap > 0 && a.CostUSDList > cap {
+		out = append(out, fmt.Sprintf("list cost US$ %s is over the cap of US$ %s",
+			jsconv.Number(a.CostUSDList), jsconv.Number(cap)))
+	}
+	return out
 }
 
 func byID(id string, prices Prices, d Deps) (string, error) {
@@ -107,7 +147,8 @@ func byID(id string, prices Prices, d Deps) (string, error) {
 			checks = b.Success
 		}
 	}
-	verdict, reason := verdictOf(a.SecretPathReads, checks)
+	overBudget := budgetBreaks(l, a)
+	verdict, reason := verdictOf(a.SecretPathReads, len(overBudget) > 0, checks)
 	ts := jsonx.Time(d.Now())
 
 	var budgetPct *float64
@@ -122,6 +163,18 @@ func byID(id string, prices Prices, d Deps) (string, error) {
 		breaks = append(breaks, registry.RuleBreakCount{Kind: "secret_path_read", Count: int64(a.SecretPathReads)})
 		if !hasRuleBreak(l, "secret_path_read", evidence) {
 			rb := &registry.RuleBreakEvent{ID: &id, TS: ts, Kind: "secret_path_read", Evidence: evidence}
+			if err := d.Store.Append(rb); err != nil {
+				return "", err
+			}
+		}
+	}
+	if len(overBudget) > 0 {
+		breaks = append(breaks, registry.RuleBreakCount{Kind: "budget_over", Count: int64(len(overBudget))})
+		for _, evidence := range overBudget {
+			if hasRuleBreak(l, "budget_over", evidence) {
+				continue
+			}
+			rb := &registry.RuleBreakEvent{ID: &id, TS: ts, Kind: "budget_over", Evidence: evidence}
 			if err := d.Store.Append(rb); err != nil {
 				return "", err
 			}
@@ -157,8 +210,15 @@ func byID(id string, prices Prices, d Deps) (string, error) {
 
 	line := fmt.Sprintf("jitso: analyzed %s: %d turns, peak %s tokens, US$ %s list, verdict %s",
 		id, a.MainRequests, jsconv.Number(a.MaxMainContextTokens), jsconv.Number(a.CostUSDList), verdict)
+	var notes []string
 	if a.SecretPathReads > 0 {
-		line += fmt.Sprintf(" (%d secret-path read(s))", a.SecretPathReads)
+		notes = append(notes, fmt.Sprintf("%d secret-path read(s)", a.SecretPathReads))
+	}
+	if len(overBudget) > 0 {
+		notes = append(notes, "over budget")
+	}
+	if len(notes) > 0 {
+		line += " (" + strings.Join(notes, ", ") + ")"
 	}
 	return line, nil
 }

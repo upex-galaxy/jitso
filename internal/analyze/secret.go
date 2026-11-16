@@ -76,12 +76,23 @@ func IsSecretPath(text string) bool {
 	return false
 }
 
-// readTools are the tools whose string inputs name a file they read.
-var readTools = map[string]bool{"Read": true, "Grep": true, "Glob": true, "NotebookRead": true}
+// pathTools maps a tool to the inputs that name the file it touches. A write
+// tool counts like a read tool (TS-ODDITIES R7, defect N-28): the counter is
+// still called secret_path_reads, because "read" there means "touched". The
+// content of a write (content, old_string, new_string, edits, new_source) is
+// never looked at.
+var pathTools = map[string][]string{
+	"Read":         {"file_path", "path", "pattern", "glob", "notebook_path"},
+	"Grep":         {"file_path", "path", "pattern", "glob", "notebook_path"},
+	"Glob":         {"file_path", "path", "pattern", "glob", "notebook_path"},
+	"NotebookRead": {"file_path", "path", "pattern", "glob", "notebook_path"},
+	"Write":        {"file_path"},
+	"Edit":         {"file_path"},
+	"MultiEdit":    {"file_path"},
+	"NotebookEdit": {"notebook_path"},
+}
 
-var readKeys = []string{"file_path", "path", "pattern", "glob", "notebook_path"}
-
-// touchesSecret reports whether a tool call reads a secret path. It looks at
+// touchesSecret reports whether a tool call touches a secret path. It looks at
 // string inputs only and returns a boolean, never the text.
 func touchesSecret(name string, input any) bool {
 	args, ok := input.(map[string]any)
@@ -92,10 +103,7 @@ func touchesSecret(name string, input any) bool {
 		cmd, ok := args["command"].(string)
 		return ok && IsSecretPath(cmd)
 	}
-	if !readTools[name] {
-		return false
-	}
-	for _, key := range readKeys {
+	for _, key := range pathTools[name] {
 		if s, ok := args[key].(string); ok && IsSecretPath(s) {
 			return true
 		}

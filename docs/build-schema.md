@@ -95,7 +95,7 @@ Value types the rules above refer to:
 | success checks | `answer_delivered`, `jira_comment_on`, `xray_execution_with_env`, `no_rule_breaks` |
 | required fields | `ticket_key` (`^[A-Z][A-Z0-9]*-[0-9]+$`), `env` (`^[a-z][a-z0-9_-]*$`); a field with no pattern cannot be required |
 | placeholders | a `{name}` inside a success entry must name a field the build lists in `requires` |
-| `budget.tokens`, `budget.usd_list_cap` | numbers: the token ceiling and the list-price cap in US dollars of one launch |
+| `budget.tokens`, `budget.usd_list_cap` | numbers: the token ceiling and the list-price cap in US dollars of one launch. `analyze` writes a `budget_over` rule break for each limit the launch went over (peak context above `tokens`, list cost above `usd_list_cap`) and gives the launch the verdict `fail`; it is detected after the session, not enforced during it |
 
 Unknown keys are accepted and ignored by the build validator. `jitso launch --field <name>=<value>` is the one place an unknown field name is rejected: `unknown field "<f>" for build "<id>"`.
 

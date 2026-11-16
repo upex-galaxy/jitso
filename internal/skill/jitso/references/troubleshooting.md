@@ -26,7 +26,7 @@ Two prefixes tell you whose problem it is. `JITSO REJECTED: <reason>` (exit 2) m
 | `unknown parent launch <id>` | `--parent` names an id that is not in `.jitso/launches.jsonl` |
 | `unknown launch <id>` (close, analyze) | the id is not in this project's log. Check the primary checkout's `.jitso/launches.jsonl` |
 | `launch <id> has no transcript on disk yet` | analyze needs the worker's transcript file. Wait for the session to write one |
-| `usage: jitso close <launch_id>`, `usage: jitso reap [--run <run_id>]...` | the arguments are wrong. These commands have no `--help` |
+| `usage: jitso close <launch_id>`, `usage: jitso reap [--run <run_id>]...`, `usage: jitso analyze <launch_id> \| jitso analyze --transcript <file.jsonl>` | the arguments are wrong. These commands have no `--help` |
 | `untrusted folder <path>: a launch runs only in a worktree of this repo; the terminal was closed` | Orca opened the terminal in a folder that is not a worktree of this repo, or reported none (`(unknown)`). The folder is checked on every launch, with or without the trust dialog. Check `--worktree` |
 | `untrusted folder <path>: --worktree asked for <path>; the terminal was closed` | `--worktree` names a path and Orca opened the terminal somewhere else. Name the worktree you want, or drop the flag |
 | `--worktree <selector> must name an absolute path`, `--worktree <selector> names <path>, which is not a worktree of this repo` | a `path:` or `id:<id>::<path>` selector was rejected before anything was written or Orca was called. Use an absolute path of a worktree of this repo |
@@ -41,9 +41,10 @@ Two prefixes tell you whose problem it is. `JITSO REJECTED: <reason>` (exit 2) m
 | `jitso: jitso/jitso.yaml is missing: this project has no JITSO allowlists (create it with jitso build new <id>)` | the project has not adopted JITSO yet. Tell the owner |
 | `build <file> is invalid: <problems>` | one file of the project's own `jitso/builds/` is broken, and it fails every catalog command. Run `jitso build validate` for every problem at once. Do not edit `jitso/builds/` yourself: report it |
 | `build <id> has no budget mapping` | a worker or conductor build needs `budget` with `tokens` and `usd_list_cap` |
-| `jitso: open <project>/jitso/prices.json: no such file or directory` | `analyze` needs the price table. Tell the owner |
+| `jitso: open <project>/jitso/prices.json: no such file or directory` | `analyze` needs the price table (it is checked after the arguments). Tell the owner |
 | `.mcp.json` missing or not valid JSON | a real launch reads it only when the launch still names an MCP server after `--mcp-exclude` |
 | `jitso: the trust dialog of terminal <handle> did not clear in 10 s; the launch is registered` | a warning with exit 0. Look at the terminal and tell the human |
+| `terminal <handle> is still open after close`, or an Orca error from `jitso close` | the terminal was not closed. Nothing was written: the launch is still running and has no `footer.txt`. Run `jitso close` again, or tell the human |
 | an Orca error, `terminal <handle> did not reach ... ; it was closed` | Orca did not answer or the harness never became ready. The launch folder was removed. Try once more, then report the message |
 | `jitso: ~/.jitso/config.yaml is invalid: <problem>` | the owner's trust file is broken. Tell the owner |
 | `unknown command "doctor"` | this binary does not have `doctor` yet (below) |
