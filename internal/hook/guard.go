@@ -23,7 +23,13 @@ func (l Launcher) Guard(input map[string]any) Denial {
 		if !ok {
 			return Denial{}
 		}
-		return l.BashDenial(command)
+		cwd, _ := text(input["cwd"])
+		return l.bashDenial(command, cwd)
+	}
+	if l.Bounds != nil {
+		if d := l.Bounds.ToolDenial(input); d.Verb != "" {
+			return d
+		}
 	}
 	return Denial{Verb: mcpVerb(name, input["tool_input"])}
 }
@@ -42,6 +48,9 @@ func (d Denial) Reason(packageJSON []byte) string {
 	}
 	if d.Verb == VerbSetup || d.Verb == VerbInstall {
 		return AdoptionReason(d.Verb)
+	}
+	if d.Area != "" {
+		return WriteReason(LauncherWord(packageJSON), d.Verb, d.Area)
 	}
 	if directHarnesses[d.Verb] {
 		return HarnessReason(LaunchWord(packageJSON), d.Verb)
@@ -137,4 +146,13 @@ func HarnessReason(launchWord, name string) string {
 		" --build <id> --brief <file> --mode <mode>, never as a program of its own." +
 		" If the word is text (a commit message, a heredoc line), put the text in a file and pass the file." +
 		" (denied: " + name + ")"
+}
+
+// WriteReason is the deny text for a write into the approved builds,
+// jitso/jitso.yaml or the hard rules, or the removal of jitso/ (defect N-25):
+// only the owner changes them, an agent drafts a build. what is the tool or the
+// program that writes, area the protected area.
+func WriteReason(launcherWord, what, area string) string {
+	return "JITSO: only the owner changes approved builds, jitso/jitso.yaml and the hard rules; draft a build with " +
+		launcherWord + " build draft and ask the owner to save it (denied: " + what + " " + area + ")"
 }

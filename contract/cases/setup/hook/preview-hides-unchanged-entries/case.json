@@ -9,7 +9,7 @@
     "go": "pass"
   },
   "defect": "N-17",
-  "intent": "INTENDED behavior (defect N-17, setup hook). `.claude/settings.json` can hold `env` values and other hooks' commands with tokens (AGENTS.md rule 1). jitso only adds lines here, so the diff of a settings file prints zero context lines: the unified diff has its `---`/`+++` headers and `@@` hunks but never the user's own entries (`TOKEN-CANARY-7`, `ENV-CANARY-9`). The oracle has no `setup` command: it answers `unknown command \"setup\"` on stderr with exit 2 and prints nothing on stdout, so every expectation that needs this output or file effect FAILS on it.",
+  "intent": "INTENDED behavior (defect N-17, setup hook). `.claude/settings.json` can hold `env` values and other hooks' commands with tokens (AGENTS.md rule 1). jitso only adds lines here, so the diff of a settings file prints zero context lines: the unified diff has its `---`/`+++` headers and `@@` hunks but never the user's own entries (`TOKEN-CANARY-7`, `ENV-CANARY-9`). Since N-25 the guard also has a third PreToolUse group, `Write|Edit|MultiEdit|NotebookEdit`. The oracle has no `setup` command: it answers `unknown command \"setup\"` on stderr with exit 2 and prints nothing on stdout, so every expectation that needs this output or file effect FAILS on it.",
   "project": {
     "files": {
       ".claude/settings.json": {
@@ -30,6 +30,7 @@
           "+++ b/.claude/settings.json",
           "@@",
           "+        \"matcher\": \"mcp__.*orca.*__.*\",",
+          "+        \"matcher\": \"Write|Edit|MultiEdit|NotebookEdit\",",
           {
             "not_contains": "TOKEN-CANARY-7"
           },

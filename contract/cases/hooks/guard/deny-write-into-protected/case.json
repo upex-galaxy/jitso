@@ -1,0 +1,84 @@
+{
+  "id": "hooks/guard/deny-write-into-protected",
+  "title": "Write, Edit and MultiEdit into jitso/builds/, jitso/jitso.yaml and jitso/hard-rules/ are denied, relative, with .. and in any letter case",
+  "source": [
+    "intended: docs/decisions.md A5 (defect N-25): the guard denies writes into builds, jitso/jitso.yaml and the hard rules"
+  ],
+  "status": {
+    "ts": "xfail",
+    "go": "pass"
+  },
+  "defect": "N-25",
+  "intent": "INTENDED behavior (defect N-25, owner answer A5). The guard denies a Write, Edit or MultiEdit whose file_path is inside jitso/builds/, jitso/hard-rules/ or is jitso/jitso.yaml: an agent changes an approved build only through a draft the owner saves. The path is resolved against the payload cwd and cleaned, and folders are compared in any letter case. The reason names the tool and the area, and says to draft a build and ask the owner to save it. The TS binary judges only Bash and orca MCP tools, and its Bash rules do not know these writes, so it prints nothing and the decision FAILS on TS.",
+  "for_each": {
+    "vars": [
+      "tool",
+      "path"
+    ],
+    "rows": [
+      [
+        "Write",
+        "{{PROJECT}}/jitso/builds/new.yaml"
+      ],
+      [
+        "Edit",
+        "{{PROJECT}}/jitso/builds/haiku-explorer.yaml"
+      ],
+      [
+        "MultiEdit",
+        "{{PROJECT}}/jitso/builds/haiku-explorer.yaml"
+      ],
+      [
+        "Write",
+        "{{PROJECT}}/jitso/jitso.yaml"
+      ],
+      [
+        "Edit",
+        "{{PROJECT}}/jitso/hard-rules/core.md"
+      ],
+      [
+        "Write",
+        "{{PROJECT}}/jitso/hard-rules/new.md"
+      ],
+      [
+        "Write",
+        "{{PROJECT}}/jitso/builds/sub/x.yaml"
+      ],
+      [
+        "Write",
+        "jitso/builds/x.yaml"
+      ],
+      [
+        "Write",
+        "{{PROJECT}}/docs/../jitso/builds/x.yaml"
+      ],
+      [
+        "Write",
+        "{{PROJECT}}/JITSO/Builds/x.yaml"
+      ]
+    ]
+  },
+  "steps": [
+    {
+      "hook": "guard",
+      "input": {
+        "hook_event_name": "PreToolUse",
+        "tool_name": "{{tool}}",
+        "tool_input": {
+          "file_path": "{{path}}",
+          "content": "x"
+        },
+        "cwd": "{{PROJECT}}"
+      },
+      "expect": {
+        "exit": 0,
+        "decision": "deny",
+        "reason": [
+          {
+            "regex": "^JITSO: only the owner changes approved builds, jitso/jitso\\.yaml and the hard rules; draft a build with (bun run jitso|jitso) build draft and ask the owner to save it \\(denied: [A-Za-z -]+ jitso/(builds/|hard-rules/|jitso\\.yaml)?\\)$"
+          }
+        ]
+      }
+    }
+  ]
+}

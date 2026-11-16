@@ -31,14 +31,14 @@ func TestHooksStates(t *testing.T) {
 	// Registered, resolves and tracked: ok.
 	put(t, dir, ".claude/settings.json", string(settingsjson.Fragment(settingsjson.Command)))
 	got := check(map[string]int{tracked: 0}, onPath)
-	want(t, got, OK, "hooks", "jitso hook guard is registered on PreToolUse (Bash, orca MCP) and SessionEnd in .claude/settings.json")
+	want(t, got, OK, "hooks", "jitso hook guard is registered on PreToolUse (Bash, orca MCP, file writes) and SessionEnd in .claude/settings.json")
 	if strings.Contains(got.Detail, ";") {
 		t.Errorf("an ok line has nothing to add: %q", got.Detail)
 	}
 
 	// Not tracked: still says it is registered, and warns.
 	got = check(map[string]int{tracked: 1}, onPath)
-	want(t, got, Warn, "hooks", "registered on PreToolUse (Bash, orca MCP) and SessionEnd in .claude/settings.json; .claude/settings.json is not tracked by git: commit it")
+	want(t, got, Warn, "hooks", "registered on PreToolUse (Bash, orca MCP, file writes) and SessionEnd in .claude/settings.json; .claude/settings.json is not tracked by git: commit it")
 	// A git that cannot answer is not a reason to warn.
 	want(t, check(map[string]int{tracked: 128}, onPath), OK, "hooks", "is registered on")
 
@@ -66,7 +66,21 @@ func TestHooksPartialAndDisabled(t *testing.T) {
 	c.p.LookPath = lookup(map[string]string{"jitso": "/x/jitso"})
 
 	put(t, dir, ".claude/settings.json", `{"hooks": {"PreToolUse": [{"matcher": "Bash", "hooks": [{"type": "command", "command": "jitso hook guard"}]}]}}`)
-	want(t, c.hooks(), Warn, "hooks", "registered on PreToolUse Bash only (missing PreToolUse orca MCP, SessionEnd): run jitso setup hook")
+	want(t, c.hooks(), Warn, "hooks", "registered on PreToolUse Bash only (missing PreToolUse orca MCP, PreToolUse file writes, SessionEnd): run jitso setup hook")
+
+	// A file written before the write boundary has three of the four slots.
+	older := strings.Replace(string(settingsjson.Fragment(settingsjson.Command)), `{
+        "matcher": "Write|Edit|MultiEdit|NotebookEdit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "jitso hook guard"
+          }
+        ]
+      }`, "", 1)
+	older = strings.Replace(older, "},\n      \n    ]", "}\n    ]", 1)
+	put(t, dir, ".claude/settings.json", older)
+	want(t, c.hooks(), Warn, "hooks", "registered on PreToolUse Bash, PreToolUse orca MCP, SessionEnd only (missing PreToolUse file writes): run jitso setup hook")
 
 	// A JITSO handler that shares a group with another handler is not a group of its own.
 	put(t, dir, ".claude/settings.json", `{"hooks": {"PreToolUse": [{"matcher": "Bash", "hooks": [{"type": "command", "command": "jitso hook guard"}, {"type": "command", "command": "./x.sh"}]}]}}`)

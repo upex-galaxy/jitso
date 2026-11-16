@@ -9,7 +9,7 @@
     "go": "pass"
   },
   "defect": "N-17",
-  "intent": "INTENDED behavior (defect N-17, setup hook). A JITSO handler is a command whose first word is `jitso` or a quoted or absolute path ending in `jitso`, followed by `hook guard`. Such a legacy handler is removed and the desired groups are written: one Bash group, one orca MCP group and one SessionEnd group, all with `jitso hook guard`, and nothing of `/old/place` is left. The oracle has no `setup` command: it answers `unknown command \"setup\"` on stderr with exit 2 and prints nothing on stdout, so every expectation that needs this output or file effect FAILS on it.",
+  "intent": "INTENDED behavior (defect N-17, setup hook). A JITSO handler is a command whose first word is `jitso` or a quoted or absolute path ending in `jitso`, followed by `hook guard`. Such a legacy handler is removed and the desired groups are written: one Bash group, one orca MCP group, one file-writes group and one SessionEnd group, all with `jitso hook guard`, and nothing of `/old/place` is left. Since N-25 the guard also has a third PreToolUse group, `Write|Edit|MultiEdit|NotebookEdit`. The oracle has no `setup` command: it answers `unknown command \"setup\"` on stderr with exit 2 and prints nothing on stdout, so every expectation that needs this output or file effect FAILS on it.",
   "project": {
     "files": {
       ".claude/settings.json": {
@@ -55,7 +55,15 @@
                 "equals": "mcp__.*orca.*__.*"
               },
               {
-                "path": "hooks.PreToolUse.2",
+                "path": "hooks.PreToolUse.2.matcher",
+                "equals": "Write|Edit|MultiEdit|NotebookEdit"
+              },
+              {
+                "path": "hooks.PreToolUse.2.hooks.0.command",
+                "equals": "jitso hook guard"
+              },
+              {
+                "path": "hooks.PreToolUse.3",
                 "absent": true
               },
               {

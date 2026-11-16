@@ -1,0 +1,66 @@
+{
+  "id": "hooks/guard/deny-shell-writes-into-protected",
+  "title": "mv, cp, rm, redirects and the other listed writers into jitso/builds/, jitso/jitso.yaml and jitso/hard-rules/ are denied, after cd and inside sh -c",
+  "source": [
+    "intended: docs/decisions.md A5 (defect N-25): the guard denies writes into builds, jitso/jitso.yaml and the hard rules"
+  ],
+  "status": {
+    "ts": "xfail",
+    "go": "pass"
+  },
+  "defect": "N-25",
+  "intent": "INTENDED behavior (defect N-25, owner answer A5). A Bash segment that writes into a protected place is denied: a redirect (>, >>, >|), tee, cp, install, mv, ln, touch, dd, sed -i, perl -i, yq -i and git mv, git checkout, and removing jitso/ itself or anything that holds jitso/jitso.yaml, because deleting that file switches the whole guard off. The program is found through wrappers and sh -c, a cd or pushd moves the base folder of the later operands, and $CLAUDE_PROJECT_DIR is expanded. Reading the same files stays allowed. The TS binary judges only Bash and orca MCP tools, and its Bash rules do not know these writes, so it prints nothing and the decision FAILS on TS.",
+  "for_each": {
+    "var": "command",
+    "values": [
+      "cp /tmp/x jitso/builds/a.yaml",
+      "cp -t jitso/builds /tmp/x",
+      "mv /tmp/x jitso/builds/",
+      "mv jitso/jitso.yaml /tmp/x",
+      "rm jitso/builds/haiku-explorer.yaml",
+      "rm -rf jitso/hard-rules",
+      "rm -rf jitso",
+      "echo x > jitso/jitso.yaml",
+      "echo x>>jitso/hard-rules/core.md",
+      "echo x >| jitso/jitso.yaml",
+      "cat > jitso/builds/x.yaml <<EOF\nid: x\nEOF",
+      "tee -a jitso/builds/x.yaml < /tmp/x",
+      "sed -i s/a/b/ jitso/builds/haiku-explorer.yaml",
+      "cd jitso && mv /tmp/x builds/",
+      "cd jitso/builds && cp /tmp/x .",
+      "install -m 644 /tmp/x {{PROJECT}}/jitso/builds/x.yaml",
+      "ln -s /tmp/x jitso/builds/x.yaml",
+      "ln jitso/jitso.yaml /tmp/j",
+      "touch jitso/builds/x.yaml",
+      "dd if=/tmp/x of=jitso/jitso.yaml",
+      "git mv jitso/builds/a.yaml /tmp/a.yaml",
+      "git checkout HEAD -- jitso/hard-rules",
+      "sh -c 'cp /tmp/x jitso/builds/'",
+      "perl -pi -e s/a/b/ jitso/jitso.yaml",
+      "yq -i .x=1 jitso/builds/a.yaml",
+      "cp /tmp/x $CLAUDE_PROJECT_DIR/jitso/builds/"
+    ]
+  },
+  "steps": [
+    {
+      "hook": "guard",
+      "input": {
+        "hook_event_name": "PreToolUse",
+        "tool_name": "Bash",
+        "tool_input": {
+          "command": "{{command}}"
+        },
+        "cwd": "{{PROJECT}}"
+      },
+      "expect": {
+        "exit": 0,
+        "decision": "deny",
+        "reason": [
+          {
+            "regex": "^JITSO: only the owner changes approved builds, jitso/jitso\\.yaml and the hard rules; draft a build with (bun run jitso|jitso) build draft and ask the owner to save it \\(denied: [A-Za-z -]+ jitso/(builds/|hard-rules/|jitso\\.yaml)?\\)$"
+          }
+        ]
+      }
+    }
+  ]
+}

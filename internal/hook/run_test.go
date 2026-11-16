@@ -175,3 +175,49 @@ func TestRunDispatchGuard(t *testing.T) {
 		})
 	}
 }
+
+// RunGuard wires the write boundary with the real file system: a Write into the
+// catalog, a Bash redirect, a link into it and the removal of jitso/ are denied
+// (defect N-25), a Write elsewhere is not.
+func TestRunGuardWriteBoundary(t *testing.T) {
+	project, home := gitProject(t)
+	if err := os.MkdirAll(filepath.Join(project, "jitso", "builds"), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.Symlink(filepath.Join(project, "jitso", "builds"), filepath.Join(project, "via")); err != nil {
+		t.Fatal(err)
+	}
+	env := map[string]string{"CLAUDE_PROJECT_DIR": project, "HOME": home}
+	write := func(tool, key, path string) string {
+		return `{"tool_name":"` + tool + `","tool_input":{"` + key + `":"` + path + `"},"cwd":"` + project + `"}`
+	}
+	bash := func(command string) string {
+		return `{"tool_name":"Bash","tool_input":{"command":"` + command + `"},"cwd":"` + project + `"}`
+	}
+	tests := []struct{ name, stdin, deny string }{
+		{"write into builds", write("Write", "file_path", project+"/jitso/builds/x.yaml"), "(denied: Write jitso/builds/)"},
+		{"edit jitso.yaml", write("Edit", "file_path", project+"/jitso/jitso.yaml"), "(denied: Edit jitso/jitso.yaml)"},
+		{"notebook into the hard rules", write("NotebookEdit", "notebook_path", project+"/jitso/hard-rules/n.ipynb"), "(denied: NotebookEdit jitso/hard-rules/)"},
+		{"write through a link", write("Write", "file_path", project+"/via/x.yaml"), "(denied: Write jitso/builds/)"},
+		{"a redirect", bash("echo x > jitso/jitso.yaml"), "(denied: redirect jitso/jitso.yaml)"},
+		{"a removal of the anchor", bash("rm -rf jitso"), "(denied: rm jitso/)"},
+		{"a removal of the folder that holds it", bash("rm -rf ."), "(denied: rm jitso/)"},
+		{"a write elsewhere", write("Write", "file_path", project+"/src/x.ts"), ""},
+		{"a harmless removal", bash("rm -rf dist"), ""},
+		{"a read of the catalog", bash("cat jitso/builds/x.yaml"), ""},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := runWith(RunGuard, tt.stdin, env, "/x/jitso")
+			if tt.deny == "" {
+				if got != "" {
+					t.Errorf("want silence, got %q", got)
+				}
+				return
+			}
+			if !strings.Contains(got, `"permissionDecision":"deny"`) || !strings.Contains(got, tt.deny) {
+				t.Errorf("got %q, want a deny containing %q", got, tt.deny)
+			}
+		})
+	}
+}

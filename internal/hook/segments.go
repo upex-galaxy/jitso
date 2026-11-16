@@ -70,6 +70,8 @@ func Segments(command string) []string {
 type Launcher struct {
 	// IsOwn reports whether a word is the path of this very executable.
 	IsOwn func(word string) bool
+	// Bounds is the write boundary. Nil leaves writes unjudged.
+	Bounds *Boundary
 }
 
 // Is reports whether segment is a `<launcher> launch` command: the launcher in
@@ -253,13 +255,28 @@ type Denial struct {
 	Verb string
 	// SaveID is the build id of a denied `jitso build save`.
 	SaveID string
+	// Area is the protected area of a denied write (`jitso/builds/`,
+	// `jitso/hard-rules/`, `jitso/jitso.yaml` or `jitso/`); Verb is then the
+	// tool or the program that writes.
+	Area string
 }
 
 // BashDenial is the denial of the first segment of command that launches an
 // agent outside jitso, runs a harness (claude, codex or opencode) as a program
-// of its own, or runs `jitso build save`, `jitso setup` or `jitso install`
-// (other than a dry run); the zero Denial when none does.
+// of its own, runs `jitso build save`, `jitso setup` or `jitso install`
+// (other than a dry run), or writes into a protected place (Launcher.Bounds);
+// the zero Denial when none does.
 func (l Launcher) BashDenial(command string) Denial {
+	return l.bashDenial(command, "")
+}
+
+// bashDenial is BashDenial for a command that runs in the folder cwd ("" is
+// the session's checkout), which the write boundary reads relative paths from.
+func (l Launcher) bashDenial(command, cwd string) Denial {
+	var writes *BashWrites
+	if l.Bounds != nil {
+		writes = l.Bounds.NewBashWrites(cwd)
+	}
 	for _, segment := range Segments(command) {
 		if id, ok := l.BuildSave(segment); ok {
 			return Denial{Verb: VerbBuildSave, SaveID: id}
@@ -270,8 +287,14 @@ func (l Launcher) BashDenial(command string) Denial {
 		if verb := l.LaunchVerb(segment); verb != "" {
 			return Denial{Verb: verb}
 		}
-		if name, ok := HarnessProgram(strings.Split(segment, " ")); ok {
+		words := strings.Split(segment, " ")
+		if name, ok := HarnessProgram(words); ok {
 			return Denial{Verb: name}
+		}
+		if writes != nil {
+			if d := writes.Segment(words); d.Verb != "" {
+				return d
+			}
 		}
 	}
 	return Denial{}

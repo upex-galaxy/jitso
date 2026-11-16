@@ -9,7 +9,7 @@
     "go": "pass"
   },
   "defect": "N-17",
-  "intent": "INTENDED behavior (defect N-17, setup hook). In a project with no `.claude/settings.json`, `jitso setup hook --yes` writes the canonical file (2-space indent, trailing newline): two JITSO groups under PreToolUse (matchers `Bash` and `mcp__.*orca.*__.*`) and one without matcher under SessionEnd, each with the bare command `jitso hook guard`. stdout prints the preview, `created .claude/settings.json`, a `note:` that the untracked file must be committed, and `jitso setup hook: done`. The bare word is not on the sandbox PATH, so a warning goes to stderr; the write still happens. The oracle has no `setup` command: it answers `unknown command \"setup\"` on stderr with exit 2 and prints nothing on stdout, so every expectation that needs this output or file effect FAILS on it.",
+  "intent": "INTENDED behavior (defect N-17, setup hook). In a project with no `.claude/settings.json`, `jitso setup hook --yes` writes the canonical file (2-space indent, trailing newline): three JITSO groups under PreToolUse (matchers `Bash`, `mcp__.*orca.*__.*` and `Write|Edit|MultiEdit|NotebookEdit`) and one without matcher under SessionEnd, each with the bare command `jitso hook guard`. stdout prints the preview, `created .claude/settings.json`, a `note:` that the untracked file must be committed, and `jitso setup hook: done`. The bare word is not on the sandbox PATH, so a warning goes to stderr; the write still happens. Since N-25 the guard also has a third PreToolUse group, `Write|Edit|MultiEdit|NotebookEdit`. The oracle has no `setup` command: it answers `unknown command \"setup\"` on stderr with exit 2 and prints nothing on stdout, so every expectation that needs this output or file effect FAILS on it.",
   "steps": [
     {
       "run": [
@@ -37,7 +37,7 @@
         "files": [
           {
             "path": ".claude/settings.json",
-            "equals": "{\n  \"hooks\": {\n    \"PreToolUse\": [\n      {\n        \"matcher\": \"Bash\",\n        \"hooks\": [\n          {\n            \"type\": \"command\",\n            \"command\": \"jitso hook guard\"\n          }\n        ]\n      },\n      {\n        \"matcher\": \"mcp__.*orca.*__.*\",\n        \"hooks\": [\n          {\n            \"type\": \"command\",\n            \"command\": \"jitso hook guard\"\n          }\n        ]\n      }\n    ],\n    \"SessionEnd\": [\n      {\n        \"hooks\": [\n          {\n            \"type\": \"command\",\n            \"command\": \"jitso hook guard\"\n          }\n        ]\n      }\n    ]\n  }\n}\n"
+            "equals": "{\n  \"hooks\": {\n    \"PreToolUse\": [\n      {\n        \"matcher\": \"Bash\",\n        \"hooks\": [\n          {\n            \"type\": \"command\",\n            \"command\": \"jitso hook guard\"\n          }\n        ]\n      },\n      {\n        \"matcher\": \"mcp__.*orca.*__.*\",\n        \"hooks\": [\n          {\n            \"type\": \"command\",\n            \"command\": \"jitso hook guard\"\n          }\n        ]\n      },\n      {\n        \"matcher\": \"Write|Edit|MultiEdit|NotebookEdit\",\n        \"hooks\": [\n          {\n            \"type\": \"command\",\n            \"command\": \"jitso hook guard\"\n          }\n        ]\n      }\n    ],\n    \"SessionEnd\": [\n      {\n        \"hooks\": [\n          {\n            \"type\": \"command\",\n            \"command\": \"jitso hook guard\"\n          }\n        ]\n      }\n    ]\n  }\n}\n"
           }
         ],
         "orca_calls": {

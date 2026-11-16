@@ -46,7 +46,7 @@ func (c *projectChecks) hooks() Line {
 
 	var parts []string
 	if st.Registered() {
-		parts = append(parts, "jitso hook guard is registered on PreToolUse (Bash, orca MCP) and SessionEnd in "+settingsRel)
+		parts = append(parts, "jitso hook guard is registered on PreToolUse (Bash, orca MCP, file writes) and SessionEnd in "+settingsRel)
 	} else {
 		parts = append(parts, partial(st)+": run jitso setup hook")
 	}
@@ -65,13 +65,13 @@ func (c *projectChecks) hooks() Line {
 	return Line{OK, "hooks", parts[0]}
 }
 
-// partial says which of the three slots the guard is on.
+// partial says which of the four slots the guard is on.
 func partial(st settingsjson.HookState) string {
 	var have, missing []string
 	for _, s := range []struct {
 		on   bool
 		name string
-	}{{st.Bash, "PreToolUse Bash"}, {st.MCP, "PreToolUse orca MCP"}, {st.SessionEnd, "SessionEnd"}} {
+	}{{st.Bash, "PreToolUse Bash"}, {st.MCP, "PreToolUse orca MCP"}, {st.Write, "PreToolUse file writes"}, {st.SessionEnd, "SessionEnd"}} {
 		if s.on {
 			have = append(have, s.name)
 		} else {
@@ -79,7 +79,7 @@ func partial(st settingsjson.HookState) string {
 		}
 	}
 	if len(have) == 0 {
-		return "jitso hook guard is in " + settingsRel + " but on none of PreToolUse Bash, PreToolUse orca MCP and SessionEnd as a group of its own"
+		return "jitso hook guard is in " + settingsRel + " but on none of PreToolUse Bash, PreToolUse orca MCP, PreToolUse file writes and SessionEnd as a group of its own"
 	}
 	return "registered on " + strings.Join(have, ", ") + " only (missing " + strings.Join(missing, ", ") + ")"
 }

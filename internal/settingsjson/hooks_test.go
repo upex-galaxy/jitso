@@ -27,6 +27,15 @@ const canonical = `{
             "command": "jitso hook guard"
           }
         ]
+      },
+      {
+        "matcher": "Write|Edit|MultiEdit|NotebookEdit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "jitso hook guard"
+          }
+        ]
       }
     ],
     "SessionEnd": [
@@ -93,7 +102,7 @@ func TestRegisterTable(t *testing.T) {
 		{
 			"user keys and groups stay, JITSO groups follow the user's",
 			"{\n  \"$schema\": \"s\",\n  \"hooks\": {\n    \"PreToolUse\": [\n" + user("Bash", "./check.sh") + "\n    ],\n    \"Stop\": [\n" + user("", "./n.sh") + "\n    ]\n  },\n  \"env\": {\n    \"A\": \"1\"\n  }\n}\n",
-			"{\n  \"$schema\": \"s\",\n  \"hooks\": {\n    \"PreToolUse\": [\n" + user("Bash", "./check.sh") + ",\n" + grp("Bash", Command) + ",\n" + grp("mcp__.*orca.*__.*", Command) + "\n    ],\n    \"Stop\": [\n" + user("", "./n.sh") + "\n    ],\n    \"SessionEnd\": [\n" + grp("", Command) + "\n    ]\n  },\n  \"env\": {\n    \"A\": \"1\"\n  }\n}\n",
+			"{\n  \"$schema\": \"s\",\n  \"hooks\": {\n    \"PreToolUse\": [\n" + user("Bash", "./check.sh") + ",\n" + grp("Bash", Command) + ",\n" + grp("mcp__.*orca.*__.*", Command) + ",\n" + grp(MatcherWrite, Command) + "\n    ],\n    \"Stop\": [\n" + user("", "./n.sh") + "\n    ],\n    \"SessionEnd\": [\n" + grp("", Command) + "\n    ]\n  },\n  \"env\": {\n    \"A\": \"1\"\n  }\n}\n",
 		},
 		{
 			"hooks is created at the end of the root",
@@ -103,7 +112,7 @@ func TestRegisterTable(t *testing.T) {
 		{
 			"a legacy absolute command is replaced in place",
 			"{\n  \"hooks\": {\n    \"PreToolUse\": [\n" + grp("Bash", "'/old/place/jitso' hook guard") + "\n    ],\n    \"Stop\": [\n" + user("", "./n.sh") + "\n    ],\n    \"SessionEnd\": [\n" + grp("", "/old/jitso hook guard") + "\n    ]\n  }\n}\n",
-			"{\n  \"hooks\": {\n    \"PreToolUse\": [\n" + grp("Bash", Command) + ",\n" + grp("mcp__.*orca.*__.*", Command) + "\n    ],\n    \"Stop\": [\n" + user("", "./n.sh") + "\n    ],\n    \"SessionEnd\": [\n" + grp("", Command) + "\n    ]\n  }\n}\n",
+			"{\n  \"hooks\": {\n    \"PreToolUse\": [\n" + grp("Bash", Command) + ",\n" + grp("mcp__.*orca.*__.*", Command) + ",\n" + grp(MatcherWrite, Command) + "\n    ],\n    \"Stop\": [\n" + user("", "./n.sh") + "\n    ],\n    \"SessionEnd\": [\n" + grp("", Command) + "\n    ]\n  }\n}\n",
 		},
 		{
 			"duplicate JITSO groups collapse and a user handler beside a JITSO one stays",
@@ -112,7 +121,7 @@ func TestRegisterTable(t *testing.T) {
 				grp("Bash", Command) + ",\n" + grp("Bash", Command) + "\n    ]\n  }\n}\n",
 			"{\n  \"hooks\": {\n    \"PreToolUse\": [\n" +
 				"      {\n        \"matcher\": \"Bash\",\n        \"hooks\": [\n          {\n            \"type\": \"command\",\n            \"command\": \"./a.sh\"\n          }\n        ]\n      },\n" +
-				grp("Bash", Command) + ",\n" + grp("mcp__.*orca.*__.*", Command) + "\n    ],\n    \"SessionEnd\": [\n" + grp("", Command) + "\n    ]\n  }\n}\n",
+				grp("Bash", Command) + ",\n" + grp("mcp__.*orca.*__.*", Command) + ",\n" + grp(MatcherWrite, Command) + "\n    ],\n    \"SessionEnd\": [\n" + grp("", Command) + "\n    ]\n  }\n}\n",
 		},
 		{
 			"a JITSO handler under another event is removed and the event it empties goes",
@@ -161,8 +170,8 @@ func TestRegisterFindsAnAbsoluteCommandItWrote(t *testing.T) {
 	if twice := register(t, once, cmd); twice != once {
 		t.Errorf("not idempotent for a binary with another name:\n%s", twice)
 	}
-	if strings.Count(once, cmd) != 3 {
-		t.Errorf("want 3 handlers with the command:\n%s", once)
+	if strings.Count(once, cmd) != 4 {
+		t.Errorf("want 4 handlers with the command:\n%s", once)
 	}
 }
 
@@ -386,7 +395,7 @@ func TestState(t *testing.T) {
 		want HookState
 	}{
 		{"absent", nil, HookState{}},
-		{"registered", []byte(canonical), HookState{Bash: true, MCP: true, SessionEnd: true, Commands: []string{Command}}},
+		{"registered", []byte(canonical), HookState{Bash: true, MCP: true, Write: true, SessionEnd: true, Commands: []string{Command}}},
 		{
 			"legacy command on the Bash slot only",
 			[]byte("{\n  \"disableAllHooks\": true,\n  \"hooks\": {\n    \"PreToolUse\": [\n" + grp("Bash", "'/x/jitso' hook guard") + "\n    ]\n  }\n}\n"),
