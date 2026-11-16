@@ -78,7 +78,7 @@ The workflow uses no configured secret: `github.token` is the automatic token, s
 | Install script | `sh install.sh v<x>` from the release's own `install.sh`, or `latest` | Installs into `$HOME/.local/bin` unless `JITSO_INSTALL_DIR` says otherwise, never with `sudo`. It checks the SHA-256 of the archive against `checksums.txt` and fails closed when neither `sha256sum` nor `shasum` exists. Pin a tag in documentation. |
 | Homebrew | `brew install upex-galaxy/tap/jitso` | After step 7 of section 4. |
 | `go install` | `go install github.com/upex-galaxy/jitso/cmd/jitso@v<x>` | Needs Go at the `go.mod` language version or newer. Works once the repository is public and the tag is pushed; a private repository needs `GOPRIVATE=github.com/upex-galaxy/*` and git credentials. Such a build reports the tag as its version and `commit unknown`. |
-| Windows | download the zip and `checksums.txt` by hand, check the SHA-256, put `jitso.exe` on `PATH` | See section 7. |
+| Windows (experimental) | download the zip and `checksums.txt` by hand, check the SHA-256, put `jitso.exe` on `PATH` | `launch` and the dispatcher do not run there. See section 7. |
 
 The hook that `jitso setup hook` will register runs the bare word `jitso`, so the install folder has to be on `PATH`; the install script says so when it is not.
 
@@ -94,7 +94,9 @@ Never re-tag, never force-push, never rewrite a pushed history.
 
 ## 7. Windows
 
-The release has zips for `amd64` and `arm64`, marked "not tested" until the owner runs one (`docs/decisions.md`, "Other decisions"). The install script refuses Windows with a message that points to the zip: its job needs `uname`, `tar` and a POSIX shell. `jitso launch` and the dispatcher need `/bin/sh` and do not run on Windows. `jitso version` and the commands that only read files are what a Windows build can be expected to do.
+The release has zips for `amd64` and `arm64`, published marked experimental and not tested until the owner runs one (`docs/decisions.md`, "Other decisions"). The install script refuses Windows with a message that points to the zip: its job needs `uname`, `tar` and a POSIX shell. To install by hand: download the zip for your architecture and `checksums.txt` from the release page, check the SHA-256 of the zip against its line in `checksums.txt` (`certutil -hashfile <zip> SHA256` in a Windows shell), unpack it and put the folder with `jitso.exe` on `PATH`.
+
+`jitso launch` and the dispatcher need `/bin/sh` and do not run on Windows. `jitso version` and the commands that only read files are what a Windows build can be expected to do. `jitso doctor` on Windows prints `warn shell` and `warn dispatcher` (a Windows path has a backslash, which the dispatch guard's launcher rule refuses) and still exits 0 when nothing else fails (defect N-32).
 
 The workflow does not run any Windows job. A `windows-latest` job that runs `jitso.exe version` would cost runner minutes and is the owner's call.
 

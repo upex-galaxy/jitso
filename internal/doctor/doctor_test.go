@@ -140,8 +140,71 @@ func TestCheckDispatcher(t *testing.T) {
 	want(t, checkDispatcher(Ports{GOOS: "linux"}, "/opt/it's/jitso"), Fail, "dispatcher", "cannot allow the path of this binary (/opt/it's/jitso)")
 	want(t, checkDispatcher(Ports{GOOS: "linux"}, "/opt/two  spaces/jitso"), Fail, "dispatcher", "cannot allow")
 	want(t, checkDispatcher(Ports{GOOS: "linux"}, ""), Fail, "dispatcher", "unknown")
-	// The rule is the guard's, whatever the OS: a windows path has a backslash.
-	want(t, checkDispatcher(Ports{GOOS: "windows"}, `C:\jitso\jitso.exe`), Fail, "dispatcher", "cannot allow the path of this binary")
+}
+
+// On windows the dispatcher does not run, so a launcher path the guard's rule
+// refuses (a backslash) is a warning that exits 0, not a failure (defect N-32).
+// The rule itself is the guard's, whatever the OS.
+func TestCheckDispatcherOnWindows(t *testing.T) {
+	const bad = `C:\Users\x\jitso.exe`
+	cases := []struct {
+		goos   string
+		self   string
+		status Status
+		detail string
+	}{
+		{"windows", bad, Warn, "cannot allow the path of this binary (" + bad + ")"},
+		{"windows", bad, Warn, "launch and the dispatcher do not run on windows, so this is not a failure"},
+		{"windows", "C:/Users/x/jitso.exe", OK, "can allow this launcher path"},
+		{"windows", "", Fail, "unknown"},
+		{"linux", bad, Fail, "cannot allow the path of this binary (" + bad + ")"},
+		{"darwin", bad, Fail, "cannot allow the path of this binary (" + bad + ")"},
+		{"linux", "/opt/jitso/bin/jitso", OK, "can allow this launcher path"},
+	}
+	for _, c := range cases {
+		got := checkDispatcher(Ports{GOOS: c.goos}, c.self)
+		want(t, got, c.status, "dispatcher", c.detail)
+		if c.goos != "windows" && strings.Contains(got.Detail, "windows") {
+			t.Errorf("%s says windows: %q", c.goos, got.Detail)
+		}
+	}
+	// Exit code: the command exits 3 only when Counts reports a failure.
+	if _, warn, failed := Counts([]Line{checkDispatcher(Ports{GOOS: "windows"}, bad)}); failed != 0 || warn != 1 {
+		t.Errorf("windows: warn %d fail %d, want 1 and 0", warn, failed)
+	}
+	if _, _, failed := Counts([]Line{checkDispatcher(Ports{GOOS: "linux"}, bad)}); failed != 1 {
+		t.Errorf("linux: fail %d, want 1", failed)
+	}
+}
+
+// A whole windows run with a backslash executable path fails only where
+// another check fails (here the project, outside git), never on the dispatcher.
+func TestRunOnWindowsDispatcherIsAWarning(t *testing.T) {
+	home := t.TempDir()
+	// A real file whose name has a backslash stands in for jitso.exe: the
+	// binary check resolves the path, and a backslash is legal in a posix name.
+	exe := filepath.Join(home, `x\jitso.exe`)
+	if err := os.WriteFile(exe, nil, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	run := &script{answers: map[string]Result{"git --version": {Stdout: "git version 2\n"}, "/bin/claude --version": {}}}
+	lines := Run(Ports{
+		GOOS: "windows", Version: "dev", Home: home,
+		Executable: func() (string, error) { return exe, nil },
+		LookPath:   lookup(map[string]string{"git": "/usr/bin/git", "claude": "/bin/claude", "orca": "/bin/orca"}),
+		Run:        run.run,
+		Resolve: func() (project.Root, error) {
+			return project.Root{}, fail.Envf("%s is not inside a git checkout", home)
+		},
+	})
+	for _, l := range lines {
+		switch {
+		case l.Check == "dispatcher" && l.Status != Warn:
+			t.Errorf("dispatcher is %s, want warn: %s", l.Status, l)
+		case l.Status == Fail && l.Check != "project":
+			t.Errorf("unexpected failure: %s", l)
+		}
+	}
 }
 
 func TestCheckOrca(t *testing.T) {
