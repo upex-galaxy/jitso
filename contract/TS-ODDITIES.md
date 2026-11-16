@@ -42,7 +42,7 @@ Legend: **keep** = intended, port it as is. **fix** = change the case and the po
 
 | # | Behavior | Proposal |
 |---|---|---|
-| C1 | `tree` and `presets` (without `list`) print "not implemented yet" and exit 0 | fix: exit 2 until implemented, or implement `tree`. The `presets` half is settled by N-10: `presets` is an unknown command, and `jitso build` alone exits 2 with the build usage (`cli/presets-is-unknown`, `build/usage`). `tree` is unchanged **DONE (N-10)** for the `presets` half; DECIDED (owner, 2026-11-15): fix (reserved defect N-30) for the `tree` half, **OPEN (fix, not done)**: `tree` still prints "not implemented yet" and exits 0 (`cli/tree-not-implemented`). |
+| C1 | `tree` and `presets` (without `list`) print "not implemented yet" and exit 0 | fix: exit 2 until implemented, or implement `tree`. The `presets` half is settled by N-10: `presets` is an unknown command, and `jitso build` alone exits 2 with the build usage (`cli/presets-is-unknown`, `build/usage`). `tree` is unchanged **DONE (N-10)** for the `presets` half; DECIDED (owner, 2026-11-15): fix (reserved defect N-30) for the `tree` half, **DONE (N-30)**: `tree` is implemented from the oracle's own rollups (`tree/*`; the former `cli/tree-not-implemented` became `tree/arguments`). |
 | C2 | An empty first argument is an unknown command, not the usage | keep |
 | C3 | A broken preset file: `launch` exits 3, but `presets list` crashes uncaught (exit 1, not pinned). The command is `build list` since N-10, and a broken build file there gives the same handled error as `launch` (exit 3) | fix: same handled error in both **DONE (N-10)**: `build list` loads the catalog the way `launch` does, so a broken build file gives the same handled error (exit 3); no case pins `build list` on its own. |
 | C4 | Outside a git checkout the TS binary still works, because it finds its project from the script folder (`project/outside-git`, xfail N-1) | fix: project = git primary checkout of the cwd, exit 3 outside one **DONE (N-1)** |
@@ -76,4 +76,4 @@ Legend: **keep** = intended, port it as is. **fix** = change the case and the po
 
 ## Known defects (xfail on `ts`, see PLAN.md)
 
-S1 to S3 and N-1 to N-29: `README.md` lists every one with its cases and the intended behavior, and is the place to read them. Of the rows above, L1, L2, L3, L6, L7, L8, L10, L11, B1, R1, R3, R4, R6, R7, R10, C4, H5 and the settled halves of C1, H2 and H3 are defects there.
+S1 to S3 and N-1 to N-30: `README.md` lists every one with its cases and the intended behavior, and is the place to read them. Of the rows above, L1, L2, L3, L6, L7, L8, L10, L11, B1, R1, R3, R4, R6, R7, R10, C4, H5 and the settled halves of C1, H2 and H3 are defects there.

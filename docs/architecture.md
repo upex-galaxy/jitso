@@ -38,6 +38,7 @@ What the CLI does, split by responsibility. "Pure" means no file, process, clock
 | Close | `close.ts` | none worth isolating | Orca, registry, footer file | `internal/closeout` |
 | Reap | `reap.ts` | worker matching (handle or `[jitso:<id>]` mark), evidence de-duplication | Orca, registry | `internal/reap` |
 | Analyze | `analyze.ts` | transcript scan, prices, verdict, budget percentage | streamed transcript read, `prices.json`, registry | `internal/analyze` |
+| Tree | `tree.ts` (`buildTree`) | the nesting by parent, the branch rollups and the line text (N-30); the oracle wires none of it to a command | none (the command reads the registry) | `internal/tree`, `internal/cli` |
 | Dispatcher | `dispatch.ts`, `jitso/dispatcher/prompt.md` | prompt rendering, catalog summary, the `claude` argv | spawns `claude` with the terminal inherited | `internal/dispatch` |
 | Guard hook | `.agents/hooks/jitso-guard.mjs` | Bash segment splitting, launch-verb detection, orca-bridge tool rules | `jitso/jitso.yaml` probe; SessionEnd appends to the registry | `internal/hook` |
 | Dispatch guard hook | `.agents/hooks/jitso-dispatch-guard.mjs` | the one allowed launcher line, the brief write rule | `lstat`, real paths, own executable path | `internal/hook` |
@@ -70,7 +71,7 @@ internal/<package>/        everything else
 | Command layer | `cli`: command table, usage, error kinds and exit codes, one `cmd_<name>.go` per command (and per subcommand of the groups `build`, `install` and `setup`), the shared flag parser (`flags.go`) and the sub-command group helper (`group.go`) |
 | Project and catalog | `project` (primary checkout, state and dispatcher folders, own executable identity), `catalog` (load, validate and scan builds in layers, the user config; `decode.go` is the only file that names the YAML decoder, section 8), `profile` (request plus catalog to profile or rejection, pure), `drafts` (the drafts folder and the save of a draft as a build) |
 | Launch | `launch` (argument parsing, plan, execute), `brief` (brief checks and the path guard), `card` (card text and the `ROUTE-SCOPE` line), `shell` (quoting, `run.sh` text, launcher field patterns), `harness` (the `Adapter` interface and launch spec types) with `harness/claude` (the Claude Code adapter), `trust` (trusted-folder check and dialog state machine), `rules` (the shipped hard-rules core and style) |
-| Lifecycle | `orca` (client over an injectable runner), `registry` (events, validation, fold, file store with a `mkdir` lock), `closeout` (`jitso close`), `reap`, `analyze` |
+| Lifecycle | `orca` (client over an injectable runner), `registry` (events, validation, fold, file store with a `mkdir` lock), `closeout` (`jitso close`), `reap`, `analyze`, `tree` (`jitso tree`, pure) |
 | Dispatcher and hooks | `dispatch` (the interactive dispatcher), `hook` (guard, dispatch guard, SessionEnd) |
 | Authoring | `templates` (the embedded build templates and the `jitso/jitso.yaml` skeleton) |
 | Adoption | `adopt` (the shared core: plan, diff, confirmation, backups, apply), `settingsjson` (the order-preserving settings edit), `instructions` (the delimited block), `skill` (the embedded usage skill, its manifest and install plan), `tty` (is a file a terminal; `tty_darwin.go`, `tty_linux.go`, `tty_other.go`) |
@@ -173,6 +174,7 @@ The launch line also ends with `--worktree {{WORKTREE}}` (N-23): `dispatch.Build
 | R6 (N-28) | `analyze.ParseArgs` returns a `Request`; `cmd_analyze.go` parses, then resolves the project, then `analyze.Run` loads the prices. `reap` builds a `Request` for its own analysis | `internal/analyze`, `internal/cli` |
 | R7 (N-28) | `pathTools` maps a tool name to the input keys that name its file: the read tools as before, `Write`, `Edit` and `MultiEdit` by `file_path`, `NotebookEdit` by `notebook_path`; the counter keeps the name `secret_path_reads` | `internal/analyze` (`secret.go`) |
 | R10 (N-28) | `budgetBreaks` gives the evidence of each exceeded limit; `byID` appends one `budget_over` rule break per limit not already in the log, lists them in `rule_breaks`, and `verdictOf` returns `fail` for a launch over budget | `internal/analyze` (`run.go`) |
+| C1, tree half (N-30) | `tree.Build(launches, root)` nests the folded launches by parent (roots: no parent or a parent not in the log, in registry order; a launch a cycle hides is added as a root; none printed twice) and sums the branch into `Metrics`; `tree.Lines` renders one line per node in preorder. `cmd_tree.go` checks the arguments, resolves the project, reads the registry and prints; no write, no Orca call | `internal/tree`, `internal/cli` (`cmd_tree.go`) |
 
 ### S1 `route_scope`
 
@@ -261,7 +263,7 @@ Every milestone ended with the runner against the built binary: `<runner> --impl
 The `--filter` value that proves each milestone (milestone 0 runs the whole suite with `--impl ts` and expects 0 FAIL, 0 XPASS and exactly the planned `XFAIL` set; milestone 8 runs with no filter on both implementations). The ids are the current ones, after the rename of defect N-10:
 
 ```
-1  ^(smoke/help|cli/(help-flags|no-arguments|unknown-command|unknown-command-empty-word|tree-not-implemented|presets-is-unknown))
+1  ^(smoke/help|cli/(help-flags|no-arguments|unknown-command|unknown-command-empty-word|presets-is-unknown))
 2  ^(build/list|project/(linked-worktree|outside-git)/build-list)
 3  ^(validation/|brief/|card/|cli/reject-wiring/|smoke/launch-dry-run|project/subfolder-launch-dry-run|project/outside-git/launch|project/dispatcher-handoff/|defects/s1[ab])
 4  ^(launch|argv|escape|registry|defects|project)/
@@ -298,6 +300,7 @@ Each block after milestone 8 is its own contract change, cases first, run agains
 | Launch arguments: `.mcp.json` only when needed, exclusion warning, blank script, `launch --help`, `--` values | N-26 | `launch`, `card`, `hook`, `cli` | `^(launch/mcp-json/\|card/(mcp-exclude\|launch-line)/\|validation/\|hooks/guard/blank-jitso-script)` |
 | Brief word count | N-27 | `brief` | `^brief/` |
 | Close, reap and analyze rows: close order, reap without a handle, unlogged workers once, analyze arguments first, secret writes, `budget_over` | N-28 | `closeout`, `reap`, `analyze`, `cli` | `^(close\|reap\|analyze)/` |
+| `jitso tree` | N-30 | `tree`, `cli` | `^(tree/\|cli/\|smoke/help)` |
 | Release files: packaging, install script, workflow, formula template | none (no case) | `scripts/`, `.github/`, `packaging/` | `scripts/test-install.sh` (offline), and the steps of `docs/release.md` section 3 |
 
 The pipes inside the table are escaped for Markdown; the filter is the text without the backslashes.

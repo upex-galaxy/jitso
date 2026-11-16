@@ -62,10 +62,18 @@ Things to know:
 
 When the guard hook is registered (the owner runs `jitso setup hook`), the hook's SessionEnd entry writes the `end` event of the closing session's launch with source `session_end_hook`. A registry problem there is swallowed so a session can always close.
 
+## `jitso tree [<launch id>]`
+
+Prints the launch tree from the log, read only (no write, no Orca call): one line per launch, parents first, children indented two spaces. Each line carries the rollups of that launch's branch, the launch and everything under it: list cost and tokens are summed, peak context and budget percentage are the largest of the nodes, rule breaks are counted, and the verdict is the worst of the analyzed launches (`fail`, then `unknown`, then `success`), or `pending` when none of them is analyzed yet. A launch with no `analyzed` line adds zeros. A launch whose parent is not in the log is a root. With a launch id it prints only that launch's branch. Measured on a hand-made log:
+
+```
+L20261113T140000-0001 sonnet-tester running: verdict fail, US$ 7.5 list, 7781 tokens, peak 300, budget 120%, 3 rule break(s), 4 of 4 analyzed
+  L20261113T140000-000a sonnet-tester running: verdict unknown, US$ 2.5 list, 2226 tokens, peak 300, budget 120%, 1 rule break(s), 2 of 2 analyzed
+    L20261113T140000-000c sonnet-tester running: verdict success, US$ 0.5 list, 4 tokens, peak 80, budget 32%, 0 rule break(s), 1 of 1 analyzed
+```
+
+With nothing in the log it prints `jitso tree: no launches`. An id that is not in the log is `JITSO REJECTED: unknown launch <id>`, and more than one argument, or one that is not a launch id, is `JITSO REJECTED: usage: jitso tree [<launch_id>]`. The cost and the numbers come from `analyze`, so run it (or `reap`) first.
+
 ## What to report to a human after a fleet
 
 State, from the log and the reports: which launches ran, which ended and how, what `reap` flagged, the verdict and list cost per launch if `analyze` ran, and what is still open. Name what you did not verify.
-
-## Not available
-
-`jitso tree` is in the usage but answers `jitso tree: not implemented yet` with exit 0. Do not rely on it.

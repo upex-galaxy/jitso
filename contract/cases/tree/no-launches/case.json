@@ -1,0 +1,64 @@
+{
+  "id": "tree/no-launches",
+  "title": "with no launch in the log (no registry, or one with no valid line) tree prints one line and exits 0",
+  "source": [
+    "intended: TS-ODDITIES C1 (defect N-30); the rollups are the oracle's own (cli/jitso/tree.ts buildTree, tree.test.ts), which it never wired to a command"
+  ],
+  "status": {
+    "ts": "xfail",
+    "go": "pass"
+  },
+  "defect": "N-30",
+  "intent": "INTENDED behavior (TS-ODDITIES C1, tree half, defect N-30). `jitso tree [<launch_id>]` prints the launch tree, one line per launch in preorder, indented two spaces per depth: `<id> <build> <state>: verdict <verdict>, US$ <cost> list, <tokens> tokens, peak <peak>, budget <pct>%, <k> rule break(s), <a> of <n> analyzed`, with the rollups of the launch's branch (cost and tokens summed, peak context and budget percentage the maximum, rule breaks counted, the worst verdict of the analyzed launches or `pending`). With nothing to print it prints `jitso tree: no launches` and exits 0, whether the registry is missing or holds only lines that are not valid events. The oracle answers `jitso tree: not implemented yet` with exit 0 for every argument, so the stdout expectation FAILS on TS.",
+  "steps": [
+    {
+      "run": [
+        "tree"
+      ],
+      "expect": {
+        "exit": 0,
+        "stdout": [
+          {
+            "equals": "jitso tree: no launches\n"
+          }
+        ],
+        "stderr": [
+          {
+            "empty": true
+          }
+        ],
+        "orca_calls": {
+          "empty": true
+        }
+      }
+    },
+    {
+      "write": {
+        "project": {
+          ".jitso/launches.jsonl": "{ this is not json\n"
+        }
+      }
+    },
+    {
+      "run": [
+        "tree"
+      ],
+      "expect": {
+        "exit": 0,
+        "stdout": [
+          {
+            "equals": "jitso tree: no launches\n"
+          }
+        ],
+        "stderr": [
+          {
+            "empty": true
+          }
+        ],
+        "orca_calls": {
+          "empty": true
+        }
+      }
+    }
+  ]
+}

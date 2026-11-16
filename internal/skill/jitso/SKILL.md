@@ -48,6 +48,7 @@ Headings `Goal`, `Scope`, `Done when`, `Report format`. English. Within the word
 - `jitso close <launch id>` saves the screen footer, writes the end event and closes that terminal.
 - `jitso reap` ends launches whose terminal is gone, flags workers no launch explains and analyzes ended launches that have a transcript.
 - `jitso analyze <launch id>` reads the transcript and writes turns, tokens, list cost and a verdict. It needs `jitso/prices.json`.
+- `jitso tree [<launch id>]` prints the launch tree with the rollups of each branch (read only).
 - When a session ends, the SessionEnd hook writes its end event too. Details: `references/lifecycle.md`.
 
 ## Builds and drafts
