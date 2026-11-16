@@ -9,7 +9,7 @@ A brief is the whole job description of a worker. The worker has none of your co
 | Check | Passes when |
 |---|---|
 | `sections` | the text has a heading line for each of `Goal`, `Scope`, `Done when` and `Report format`. Any heading level, any case, an optional trailing colon, nothing else on the line |
-| `length` | the word count is inside the limits the rejection prints |
+| `length` | the word count is inside the limits the rejection prints. A word is a run of characters between spaces that holds a letter: `` `src/sync.ts` `` and `don't` are one word each, a number such as `3.14` is none, and the heading lines (`## Goal` and the like) are not counted |
 | `language` | the text reads as English. The check counts common English and Spanish words, so a short brief of identifiers and paths can fail it. `--brief-language es` or `any` skips it, only for a project that works in another language |
 | `paths` | every backticked token that looks like a path exists |
 

@@ -166,6 +166,7 @@ The launch line also ends with `--worktree {{WORKTREE}}` (N-23): `dispatch.Build
 | L8 (N-4) | `direct` and `fleet` are the only mode values: `launch --mode` rejects anything else (exit 2, `--mode must be direct or fleet`) and the registry validator treats a line with another mode as invalid, so readers skip it. No alias table exists anywhere | `internal/launch`, `internal/registry` |
 | L10 (N-26) | `runLaunch` prints the `launchUsage` constant on stdout and returns when the first word after `launch` is `--help` or `-h`, before `launch.Parse`, so no project, catalog or Orca is needed. Any other position leaves the word to `Parse` as an unknown argument. `close`, `reap`, `analyze` and `tree` have no help screen | `internal/cli` (`cmd_launch.go`) |
 | L11 (N-26) | in `launch.Parse` a value flag whose next word starts with `--`, or that is last, is `--<flag> needs a value`; a value that starts with a single `-` is taken | `internal/launch` (`args.go`) |
+| B1 (N-27) | the pure `countWords(text)` of `internal/brief`: the text is split on newlines, a line that starts with one to six `#` not followed by another `#` adds nothing, and every other whitespace-separated token that holds a letter is one word. `Check` uses it for `length` only; `language` keeps the letter runs of the whole lowered text | `internal/brief` (`check.go`) |
 
 ### S1 `route_scope`
 
@@ -289,6 +290,7 @@ Each block after milestone 8 is its own contract change, cases first, run agains
 | `doctor` | N-20 | `doctor`, `cli` | `^(doctor/\|cli/usage/)` |
 | `version` | N-21 | `version`, `cli` | `^cli/(version/\|usage/)` |
 | Launch arguments: `.mcp.json` only when needed, exclusion warning, blank script, `launch --help`, `--` values | N-26 | `launch`, `card`, `hook`, `cli` | `^(launch/mcp-json/\|card/(mcp-exclude\|launch-line)/\|validation/\|hooks/guard/blank-jitso-script)` |
+| Brief word count | N-27 | `brief` | `^brief/` |
 | Release files: packaging, install script, workflow, formula template | none (no case) | `scripts/`, `.github/`, `packaging/` | `scripts/test-install.sh` (offline), and the steps of `docs/release.md` section 3 |
 
 The pipes inside the table are escaped for Markdown; the filter is the text without the backslashes.

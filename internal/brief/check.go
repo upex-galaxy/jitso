@@ -51,6 +51,9 @@ const jsSpace = `[\t\n\v\f\r \x{a0}\x{1680}\x{2000}-\x{200a}\x{2028}\x{2029}\x{2
 
 var (
 	letters      = regexp.MustCompile(`\p{L}+`)
+	wordSpace    = regexp.MustCompile(jsSpace + `+`)
+	hasLetter    = regexp.MustCompile(`\p{L}`)
+	headingLine  = regexp.MustCompile(`^#{1,6}(?:[^#]|$)`)
 	backticked   = regexp.MustCompile("`([^`" + jsSpace[1:len(jsSpace)-1] + "]+)`")
 	urlScheme    = regexp.MustCompile(`^[A-Za-z]+://`)
 	homeOrVar    = regexp.MustCompile(`^[~$]`)
@@ -81,10 +84,12 @@ func Check(text, language string, exists func(path string) bool) []Failure {
 		failures = append(failures, Failure{CheckSections, "missing section: " + strings.Join(missing, ", ")})
 	}
 
-	words := letters.FindAllString(strings.ToLower(text), -1)
-	if n := len(words); n < MinWords || n > MaxWords {
+	// The length check counts words (TS-ODDITIES B1, defect N-27); the
+	// language check keeps its letter runs of the whole lowered text.
+	if n := countWords(text); n < MinWords || n > MaxWords {
 		failures = append(failures, Failure{CheckLength, strconv.Itoa(n) + " words, expected " + strconv.Itoa(MinWords) + " to " + strconv.Itoa(MaxWords)})
 	}
+	words := letters.FindAllString(strings.ToLower(text), -1)
 
 	if language == LanguageEnglish && len(words) > 0 {
 		en, es := 0, 0
@@ -113,6 +118,26 @@ func Check(text, language string, exists func(path string) bool) []Failure {
 		failures = append(failures, Failure{CheckPaths, "cited path does not exist: " + strings.Join(ghosts, ", ")})
 	}
 	return failures
+}
+
+// countWords is the length of a brief in words. A word is a maximal run of
+// characters that are not JavaScript whitespace and that holds at least one
+// letter, so `src/sync.ts` and `don't` are one word each and `3.14`, `(7)` and
+// a mid-line `#9` are none. A heading line (one to six # at the start of the
+// line, as the section patterns read it) adds nothing.
+func countWords(text string) int {
+	n := 0
+	for _, line := range strings.Split(text, "\n") {
+		if headingLine.MatchString(line) {
+			continue
+		}
+		for _, token := range wordSpace.Split(line, -1) {
+			if hasLetter.MatchString(token) {
+				n++
+			}
+		}
+	}
+	return n
 }
 
 // Reason is the rejection text for failures:

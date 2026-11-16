@@ -2,8 +2,15 @@
   "id": "brief/length/boundary-801",
   "title": "a brief of exactly 801 words is rejected with the exact count",
   "source": [
-    "cli/jitso/brief.test.ts: 'fails a brief under 40 words and one over 800' (boundary)"
+    "cli/jitso/brief.test.ts: 'fails a brief under 40 words and one over 800' (boundary)",
+    "intended: TS-ODDITIES B1 (defect N-27)"
   ],
+  "status": {
+    "ts": "xfail",
+    "go": "pass"
+  },
+  "defect": "N-27",
+  "intent": "INTENDED behavior (TS-ODDITIES B1, defect N-27). The length check counts words: whitespace-separated tokens that hold a letter, and the four heading lines of the brief add nothing. The brief ends with a line of six filler words so that the pinned count is true under the new rule. The count is 801 and the rejection says `801 words`. The oracle counts 807 and says `807 words`, so the stderr expectation FAILS on TS.",
   "project": {
     "files": {
       ".jitso/briefs/brief.md": {

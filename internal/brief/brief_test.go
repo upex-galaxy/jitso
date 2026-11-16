@@ -46,7 +46,7 @@ func TestCheck(t *testing.T) {
 		{"long s is not s", strings.Replace(good, "## Scope", "## ſcope", 1), LanguageEnglish, all,
 			[]Failure{{CheckSections, "missing section: Scope"}}},
 		{"too short", "## Goal\n## Scope\n## Done when\n## Report format\nthe a an of to and\n", LanguageEnglish, all,
-			[]Failure{{CheckLength, "12 words, expected 40 to 800"}}},
+			[]Failure{{CheckLength, "6 words, expected 40 to 800"}}},
 		{"spanish rejected in en", spanishBrief, LanguageEnglish, all, []Failure{{CheckLanguage, "the brief must be written in English"}}},
 		{"spanish accepted in es", spanishBrief, LanguageSpanish, all, nil},
 		{"any skips language only", spanishBrief + "`x/ghost`\n", LanguageAny, all, []Failure{{CheckPaths, "cited path does not exist: x/ghost"}}},
@@ -64,6 +64,63 @@ const spanishBrief = "## Goal\n\nEncuentra el punto de entrada de la sincronizac
 	"## Scope\n\nSolo lectura. Mira el archivo y la guía, y nada fuera del repositorio. No cambies ningún archivo de la carpeta.\n\n" +
 	"## Done when\n\nPuedes nombrar el archivo y la línea que define el punto de entrada, y lo comprobaste leyendo el archivo.\n\n" +
 	"## Report format\n\nUn párrafo corto con la ruta, el número de línea y un resumen de una línea de lo que hace.\n"
+
+func TestCountWords(t *testing.T) {
+	tests := []struct {
+		name string
+		text string
+		want int
+	}{
+		{"empty", "", 0},
+		{"plain words", "one two  three\tfour\nfive", 5},
+		{"a cited path is one word", "`src/sync.ts`", 1},
+		{"a path with underscores and dashes", "foo/bar-baz_qux", 1},
+		{"a contraction", "don't", 1},
+		{"an abbreviation", "e.g.", 1},
+		{"accented letters", "na\u00efve se\u00f1al", 2},
+		{"numbers are not words", "3.14 (7) 2026-11-15", 0},
+		{"a number with a letter is a word", "v2 3x", 2},
+		{"a mid-line hash is not a heading", "see #9 and #Goal", 3},
+		{"a heading line adds nothing", "# Done when\nreal words here", 3},
+		{"a heading without a space", "#Goal\ntwo words", 2},
+		{"every heading depth up to six", "# a\n## b\n### c\n#### d\n##### e\n###### f\nx", 1},
+		{"seven hashes are not a heading", "####### Goal", 1},
+		{"an empty heading line", "#\none", 1},
+		{"a heading with CRLF", "# Goal\r\nfind it\r\n", 2},
+		{"an indented hash is not a heading, and a lone # is no word", "  # Goal", 1},
+		{"a no-break space separates", "one\u00a0two", 2},
+		{"a zero width space does not", "one\u200btwo", 1},
+		{"a punctuation-only token", "- * -- ... | one", 1},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := countWords(tt.text); got != tt.want {
+				t.Errorf("countWords(%q) = %d, want %d", tt.text, got, tt.want)
+			}
+		})
+	}
+}
+
+// TestCheckCountsWordsNotTokens pins TS-ODDITIES B1 (defect N-27): the length
+// check reads words, while the language check keeps its letter runs.
+func TestCheckCountsWordsNotTokens(t *testing.T) {
+	all := existing("src/sync.ts", "docs/guide.md")
+	if got := countWords(good); got < MinWords || got > MaxWords {
+		t.Fatalf("the good brief has %d words", got)
+	}
+	// Four headings and 39 plain words, two of them cited paths.
+	body := "## Goal\nFind the sync entry point in `src/sync.ts` and then read `docs/guide.md` for context.\n" +
+		"## Scope\nRead only. Do not change any file.\n" +
+		"## Done when\nThe file is named and the answer is one short line for the reader.\n" +
+		"## Report format\nOne line with the path.\n"
+	want := []Failure{{CheckLength, "39 words, expected 40 to 800"}}
+	if got := Check(body, LanguageEnglish, all); !reflect.DeepEqual(got, want) {
+		t.Errorf("39 words: got %v", got)
+	}
+	if got := Check(body+"more\n", LanguageEnglish, all); got != nil {
+		t.Errorf("40 words: got %v", got)
+	}
+}
 
 func TestReason(t *testing.T) {
 	got := Reason([]Failure{{CheckSections, "missing section: Goal"}, {CheckPaths, "cited path does not exist: a/b"}})

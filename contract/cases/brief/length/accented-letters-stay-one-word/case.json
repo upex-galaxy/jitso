@@ -2,8 +2,15 @@
   "id": "brief/length/accented-letters-stay-one-word",
   "title": "a word with an accented letter counts once: 38 plain words plus 'señal' is 39 words, too short",
   "source": [
-    "cli/jitso/brief.test.ts: words() = text.toLowerCase().match(/\\\\p{L}+/gu)"
+    "cli/jitso/brief.test.ts: words() = text.toLowerCase().match(/\\\\p{L}+/gu)",
+    "intended: TS-ODDITIES B1 (defect N-27)"
   ],
+  "status": {
+    "ts": "xfail",
+    "go": "pass"
+  },
+  "defect": "N-27",
+  "intent": "INTENDED behavior (TS-ODDITIES B1, defect N-27). The length check counts words: whitespace-separated tokens that hold a letter, and the four heading lines of the brief add nothing. The brief ends with a line of six filler words so that the pinned count is true under the new rule. The count is 39 with the accented word counted once. The oracle counts 45, so the stderr expectation FAILS on TS.",
   "project": {
     "files": {
       ".jitso/briefs/brief.md": {

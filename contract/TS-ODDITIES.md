@@ -33,9 +33,9 @@ Legend: **keep** = intended, port it as is. **fix** = change the case and the po
 
 | # | Behavior | Proposal |
 |---|---|---|
-| B1 | The word count includes headings, and a cited path splits on punctuation (`src/sync.ts` counts as 3) | DECIDED (owner, 2026-11-15): fix (reserved defect N-27): count words, not tokens, so headings and cited paths that split on punctuation no longer inflate the count **OPEN (fix, not done)** |
+| B1 | The word count includes headings, and a cited path splits on punctuation (`src/sync.ts` counts as 3) | DECIDED (owner, 2026-11-15): fix (reserved defect N-27): count words, not tokens, so headings and cited paths that split on punctuation no longer inflate the count **DONE (N-27)**: a word is a whitespace-separated token that holds a letter, and heading lines (one to six `#` at the start of the line) are not counted. |
 | B2 | `Output to:` does not exempt a path; only `Output:`, `Outputs:`, `Create:`, `Creates:` do | keep |
-| B3 | The `ticket_keys` check exists in code but the CLI never passes a request, so it is unreachable | DECIDED (owner, 2026-11-15): fix (reserved defect N-27): either wire it to a flag or drop it **OPEN (fix, not done)** |
+| B3 | The `ticket_keys` check exists in code but the CLI never passes a request, so it is unreachable | DECIDED (owner, 2026-11-15): fix (reserved defect N-27): either wire it to a flag or drop it **DONE (N-27)**: dropped. The Go port has no `ticket_keys` check and gets none (an unreachable check has no observable behavior, so no case). The ticket key already travels as `--field ticket_key=...`, validated by the build's `requires`. |
 | B4 | Failure order is sections, length, language, paths (all reported together) | keep |
 
 ## CLI surface
@@ -76,4 +76,4 @@ Legend: **keep** = intended, port it as is. **fix** = change the case and the po
 
 ## Known defects (xfail on `ts`, see PLAN.md)
 
-S1 to S3 and N-1 to N-29: `README.md` lists every one with its cases and the intended behavior, and is the place to read them. Of the rows above, L1, L2, L3, L6, L7, L8, L10, L11, C4, H5 and the settled halves of C1, H2 and H3 are defects there.
+S1 to S3 and N-1 to N-29: `README.md` lists every one with its cases and the intended behavior, and is the place to read them. Of the rows above, L1, L2, L3, L6, L7, L8, L10, L11, B1, C4, H5 and the settled halves of C1, H2 and H3 are defects there.
