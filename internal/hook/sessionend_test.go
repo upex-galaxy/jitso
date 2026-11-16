@@ -3,13 +3,14 @@ package hook
 import (
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 	"time"
 
 	"github.com/upex-galaxy/jitso/internal/registry"
 )
 
-const launchLine = `{"v":1,"event":"launch","id":"L20261113T142233-a3f9","ts":"2026-11-13T14:22:33.000Z","session_id":"sess-1"}`
+const launchLine = `{"v":2,"event":"launch","id":"L20261113T142233-a3f9","ts":"2026-11-13T14:22:33.000Z","session_id":"sess-1"}`
 
 func TestEndedBy(t *testing.T) {
 	now := time.Date(2026, 11, 13, 14, 30, 0, 0, time.UTC)
@@ -22,14 +23,19 @@ func TestEndedBy(t *testing.T) {
 		{"corrupt line is skipped", launchLine + "\nnot json\n", "sess-1", "L20261113T142233-a3f9", 447},
 		{"unknown session", launchLine + "\n", "nobody", "", 0},
 		{"empty session", launchLine + "\n", "", "", 0},
-		{"already ended by anything", launchLine + "\n" + `{"v":1,"event":"end","id":"L20261113T142233-a3f9","source":"cli"}` + "\n", "sess-1", "", 0},
-		{"another launch ended", launchLine + "\n" + `{"v":1,"event":"end","id":"L20261113T142233-b4a0"}` + "\n", "sess-1", "L20261113T142233-a3f9", 447},
-		{"last launch of the session wins", launchLine + "\n" + `{"v":1,"event":"launch","id":"L20261113T142233-b4a0","ts":"2026-11-13T14:29:00.000Z","session_id":"sess-1"}` + "\n", "sess-1", "L20261113T142233-b4a0", 60},
-		{"unreadable ts", `{"event":"launch","id":"L20261113T142233-a3f9","ts":"x","session_id":"sess-1"}` + "\n", "sess-1", "L20261113T142233-a3f9", 0},
-		{"launch in the future", `{"event":"launch","id":"L20261113T142233-a3f9","ts":"2026-11-13T15:00:00.000Z","session_id":"sess-1"}` + "\n", "sess-1", "L20261113T142233-a3f9", 0},
+		{"already ended by anything", launchLine + "\n" + `{"v":2,"event":"end","id":"L20261113T142233-a3f9","source":"cli"}` + "\n", "sess-1", "", 0},
+		{"another launch ended", launchLine + "\n" + `{"v":2,"event":"end","id":"L20261113T142233-b4a0"}` + "\n", "sess-1", "L20261113T142233-a3f9", 447},
+		{"last launch of the session wins", launchLine + "\n" + `{"v":2,"event":"launch","id":"L20261113T142233-b4a0","ts":"2026-11-13T14:29:00.000Z","session_id":"sess-1"}` + "\n", "sess-1", "L20261113T142233-b4a0", 60},
+		{"unreadable ts", `{"v":2,"event":"launch","id":"L20261113T142233-a3f9","ts":"x","session_id":"sess-1"}` + "\n", "sess-1", "L20261113T142233-a3f9", 0},
+		{"launch in the future", `{"v":2,"event":"launch","id":"L20261113T142233-a3f9","ts":"2026-11-13T15:00:00.000Z","session_id":"sess-1"}` + "\n", "sess-1", "L20261113T142233-a3f9", 0},
 		{"non-object lines", "null\n[]\n42\n" + launchLine + "\n", "sess-1", "L20261113T142233-a3f9", 447},
-		{"id that cannot be a key", `{"event":"end","id":[1]}` + "\n" + launchLine + "\n", "sess-1", "L20261113T142233-a3f9", 447},
+		{"id that cannot be a key", `{"v":2,"event":"end","id":[1]}` + "\n" + launchLine + "\n", "sess-1", "L20261113T142233-a3f9", 447},
 		{"empty registry", "", "sess-1", "", 0},
+		{"a v1 launch is not a launch", strings.Replace(launchLine, `"v":2`, `"v":1`, 1) + "\n", "sess-1", "", 0},
+		{"a launch with no v is not a launch", strings.Replace(launchLine, `"v":2,`, "", 1) + "\n", "sess-1", "", 0},
+		{"a v3 launch is not a launch", strings.Replace(launchLine, `"v":2`, `"v":3`, 1) + "\n", "sess-1", "", 0},
+		{"a v1 launch beside a v2 launch of the same session", strings.Replace(launchLine, `"v":2`, `"v":1`, 1) + "\n" + `{"v":2,"event":"launch","id":"L20261113T142233-b4a0","ts":"2026-11-13T14:29:00.000Z","session_id":"sess-1"}` + "\n", "sess-1", "L20261113T142233-b4a0", 60},
+		{"a v1 end does not end a v2 launch", launchLine + "\n" + `{"v":1,"event":"end","id":"L20261113T142233-a3f9","source":"jitso_close"}` + "\n", "sess-1", "L20261113T142233-a3f9", 447},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

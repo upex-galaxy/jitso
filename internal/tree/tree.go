@@ -214,9 +214,8 @@ func line(n *Node) string {
 		", " + jsconv.Number(float64(t.Analyzed)) + " of " + jsconv.Number(float64(t.Nodes)) + " analyzed"
 }
 
-// buildKey is the key of the build id in a launch line. The log still stores
-// it as "preset", the key of the v1 schema.
-const buildKey = "preset"
+// buildKey is the key of the build id in a launch line (schema v2).
+const buildKey = "build"
 
 // round3 rounds to three decimals the way JavaScript's Math.round does, as the
 // analyzer does for the cost it writes.

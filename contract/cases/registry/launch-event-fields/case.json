@@ -1,6 +1,6 @@
 {
   "id": "registry/launch-event-fields",
-  "title": "a real direct launch writes one launch event with the schema v1 core and the launcher fields",
+  "title": "a real direct launch writes one launch event with the schema v2 core and the launcher fields",
   "source": [
     "cli/jitso/log.test.ts: 'accepts one valid event of each kind'",
     "cli/jitso/launch.test.ts: real launch logs the launch event"
@@ -38,7 +38,7 @@
               "at": 0,
               "event": "launch",
               "fields": {
-                "v": 1,
+                "v": 2,
                 "id": {
                   "regex": "^L\\d{8}T\\d{6}-[0-9a-f]{4}$"
                 },
@@ -51,8 +51,8 @@
                 "mode": "direct",
                 "role": "operator",
                 "type": "explorer",
-                "preset": "haiku-explorer",
-                "preset_version": 1,
+                "build": "haiku-explorer",
+                "build_version": 1,
                 "harness": "claude",
                 "model": "claude-haiku-5-5",
                 "effort": "low",

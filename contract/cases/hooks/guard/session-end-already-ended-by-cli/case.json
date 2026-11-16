@@ -6,7 +6,7 @@
   ],
   "project": {
     "files": {
-      ".jitso/launches.jsonl": "{\"v\":1,\"event\":\"launch\",\"id\":\"L20261113T142233-a3f9\",\"parent\":null,\"root\":\"L20261113T142233-a3f9\",\"depth\":0,\"ts\":\"2026-11-13T14:22:33.000Z\",\"mode\":\"direct\",\"preset\":\"haiku-explorer\",\"session_id\":\"sess-1\"}\n{\"v\":1,\"event\":\"end\",\"id\":\"L20261113T142233-a3f9\",\"ts\":\"2026-11-13T14:30:00.000Z\",\"source\":\"cli\",\"outcome_reported\":\"none\",\"footer_path\":null,\"duration_s\":447}\n"
+      ".jitso/launches.jsonl": "{\"v\":2,\"event\":\"launch\",\"id\":\"L20261113T142233-a3f9\",\"parent\":null,\"root\":\"L20261113T142233-a3f9\",\"depth\":0,\"ts\":\"2026-11-13T14:22:33.000Z\",\"mode\":\"direct\",\"build\":\"haiku-explorer\",\"session_id\":\"sess-1\"}\n{\"v\":2,\"event\":\"end\",\"id\":\"L20261113T142233-a3f9\",\"ts\":\"2026-11-13T14:30:00.000Z\",\"source\":\"cli\",\"outcome_reported\":\"none\",\"footer_path\":null,\"duration_s\":447}\n"
     }
   },
   "steps": [

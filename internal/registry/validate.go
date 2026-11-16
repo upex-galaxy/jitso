@@ -4,6 +4,7 @@ import (
 	"math"
 	"regexp"
 	"slices"
+	"strconv"
 	"strings"
 	"time"
 )
@@ -22,8 +23,8 @@ func Validate(v any) []string {
 	}
 	var problems []string
 	add := func(msg string) { problems = append(problems, msg) }
-	if n, ok := e["v"].(float64); !ok || n != 1 {
-		add("v must be 1")
+	if n, ok := e["v"].(float64); !ok || n != Version {
+		add("v must be " + strconv.Itoa(Version))
 	}
 	if ts, ok := e["ts"].(string); !ok || ts == "" || !isTimestamp(ts) {
 		add("ts must be an ISO timestamp")
@@ -45,8 +46,8 @@ func Validate(v any) []string {
 		if !isOneOf(Modes, e["mode"]) {
 			add("mode must be one of " + strings.Join(Modes, "|"))
 		}
-		if s, ok := e["preset"].(string); !ok || s == "" {
-			add("preset must be a non-empty string")
+		if s, ok := e["build"].(string); !ok || s == "" {
+			add("build must be a non-empty string")
 		}
 	case KindEnd:
 		if !isID(e["id"]) {

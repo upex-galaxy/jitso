@@ -20,11 +20,11 @@ const (
 )
 
 func launch(id, orcaJSON, extra string) string {
-	return `{"v":1,"event":"launch","id":"` + id + `","parent":null,"root":"` + id + `","depth":0,"ts":"2026-11-13T14:22:33.000Z","mode":"direct","preset":"p","orca":` + orcaJSON + extra + "}\n"
+	return `{"v":2,"event":"launch","id":"` + id + `","parent":null,"root":"` + id + `","depth":0,"ts":"2026-11-13T14:22:33.000Z","mode":"direct","build":"p","orca":` + orcaJSON + extra + "}\n"
 }
 
 func endOf(id string) string {
-	return `{"v":1,"event":"end","id":"` + id + `","ts":"2026-11-13T14:30:00.000Z","source":"jitso_close","outcome_reported":"none","footer_path":null}` + "\n"
+	return `{"v":2,"event":"end","id":"` + id + `","ts":"2026-11-13T14:30:00.000Z","source":"jitso_close","outcome_reported":"none","footer_path":null}` + "\n"
 }
 
 func orcaRef(terminal, run string) string {
@@ -320,7 +320,7 @@ func TestRunOrderAndDedup(t *testing.T) {
 func TestUnloggedWorkerKeys(t *testing.T) {
 	rogue := workersResult(map[string]any{"agentTerminalHandle": "term_rogue"})
 	nameless := workersResult(map[string]any{"title": "nameless"})
-	old := `{"v":1,"event":"rule_break","id":null,"ts":"2026-11-13T14:30:00.000Z","kind":"unlogged_worker","evidence":"worker term_rogue in run run_old has no launch event"}` + "\n"
+	old := `{"v":2,"event":"rule_break","id":null,"ts":"2026-11-13T14:30:00.000Z","kind":"unlogged_worker","evidence":"worker term_rogue in run run_old has no launch event"}` + "\n"
 	tests := []struct {
 		name     string
 		registry string
@@ -331,8 +331,8 @@ func TestUnloggedWorkerKeys(t *testing.T) {
 		{"same handle in two runs", "", []string{"run_a", "run_b"}, map[string]map[string]any{"run_a": rogue, "run_b": rogue}, 1},
 		{"a handle named by an older line in another run", old, []string{"run_a"}, map[string]map[string]any{"run_a": rogue}, 0},
 		{"no handle in two runs is one line per run", "", []string{"run_a", "run_b"}, map[string]map[string]any{"run_a": nameless, "run_b": nameless}, 2},
-		{"no handle again in a known run", `{"v":1,"event":"rule_break","id":null,"ts":"2026-11-13T14:30:00.000Z","kind":"unlogged_worker","evidence":"worker (no terminal handle) in run run_a has no launch event"}` + "\n", []string{"run_a", "run_b"}, map[string]map[string]any{"run_a": nameless, "run_b": nameless}, 1},
-		{"another rule break kind is not a known worker", `{"v":1,"event":"rule_break","id":null,"ts":"2026-11-13T14:30:00.000Z","kind":"other","evidence":"worker term_rogue in run run_a has no launch event"}` + "\n", []string{"run_a"}, map[string]map[string]any{"run_a": rogue}, 1},
+		{"no handle again in a known run", `{"v":2,"event":"rule_break","id":null,"ts":"2026-11-13T14:30:00.000Z","kind":"unlogged_worker","evidence":"worker (no terminal handle) in run run_a has no launch event"}` + "\n", []string{"run_a", "run_b"}, map[string]map[string]any{"run_a": nameless, "run_b": nameless}, 1},
+		{"another rule break kind is not a known worker", `{"v":2,"event":"rule_break","id":null,"ts":"2026-11-13T14:30:00.000Z","kind":"other","evidence":"worker term_rogue in run run_a has no launch event"}` + "\n", []string{"run_a"}, map[string]map[string]any{"run_a": rogue}, 1},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -404,7 +404,7 @@ func TestAnalyzePhase(t *testing.T) {
 	withTranscript := func(id string) string {
 		return launch(id, orcaRef("term_a", ""), `,"transcript_path":"/there.jsonl"`)
 	}
-	analyzed := `{"v":1,"event":"analyzed","id":"` + idA + `","ts":"2026-11-13T15:00:00.000Z","analyzer":"x","peak_context":1,"cost_usd_list":0,"verdict":"unknown","tokens":{"input":0,"cache_read":0,"cache_write":0,"output":0}}` + "\n"
+	analyzed := `{"v":2,"event":"analyzed","id":"` + idA + `","ts":"2026-11-13T15:00:00.000Z","analyzer":"x","peak_context":1,"cost_usd_list":0,"verdict":"unknown","tokens":{"input":0,"cache_read":0,"cache_write":0,"output":0}}` + "\n"
 	tests := []struct {
 		name     string
 		registry string

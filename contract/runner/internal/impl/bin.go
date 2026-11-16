@@ -35,6 +35,11 @@ func (b *Bin) Name() string                   { return "bin" }
 func (b *Bin) StatusKey() string              { return "go" }
 func (b *Bin) Prepare(*sandbox.Sandbox) error { return nil }
 
+// AroundStep is a no-op: the cases are written in the schema the binary speaks.
+func (b *Bin) AroundStep(*sandbox.Sandbox) (func() error, error) {
+	return func() error { return nil }, nil
+}
+
 func (b *Bin) Command(_ *sandbox.Sandbox, args []string) ([]string, error) {
 	return append([]string{b.path}, args...), nil
 }

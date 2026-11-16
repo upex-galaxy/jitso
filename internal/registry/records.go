@@ -29,10 +29,10 @@ type LaunchEvent struct {
 	Mode     string  `json:"mode"`
 	Role     string  `json:"role"`
 	Type     string  `json:"type"`
-	// Build and BuildVersion keep the v1 log keys "preset" and
-	// "preset_version": a storage schema is not renamed with the vocabulary.
-	Build        string `json:"preset"`
-	BuildVersion any    `json:"preset_version"`
+	// Build is the id of the build the session was launched from and
+	// BuildVersion its version, as the build file spells it.
+	Build        string `json:"build"`
+	BuildVersion any    `json:"build_version"`
 	// BuildLayer, BuildFile and BuildSHA256 name the file the session was
 	// launched from: its layer (repo, parent or user), its real absolute path
 	// and the SHA-256 of its bytes.
@@ -77,7 +77,7 @@ type Budget struct {
 func (*LaunchEvent) kind() string { return KindLaunch }
 
 func (e *LaunchEvent) stamp() {
-	e.V, e.Event = 1, KindLaunch
+	e.V, e.Event = Version, KindLaunch
 	for _, list := range []*[]string{&e.Flags, &e.MCP, &e.MCPExcluded, &e.SkillsFirst, &e.RouteScope} {
 		if *list == nil {
 			*list = []string{}
@@ -98,7 +98,7 @@ type EndEvent struct {
 }
 
 func (*EndEvent) kind() string { return KindEnd }
-func (e *EndEvent) stamp()     { e.V, e.Event = 1, KindEnd }
+func (e *EndEvent) stamp()     { e.V, e.Event = Version, KindEnd }
 
 // AnalyzedEvent is what jitso analyze appends for a launch.
 type AnalyzedEvent struct {
@@ -143,7 +143,7 @@ type RuleBreakCount struct {
 func (*AnalyzedEvent) kind() string { return KindAnalyzed }
 
 func (e *AnalyzedEvent) stamp() {
-	e.V, e.Event = 1, KindAnalyzed
+	e.V, e.Event = Version, KindAnalyzed
 	if e.ByModel == nil {
 		e.ByModel = jsonx.Object{}
 	}
@@ -167,4 +167,4 @@ type RuleBreakEvent struct {
 }
 
 func (*RuleBreakEvent) kind() string { return KindRuleBreak }
-func (e *RuleBreakEvent) stamp()     { e.V, e.Event = 1, KindRuleBreak }
+func (e *RuleBreakEvent) stamp()     { e.V, e.Event = Version, KindRuleBreak }

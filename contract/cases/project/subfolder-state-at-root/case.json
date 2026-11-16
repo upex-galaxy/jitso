@@ -38,7 +38,7 @@
               "at": 0,
               "event": "launch",
               "fields": {
-                "preset": "haiku-explorer",
+                "build": "haiku-explorer",
                 "mode": "direct"
               }
             }

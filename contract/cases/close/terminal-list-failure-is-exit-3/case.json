@@ -13,7 +13,7 @@
   "intent": "INTENDED behavior (TS-ODDITIES R1, defect N-28). A close that fails leaves the launch running: the footer and the end event are written only after the terminal is closed and `terminal list` no longer shows it, so a failure writes neither `footer.txt` nor an end event and a later close retries cleanly. Here the failure is the failing terminal list. The oracle has already written both before it lists the terminals, so the registry count and the footer expectation FAIL on TS.",
   "project": {
     "files": {
-      ".jitso/launches.jsonl": "{\"v\":1,\"event\":\"launch\",\"id\":\"L20261113T142233-a3f9\",\"parent\":null,\"root\":\"L20261113T142233-a3f9\",\"depth\":0,\"ts\":\"2026-11-13T14:22:33.000Z\",\"mode\":\"direct\",\"preset\":\"haiku-explorer\",\"orca\":{\"run\":null,\"task\":null,\"terminal\":\"term_fake\",\"title\":\"t [jitso:L20261113T142233-a3f9]\"}}\n"
+      ".jitso/launches.jsonl": "{\"v\":2,\"event\":\"launch\",\"id\":\"L20261113T142233-a3f9\",\"parent\":null,\"root\":\"L20261113T142233-a3f9\",\"depth\":0,\"ts\":\"2026-11-13T14:22:33.000Z\",\"mode\":\"direct\",\"build\":\"haiku-explorer\",\"orca\":{\"run\":null,\"task\":null,\"terminal\":\"term_fake\",\"title\":\"t [jitso:L20261113T142233-a3f9]\"}}\n"
     }
   },
   "orca": {

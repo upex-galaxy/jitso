@@ -9,7 +9,7 @@ Everything JITSO knows about a launch is in `.jitso/launches.jsonl`, an append-o
 | `analyzed` | `analyze` | turns, tokens, list cost, peak context, verdict |
 | `rule_break` | `reap`, `analyze` | a kind and its evidence |
 
-The log keeps the old word `preset` as the key of the build id in its lines. That is a storage detail, the vocabulary stays `build`.
+The log is schema v2 (`"v": 2` on every line) and the build id is the key `build` of a launch line. A line an older jitso wrote (`"v": 1`, with `preset`) is skipped as invalid: close every running launch with the old version before upgrading, and `jitso doctor` counts the skipped v1 lines.
 
 The launch folder `.jitso/launches/<id>/` keeps what the session was given (`brief.md`, `card.txt`, `core.md`, `mcp.json`, `run.sh`) and, after `close`, `footer.txt`. Read `core.md` to see the exact hard rules a worker carried.
 

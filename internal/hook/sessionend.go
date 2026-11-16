@@ -15,7 +15,10 @@ import (
 // owes none: the registry text names no launch of that session, or that launch
 // already has an end event. Lines are read raw, as the oracle's hook does: a
 // line that is not JSON is skipped, and a line a strict reader would call
-// invalid (an `end` from an older writer) still counts as the launch's end.
+// invalid (an `end` with a source this version never writes) still counts as
+// the launch's end. A line whose `v` is not the current schema version is
+// skipped like every reader skips it: a v1 launch is not a launch, and an end
+// event for it would be an orphan no reader sees.
 func EndedBy(registryText []byte, sessionID string, now time.Time) *registry.EndEvent {
 	if sessionID == "" {
 		return nil
@@ -24,7 +27,7 @@ func EndedBy(registryText []byte, sessionID string, now time.Time) *registry.End
 	ended := map[string]bool{}
 	for _, line := range bytes.Split(registryText, []byte("\n")) {
 		var event map[string]any
-		if json.Unmarshal(line, &event) != nil {
+		if json.Unmarshal(line, &event) != nil || event["v"] != float64(registry.Version) {
 			continue
 		}
 		switch event["event"] {

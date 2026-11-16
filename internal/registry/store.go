@@ -144,6 +144,23 @@ func (s *FileStore) Events() ([]Event, error) {
 	return Parse(data), nil
 }
 
+// CountV1 is the number of lines of registry text that are one JSON object with
+// `v` equal to 1: the lines the TypeScript era wrote, which Parse skips. Doctor
+// reports them apart from the other invalid lines.
+func CountV1(data []byte) int {
+	n := 0
+	for _, line := range bytes.Split(data, []byte("\n")) {
+		var event map[string]any
+		if json.Unmarshal(line, &event) != nil {
+			continue
+		}
+		if v, ok := event["v"].(float64); ok && v == 1 {
+			n++
+		}
+	}
+	return n
+}
+
 // Parse reads registry text: the valid events of its lines, in order.
 func Parse(data []byte) []Event {
 	var events []Event

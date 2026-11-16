@@ -16,7 +16,7 @@
       "write": {
         "project": {
           ".jitso/launches.jsonl": {
-            "content": "{\"v\": 1, \"event\": \"launch\", \"id\": \"L20261113T142233-a3f9\", \"parent\": \"L20261113T000100-0001\", \"root\": \"L20261113T000000-0000\", \"depth\": 2, \"ts\": \"2026-11-13T14:22:33.000Z\", \"mode\": \"fleet\", \"preset\": \"haiku-explorer\"}\n"
+            "content": "{\"v\": 2, \"event\": \"launch\", \"id\": \"L20261113T142233-a3f9\", \"parent\": \"L20261113T000100-0001\", \"root\": \"L20261113T000000-0000\", \"depth\": 2, \"ts\": \"2026-11-13T14:22:33.000Z\", \"mode\": \"fleet\", \"build\": \"haiku-explorer\"}\n"
           }
         }
       }

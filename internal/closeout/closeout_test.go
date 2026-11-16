@@ -17,10 +17,10 @@ import (
 const id = "L20261113T142233-a3f9"
 
 func launchLine(extra, orcaJSON, ts string) string {
-	return `{"v":1,"event":"launch","id":"` + id + `","parent":null,"root":"` + id + `","depth":0,"ts":"` + ts + `","mode":"direct","preset":"p","orca":` + orcaJSON + extra + "}\n"
+	return `{"v":2,"event":"launch","id":"` + id + `","parent":null,"root":"` + id + `","depth":0,"ts":"` + ts + `","mode":"direct","build":"p","orca":` + orcaJSON + extra + "}\n"
 }
 
-const endLine = `{"v":1,"event":"end","id":"` + id + `","ts":"2026-11-13T14:30:00.000Z","source":"worker_done","outcome_reported":"none","footer_path":null}` + "\n"
+const endLine = `{"v":2,"event":"end","id":"` + id + `","ts":"2026-11-13T14:30:00.000Z","source":"worker_done","outcome_reported":"none","footer_path":null}` + "\n"
 
 // fakeOrca records the calls and fails the ones it is told to.
 type fakeOrca struct {

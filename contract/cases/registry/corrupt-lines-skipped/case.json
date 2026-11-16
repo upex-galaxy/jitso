@@ -6,7 +6,7 @@
   ],
   "project": {
     "files": {
-      ".jitso/launches.jsonl": "{\"v\":1,\"event\":\"launch\",\"id\":\"L20261113T142233-a3f9\",\"parent\":null,\"root\":\"L20261113T142233-a3f9\",\"depth\":0,\"ts\":\"2026-11-13T14:22:33.000Z\",\"mode\":\"direct\",\"preset\":\"haiku-explorer\",\"orca\":{\"run\":null,\"task\":null,\"terminal\":\"term_fake\",\"title\":\"t [jitso:L20261113T142233-a3f9]\"}}\n{ this is not json\n{\"v\":1,\"event\":\"bogus\",\"id\":\"X\",\"ts\":\"2026-11-13T14:22:33.000Z\"}\n\n"
+      ".jitso/launches.jsonl": "{\"v\":2,\"event\":\"launch\",\"id\":\"L20261113T142233-a3f9\",\"parent\":null,\"root\":\"L20261113T142233-a3f9\",\"depth\":0,\"ts\":\"2026-11-13T14:22:33.000Z\",\"mode\":\"direct\",\"build\":\"haiku-explorer\",\"orca\":{\"run\":null,\"task\":null,\"terminal\":\"term_fake\",\"title\":\"t [jitso:L20261113T142233-a3f9]\"}}\n{ this is not json\n{\"v\":2,\"event\":\"bogus\",\"id\":\"X\",\"ts\":\"2026-11-13T14:22:33.000Z\"}\n\n"
     }
   },
   "steps": [

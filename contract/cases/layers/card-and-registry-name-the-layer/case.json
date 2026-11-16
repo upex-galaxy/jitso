@@ -9,7 +9,7 @@
     "go": "pass"
   },
   "defect": "N-12",
-  "intent": "INTENDED behavior (defect N-12, build layers). Every launch line of the registry gains build_layer (repo, parent or user), build_file (the real absolute path of the build file) and build_sha256 (the SHA-256 of the file's bytes, not of anything re-encoded), so a record names exactly which file a session was launched from. The card header of a parent or user build ends with ` (<layer>)`, and card.txt holds the same header; a project build has no suffix. The registry keeps its preset and preset_version keys (docs/decisions.md). The oracle knows no layers: it rejects the user build as an unknown preset and the case FAILS on it.",
+  "intent": "INTENDED behavior (defect N-12, build layers). Every launch line of the registry gains build_layer (repo, parent or user), build_file (the real absolute path of the build file) and build_sha256 (the SHA-256 of the file's bytes, not of anything re-encoded), so a record names exactly which file a session was launched from. The card header of a parent or user build ends with ` (<layer>)`, and card.txt holds the same header; a project build has no suffix. The registry line carries build and build_version (v: 2, defect N-31). The oracle knows no layers: it rejects the user build as an unknown preset and the case FAILS on it.",
   "project": {
     "files": {
       ".jitso/briefs/brief.md": {
@@ -64,8 +64,8 @@
               "at": 0,
               "event": "launch",
               "fields": {
-                "preset": "shared-scan",
-                "preset_version": 1,
+                "build": "shared-scan",
+                "build_version": 1,
                 "build_layer": "user",
                 "build_file": "{{HOME}}/.jitso/builds/shared-scan.yaml",
                 "build_sha256": "0d53cd1b501d0f73dc2587f0469a127bbde4c5cdd94eac6691904ededea8a097"
@@ -99,7 +99,7 @@
               "at": 1,
               "event": "launch",
               "fields": {
-                "preset": "haiku-explorer",
+                "build": "haiku-explorer",
                 "build_layer": "repo",
                 "build_file": "{{PROJECT}}/jitso/builds/haiku-explorer.yaml",
                 "build_sha256": {

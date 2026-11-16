@@ -410,7 +410,7 @@ func runEnv(t *testing.T, launchExtra string, withTranscript bool) (Deps, *regis
 		write(t, transcript, mainTranscript)
 	}
 	store := registry.NewFileStore(filepath.Join(root, ".jitso"))
-	launch := `{"v":1,"event":"launch","id":"L20261113T142233-a3f9","parent":null,"root":"L20261113T142233-a3f9","depth":0,"ts":"2026-11-13T14:22:33.000Z","mode":"direct","preset":"p","orca":{"terminal":"t"},"transcript_path":` + jsonString(transcript) + launchExtra + "}\n"
+	launch := `{"v":2,"event":"launch","id":"L20261113T142233-a3f9","parent":null,"root":"L20261113T142233-a3f9","depth":0,"ts":"2026-11-13T14:22:33.000Z","mode":"direct","build":"p","orca":{"terminal":"t"},"transcript_path":` + jsonString(transcript) + launchExtra + "}\n"
 	write(t, store.Path(), launch)
 	d := Deps{
 		PricesPath: filepath.Join(root, "jitso", "prices.json"),

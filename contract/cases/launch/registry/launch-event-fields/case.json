@@ -1,6 +1,6 @@
 {
   "id": "launch/registry/launch-event-fields",
-  "title": "the launch line of a direct haiku-explorer launch carries id, lineage, mode, preset, harness, model, effort, bypass, mcp, cwd, orca ids, trust state and budget",
+  "title": "the launch line of a direct haiku-explorer launch carries id, lineage, mode, build, harness, model, effort, bypass, mcp, cwd, orca ids, trust state and budget",
   "source": [
     "cli/jitso/launch.test.ts: 'writes the launch event, with the trust state, and prints the card'"
   ],
@@ -38,7 +38,7 @@
               "at": 0,
               "event": "launch",
               "fields": {
-                "v": 1,
+                "v": 2,
                 "id": {
                   "regex": "^L\\d{8}T\\d{6}-[0-9a-f]{4}$"
                 },
@@ -53,8 +53,8 @@
                 "mode": "direct",
                 "role": "operator",
                 "type": "explorer",
-                "preset": "haiku-explorer",
-                "preset_version": 1,
+                "build": "haiku-explorer",
+                "build_version": 1,
                 "harness": "claude",
                 "model": "claude-haiku-5-5",
                 "effort": "low",

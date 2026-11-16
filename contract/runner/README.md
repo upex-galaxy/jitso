@@ -98,5 +98,6 @@ Implement `impl.Implementation` in a new file of `internal/impl`:
 | `Prepare(sb)` | installs what the implementation needs into a fresh sandbox: files under `sb.Project`, programs through `sb.LinkTool` (never a real folder on PATH), variables through `sb.SetEnv` |
 | `Command(sb, args)` | the argv that runs the CLI |
 | `HookCommand(sb, hook)` | the argv that runs `guard` or `dispatch-guard` |
+| `AroundStep(sb)` | called before every `run` and `hook` step (not `exec`, `write` or the git steps); returns the function the engine calls right after the step's process ends, before captures and expectations, even when the process failed to run. `bin` returns a no-op. `ts` maps the registry file between the case's schema and the oracle's (`internal/impl/registrymap.go`, SPEC 9). Keep the state in the returned closure, never in the adapter value: sandboxes run in parallel |
 
 Then add its case to `newImplementation` in `main.go` and a row to SPEC 9. Return an error from the constructor when a prerequisite is missing, so the run stops before any case starts.

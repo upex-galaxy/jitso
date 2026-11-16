@@ -20,4 +20,10 @@ type Implementation interface {
 	// Launcher is the value of {{JITSO}}: the command line, as one string of words, that a
 	// hook or a shell would use to start this implementation in the sandbox.
 	Launcher(sb *sandbox.Sandbox) string
+	// AroundStep is called before a `run` or `hook` step. It may prepare the sandbox for the
+	// step and returns after, which the engine calls right after the step's process ends,
+	// before captures and expectations, even when the step failed to run. An adapter keeps
+	// its state in the closure, never in its own value: sandboxes run in parallel. A failing
+	// after is a runner error. `bin` has nothing to do; `ts` maps the registry schema (SPEC 9).
+	AroundStep(sb *sandbox.Sandbox) (after func() error, err error)
 }

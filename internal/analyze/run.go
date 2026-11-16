@@ -141,8 +141,7 @@ func byID(id string, prices Prices, d Deps) (string, error) {
 		return "", err
 	}
 	var checks []catalog.SuccessCheck
-	// The registry log keeps its v1 key "preset" for the build id (decision B3-5).
-	if build, _ := l.Launch.String("preset"); build != "" {
+	if build, _ := l.Launch.String("build"); build != "" {
 		if b, ok := cat.Find(build); ok {
 			checks = b.Success
 		}

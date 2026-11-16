@@ -1,5 +1,5 @@
 // Package registry is the launch registry: .jitso/launches.jsonl in the
-// primary checkout, one JSON event per line, append-only, schema version 1.
+// primary checkout, one JSON event per line, append-only, schema version 2.
 //
 // A launch's state is the fold of its events by id: the first launch line of
 // an id wins, a later end or analyzed event wins over an earlier one, nothing
@@ -26,7 +26,12 @@ const (
 	KindRuleBreak = "rule_break"
 )
 
-// Allowed values (schema v1). Modes are only direct and fleet: the Spanish
+// Version is the schema version of every line a writer appends and the only one
+// a reader accepts: a line of another version (the TypeScript era wrote v: 1,
+// with the build id under the key `preset`) is an invalid line and is skipped.
+const Version = 2
+
+// Allowed values (schema v2). Modes are only direct and fleet: the Spanish
 // aliases are invalid everywhere, registry lines included (TS-ODDITIES L8).
 var (
 	Modes          = []string{"direct", "fleet"}

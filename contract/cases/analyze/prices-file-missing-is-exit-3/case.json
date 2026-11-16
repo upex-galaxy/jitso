@@ -6,7 +6,7 @@
   ],
   "project": {
     "files": {
-      ".jitso/launches.jsonl": "{\"v\":1,\"event\":\"launch\",\"id\":\"L20261113T142233-a3f9\",\"parent\":null,\"root\":\"L20261113T142233-a3f9\",\"depth\":0,\"ts\":\"2026-11-13T14:22:33.000Z\",\"mode\":\"direct\",\"preset\":\"haiku-explorer\",\"orca\":{\"run\":null,\"task\":null,\"terminal\":\"term_fake\",\"title\":\"t [jitso:L20261113T142233-a3f9]\"},\"transcript_path\":\"{{PROJECT}}/.jitso/transcripts/11111111-2222-3333-4444-555555555555.jsonl\",\"budget\":{\"tokens\":250000,\"usd_list_cap\":3}}\n",
+      ".jitso/launches.jsonl": "{\"v\":2,\"event\":\"launch\",\"id\":\"L20261113T142233-a3f9\",\"parent\":null,\"root\":\"L20261113T142233-a3f9\",\"depth\":0,\"ts\":\"2026-11-13T14:22:33.000Z\",\"mode\":\"direct\",\"build\":\"haiku-explorer\",\"orca\":{\"run\":null,\"task\":null,\"terminal\":\"term_fake\",\"title\":\"t [jitso:L20261113T142233-a3f9]\"},\"transcript_path\":\"{{PROJECT}}/.jitso/transcripts/11111111-2222-3333-4444-555555555555.jsonl\",\"budget\":{\"tokens\":250000,\"usd_list_cap\":3}}\n",
       ".jitso/transcripts/11111111-2222-3333-4444-555555555555.jsonl": "{\"type\":\"assistant\",\"uuid\":\"u-m1-0:00.000\",\"timestamp\":\"2026-11-13T05:00:00.000Z\",\"message\":{\"id\":\"m1\",\"model\":\"claude-haiku-5-5\",\"usage\":{\"input_tokens\":10,\"output_tokens\":5},\"content\":[{\"type\":\"tool_use\",\"name\":\"Read\",\"input\":{\"file_path\":\"/repo/README.md\"}}]}}\n"
     }
   },

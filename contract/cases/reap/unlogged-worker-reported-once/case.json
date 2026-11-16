@@ -13,7 +13,7 @@
   "intent": "INTENDED behavior (TS-ODDITIES R4, defect N-28). The unlogged worker count of the summary is the number of rule_break lines this reap wrote, so a worker flagged by an earlier reap is not counted again. The oracle counts every unlogged worker it sees, so the second summary line FAILS on TS.",
   "project": {
     "files": {
-      ".jitso/launches.jsonl": "{\"v\":1,\"event\":\"launch\",\"id\":\"L20261113T142233-a3f9\",\"parent\":null,\"root\":\"L20261113T142233-a3f9\",\"depth\":0,\"ts\":\"2026-11-13T14:22:33.000Z\",\"mode\":\"direct\",\"preset\":\"haiku-explorer\",\"orca\":{\"run\":\"run_1\",\"task\":\"t\",\"terminal\":\"term_logged\",\"title\":\"t [jitso:L20261113T142233-a3f9]\"}}\n"
+      ".jitso/launches.jsonl": "{\"v\":2,\"event\":\"launch\",\"id\":\"L20261113T142233-a3f9\",\"parent\":null,\"root\":\"L20261113T142233-a3f9\",\"depth\":0,\"ts\":\"2026-11-13T14:22:33.000Z\",\"mode\":\"direct\",\"build\":\"haiku-explorer\",\"orca\":{\"run\":\"run_1\",\"task\":\"t\",\"terminal\":\"term_logged\",\"title\":\"t [jitso:L20261113T142233-a3f9]\"}}\n"
     }
   },
   "orca": {

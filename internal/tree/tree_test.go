@@ -27,7 +27,7 @@ func launches(specs ...spec) []registry.Launch {
 			l.Launch["parent"] = s.parent
 		}
 		if !s.noBuild {
-			l.Launch["preset"] = "sonnet-tester"
+			l.Launch["build"] = "sonnet-tester"
 		}
 		if s.verdict != "" {
 			l.Analyzed = registry.Event{
@@ -193,7 +193,7 @@ func TestLineDetails(t *testing.T) {
 		})
 	}
 	l := launches(spec{id: "R", noBuild: true})
-	l[0].Launch["preset"] = 5.0
+	l[0].Launch["build"] = 5.0
 	if got := Lines(Build(l, "")); !strings.HasPrefix(got[0], "R - running") {
 		t.Errorf("a numeric build key prints -: %q", got)
 	}

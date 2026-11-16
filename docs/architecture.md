@@ -206,7 +206,7 @@ The default fixture has `sonnet-automator` with `subagents: [plan, code, verifie
 
 Rows in `docs/decisions.md`; the shape of each, for a reader of the code:
 
-- Vocabulary (N-10). The word is `build` everywhere a user sees it: the flag `--build`, the folder `jitso/builds/`, the command group `jitso build <subcommand>`, every message and the card header. There is no alias: `--preset`, `presets` and `jitso/presets/` are unknown. The one survivor is the registry's `v: 1` keys `preset` and `preset_version`, a storage schema, not vocabulary. The oracle keeps the old spelling, and the ts adapter of the runner maps the new one to it in one direction (`contract/SPEC.md` section 9).
+- Vocabulary (N-10). The word is `build` everywhere a user sees it: the flag `--build`, the folder `jitso/builds/`, the command group `jitso build <subcommand>`, every message and the card header. There is no alias: `--preset`, `presets` and `jitso/presets/` are unknown. The registry log was the one survivor (`v: 1` with the keys `preset` and `preset_version`, a storage schema) until N-31 moved it to `v: 2` with `build` and `build_version`; a v1 line is an invalid line. The oracle keeps the old spelling and the old log schema, and the ts adapter of the runner maps the new vocabulary to it in one direction and the registry file both ways (`contract/SPEC.md` section 9).
 - Layers (N-12). The lookup order is the repo's `jitso/builds/`, the trusted parent folders (named only by `~/.jitso/config.yaml`), the user's `~/.jitso/builds/`, then the drafts. The nearest file of an id is the build, every layer is validated against the launching repo, and the card and the registry line name the layer (`build_layer`, `build_file`, `build_sha256`). Code: `internal/catalog`.
 - Validation report (N-13). `jitso build validate` scans every layer tolerantly and reports every problem; an invalid repo file is a finding there (exit 2), not the exit 3 of the other commands. Code: `internal/catalog` (`scan.go`).
 - Core and templates (N-14). `internal/rules` and `internal/templates` are embedded; `jitso build new` writes a draft from a template and, in a fresh project, the allowlists skeleton.
@@ -301,6 +301,7 @@ Each block after milestone 8 is its own contract change, cases first, run agains
 | Brief word count | N-27 | `brief` | `^brief/` |
 | Close, reap and analyze rows: close order, reap without a handle, unlogged workers once, analyze arguments first, secret writes, `budget_over` | N-28 | `closeout`, `reap`, `analyze`, `cli` | `^(close\|reap\|analyze)/` |
 | `jitso tree` | N-30 | `tree`, `cli` | `^(tree/\|cli/\|smoke/help)` |
+| Registry v2: `v: 2` with `build` keys, v1 lines skipped, `doctor` counts them | N-31 | `registry`, `analyze`, `tree`, `hook`, `doctor`, the runner's ts adapter (`AroundStep`) | `^(registry\|close\|reap\|analyze\|launch\|layers\|project\|hooks/guard/session-end\|tree\|doctor)/`, then the whole suite on both implementations |
 | Release files: packaging, install script, workflow, formula template | none (no case) | `scripts/`, `.github/`, `packaging/` | `scripts/test-install.sh` (offline), and the steps of `docs/release.md` section 3 |
 
 The pipes inside the table are escaped for Markdown; the filter is the text without the backslashes.

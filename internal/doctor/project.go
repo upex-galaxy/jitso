@@ -144,7 +144,7 @@ func (c *projectChecks) state() Line {
 }
 
 // registry reads the launch log the way every reader does: a line that is not
-// a valid event is skipped, so the check counts them.
+// a valid event is skipped, so the check counts them, the v1 lines apart.
 func (c *projectChecks) registry() Line {
 	file := filepath.Join(c.root.StateDir(), registry.FileName)
 	shown := ".jitso/" + registry.FileName
@@ -164,6 +164,7 @@ func (c *projectChecks) registry() Line {
 	events := registry.Parse(data)
 	launches := registry.Fold(events)
 	invalid := lines - len(events)
+	v1 := registry.CountV1(data)
 	if len(launches) == 0 && invalid == 0 {
 		return Line{OK, "registry", "no launches yet"}
 	}
@@ -174,10 +175,18 @@ func (c *projectChecks) registry() Line {
 		}
 	}
 	detail := fmt.Sprintf("%s: %s, %d running", shown, plural(len(launches), "launch"), running)
-	if invalid > 0 {
-		return Line{Warn, "registry", fmt.Sprintf("%s; %s skipped", detail, plural(invalid, "invalid line"))}
+	if invalid == 0 {
+		return Line{OK, "registry", detail}
 	}
-	return Line{OK, "registry", detail}
+	// A v1 line is an invalid line too, but it gets its own clause: it is not
+	// corruption, it is a line written before the log moved to v: 2.
+	if v1 > 0 {
+		detail += fmt.Sprintf("; %s skipped (written before the log moved to v: %d)", plural(v1, "v1 line"), registry.Version)
+	}
+	if other := invalid - v1; other > 0 {
+		detail += fmt.Sprintf("; %s skipped", plural(other, "invalid line"))
+	}
+	return Line{Warn, "registry", detail}
 }
 
 // drafts counts the just-in-time builds waiting for a decision.

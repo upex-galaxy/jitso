@@ -166,10 +166,28 @@ func TestRegistry(t *testing.T) {
 	f.Close()
 	want(t, c.registry(), Warn, "registry", "2 launches, 1 running; 2 invalid lines skipped")
 
+	// Lines written at schema v1 get their own clause, counted apart from the other invalid lines.
+	const v1 = `{"v":1,"event":"launch","id":"L20261113T142233-cccc","parent":null,"root":"L20261113T142233-cccc","depth":0,"ts":"` + ts + `","mode":"direct","preset":"b"}` + "\n"
+	f, _ = os.OpenFile(store.Path(), os.O_APPEND|os.O_WRONLY, 0o644)
+	f.WriteString(v1)
+	f.Close()
+	want(t, c.registry(), Warn, "registry", "2 launches, 1 running; 1 v1 line skipped (written before the log moved to v: 2); 2 invalid lines skipped")
+	f, _ = os.OpenFile(store.Path(), os.O_APPEND|os.O_WRONLY, 0o644)
+	f.WriteString(v1)
+	f.Close()
+	want(t, c.registry(), Warn, "registry", "2 launches, 1 running; 2 v1 lines skipped (written before the log moved to v: 2); 2 invalid lines skipped")
+
 	// A path that is a folder cannot be read.
 	os.Remove(store.Path())
 	os.Mkdir(store.Path(), 0o755)
 	want(t, c.registry(), Fail, "registry", ".jitso/launches.jsonl cannot be read")
+}
+
+func TestRegistryOnlyV1Lines(t *testing.T) {
+	dir := fixture(t)
+	c, _ := checksFor(t, dir, nil)
+	put(t, dir, ".jitso/launches.jsonl", `{"event":"launch","v":1,"id":"L20261113T142233-cccc","preset":"b"}`+"\n")
+	want(t, c.registry(), Warn, "registry", ".jitso/launches.jsonl: 0 launches, 0 running; 1 v1 line skipped (written before the log moved to v: 2)")
 }
 
 func TestDrafts(t *testing.T) {

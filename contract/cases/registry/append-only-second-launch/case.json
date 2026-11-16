@@ -59,7 +59,7 @@
               "event": "launch",
               "fields": {
                 "id": "{{FIRST_ID}}",
-                "preset": "haiku-explorer",
+                "build": "haiku-explorer",
                 "orca.title": "[jitso:{{FIRST_ID}}] haiku-explorer"
               }
             },
@@ -68,7 +68,7 @@
               "event": "launch",
               "fields": {
                 "id": "{{SECOND_ID}}",
-                "preset": "haiku-explorer"
+                "build": "haiku-explorer"
               }
             }
           ]
