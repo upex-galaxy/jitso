@@ -1,0 +1,71 @@
+{
+  "id": "hooks/guard/deny-direct-harness",
+  "title": "a Bash segment whose program is claude, codex or opencode is denied, through paths, quotes, wrappers, shells and substitutions",
+  "source": [
+    "intended: docs/decisions.md A3 (defect N-24): the guard denies a harness started directly"
+  ],
+  "status": {
+    "ts": "xfail",
+    "go": "pass"
+  },
+  "defect": "N-24",
+  "intent": "INTENDED behavior (defect N-24, owner answer A3). A worker starts only through the launcher, so a Bash segment whose program is claude, codex or opencode is denied: by name or path, in any letter case, with NAME=value words, quotes or a backslash in the word, behind a wrapper (env, command, exec, nohup, time, sudo, nice, timeout, xargs), behind a shell -c or eval, and in a command substitution, a backtick or a subshell. Every invocation is denied, claude --version included. The reason tells the session to start workers through the launcher and ends with (denied: <name>). The TS binary denies only the orca launch verbs and a terminal create --command, so it prints nothing for these lines and the decision FAILS on TS.",
+  "for_each": {
+    "var": "command",
+    "values": [
+      "claude -p hi",
+      "codex exec x",
+      "opencode run x",
+      "/usr/local/bin/claude --version",
+      "./claude",
+      "../x/claude",
+      "~/bin/claude",
+      "FOO=1 claude",
+      "CLAUDE",
+      "c\\laude",
+      "'claude'",
+      "c\"l\"aude",
+      "sh -c 'claude -p x'",
+      "bash -lc \"claude\"",
+      "env claude",
+      "env -i FOO=1 claude",
+      "command claude",
+      "exec claude",
+      "nohup claude &",
+      "time claude",
+      "sudo -u me claude",
+      "nice -n 5 opencode",
+      "timeout 10 claude",
+      "eval claude",
+      "$(claude)",
+      "echo `claude`",
+      "(claude)",
+      "echo x | xargs claude",
+      "xargs -I{} claude {}",
+      "if true; then claude; fi",
+      "git status && codex"
+    ]
+  },
+  "steps": [
+    {
+      "hook": "guard",
+      "input": {
+        "hook_event_name": "PreToolUse",
+        "tool_name": "Bash",
+        "tool_input": {
+          "command": "{{command}}"
+        },
+        "cwd": "{{PROJECT}}"
+      },
+      "expect": {
+        "exit": 0,
+        "decision": "deny",
+        "reason": [
+          {
+            "regex": "^JITSO owns worker launch in this project: a harness starts only through (bun run jitso|jitso) launch --build <id> --brief <file> --mode <mode>, never as a program of its own\\. If the word is text \\(a commit message, a heredoc line\\), put the text in a file and pass the file\\. \\(denied: (claude|codex|opencode)\\)$"
+          }
+        ]
+      }
+    }
+  ]
+}

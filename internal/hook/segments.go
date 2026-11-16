@@ -256,8 +256,9 @@ type Denial struct {
 }
 
 // BashDenial is the denial of the first segment of command that launches an
-// agent outside jitso or runs `jitso build save`, `jitso setup` or
-// `jitso install` (other than a dry run); the zero Denial when none does.
+// agent outside jitso, runs a harness (claude, codex or opencode) as a program
+// of its own, or runs `jitso build save`, `jitso setup` or `jitso install`
+// (other than a dry run); the zero Denial when none does.
 func (l Launcher) BashDenial(command string) Denial {
 	for _, segment := range Segments(command) {
 		if id, ok := l.BuildSave(segment); ok {
@@ -268,6 +269,9 @@ func (l Launcher) BashDenial(command string) Denial {
 		}
 		if verb := l.LaunchVerb(segment); verb != "" {
 			return Denial{Verb: verb}
+		}
+		if name, ok := HarnessProgram(strings.Split(segment, " ")); ok {
+			return Denial{Verb: name}
 		}
 	}
 	return Denial{}

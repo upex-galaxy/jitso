@@ -1,0 +1,43 @@
+{
+  "id": "hooks/guard/harness-word-after-a-separator-is-denied",
+  "title": "a harness word that the splitter reads as a command is denied even when it is only text: a known limit, the session puts the text in a file",
+  "source": [
+    "intended: docs/decisions.md A3 (defect N-24): the segment splitter reads text after ( , a backtick or a newline as a command, the way jitso build save has the same limit"
+  ],
+  "status": {
+    "ts": "xfail",
+    "go": "pass"
+  },
+  "defect": "N-24",
+  "intent": "INTENDED behavior (defect N-24, owner answer A3), a known limit pinned on purpose. The guard splits a command line at parentheses, backticks and newlines without reading quotes, so a commit message or a heredoc line that starts with claude after one of those is judged as a command and denied. The deny text tells the session to put such text in a file and pass the file. The TS binary prints nothing for these lines, so the decision FAILS on TS.",
+  "for_each": {
+    "var": "command",
+    "values": [
+      "git commit -m 'fix (claude) bug'",
+      "git commit -m 'see `claude` docs'",
+      "cat <<'EOF'\nclaude rules\nEOF"
+    ]
+  },
+  "steps": [
+    {
+      "hook": "guard",
+      "input": {
+        "hook_event_name": "PreToolUse",
+        "tool_name": "Bash",
+        "tool_input": {
+          "command": "{{command}}"
+        },
+        "cwd": "{{PROJECT}}"
+      },
+      "expect": {
+        "exit": 0,
+        "decision": "deny",
+        "reason": [
+          {
+            "regex": "\\(denied: claude\\)$"
+          }
+        ]
+      }
+    }
+  ]
+}

@@ -1,0 +1,45 @@
+{
+  "id": "hooks/guard/allows-commands-that-only-name-a-harness",
+  "title": "a harness name that is not the program of the segment passes: lookups, arguments, file names and a launcher script",
+  "source": [
+    "intended: docs/decisions.md A3 (defect N-24): only the program of a segment is judged; the run.sh of a launch is exempt because the guard never opens a script"
+  ],
+  "for_each": {
+    "var": "command",
+    "values": [
+      "echo claude",
+      "command -v claude",
+      "which codex",
+      "type opencode",
+      "ls ~/.claude",
+      "cat CLAUDE.md",
+      "grep -r claude docs",
+      "git log --author claude",
+      "sh /p/.jitso/launches/L20261116T000000-abcd/run.sh",
+      "'/p/.jitso/launches/L20261116T000000-abcd/run.sh'",
+      "claude-code-notes --help"
+    ]
+  },
+  "steps": [
+    {
+      "hook": "guard",
+      "input": {
+        "hook_event_name": "PreToolUse",
+        "tool_name": "Bash",
+        "tool_input": {
+          "command": "{{command}}"
+        },
+        "cwd": "{{PROJECT}}"
+      },
+      "expect": {
+        "exit": 0,
+        "decision": "none",
+        "stdout": [
+          {
+            "empty": true
+          }
+        ]
+      }
+    }
+  ]
+}

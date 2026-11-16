@@ -9,8 +9,8 @@ import (
 var orcaTool = regexp.MustCompile(`^mcp__.*orca.*__`)
 
 // Guard is what the guard refuses in a PreToolUse payload: a launch of an
-// agent outside jitso, a `jitso build save` (the owner saves a draft as a
-// build, an agent never does) or a `jitso setup` or `jitso install` that is not
+// agent outside jitso (an orca launch verb, or a harness run as a program of
+// its own), a `jitso build save` (the owner saves a draft as a build, an agent never does) or a `jitso setup` or `jitso install` that is not
 // a dry run (the owner changes the setup), the zero Denial when it refuses nothing (the
 // guard then stays silent). Bash commands are judged segment by segment; the
 // tools of an MCP server whose name contains orca by tool name and arguments.
@@ -42,6 +42,9 @@ func (d Denial) Reason(packageJSON []byte) string {
 	}
 	if d.Verb == VerbSetup || d.Verb == VerbInstall {
 		return AdoptionReason(d.Verb)
+	}
+	if directHarnesses[d.Verb] {
+		return HarnessReason(LaunchWord(packageJSON), d.Verb)
 	}
 	return GuardReason(LaunchWord(packageJSON), d.Verb)
 }
@@ -124,4 +127,14 @@ func SaveReason(launcherWord, id string) string {
 // that was denied (VerbSetup or VerbInstall).
 func AdoptionReason(verb string) string {
 	return "JITSO: only the owner changes the JITSO setup; ask the owner to run it in a terminal (denied: " + verb + ")"
+}
+
+// HarnessReason is the deny text for a harness run as a program of its own
+// (defect N-24): it says a harness starts only through the launcher, and how
+// to get past a word that is only text. name is claude, codex or opencode.
+func HarnessReason(launchWord, name string) string {
+	return "JITSO owns worker launch in this project: a harness starts only through " + launchWord +
+		" --build <id> --brief <file> --mode <mode>, never as a program of its own." +
+		" If the word is text (a commit message, a heredoc line), put the text in a file and pass the file." +
+		" (denied: " + name + ")"
 }
