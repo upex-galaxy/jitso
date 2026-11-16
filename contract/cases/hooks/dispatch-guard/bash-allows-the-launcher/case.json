@@ -9,7 +9,7 @@
     "go": "pass"
   },
   "defect": "N-10",
-  "intent": "INTENDED behavior (defect N-10, build vocabulary; docs/decisions.md D6). The dispatch guard allows the launcher line with the flag `--build`, since that is the flag the launcher takes. The oracle guard still allows `--preset` only: it denies `--build` with `flag \"--build\" is not allowed`, so the allow decision FAILS on TS. The only --worktree value the guard allows is path:<primary>, the primary named by JITSO_PROJECT (defect N-23).",
+  "intent": "INTENDED behavior (defect N-10, build vocabulary; docs/decisions.md D6). The dispatch guard allows the launcher line with the flag `--build`, since that is the flag the launcher takes. The oracle guard still allows `--preset` only: it denies `--build` with `flag \"--build\" is not allowed`, so the allow decision FAILS on TS. The only --worktree value the guard allows is path:<primary>, the primary named by JITSO_PROJECT (defect N-23). Since N-29 the line must also carry --worktree, so every row does.",
   "home": {
     "files": {
       ".jitso/dispatch-cwd/briefs/.keep": "",
@@ -19,11 +19,11 @@
   "for_each": {
     "var": "tail",
     "values": [
-      "--build haiku-explorer --brief /h/b/a.md --mode direct",
-      "--build sonnet-tester --brief /h/b/a.md --mode direct --field ticket_key=PRJ-120",
-      "--build haiku-explorer --brief /h/b/a.md --mode direct --dry-run",
+      "--build haiku-explorer --brief /h/b/a.md --mode direct --worktree path:{{PROJECT}}",
+      "--build sonnet-tester --brief /h/b/a.md --mode direct --field ticket_key=PRJ-120 --worktree path:{{PROJECT}}",
+      "--build haiku-explorer --brief /h/b/a.md --mode direct --dry-run --worktree path:{{PROJECT}}",
       "--build haiku-explorer --brief /h/b/a.md --mode direct --worktree path:{{PROJECT}} --mcp-exclude dbhub",
-      "--build haiku-explorer --brief /h/b/a.md --mode direct --field ticket_key=PRJ-1 --field env=staging"
+      "--build haiku-explorer --brief /h/b/a.md --mode direct --field ticket_key=PRJ-1 --field env=staging --worktree path:{{PROJECT}}"
     ]
   },
   "steps": [

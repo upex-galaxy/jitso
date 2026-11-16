@@ -161,6 +161,10 @@ func RunDispatchGuard(d Deps) {
 			info, err := os.Lstat(path)
 			return err == nil && info.Mode()&os.ModeSymlink != 0
 		},
+		Exists: func(path string) bool {
+			_, err := os.Lstat(path)
+			return err == nil
+		},
 	}
 	g.Primary, g.PrimaryProblem = d.primary(home)
 	if problem := g.Problem(input); problem != "" {

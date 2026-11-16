@@ -144,6 +144,9 @@ func TestRunDispatchGuard(t *testing.T) {
 		t.Fatal(err)
 	}
 	project, _ := gitProject(t)
+	if err := os.WriteFile(filepath.Join(dir, "briefs", "old.md"), []byte("x"), 0o644); err != nil {
+		t.Fatal(err)
+	}
 	env := map[string]string{"HOME": home, "JITSO_PROJECT": project}
 	bash := func(command string) string {
 		return `{"tool_name":"Bash","tool_input":{"command":"` + command + `"},"cwd":"` + dir + `"}`
@@ -153,13 +156,16 @@ func TestRunDispatchGuard(t *testing.T) {
 		env         map[string]string
 		decision    string
 	}{
-		{"allows the launcher line", bash(self + " launch --build p --brief b --mode direct"), env, "allow"},
-		{"allows the primary worktree", bash(self + " launch --build p --worktree path:" + project), env, "allow"},
+		{"allows the launcher line", bash(self + " launch --build p --brief b --mode direct --worktree path:" + project), env, "allow"},
+		{"denies a launcher line without --worktree", bash(self + " launch --build p --brief b --mode direct"), env, "deny"},
+		{"denies a bare launch", bash(self + " launch"), env, "deny"},
+		{"allows the primary worktree", bash(self + " launch --build p --brief b --mode direct --worktree path:" + project), env, "allow"},
 		{"denies another worktree", bash(self + " launch --build p --worktree path:" + home), env, "deny"},
 		{"denies a worktree without JITSO_PROJECT", bash(self + " launch --build p --worktree path:" + project), map[string]string{"HOME": home}, "deny"},
 		{"denies a worktree when JITSO_PROJECT is no checkout", bash(self + " launch --build p --worktree path:" + project), map[string]string{"HOME": home, "JITSO_PROJECT": home}, "deny"},
 		{"denies another command", bash("ls"), env, "deny"},
 		{"allows a brief", `{"tool_name":"Write","tool_input":{"file_path":"` + dir + `/briefs/a.md"},"cwd":"` + dir + `"}`, env, "allow"},
+		{"denies a brief that already exists", `{"tool_name":"Write","tool_input":{"file_path":"` + dir + `/briefs/old.md"},"cwd":"` + dir + `"}`, env, "deny"},
 		{"denies a write outside the briefs", `{"tool_name":"Write","tool_input":{"file_path":"` + home + `/a.md"},"cwd":"` + dir + `"}`, env, "deny"},
 		{"fails closed on bad JSON", `nope`, env, "deny"},
 		{"fails closed on empty input", ``, env, "deny"},

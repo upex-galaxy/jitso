@@ -1,0 +1,44 @@
+{
+  "id": "hooks/dispatch-guard/bash-denies-a-bare-launch",
+  "title": "the launcher with no flag at all is denied by the guard: --build, --brief, --mode and --worktree are required",
+  "source": [
+    "intended: TS-ODDITIES H3 (owner decision, defect N-29): the oracle pinned a bare launch as allowed (measured on the TypeScript hook: an empty flag list passes)"
+  ],
+  "status": {
+    "ts": "xfail",
+    "go": "pass"
+  },
+  "defect": "N-29",
+  "intent": "INTENDED behavior (TS-ODDITIES H3, owner decision, defect N-29). The dispatcher's one launch line must carry --build, --brief, --mode direct and --worktree path:<primary>, so a bare `<launcher> launch` is denied with `--build is required` instead of being left for the launcher to reject. This case was `bash-allows-bare-launch` and pinned the oracle's behavior; it is converted in place. The TS binary allows the bare line (its flag loop is empty), so the decision FAILS on TS.",
+  "home": {
+    "files": {
+      ".jitso/dispatch-cwd/briefs/.keep": "",
+      "outside/target.md": "x"
+    }
+  },
+  "steps": [
+    {
+      "hook": "dispatch-guard",
+      "input": {
+        "hook_event_name": "PreToolUse",
+        "tool_name": "Bash",
+        "tool_input": {
+          "command": "{{JITSO}} launch"
+        },
+        "cwd": "{{HOME}}/.jitso/dispatch-cwd"
+      },
+      "env": {
+        "JITSO_PROJECT": "{{PROJECT}}"
+      },
+      "expect": {
+        "exit": 0,
+        "decision": "deny",
+        "reason": [
+          {
+            "equals": "JITSO dispatch guard: --build is required"
+          }
+        ]
+      }
+    }
+  ]
+}

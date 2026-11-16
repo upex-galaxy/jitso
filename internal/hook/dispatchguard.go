@@ -3,6 +3,7 @@ package hook
 import (
 	"path/filepath"
 	"regexp"
+	"slices"
 	"strings"
 )
 
@@ -19,6 +20,9 @@ var (
 	// valueFlags are the flags of `launch` that take a value, which the
 	// dispatcher may use. `--dry-run` takes none.
 	valueFlags = map[string]bool{"--build": true, "--brief": true, "--mode": true, "--field": true, "--worktree": true, "--mcp-exclude": true}
+	// requiredFlags are the flags every launch line carries exactly once
+	// (defect N-29), in the order a missing one is reported.
+	requiredFlags = []string{"--build", "--brief", "--mode", "--worktree"}
 )
 
 // DispatchGuard judges what the dispatcher's claude may do: Bash for exactly
@@ -36,6 +40,9 @@ type DispatchGuard struct {
 	Real func(path string) string
 	// IsSymlink reports whether path is a symbolic link (Lstat).
 	IsSymlink func(path string) bool
+	// Exists reports whether anything is at path, a link included (Lstat). Nil
+	// means nothing exists.
+	Exists func(path string) bool
 	// Primary is the real path of the project's primary checkout, named by
 	// JITSO_PROJECT: the one folder --worktree may name (defect N-23).
 	Primary string
@@ -124,8 +131,9 @@ func splitWords(command string) (words []word, ok bool) {
 }
 
 // commandProblem is "" when command is the one allowed launcher line: this
-// executable, then launch, then only known flags with their values, in direct
-// mode, and --worktree only as path:<primary>. A word may be single-quoted
+// executable, then launch, then only known flags with their values, in any
+// order, in direct mode, --worktree only as path:<primary>, and --build,
+// --brief, --mode and --worktree each exactly once. A word may be single-quoted
 // only when it holds a space: the launcher and the value of --brief.
 func (g DispatchGuard) commandProblem(raw any) string {
 	command, ok := text(raw)
@@ -139,6 +147,7 @@ func (g DispatchGuard) commandProblem(raw any) string {
 	if len(words) < 2 || words[1].quoted || !filepath.IsAbs(words[0].text) || !g.IsOwn(words[0].text) || words[1].text != "launch" {
 		return `only "` + g.Launcher + ` launch ..." may run`
 	}
+	seen := map[string]bool{}
 	for i := 2; i < len(words); i++ {
 		flag := words[i]
 		if flag.quoted {
@@ -149,6 +158,12 @@ func (g DispatchGuard) commandProblem(raw any) string {
 		}
 		if !valueFlags[flag.text] {
 			return `flag "` + flag.text + `" is not allowed`
+		}
+		if slices.Contains(requiredFlags, flag.text) {
+			if seen[flag.text] {
+				return flag.text + " is given more than once"
+			}
+			seen[flag.text] = true
 		}
 		if i+1 >= len(words) || strings.HasPrefix(words[i+1].text, "-") {
 			return flag.text + " needs a value"
@@ -170,11 +185,17 @@ func (g DispatchGuard) commandProblem(raw any) string {
 		}
 		i++
 	}
+	for _, flag := range requiredFlags {
+		if !seen[flag] {
+			return flag + " is required"
+		}
+	}
 	return ""
 }
 
 // writeProblem is "" when filePath is a new brief file directly under the
-// briefs folder, neither it nor the folder a symlink.
+// briefs folder: nothing exists at that name (a file, a folder, a link), and
+// neither it nor the folder is a symlink.
 func (g DispatchGuard) writeProblem(raw any) string {
 	filePath, ok := text(raw)
 	if !ok || !filepath.IsAbs(filePath) || strings.ContainsRune(filePath, 0) || containsDotDot(filePath) {
@@ -187,6 +208,9 @@ func (g DispatchGuard) writeProblem(raw any) string {
 	}
 	if g.IsSymlink(briefs) || g.IsSymlink(target) {
 		return "a symlink is not a valid brief location"
+	}
+	if g.Exists != nil && g.Exists(target) {
+		return target + " already exists: write the brief to a new file name"
 	}
 	return ""
 }

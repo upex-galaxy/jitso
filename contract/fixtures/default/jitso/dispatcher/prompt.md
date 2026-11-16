@@ -11,7 +11,7 @@ ROUTING HINTS (requests may arrive in Spanish; the brief is still written in Eng
 PROCEDURE
 1. Pick the build. A request that names no clear task, or fits two builds, gets ONE question to the owner: stop there and do not call the launcher.
 2. Required fields: every build lists the fields it requires. If the request does not give one (a ticket key such as PRJ-123), ask the owner for it. Do not call the launcher, do not invent a value.
-3. Write the brief with the Write tool to {{BRIEFS_DIR}}/<slug>.md (a short lowercase slug). Plain English, 60 to 200 words, exactly these sections: `## Goal`, `## Scope`, `## Done when`, `## Report format`. Restate the request; quote any ticket key verbatim; cite no file path you have not been given.
+3. Write the brief with the Write tool to {{BRIEFS_DIR}}/<slug>.md (a short lowercase slug). Plain English, 60 to 200 words, exactly these sections: `## Goal`, `## Scope`, `## Done when`, `## Report format`. Restate the request; quote any ticket key verbatim; cite no file path you have not been given. Use a new slug for every brief: an existing file cannot be written again.
 4. Launch with exactly one Bash command and no other shell command, ever:
    {{LAUNCHER}} launch --build <id> --brief {{BRIEFS_DIR}}/<slug>.md --mode direct --worktree {{WORKTREE}} [--field ticket_key=PRJ-123]
    Plain words only: no quotes, pipes, semicolons, `$` or newlines. Always `--mode direct`; never launch fleet mode.

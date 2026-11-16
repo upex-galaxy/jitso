@@ -9,7 +9,7 @@
     "go": "pass"
   },
   "defect": "N-8",
-  "intent": "INTENDED behavior (defect N-8, launcher line). The fixture prompt template (jitso/dispatcher/prompt.md) writes the launch command as `{{LAUNCHER}} launch ...` with no `bun` in front, since the Go launcher is an executable, not a Bun script. The rendered system prompt must therefore contain a line that starts with the launcher (a regex on the line start, so a `bun` word in front does not match) `{{JITSO}} launch --build <id> --brief <dispatcher briefs folder>/<slug>.md --mode direct`, where {{JITSO}} is the launcher as the dispatch guard recognizes it, and the guard allows exactly that line. The TS binary renders {{LAUNCHER}} as the path of index.ts and its guard allows only `bun <index.ts> launch`, so the prompt line starts with `<index.ts> launch` while {{JITSO}} is `bun <index.ts>`: the regex expectation FAILS on TS. Only the launcher word is pinned, not how an implementation spells its own path; the launcher in the prompt and the one the guard compares are the same real path, so on a platform where the sandbox folder is a symlink (darwin /tmp) pass a real path in --bin. The launcher line in its guard step carries `--build` (build vocabulary, defect N-10; docs/decisions.md D6), a flag the oracle guard does not allow either.",
+  "intent": "INTENDED behavior (defect N-8, launcher line). The fixture prompt template (jitso/dispatcher/prompt.md) writes the launch command as `{{LAUNCHER}} launch ...` with no `bun` in front, since the Go launcher is an executable, not a Bun script. The rendered system prompt must therefore contain a line that starts with the launcher (a regex on the line start, so a `bun` word in front does not match) `{{JITSO}} launch --build <id> --brief <dispatcher briefs folder>/<slug>.md --mode direct`, where {{JITSO}} is the launcher as the dispatch guard recognizes it, and the guard allows exactly that line. The TS binary renders {{LAUNCHER}} as the path of index.ts and its guard allows only `bun <index.ts> launch`, so the prompt line starts with `<index.ts> launch` while {{JITSO}} is `bun <index.ts>`: the regex expectation FAILS on TS. Only the launcher word is pinned, not how an implementation spells its own path; the launcher in the prompt and the one the guard compares are the same real path, so on a platform where the sandbox folder is a symlink (darwin /tmp) pass a real path in --bin. The launcher line in its guard step carries `--build` (build vocabulary, defect N-10; docs/decisions.md D6), a flag the oracle guard does not allow either. Since N-29 the guarded line also carries --worktree path:<primary> (the prompt line already does, defect N-23), and the hook step sets JITSO_PROJECT.",
   "steps": [
     {
       "run": [
@@ -33,9 +33,12 @@
         "hook_event_name": "PreToolUse",
         "tool_name": "Bash",
         "tool_input": {
-          "command": "{{JITSO}} launch --build haiku-explorer --brief {{HOME}}/.jitso/dispatch-cwd/briefs/a.md --mode direct"
+          "command": "{{JITSO}} launch --build haiku-explorer --brief {{HOME}}/.jitso/dispatch-cwd/briefs/a.md --mode direct --worktree path:{{PROJECT}}"
         },
         "cwd": "{{HOME}}/.jitso/dispatch-cwd"
+      },
+      "env": {
+        "JITSO_PROJECT": "{{PROJECT}}"
       },
       "expect": {
         "exit": 0,

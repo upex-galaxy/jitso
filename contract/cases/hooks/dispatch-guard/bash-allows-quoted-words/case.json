@@ -9,7 +9,7 @@
     "go": "pass"
   },
   "defect": "N-9",
-  "intent": "INTENDED behavior (defect N-9, quoted words). The dispatcher prompt renders the launcher as a single-quoted word when its path holds a space, and the guard must allow that exact line: the first word as one quoted word whose real path is this executable, and the value after --brief as one quoted word. A quoted word holds plain characters and single spaces only, and holds at least one space (quotes appear only where a space needs them). The TypeScript guard denies every line with a quote, so each row is DENIED there and the expectation of allow fails. The launcher in the first row is a symlink inside a folder with a space that points at the implementation under test, so the guard must compare real paths. The launcher line carries `--build` (build vocabulary, defect N-10; docs/decisions.md D6), a flag the oracle guard does not allow, so every row is also denied there for that reason.",
+  "intent": "INTENDED behavior (defect N-9, quoted words). The dispatcher prompt renders the launcher as a single-quoted word when its path holds a space, and the guard must allow that exact line: the first word as one quoted word whose real path is this executable, and the value after --brief as one quoted word. A quoted word holds plain characters and single spaces only, and holds at least one space (quotes appear only where a space needs them). The TypeScript guard denies every line with a quote, so each row is DENIED there and the expectation of allow fails. The launcher in the first row is a symlink inside a folder with a space that points at the implementation under test, so the guard must compare real paths. The launcher line carries `--build` (build vocabulary, defect N-10; docs/decisions.md D6), a flag the oracle guard does not allow, so every row is also denied there for that reason. Since N-29 every line also carries --worktree path:<primary>, and the hook step sets JITSO_PROJECT.",
   "project": {
     "files": {
       "tools dir/jitso": {
@@ -30,23 +30,23 @@
     "rows": [
       [
         "'{{PROJECT}}/tools dir/jitso'",
-        "--build haiku-explorer --brief {{HOME}}/.jitso/dispatch-cwd/briefs/a.md --mode direct"
+        "--build haiku-explorer --brief {{HOME}}/.jitso/dispatch-cwd/briefs/a.md --mode direct --worktree path:{{PROJECT}}"
       ],
       [
         "'{{PROJECT}}/tools dir/jitso'",
-        "--build haiku-explorer --brief {{HOME}}/.jitso/dispatch-cwd/briefs/a.md --mode direct --dry-run"
+        "--build haiku-explorer --brief {{HOME}}/.jitso/dispatch-cwd/briefs/a.md --mode direct --dry-run --worktree path:{{PROJECT}}"
       ],
       [
         "'{{PROJECT}}/tools dir/jitso'",
-        "--build sonnet-tester --brief {{HOME}}/.jitso/dispatch-cwd/briefs/a.md --mode direct --field ticket_key=PRJ-120"
+        "--build sonnet-tester --brief {{HOME}}/.jitso/dispatch-cwd/briefs/a.md --mode direct --field ticket_key=PRJ-120 --worktree path:{{PROJECT}}"
       ],
       [
         "{{JITSO}}",
-        "--build haiku-explorer --brief '/home dir/.jitso/dispatch-cwd/briefs/a.md' --mode direct"
+        "--build haiku-explorer --brief '/home dir/.jitso/dispatch-cwd/briefs/a.md' --mode direct --worktree path:{{PROJECT}}"
       ],
       [
         "'{{PROJECT}}/tools dir/jitso'",
-        "--build haiku-explorer --brief '/home dir/.jitso/dispatch-cwd/briefs/a b.md' --mode direct"
+        "--build haiku-explorer --brief '/home dir/.jitso/dispatch-cwd/briefs/a b.md' --mode direct --worktree path:{{PROJECT}}"
       ]
     ],
     "ids": [
@@ -67,6 +67,9 @@
           "command": "{{launcher}} launch {{tail}}"
         },
         "cwd": "{{HOME}}/.jitso/dispatch-cwd"
+      },
+      "env": {
+        "JITSO_PROJECT": "{{PROJECT}}"
       },
       "expect": {
         "exit": 0,

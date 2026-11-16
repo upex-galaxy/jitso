@@ -1,0 +1,50 @@
+{
+  "id": "hooks/dispatch-guard/write-denies-an-existing-brief",
+  "title": "Write to a path that already exists in the briefs folder is denied: a brief is written once",
+  "source": [
+    "intended: TS-ODDITIES H5 (owner decision, defect N-29): the oracle only rejects a symlink, so overwriting an existing regular file passes"
+  ],
+  "status": {
+    "ts": "xfail",
+    "go": "pass"
+  },
+  "defect": "N-29",
+  "intent": "INTENDED behavior (TS-ODDITIES H5, owner decision, defect N-29). The guard allows a Write only for a new file directly under the briefs folder. Any existing entry of that name, a regular file or a folder, is denied with `<path> already exists: write the brief to a new file name`. The TS binary rejects only a symlink, so it allows the overwrite and the decision FAILS on TS.",
+  "home": {
+    "files": {
+      ".jitso/dispatch-cwd/briefs/.keep": "",
+      ".jitso/dispatch-cwd/briefs/old.md": "x",
+      ".jitso/dispatch-cwd/briefs/dir.md/.keep": ""
+    }
+  },
+  "for_each": {
+    "var": "name",
+    "values": [
+      "old.md",
+      "dir.md"
+    ]
+  },
+  "steps": [
+    {
+      "hook": "dispatch-guard",
+      "input": {
+        "hook_event_name": "PreToolUse",
+        "tool_name": "Write",
+        "tool_input": {
+          "file_path": "{{HOME}}/.jitso/dispatch-cwd/briefs/{{name}}",
+          "content": "x"
+        },
+        "cwd": "{{HOME}}/.jitso/dispatch-cwd"
+      },
+      "expect": {
+        "exit": 0,
+        "decision": "deny",
+        "reason": [
+          {
+            "equals": "JITSO dispatch guard: {{HOME}}/.jitso/dispatch-cwd/briefs/{{name}} already exists: write the brief to a new file name"
+          }
+        ]
+      }
+    }
+  ]
+}

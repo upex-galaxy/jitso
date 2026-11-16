@@ -1,0 +1,74 @@
+{
+  "id": "hooks/dispatch-guard/bash-denies-missing-required-flags",
+  "title": "a launch line without --build, --brief, --mode or --worktree is denied, naming the flag that is missing",
+  "source": [
+    "intended: TS-ODDITIES H3 and docs/decisions.md A2 (defect N-29): the dispatcher's launch line is complete"
+  ],
+  "status": {
+    "ts": "xfail",
+    "go": "pass"
+  },
+  "defect": "N-29",
+  "intent": "INTENDED behavior (TS-ODDITIES H3, owner decision, defect N-29, with --worktree required by the owner's answer on A2). The dispatch guard requires --build, --brief, --mode and --worktree, and denies a line that lacks one with `<flag> is required`, checking them in that order. The TS binary allows a bare launch (an empty flag list passes) and denies the other rows for another reason, so the reason text FAILS on TS.",
+  "home": {
+    "files": {
+      ".jitso/dispatch-cwd/briefs/.keep": "",
+      "outside/target.md": "x"
+    }
+  },
+  "for_each": {
+    "vars": [
+      "cmd",
+      "flag"
+    ],
+    "rows": [
+      [
+        "{{JITSO}} launch",
+        "--build"
+      ],
+      [
+        "{{JITSO}} launch --build haiku-explorer --mode direct --worktree path:{{PROJECT}}",
+        "--brief"
+      ],
+      [
+        "{{JITSO}} launch --build haiku-explorer --brief /h/b/a.md --worktree path:{{PROJECT}}",
+        "--mode"
+      ],
+      [
+        "{{JITSO}} launch --build haiku-explorer --brief /h/b/a.md --mode direct",
+        "--worktree"
+      ]
+    ],
+    "ids": [
+      "build",
+      "brief",
+      "mode",
+      "worktree"
+    ]
+  },
+  "steps": [
+    {
+      "hook": "dispatch-guard",
+      "input": {
+        "hook_event_name": "PreToolUse",
+        "tool_name": "Bash",
+        "tool_input": {
+          "command": "{{cmd}}"
+        },
+        "cwd": "{{HOME}}/.jitso/dispatch-cwd"
+      },
+      "env": {
+        "JITSO_PROJECT": "{{PROJECT}}"
+      },
+      "expect": {
+        "exit": 0,
+        "decision": "deny",
+        "reason": [
+          {
+            "equals": "JITSO dispatch guard: {{flag}} is required"
+          }
+        ]
+      }
+    }
+  ]
+}
