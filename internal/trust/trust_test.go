@@ -106,11 +106,11 @@ func TestTrusted(t *testing.T) {
 	if err := os.Symlink(repo, filepath.Join(root, "alias")); err != nil {
 		t.Fatal(err)
 	}
-	p := Policy{Primary: repo, DispatchDir: dispatch, Extra: []string{filepath.Join(root, "extra")}}
+	p := Policy{Primary: repo, Extra: []string{filepath.Join(root, "extra")}}
 	for dir, want := range map[string]bool{
 		repo:                             true,
 		linked:                           true,
-		dispatch:                         true,
+		dispatch:                         false,
 		filepath.Join(root, "alias"):     true,
 		filepath.Join(root, "extra"):     true,
 		filepath.Join(repo, "src"):       false,
@@ -181,7 +181,7 @@ func repoWithWorktree(t *testing.T) (root, repo, linked string) {
 func TestPrecheck(t *testing.T) {
 	root, repo, linked := repoWithWorktree(t)
 	dispatch := filepath.Join(root, "dispatch")
-	p := Policy{Primary: repo, DispatchDir: dispatch}
+	p := Policy{Primary: repo}
 	tests := []struct {
 		selector string
 		want     string
@@ -196,7 +196,7 @@ func TestPrecheck(t *testing.T) {
 		{"path:" + linked + "/", ""},
 		{"path:" + filepath.Join(root, "alias"), ""},
 		{"id:fake-uuid::" + linked, ""},
-		{"path:" + dispatch, ""},
+		{"path:" + dispatch, "--worktree path:" + dispatch + " names " + dispatch + ", which is not a worktree of this repo"},
 		{"path:rel/x", "--worktree path:rel/x must name an absolute path"},
 		{"path:", "--worktree path: must name an absolute path"},
 		{"id:fake-uuid::rel", "--worktree id:fake-uuid::rel must name an absolute path"},
@@ -218,7 +218,7 @@ func TestPlace(t *testing.T) {
 	root, repo, linked := repoWithWorktree(t)
 	dispatch := filepath.Join(root, "dispatch")
 	elsewhere := filepath.Join(root, "elsewhere")
-	p := Policy{Primary: repo, DispatchDir: dispatch}
+	p := Policy{Primary: repo}
 	general := func(folder string) string {
 		return "untrusted folder " + folder + ": a launch runs only in a worktree of this repo; the terminal was closed"
 	}
@@ -234,7 +234,7 @@ func TestPlace(t *testing.T) {
 		{"primary, no selector", repo, "", ""},
 		{"linked, no selector", linked, "", ""},
 		{"symlink to the primary", filepath.Join(root, "alias"), "", ""},
-		{"dispatcher folder", dispatch, "", ""},
+		{"dispatcher folder", dispatch, "", general(dispatch)},
 		{"name selector, a worktree", linked, "wt-1", ""},
 		{"id without a path, a worktree", repo, "id:fake-uuid", ""},
 		{"path selector honoured", linked, "path:" + linked, ""},

@@ -52,7 +52,7 @@ func Open(o Options) error {
 		return fail.Envf("cannot read %s: %v", PromptFile, err)
 	}
 	dir := project.DispatchDir(o.Home)
-	plan, err := BuildPlan(PlanInput{Request: o.Request, Template: string(template), Summary: o.Summary, Launcher: o.Launcher, DispatchDir: dir})
+	plan, err := BuildPlan(PlanInput{Request: o.Request, Template: string(template), Summary: o.Summary, Launcher: o.Launcher, DispatchDir: dir, Primary: o.Root})
 	if err != nil {
 		return err
 	}

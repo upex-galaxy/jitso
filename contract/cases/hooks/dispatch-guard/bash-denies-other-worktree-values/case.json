@@ -1,0 +1,54 @@
+{
+  "id": "hooks/dispatch-guard/bash-denies-other-worktree-values",
+  "title": "any --worktree value but path:<primary> is denied, whatever the form",
+  "source": [
+    "intended: docs/decisions.md A2 (defect N-23): the guard allows exactly the primary worktree"
+  ],
+  "status": {
+    "ts": "xfail",
+    "go": "pass"
+  },
+  "defect": "N-23",
+  "intent": "INTENDED behavior (defect N-23, owner answer A2). The dispatch guard allows --worktree only with the exact value path:<primary>, the primary checkout named by JITSO_PROJECT. A name, another folder, a subfolder of the project and the id:<id>::<path> form are denied with the reason '--worktree must be path:<primary>'. The TS binary denies the line for another reason (it does not allow --build), so the reason text FAILS on TS.",
+  "home": {
+    "files": {
+      ".jitso/dispatch-cwd/briefs/.keep": "",
+      "outside/target.md": "x"
+    }
+  },
+  "for_each": {
+    "var": "wt",
+    "values": [
+      "wt-1",
+      "path:{{HOME}}",
+      "path:{{PROJECT}}/sub",
+      "id:fake-uuid::{{PROJECT}}",
+      "path:/elsewhere"
+    ]
+  },
+  "steps": [
+    {
+      "hook": "dispatch-guard",
+      "input": {
+        "hook_event_name": "PreToolUse",
+        "tool_name": "Bash",
+        "tool_input": {
+          "command": "{{JITSO}} launch --build haiku-explorer --brief /h/b/a.md --mode direct --worktree {{wt}}"
+        },
+        "cwd": "{{HOME}}/.jitso/dispatch-cwd"
+      },
+      "env": {
+        "JITSO_PROJECT": "{{PROJECT}}"
+      },
+      "expect": {
+        "exit": 0,
+        "decision": "deny",
+        "reason": [
+          {
+            "regex": "^JITSO dispatch guard: --worktree must be path:{{PROJECT}}$"
+          }
+        ]
+      }
+    }
+  ]
+}

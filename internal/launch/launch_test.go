@@ -231,6 +231,11 @@ func TestRunFailuresRemoveOnlyTheirFolder(t *testing.T) {
 			[]string{"terminal create", "terminal wait", "terminal read", "terminal close"}},
 		{"refused with a dialog", func(s *sandbox) { s.orca.cwd = s.home; s.orca.screens = []string{dialogScreen} }, nil, "JITSO REJECTED: untrusted folder ",
 			[]string{"terminal create", "terminal close"}},
+		{"refused in the dispatcher folder", func(s *sandbox) {
+			s.orca.cwd = filepath.Join(s.home, ".jitso", "dispatch-cwd")
+			s.orca.screens = []string{dialogScreen}
+		}, nil,
+			"JITSO REJECTED: untrusted folder ", []string{"terminal create", "terminal close"}},
 		{"refused without a dialog", func(s *sandbox) { s.orca.cwd = s.home }, nil, "JITSO REJECTED: untrusted folder ",
 			[]string{"terminal create", "terminal close"}},
 		{"refused without a folder", func(s *sandbox) { s.orca.cwd = "" }, nil, "untrusted folder (unknown):",
@@ -374,7 +379,6 @@ func TestRunTrust(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			s := newSandbox(t)
-			s.orca.cwd = filepath.Join(s.home, ".jitso", "dispatch-cwd")
 			s.orca.screens = tt.screens
 			if err := s.run(t, "--build", "haiku-explorer", "--brief", s.briefPath, "--mode", "direct"); err != nil {
 				t.Fatal(err)

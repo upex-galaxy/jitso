@@ -1,0 +1,64 @@
+{
+  "id": "hooks/dispatch-guard/worktree-needs-jitso-project",
+  "title": "without a usable JITSO_PROJECT the guard cannot know the primary worktree and denies a line that holds --worktree",
+  "source": [
+    "intended: docs/decisions.md A2 (defect N-23): the guard fails closed when the primary is unknown"
+  ],
+  "status": {
+    "ts": "xfail",
+    "go": "pass"
+  },
+  "defect": "N-23",
+  "intent": "INTENDED behavior (defect N-23, owner answer A2). The primary worktree comes from JITSO_PROJECT, which the dispatcher sets for its claude. A line that holds --worktree is denied with a reason of its own when the variable is empty or does not name a git checkout, instead of being compared with nothing. The TS binary denies the line for another reason (it does not allow --build), so the reason text FAILS on TS.",
+  "home": {
+    "files": {
+      ".jitso/dispatch-cwd/briefs/.keep": "",
+      "outside/target.md": "x"
+    }
+  },
+  "steps": [
+    {
+      "hook": "dispatch-guard",
+      "input": {
+        "hook_event_name": "PreToolUse",
+        "tool_name": "Bash",
+        "tool_input": {
+          "command": "{{JITSO}} launch --build haiku-explorer --brief /h/b/a.md --mode direct --worktree path:{{PROJECT}}"
+        },
+        "cwd": "{{HOME}}/.jitso/dispatch-cwd"
+      },
+      "expect": {
+        "exit": 0,
+        "decision": "deny",
+        "reason": [
+          {
+            "equals": "JITSO dispatch guard: JITSO_PROJECT is not set, so the primary worktree is unknown"
+          }
+        ]
+      }
+    },
+    {
+      "hook": "dispatch-guard",
+      "input": {
+        "hook_event_name": "PreToolUse",
+        "tool_name": "Bash",
+        "tool_input": {
+          "command": "{{JITSO}} launch --build haiku-explorer --brief /h/b/a.md --mode direct --worktree path:{{PROJECT}}"
+        },
+        "cwd": "{{HOME}}/.jitso/dispatch-cwd"
+      },
+      "env": {
+        "JITSO_PROJECT": "{{HOME}}"
+      },
+      "expect": {
+        "exit": 0,
+        "decision": "deny",
+        "reason": [
+          {
+            "equals": "JITSO dispatch guard: JITSO_PROJECT does not name a git checkout"
+          }
+        ]
+      }
+    }
+  ]
+}

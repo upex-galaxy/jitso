@@ -143,7 +143,8 @@ func TestRunDispatchGuard(t *testing.T) {
 	if err := os.MkdirAll(filepath.Join(dir, "briefs"), 0o755); err != nil {
 		t.Fatal(err)
 	}
-	env := map[string]string{"HOME": home}
+	project, _ := gitProject(t)
+	env := map[string]string{"HOME": home, "JITSO_PROJECT": project}
 	bash := func(command string) string {
 		return `{"tool_name":"Bash","tool_input":{"command":"` + command + `"},"cwd":"` + dir + `"}`
 	}
@@ -153,6 +154,10 @@ func TestRunDispatchGuard(t *testing.T) {
 		decision    string
 	}{
 		{"allows the launcher line", bash(self + " launch --build p --brief b --mode direct"), env, "allow"},
+		{"allows the primary worktree", bash(self + " launch --build p --worktree path:" + project), env, "allow"},
+		{"denies another worktree", bash(self + " launch --build p --worktree path:" + home), env, "deny"},
+		{"denies a worktree without JITSO_PROJECT", bash(self + " launch --build p --worktree path:" + project), map[string]string{"HOME": home}, "deny"},
+		{"denies a worktree when JITSO_PROJECT is no checkout", bash(self + " launch --build p --worktree path:" + project), map[string]string{"HOME": home, "JITSO_PROJECT": home}, "deny"},
 		{"denies another command", bash("ls"), env, "deny"},
 		{"allows a brief", `{"tool_name":"Write","tool_input":{"file_path":"` + dir + `/briefs/a.md"},"cwd":"` + dir + `"}`, env, "allow"},
 		{"denies a write outside the briefs", `{"tool_name":"Write","tool_input":{"file_path":"` + home + `/a.md"},"cwd":"` + dir + `"}`, env, "deny"},

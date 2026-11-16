@@ -76,4 +76,4 @@ Legend: **keep** = intended, port it as is. **fix** = change the case and the po
 
 ## Known defects (xfail on `ts`, see PLAN.md)
 
-S1 to S3 and N-1 to N-22: `README.md` lists every one with its cases and the intended behavior, and is the place to read them. Of the rows above, L2, L3, L8, C4 and the settled halves of C1, H2 and H3 are defects there.
+S1 to S3 and N-1 to N-23: `README.md` lists every one with its cases and the intended behavior, and is the place to read them. Of the rows above, L2, L3, L8, C4 and the settled halves of C1, H2 and H3 are defects there.

@@ -58,6 +58,9 @@ type PlanInput struct {
 	Launcher string
 	// DispatchDir is the fixed dispatcher folder.
 	DispatchDir string
+	// Primary is the primary checkout of the project: the launch line names it
+	// with --worktree path:<Primary> (defect N-23).
+	Primary string
 }
 
 // BuildPlan is the interactive claude line: Haiku, project settings only, an
@@ -72,7 +75,11 @@ func BuildPlan(in PlanInput) (Plan, error) {
 	if err != nil {
 		return Plan{}, fail.Envf("cannot write the launcher into the prompt: %v", err)
 	}
-	prompt := RenderPrompt(in.Template, PromptParts{Catalog: in.Summary, Launcher: launcher, BriefsDir: briefs})
+	worktree := "path:" + in.Primary
+	if shell.CheckLaunchField("worktree", worktree) != "" {
+		return Plan{}, fail.Envf("the dispatcher cannot name the primary worktree %s: --worktree allows only letters, digits and . _ : / -", worktree)
+	}
+	prompt := RenderPrompt(in.Template, PromptParts{Catalog: in.Summary, Launcher: launcher, BriefsDir: briefs, Worktree: worktree})
 	settings, err := Settings(in.Launcher)
 	if err != nil {
 		return Plan{}, err

@@ -1,10 +1,11 @@
 // Package trust decides where a launch may run and answers the
 // trust-this-folder dialog of a freshly started session. A launch runs only in
-// a worktree of the primary checkout, the fixed dispatcher folder, or a folder
-// the caller configured (tests): Precheck and Place enforce it on every launch
-// (defect N-22), whether or not a dialog shows. The dialog appears even in
-// bypass mode, and Enter alone picks "No, exit"; Handle confirms it only for a
-// trusted folder and leaves it alone anywhere else.
+// a worktree of the primary checkout, or a folder the caller configured
+// (tests): Precheck and Place enforce it on every launch (defect N-22),
+// whether or not a dialog shows. The dispatcher folder is not one of them: the
+// dispatcher names the primary worktree on its launch line (defect N-23). The
+// dialog appears even in bypass mode, and Enter alone picks "No, exit"; Handle
+// confirms it only for a trusted folder and leaves it alone anywhere else.
 package trust
 
 import (
@@ -45,8 +46,6 @@ type Policy struct {
 	// Primary is the primary checkout; every worktree `git worktree list`
 	// reports for it is trusted.
 	Primary string
-	// DispatchDir is the fixed dispatcher folder.
-	DispatchDir string
 	// Extra are folders a caller configured. No CLI flag sets it.
 	Extra []string
 }
@@ -63,7 +62,7 @@ func (p Policy) Trusted(dir string) bool {
 
 // allowed are the real paths of every folder a launch may run in.
 func (p Policy) allowed() []string {
-	list := append(append(worktrees(p.Primary), p.DispatchDir), p.Extra...)
+	list := append(worktrees(p.Primary), p.Extra...)
 	for i := range list {
 		list[i] = real(list[i])
 	}

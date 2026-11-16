@@ -36,6 +36,12 @@ type DispatchGuard struct {
 	Real func(path string) string
 	// IsSymlink reports whether path is a symbolic link (Lstat).
 	IsSymlink func(path string) bool
+	// Primary is the real path of the project's primary checkout, named by
+	// JITSO_PROJECT: the one folder --worktree may name (defect N-23).
+	Primary string
+	// PrimaryProblem is why Primary is unknown, "" when it is known. A line
+	// that holds --worktree is denied with it.
+	PrimaryProblem string
 }
 
 // Problem is why the payload is not allowed, "" when it is the one allowed
@@ -119,8 +125,8 @@ func splitWords(command string) (words []word, ok bool) {
 
 // commandProblem is "" when command is the one allowed launcher line: this
 // executable, then launch, then only known flags with their values, in direct
-// mode. A word may be single-quoted only when it holds a space: the launcher
-// and the value of --brief.
+// mode, and --worktree only as path:<primary>. A word may be single-quoted
+// only when it holds a space: the launcher and the value of --brief.
 func (g DispatchGuard) commandProblem(raw any) string {
 	command, ok := text(raw)
 	if !ok {
@@ -153,6 +159,14 @@ func (g DispatchGuard) commandProblem(raw any) string {
 		}
 		if flag.text == "--mode" && value.text != "direct" {
 			return "the dispatcher launches in direct mode only"
+		}
+		if flag.text == "--worktree" {
+			if g.PrimaryProblem != "" {
+				return g.PrimaryProblem
+			}
+			if value.text != "path:"+g.Primary {
+				return "--worktree must be path:" + g.Primary
+			}
 		}
 		i++
 	}

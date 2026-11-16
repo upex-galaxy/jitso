@@ -16,6 +16,7 @@ func testGuard(symlinks ...string) DispatchGuard {
 		IsOwn:       isOwnAt("/opt/jitso"),
 		Real:        func(p string) string { return p },
 		IsSymlink:   func(p string) bool { return links[p] },
+		Primary:     "/p",
 	}
 }
 
@@ -31,7 +32,15 @@ func TestDispatchGuardCommands(t *testing.T) {
 	}{
 		{"bare launch", "/opt/jitso launch", true},
 		{"build brief mode", launch + "--build p --brief /h/b/a.md --mode direct", true},
-		{"all flags", launch + "--build p --brief b --mode direct --field a=b --field c=d --worktree w --mcp-exclude m --dry-run", true},
+		{"all flags", launch + "--build p --brief b --mode direct --field a=b --field c=d --worktree path:/p --mcp-exclude m --dry-run", true},
+		{"worktree is the primary", launch + "--build p --worktree path:/p", true},
+		{"worktree by name", launch + "--build p --worktree wt-1", false},
+		{"worktree of another folder", launch + "--build p --worktree path:/elsewhere", false},
+		{"worktree below the primary", launch + "--build p --worktree path:/p/sub", false},
+		{"worktree as an id", launch + "--build p --worktree id:fake-uuid::/p", false},
+		{"worktree with a trailing slash", launch + "--build p --worktree path:/p/", false},
+		{"worktree twice, one wrong", launch + "--build p --worktree path:/p --worktree path:/q", false},
+		{"quoted worktree", launch + "--build p --worktree 'path:/p'", false},
 		{"other program", "ls", false},
 		{"bun run form", "bun run jitso launch --build p", false},
 		{"program in front", "python3 /opt/jitso launch --build p", false},
@@ -172,5 +181,24 @@ func TestDispatchGuardRejectsThePresetFlag(t *testing.T) {
 	problem := g.Problem(payload("Bash", map[string]any{"command": "/opt/jitso launch --preset p --brief b --mode direct"}, g.DispatchDir))
 	if problem != `flag "--preset" is not allowed` {
 		t.Errorf("problem %q", problem)
+	}
+}
+
+// A line with --worktree is denied with the reason of an unknown primary, and
+// a line without it is not asked about the primary (defect N-23).
+func TestDispatchGuardWorktreeNeedsThePrimary(t *testing.T) {
+	g := testGuard()
+	g.Primary = ""
+	g.PrimaryProblem = "JITSO_PROJECT is not set, so the primary worktree is unknown"
+	with := "/opt/jitso launch --build p --worktree path:/p"
+	if got := g.Problem(payload("Bash", map[string]any{"command": with}, g.DispatchDir)); got != g.PrimaryProblem {
+		t.Errorf("problem %q, want %q", got, g.PrimaryProblem)
+	}
+	without := "/opt/jitso launch --build p --mode direct"
+	if got := g.Problem(payload("Bash", map[string]any{"command": without}, g.DispatchDir)); got != "" {
+		t.Errorf("a line without --worktree is not about the primary, got %q", got)
+	}
+	if got := testGuard().Problem(payload("Bash", map[string]any{"command": with + "/x"}, testGuard().DispatchDir)); got != "--worktree must be path:/p" {
+		t.Errorf("problem %q", got)
 	}
 }

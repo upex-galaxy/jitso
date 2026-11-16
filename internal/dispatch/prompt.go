@@ -13,13 +13,17 @@ type PromptParts struct {
 	Launcher string
 	// BriefsDir is the folder the dispatcher writes its briefs to.
 	BriefsDir string
+	// Worktree is the --worktree value of the launch line: path:<primary
+	// worktree of the project> (defect N-23).
+	Worktree string
 }
 
-// RenderPrompt fills {{CATALOG}}, {{LAUNCHER}} and {{BRIEFS_DIR}} in template.
+// RenderPrompt fills {{CATALOG}}, {{LAUNCHER}}, {{BRIEFS_DIR}} and {{WORKTREE}}
+// in template.
 // Any other {{NAME}} stays as written, and an inserted value is never scanned
 // again, so a catalog description holding a placeholder stays literal.
 func RenderPrompt(template string, parts PromptParts) string {
-	values := map[string]string{"CATALOG": parts.Catalog, "LAUNCHER": parts.Launcher, "BRIEFS_DIR": parts.BriefsDir}
+	values := map[string]string{"CATALOG": parts.Catalog, "LAUNCHER": parts.Launcher, "BRIEFS_DIR": parts.BriefsDir, "WORKTREE": parts.Worktree}
 	return placeholder.ReplaceAllStringFunc(template, func(match string) string {
 		if v, ok := values[match[2:len(match)-2]]; ok {
 			return v

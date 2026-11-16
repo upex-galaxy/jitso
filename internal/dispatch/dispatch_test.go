@@ -42,9 +42,9 @@ func TestCheckRequest(t *testing.T) {
 }
 
 func TestRenderPrompt(t *testing.T) {
-	parts := PromptParts{Catalog: "- a: {{LAUNCHER}}", Launcher: "/opt/jitso", BriefsDir: "/h/briefs"}
+	parts := PromptParts{Catalog: "- a: {{LAUNCHER}}", Launcher: "/opt/jitso", BriefsDir: "/h/briefs", Worktree: "path:/p"}
 	tests := []struct{ name, template, want string }{
-		{"all three", "{{CATALOG}}|{{LAUNCHER}} launch|{{BRIEFS_DIR}}", "- a: {{LAUNCHER}}|/opt/jitso launch|/h/briefs"},
+		{"all four", "{{CATALOG}}|{{LAUNCHER}} launch|{{BRIEFS_DIR}}|{{WORKTREE}}", "- a: {{LAUNCHER}}|/opt/jitso launch|/h/briefs|path:/p"},
 		{"unknown stays", "{{OTHER}} {{BRIEFS_DIR}}", "{{OTHER}} /h/briefs"},
 		{"repeated", "{{BRIEFS_DIR}} {{BRIEFS_DIR}}", "/h/briefs /h/briefs"},
 		{"not a placeholder", "{ {LAUNCHER} } {{ LAUNCHER }}", "{ {LAUNCHER} } {{ LAUNCHER }}"},
@@ -78,7 +78,7 @@ func TestSettings(t *testing.T) {
 }
 
 func TestBuildPlan(t *testing.T) {
-	plan, err := BuildPlan(PlanInput{Request: "find the hook", Template: "P {{BRIEFS_DIR}}", Summary: "S", Launcher: "/opt/jitso", DispatchDir: "/h/.jitso/dispatch-cwd"})
+	plan, err := BuildPlan(PlanInput{Request: "find the hook", Template: "P {{BRIEFS_DIR}} {{WORKTREE}}", Summary: "S", Launcher: "/opt/jitso", DispatchDir: "/h/.jitso/dispatch-cwd", Primary: "/p"})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -89,7 +89,7 @@ func TestBuildPlan(t *testing.T) {
 	want := []string{
 		"claude", "--model", "claude-haiku-5-5", "--effort", "medium", "--setting-sources", "project",
 		"--strict-mcp-config", "--mcp-config", `{"mcpServers":{}}`, "--tools=Bash,Write",
-		"--settings", settings, "--system-prompt", "P /h/.jitso/dispatch-cwd/briefs", "find the hook",
+		"--settings", settings, "--system-prompt", "P /h/.jitso/dispatch-cwd/briefs path:/p", "find the hook",
 	}
 	if !reflect.DeepEqual(plan.Argv, want) {
 		t.Errorf("argv\n%q\nwant\n%q", plan.Argv, want)
@@ -217,7 +217,7 @@ func TestOpen(t *testing.T) {
 }
 
 func TestBuildPlanLauncherWithSpace(t *testing.T) {
-	in := PlanInput{Request: "r", Template: "{{LAUNCHER}} launch --build <id>", Summary: "S", DispatchDir: "/h/.jitso/dispatch-cwd"}
+	in := PlanInput{Request: "r", Template: "{{LAUNCHER}} launch --build <id>", Summary: "S", DispatchDir: "/h/.jitso/dispatch-cwd", Primary: "/p"}
 	in.Launcher = "/opt/my tools/jitso"
 	plan, err := BuildPlan(in)
 	if err != nil {
@@ -231,6 +231,30 @@ func TestBuildPlanLauncherWithSpace(t *testing.T) {
 		in.Launcher = bad
 		if _, err := BuildPlan(in); fail.Code(err) != fail.CodeEnv {
 			t.Errorf("launcher %q: got %v (exit %d), want an environment error", bad, err, fail.Code(err))
+		}
+	}
+}
+
+// The launch line names the primary worktree, so the primary must pass the
+// --worktree allowlist: a path the launcher would reject is an environment
+// error, not a line that could never launch (defect N-23).
+func TestBuildPlanPrimaryWorktree(t *testing.T) {
+	in := PlanInput{Request: "r", Template: "{{LAUNCHER}} launch --worktree {{WORKTREE}}", Summary: "S", Launcher: "/opt/jitso", DispatchDir: "/h/.jitso/dispatch-cwd"}
+	in.Primary = "/work/my-repo_1.x"
+	plan, err := BuildPlan(in)
+	if err != nil {
+		t.Fatal(err)
+	}
+	i := slices.Index(plan.Argv, "--system-prompt")
+	if i < 0 || plan.Argv[i+1] != "/opt/jitso launch --worktree path:/work/my-repo_1.x" {
+		t.Errorf("the prompt must carry path:<primary>, got %q", plan.Argv)
+	}
+	for _, bad := range []string{"/a b/p", "/a@b/p", "/a+b/p", "/a,b/p", "/a%b/p", "/a$b/p", "/a/../p", "/a'b/p"} {
+		in.Primary = bad
+		_, err := BuildPlan(in)
+		want := "the dispatcher cannot name the primary worktree path:" + bad + ": --worktree allows only letters, digits and . _ : / -"
+		if fail.Code(err) != fail.CodeEnv || err == nil || !strings.Contains(err.Error(), want) {
+			t.Errorf("primary %q: got %v (exit %d), want an environment error %q", bad, err, fail.Code(err), want)
 		}
 	}
 }

@@ -9,7 +9,6 @@ import (
 	"github.com/upex-galaxy/jitso/internal/harness"
 	"github.com/upex-galaxy/jitso/internal/jsonx"
 	"github.com/upex-galaxy/jitso/internal/orca"
-	"github.com/upex-galaxy/jitso/internal/project"
 	"github.com/upex-galaxy/jitso/internal/rules"
 	"github.com/upex-galaxy/jitso/internal/shell"
 	"github.com/upex-galaxy/jitso/internal/trust"
@@ -132,7 +131,7 @@ func repoServers(path string) (map[string]any, error) {
 
 // trustPolicy is the set of folders a launch may run in.
 func trustPolicy(d Deps) trust.Policy {
-	return trust.Policy{Primary: d.Root.Primary, DispatchDir: project.DispatchDir(d.Home), Extra: d.TrustExtra}
+	return trust.Policy{Primary: d.Root.Primary, Extra: d.TrustExtra}
 }
 
 // answerTrust handles the trust dialog of the new terminal. The folder Orca

@@ -162,9 +162,25 @@ func RunDispatchGuard(d Deps) {
 			return err == nil && info.Mode()&os.ModeSymlink != 0
 		},
 	}
+	g.Primary, g.PrimaryProblem = d.primary(home)
 	if problem := g.Problem(input); problem != "" {
 		answer(Deny, problem)
 		return
 	}
 	answer(Allow, AllowedReason)
+}
+
+// primary is the real path of the primary checkout JITSO_PROJECT names, which
+// the dispatcher sets for its claude. When it cannot be known, problem says why
+// and the guard denies a line that holds --worktree.
+func (d Deps) primary(home string) (primary, problem string) {
+	env := d.Getenv(project.EnvVar)
+	if env == "" {
+		return "", project.EnvVar + " is not set, so the primary worktree is unknown"
+	}
+	root, err := project.Resolve(project.DispatchDir(home), env)
+	if err != nil {
+		return "", project.EnvVar + " does not name a git checkout"
+	}
+	return root.Primary, ""
 }
