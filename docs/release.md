@@ -2,6 +2,8 @@
 
 How a JITSO release is built, checked and published. Everything that leaves this machine is marked **OWNER-GATED**: it waits for the owner's say in the conversation (AGENTS.md rule 4), and no agent runs it on its own. The local steps change nothing outside this repository and the scratch folder you build into.
 
+The repository `upex-galaxy/jitso` is to be public (decided by the owner on 2026-11-15). Creating it and every other publishing step is OWNER-GATED and done with the owner present.
+
 Nothing here has been published. The files this procedure uses exist and have been run locally: `scripts/package.sh`, `scripts/install.sh`, `scripts/test-install.sh`, `scripts/fill-formula.sh`, `packaging/homebrew/jitso.rb`. `.github/workflows/release.yml` is written and has never run.
 
 Committed prose names the source of truth, not its value (AGENTS.md rule 12), so this file has no sizes, counts or dates: it says which file or command holds each one.
@@ -21,11 +23,17 @@ A release is a tag `v<x>` on `main` and a GitHub Release of that tag. Its assets
 
 ## 2. Version policy
 
-| # | Question | Recommendation |
-|---|---|---|
-| OWNER | Which version numbers does JITSO use? | SemVer tags `vMAJOR.MINOR.PATCH`, release candidates as `-rc.N`. Start at `v0.1.0` and stay in `0.x` while the contract can still change. Move to `v1.0.0` after the attended real Orca run. Never reach `v2` without moving the module path to `/v2`: `go install` needs it. |
+Decided by the owner on 2026-11-15 (`docs/decisions.md`).
 
-This is the owner's call; until it is answered, `package.sh` accepts any tag of the form `v<digits>.<digits>.<digits>` with an optional suffix, and the workflow treats a tag with a `-` as a prerelease.
+| Item | Policy |
+|---|---|
+| Tags | SemVer `vMAJOR.MINOR.PATCH`; release candidates are `vMAJOR.MINOR.PATCH-rc.N` |
+| First tag | `v0.1.0` |
+| `0.x` | stay in `0.x` while the contract can still change |
+| `v1.0.0` | only after an attended real Orca run |
+| `v2` | never without moving the module path to `/v2`: `go install` needs it |
+
+`package.sh` accepts any tag of the form `v<digits>.<digits>.<digits>` with an optional suffix, and the workflow treats a tag with a `-` as a prerelease.
 
 Whatever the policy, a tag is never moved, deleted and reused, and never force-pushed. The Go module proxy and checksum database keep the first content they saw for a version for good (predicted to apply once the repository is public), so a bad tag is replaced by a new version (section 6).
 
@@ -51,7 +59,7 @@ Every step in this list is **OWNER-GATED**. Do not run one without the owner's s
 
 | # | Step | Notes |
 |---|---|---|
-| 1 | **OWNER-GATED** Create the GitHub repository `upex-galaxy/jitso` | Visibility is the owner's call. Recommendation: public, so `go install` and the module proxy work without `GOPRIVATE`. |
+| 1 | **OWNER-GATED** Create the GitHub repository `upex-galaxy/jitso` | Public (decided 2026-11-15), so `go install` and the module proxy work without `GOPRIVATE`. Done with the owner present. |
 | 2 | **OWNER-GATED** Add the remote | Write the push policy into AGENTS.md section 7 first (rule 4 and section 7 say it goes there before the first push). |
 | 3 | **OWNER-GATED** Push `main` | No force-push, ever. |
 | 4 | **OWNER-GATED** Create the annotated tag `v<x>` on the verified commit and push it | The tag push starts the workflow. |
@@ -94,7 +102,7 @@ The workflow does not run any Windows job. A `windows-latest` job that runs `jit
 
 | Limit | Why |
 |---|---|
-| Release integrity is checksums from the same server as the archives | OWNER question, recommendation: accept for the first release; add GitHub artifact attestations (`actions/attest-build-provenance`, `gh attestation verify`) or minisign in a later one |
+| Release integrity is checksums from the same server as the archives | Decided by the owner on 2026-11-15: checksums only for release 1; GitHub artifact attestations (`actions/attest-build-provenance`, `gh attestation verify`) or minisign can come in a later release |
 | The binaries are not signed or notarized | A binary downloaded through a browser on macOS may be quarantined by Gatekeeper; `curl` and the install script do not set the attribute (predicted, not measured). The install script copies the binary through a temp file and `mv`, which is what replaces a running binary atomically |
 | Archives are not byte-reproducible | `tar` and `zip` write metadata; the binaries are meant to be reproducible for the same toolchain, flags and commit (predicted) |
 | The workflow has never run | the SHAs are placeholders, and `gh` and `zip` being present on the runner image is predicted, not measured |
