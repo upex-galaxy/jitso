@@ -149,9 +149,12 @@ func LoadConfig(fsys fs.FS) (Config, error) {
 	if err != nil {
 		return Config{}, &FileError{File: ConfigPath, Problems: []string{err.Error()}}
 	}
-	cfg, ok := configFrom(raw)
+	cfg, problems, ok := configFrom(raw)
 	if !ok {
 		return Config{}, &FileError{File: ConfigPath, Problems: []string{"the top level is not a mapping"}}
+	}
+	if len(problems) > 0 {
+		return Config{}, &FileError{File: ConfigPath, Problems: problems}
 	}
 	return cfg, nil
 }

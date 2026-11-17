@@ -23,3 +23,8 @@ skills:
   - orca-orchestration
 
 tools: [Read, Glob, Grep, Bash, Write, Edit]
+
+# Patterns of the fields a build may require, each matched against the whole value.
+fields:
+  ticket_key: '^[A-Z][A-Z0-9]*-[0-9]+$'
+  env: '^[a-z][a-z0-9_-]*$'

@@ -17,7 +17,7 @@ import (
 // build draft checks a build and keeps it as a draft: the bytes of the input,
 // unchanged, in .jitso/drafts/<id>.yaml (defect N-15). It writes only that
 // folder. The draft is checked like a build of the draft layer: the
-// allowlists, the route scope and the success checks of this project, the
+// allowlists and the route scope of this project, the shape of its success list, the
 // rules only a launch sees (a worker needs a budget and a harness with an
 // adapter, a listed subagent must exist and be approved or a draft), and the
 // id must be one no saved build has, so an agent cannot shadow an approved

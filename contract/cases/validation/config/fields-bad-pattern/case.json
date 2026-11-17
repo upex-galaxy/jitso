@@ -1,0 +1,34 @@
+{
+  "id": "validation/config/fields-bad-pattern",
+  "title": "a fields pattern that does not compile is an invalid config naming the user's pattern",
+  "source": [
+    "intended: docs/decisions.md, the v0.1.0 cut (the fields key of jitso/jitso.yaml)"
+  ],
+  "project": {
+    "files": {
+      "jitso/jitso.yaml": "# JITSO allowlists (ADR-0027). A build, and any override a launch asks for,\n# may name only what is listed here. `cli/jitso/catalog.test.ts` asserts that every\n# entry exists in this repo: skills under `.agents/skills/`, MCP servers in\n# `.mcp.json`, Sonnet/Opus ids in `.agents/project.yaml` (`orchestration:`).\n# Models are full ids, never aliases.\nversion: 1\n\nmodels:\n  - claude-haiku-5-5\n  - claude-sonnet-5-5\n  - claude-opus-5-5\n\nefforts: [low, medium, high]\n\nmcp: [dbhub, openapi]\n\nskills:\n  - sprint-testing\n  - shift-left-testing\n  - test-automation\n  - framework-development\n  - exploratory-testing\n  - orca-orchestration\n\ntools: [Read, Glob, Grep, Bash, Write, Edit]\n\nfields:\n  ticket_key: '['\n"
+    }
+  },
+  "steps": [
+    {
+      "run": [
+        "build",
+        "list"
+      ],
+      "expect": {
+        "exit": 3,
+        "stdout": [
+          {
+            "empty": true
+          }
+        ],
+        "stderr": [
+          "jitso: jitso/jitso.yaml is invalid: field \"ticket_key\" pattern does not compile: "
+        ],
+        "orca_calls": {
+          "empty": true
+        }
+      }
+    }
+  ]
+}

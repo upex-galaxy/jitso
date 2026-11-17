@@ -1,0 +1,40 @@
+{
+  "id": "build/validate/worker-without-success-or-route-scope-is-ok",
+  "title": "a worker build with neither success nor route_scope validates: build validate prints ok and exits 0",
+  "source": [
+    "intended: docs/decisions.md, the v0.1.0 cut (the QA vocabulary leaves the generic tool: success and route_scope are optional)"
+  ],
+  "intent": "A build with no `success` key and no `route_scope` key is valid on every tier. `build validate bare` prints its ok line and the summary, exits 0 and prints nothing on stderr.",
+  "project": {
+    "files": {
+      "jitso/builds/bare.yaml": {
+        "from": "bare.yaml"
+      }
+    }
+  },
+  "steps": [
+    {
+      "run": [
+        "build",
+        "validate",
+        "bare"
+      ],
+      "expect": {
+        "exit": 0,
+        "stdout": [
+          {
+            "equals": "ok bare repo jitso/builds/bare.yaml\nchecked 1 builds: 1 ok, 0 invalid\n"
+          }
+        ],
+        "stderr": [
+          {
+            "empty": true
+          }
+        ],
+        "orca_calls": {
+          "empty": true
+        }
+      }
+    }
+  ]
+}

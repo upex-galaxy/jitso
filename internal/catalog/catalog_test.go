@@ -105,22 +105,27 @@ func TestValidateBuild(t *testing.T) {
 		{"subagents scalar", []string{"subagents: plan"}, []string{"subagents must be a list of kebab-case names"}},
 		{"subagents null", []string{"subagents: null"}, []string{"subagents must be a list of kebab-case names"}},
 		{"subagents number item", []string{"subagents: [1]"}, []string{"subagents must be a list of kebab-case names"}},
-		{"route scope empty", []string{"route_scope: []"}, []string{"route_scope is empty (use [none])"}},
-		{"route scope missing", []string{"route_scope:-"}, []string{"route_scope is empty (use [none])"}},
+		{"route scope empty is none", []string{"route_scope: []"}, nil},
+		{"route scope missing is none", []string{"route_scope:-"}, nil},
 		{"route scope unknown", []string{"route_scope: [ticket-work, nope]"}, []string{`route_scope id "nope" is not an instruction section`}},
-		{"required field without pattern", []string{"requires: [ticket_key, color]"}, []string{`required field "color" has no pattern`}},
+		{"required field without a fields entry", []string{"requires: [ticket_key, color]"}, nil},
+		{"required field not a field name", []string{"requires: [Color, env2, a-b]"}, []string{
+			`required field "Color" is not a field name`, `required field "env2" is not a field name`, `required field "a-b" is not a field name`,
+		}},
 		{"success empty", []string{"success: []"}, []string{"success must list at least one check"}},
-		{"success missing", []string{"success:-"}, []string{"success must list at least one check"}},
-		{"success unknown check", []string{"success: [{ check: magic }]"}, []string{`success check "magic" is unknown`}},
-		{"success entry without check", []string{"success: [{ key: x }]"}, []string{`success check "undefined" is unknown`}},
-		{"success string entry", []string{"success: [answer_delivered]"}, []string{`success check "undefined" is unknown`}},
+		{"success missing", []string{"success:-"}, nil},
+		{"success null", []string{"success: null"}, []string{"success must list at least one check"}},
+		{"success any check name", []string{"success: [{ check: magic }, { check: no_rule_breaks }]"}, nil},
+		{"success check name not text", []string{"success: [{ check: 7 }, { check: '' }]"}, []string{"success entry must have a check name", "success entry must have a check name"}},
+		{"success entry without check", []string{"success: [{ key: x }]"}, []string{"success entry must have a check name"}},
+		{"success string entry", []string{"success: [answer_delivered]"}, []string{"success entry must have a check name"}},
 		{"success placeholder", []string{"success: [{ check: jira_comment_on, key: '{ticket_key}' }]"}, []string{"success placeholder {ticket_key} is not a required field"}},
 		{"success placeholder required", []string{"requires: [ticket_key]", "success: [{ check: jira_comment_on, key: '{ticket_key}' }]"}, nil},
 		{"success placeholders in key order", []string{"success: [{ check: jira_comment_on, b: '{env}', a: '{ticket_key}' }]"}, []string{
 			"success placeholder {env} is not a required field",
 			"success placeholder {ticket_key} is not a required field",
 		}},
-		{"success string entry characters", []string{"success: ['{x}']"}, []string{`success check "undefined" is unknown`}},
+		{"success string entry characters", []string{"success: ['{x}']"}, []string{"success entry must have a check name"}},
 		{"tier worker", []string{"tier: worker"}, nil},
 		{"tier conductor", []string{"tier: conductor"}, nil},
 		{"tier unknown", []string{"tier: boss"}, []string{"tier must be one of worker, conductor, subagent"}},
@@ -130,14 +135,14 @@ func TestValidateBuild(t *testing.T) {
 		{"subagent tier blank prompt", []string{"tier: subagent", "prompt: '  '"}, []string{"prompt must be a non-empty string in a subagent-tier build"}},
 		{"subagent tier without description", []string{"tier: subagent", "prompt: p", "description:-"}, []string{"description must be a non-empty string in a subagent-tier build"}},
 		{"subagent tier listing subagents", []string{"tier: subagent", "prompt: p", "subagents: [plan]"}, []string{"a subagent-tier build cannot list subagents"}},
-		{"conductor needs route_scope", []string{"tier: conductor", "route_scope:-"}, []string{"route_scope is empty (use [none])"}},
-		{"conductor needs success", []string{"tier: conductor", "success:-"}, []string{"success must list at least one check"}},
+		{"conductor needs no route_scope", []string{"tier: conductor", "route_scope:-"}, nil},
+		{"conductor needs no success", []string{"tier: conductor", "success:-"}, nil},
 		{"conductor may list subagents and skills", []string{"tier: conductor", "skills_first: [sprint-testing]", "mcp: [dbhub]", "requires: [ticket_key]", "subagents: [plan]"}, nil},
 		{"subagent tier needs no launch-only field", []string{"tier: subagent", "prompt: p", "route_scope:-", "success:-", "budget:-", "mode_default:-", "agents_md:-", "harness:-"}, nil},
 		{"subagent tier needs no list field at all", []string{"tier: subagent", "prompt: p", "skills_first:-", "mcp:-", "requires:-"}, nil},
 		{"subagent tier route_scope is checked when present", []string{"tier: subagent", "prompt: p", "route_scope: [nope]"}, []string{`route_scope id "nope" is not an instruction section`}},
-		{"subagent tier empty route_scope is checked when present", []string{"tier: subagent", "prompt: p", "route_scope: []"}, []string{"route_scope is empty (use [none])"}},
-		{"subagent tier success is checked when present", []string{"tier: subagent", "prompt: p", "success: [{ check: magic }]"}, []string{`success check "magic" is unknown`}},
+		{"subagent tier empty route_scope is none", []string{"tier: subagent", "prompt: p", "route_scope: []"}, nil},
+		{"subagent tier success shape is checked when present", []string{"tier: subagent", "prompt: p", "success: [{ key: x }]"}, []string{"success entry must have a check name"}},
 		{"subagent tier empty success is checked when present", []string{"tier: subagent", "prompt: p", "success: []"}, []string{"success must list at least one check"}},
 		{"subagent tier skills_first must be empty", []string{"tier: subagent", "prompt: p", "skills_first: [sprint-testing]"}, []string{"skills_first must be empty in a subagent-tier build"}},
 		{"subagent tier mcp must be empty", []string{"tier: subagent", "prompt: p", "mcp: [dbhub]"}, []string{"mcp must be empty in a subagent-tier build"}},
@@ -147,9 +152,9 @@ func TestValidateBuild(t *testing.T) {
 			"skills_first must be empty in a subagent-tier build", "mcp must be empty in a subagent-tier build",
 			"requires must be empty in a subagent-tier build", "a subagent-tier build cannot list subagents",
 		}},
-		{"unknown tier value keeps the worker rules", []string{"tier: boss", "route_scope:-"}, []string{"route_scope is empty (use [none])", "tier must be one of worker, conductor, subagent"}},
-		{"several problems in order", []string{"id: X", "model: gpt", "route_scope: []"}, []string{
-			"id must be kebab-case", `model "gpt" is not in the allowlist`, "route_scope is empty (use [none])",
+		{"unknown tier value keeps the worker rules", []string{"tier: boss", "route_scope: [nope]"}, []string{`route_scope id "nope" is not an instruction section`, "tier must be one of worker, conductor, subagent"}},
+		{"several problems in order", []string{"id: X", "model: gpt", "route_scope: [nope]"}, []string{
+			"id must be kebab-case", `model "gpt" is not in the allowlist`, `route_scope id "nope" is not an instruction section`,
 		}},
 	}
 	for _, tt := range tests {
@@ -333,9 +338,90 @@ func TestLoadMissingFiles(t *testing.T) {
 
 func TestConfigCoercion(t *testing.T) {
 	raw, _ := decodeYAML([]byte("version: 1\nmodels: [123, a]\nefforts: low\n"))
-	cfg, ok := configFrom(raw)
+	cfg, _, ok := configFrom(raw)
 	if !ok || cfg.Version != 1 || !reflect.DeepEqual(cfg.Models, []string{"123", "a"}) || len(cfg.Efforts) != 0 {
 		t.Errorf("config %+v", cfg)
+	}
+}
+
+func TestConfigFields(t *testing.T) {
+	tests := []struct {
+		name, yaml string
+		problems   []string
+		names      []string
+	}{
+		{"absent", "version: 1\n", nil, nil},
+		{"null", "fields:\n", nil, nil},
+		{"empty mapping", "fields: {}\n", nil, nil},
+		{"two patterns", "fields:\n  ticket_key: '^[A-Z]+-[0-9]+$'\n  env: '^[a-z]+$'\n", nil, []string{"ticket_key", "env"}},
+		{"list", "fields: [a]\n", []string{"fields must be a mapping of field name to pattern"}, nil},
+		{"string", "fields: abc\n", []string{"fields must be a mapping of field name to pattern"}, nil},
+		{"bad names", "fields:\n  Ticket: x\n  env2: x\n  a-b: x\n", []string{
+			`field name "Ticket" must be lowercase letters and _`, `field name "env2" must be lowercase letters and _`, `field name "a-b" must be lowercase letters and _`,
+		}, nil},
+		{"not a string", "fields:\n  a: 5\n  b: ''\n  c:\n", []string{
+			`field "a" pattern must be a non-empty string`, `field "b" pattern must be a non-empty string`, `field "c" pattern must be a non-empty string`,
+		}, nil},
+		{"does not compile", "fields:\n  a: '['\n", []string{"field \"a\" pattern does not compile: error parsing regexp: missing closing ]: `[`"}, nil},
+		{"problems in key order", "fields:\n  b: '['\n  A: x\n  c: ''\n", []string{
+			"field \"b\" pattern does not compile: error parsing regexp: missing closing ]: `[`",
+			`field name "A" must be lowercase letters and _`,
+			`field "c" pattern must be a non-empty string`,
+		}, nil},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			raw, err := decodeYAML([]byte(tt.yaml))
+			if err != nil {
+				t.Fatal(err)
+			}
+			cfg, problems, ok := configFrom(raw)
+			if !ok || !reflect.DeepEqual(problems, tt.problems) {
+				t.Fatalf("problems %q, want %q", problems, tt.problems)
+			}
+			var names []string
+			for _, f := range cfg.Fields {
+				names = append(names, f.Name)
+			}
+			if !reflect.DeepEqual(names, tt.names) {
+				t.Errorf("fields %v, want %v", names, tt.names)
+			}
+		})
+	}
+}
+
+// TestFieldPatternMatchesTheWholeValue pins the wrap the loader puts around a
+// pattern: an unanchored pattern still has to match the whole value.
+func TestFieldPatternMatchesTheWholeValue(t *testing.T) {
+	raw, _ := decodeYAML([]byte("fields:\n  a: 'PRJ-[0-9]+'\n  b: '^[a-z]+$'\n"))
+	cfg, _, _ := configFrom(raw)
+	a, ok := cfg.FieldPattern("a")
+	if !ok || !a.MatchString("PRJ-1") || a.MatchString("xPRJ-1") || a.MatchString("PRJ-1x") {
+		t.Errorf("pattern a: %v %v", a, ok)
+	}
+	b, _ := cfg.FieldPattern("b")
+	if !b.MatchString("abc") || b.MatchString("abc\n") {
+		t.Errorf("pattern b must reject a trailing newline")
+	}
+	if _, ok := cfg.FieldPattern("c"); ok {
+		t.Errorf("c has no pattern")
+	}
+}
+
+func TestValidFieldValue(t *testing.T) {
+	for v, want := range map[string]bool{"any text": true, "x": true, "": false, "a\nb": false, "a\x00b": false, "a\tb": false, "a\x7fb": false, "caf\u00e9": true} {
+		if got := ValidFieldValue(v); got != want {
+			t.Errorf("ValidFieldValue(%q) = %v, want %v", v, got, want)
+		}
+	}
+}
+
+func TestLoadRejectsBadFields(t *testing.T) {
+	fsys := testFS(nil)
+	fsys["jitso/jitso.yaml"] = &fstest.MapFile{Data: []byte("version: 1\nfields:\n  Bad: x\n")}
+	_, err := Load(fsys)
+	if err == nil || err.Error() != `jitso/jitso.yaml is invalid: field name "Bad" must be lowercase letters and _` {
+		t.Errorf("got %v", err)
 	}
 }
 

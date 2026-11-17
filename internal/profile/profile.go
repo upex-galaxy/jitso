@@ -3,8 +3,9 @@
 // is pure: the catalog is already loaded and validated.
 //
 // The launching model asks; this code decides. A request picks a build and
-// gives the fields that build requires; every field value must match its
-// pattern, so nothing a model wrote carries shell syntax further.
+// gives the fields that build requires; every field value must match the
+// pattern the project's jitso/jitso.yaml gives its field, or the generic check
+// (not empty, one line) when it gives none.
 package profile
 
 import (
@@ -76,9 +77,6 @@ func Resolve(req Request, cat *catalog.Catalog) (Profile, error) {
 		}
 	}
 	scope := b.RouteScope
-	if len(scope) == 0 {
-		return Profile{}, fail.Rejected("empty route scope (use none)")
-	}
 	for _, id := range scope {
 		if id != "none" && !slices.Contains(cat.RouteIDs, id) {
 			return Profile{}, fail.Rejectedf(`unknown route-scope id "%s"`, id)
@@ -91,8 +89,9 @@ func Resolve(req Request, cat *catalog.Catalog) (Profile, error) {
 		if !slices.Contains(b.Requires, name) {
 			return Profile{}, fail.Rejectedf(`unknown field "%s" for build "%s"`, name, b.ID)
 		}
-		pattern, ok := catalog.FieldPattern(name)
-		if !ok || !pattern.MatchString(req.Fields.Get(name)) {
+		value := req.Fields.Get(name)
+		pattern, ok := cfg.FieldPattern(name)
+		if (ok && !pattern.MatchString(value)) || (!ok && !catalog.ValidFieldValue(value)) {
 			return Profile{}, fail.Rejectedf("field %s has an invalid value", name)
 		}
 	}

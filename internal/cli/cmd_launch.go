@@ -35,7 +35,7 @@ Launches a worker from an approved build and a brief file: prints its card, open
   --parent <launch_id>         the launch that starts this one
   --worktree <selector>        the Orca worktree the terminal opens in
   --mcp-exclude <name>         leave one MCP server of the build out (repeatable)
-  --field <name>=<value>       a value the build requires, such as ticket_key (repeatable)
+  --field <name>=<value>       a value the build requires (repeatable)
   --brief-language en|es|any   the language the brief check expects (default en)
   --dry-run                    check everything and print the card; open nothing, write nothing`
 

@@ -52,8 +52,7 @@ type Build struct {
 	Tools    []string
 	ToolsSet bool
 
-	Budget  Budget
-	Success []SuccessCheck
+	Budget Budget
 }
 
 // Budget is the build's budget mapping. Set is false when the build has none.
@@ -61,20 +60,6 @@ type Budget struct {
 	Tokens     float64
 	USDListCap float64
 	Set        bool
-}
-
-// SuccessCheck is one entry of a build's success list.
-type SuccessCheck struct {
-	// Check is the check name, for example no_rule_breaks.
-	Check string
-	// Params are the other keys of the entry, in order, values as String().
-	Params []Param
-}
-
-// Param is one key and value of a success check.
-type Param struct {
-	Key   string
-	Value string
 }
 
 // LayerWord is the layer word of the build, repo for a build made by hand.
@@ -135,22 +120,6 @@ func buildFrom(file string, m *Map) Build {
 	}
 	if budget, ok := m.Value("budget").(*Map); ok {
 		b.Budget = Budget{Tokens: jsNumber(budget.Value("tokens")), USDListCap: jsNumber(budget.Value("usd_list_cap")), Set: true}
-	}
-	if list, ok := m.Value("success").([]any); ok {
-		for _, entry := range list {
-			sc := SuccessCheck{}
-			if em, ok := entry.(*Map); ok {
-				for _, k := range em.Keys() {
-					v, _ := em.Get(k)
-					if k == "check" {
-						sc.Check = jsconv.String(v)
-						continue
-					}
-					sc.Params = append(sc.Params, Param{Key: k, Value: jsconv.String(v)})
-				}
-			}
-			b.Success = append(b.Success, sc)
-		}
 	}
 	return b
 }

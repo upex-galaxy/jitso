@@ -9,7 +9,7 @@ import (
 	"github.com/upex-galaxy/jitso/internal/catalog"
 )
 
-const config = "version: 1\nmodels: [claude-haiku-5-5, claude-sonnet-5-5]\nefforts: [low, medium]\nmcp: [dbhub]\nskills: [sprint-testing]\ntools: [Read, Bash]\n"
+const config = "version: 1\nmodels: [claude-haiku-5-5, claude-sonnet-5-5]\nefforts: [low, medium]\nmcp: [dbhub]\nskills: [sprint-testing]\ntools: [Read, Bash]\nfields:\n  ticket_key: '^[A-Z][A-Z0-9]*-[0-9]+$'\n  env: '^[a-z][a-z0-9_-]*$'\n"
 
 func build(id string, extra ...string) string {
 	lines := map[string]string{
@@ -185,5 +185,25 @@ func TestResolveInvalidHere(t *testing.T) {
 	}
 	if _, err := Resolve(Request{Build: ""}, cat); err == nil || err.Error() != `JITSO REJECTED: unknown build ""` {
 		t.Errorf("empty id must not match a file without an id: %v", err)
+	}
+}
+
+// TestResolveFieldWithoutPattern: a field with no entry in the fields key of
+// jitso.yaml gets the generic check, a non-empty value on one line.
+func TestResolveFieldWithoutPattern(t *testing.T) {
+	fsys := fstest.MapFS{
+		"jitso/jitso.yaml":           {Data: []byte("version: 1\nmodels: [claude-haiku-5-5]\nefforts: [low]\n")},
+		".agents/instructions/x.txt": {Data: []byte("")},
+		"jitso/builds/painter.yaml":  {Data: []byte(build("painter", "requires: [color]", "route_scope: null"))},
+	}
+	cat, err := catalog.Load(fsys)
+	if err != nil {
+		t.Fatal(err)
+	}
+	for value, reason := range map[string]string{"any text": "", "": "field color has an invalid value", "a\nb": "field color has an invalid value"} {
+		_, err := Resolve(Request{Build: "painter", Fields: fields("color", value)}, cat)
+		if reason == "" && err != nil || reason != "" && (err == nil || !strings.Contains(err.Error(), reason)) {
+			t.Errorf("value %q: got %v, want %q", value, err, reason)
+		}
 	}
 }

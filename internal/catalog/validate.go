@@ -27,22 +27,10 @@ const (
 // Tiers lists the valid tier values.
 var Tiers = []string{TierWorker, TierConductor, TierSubagent}
 
-// SuccessChecks are the known success check names.
-var SuccessChecks = []string{"answer_delivered", "jira_comment_on", "xray_execution_with_env", "no_rule_breaks"}
-
-// fieldPatterns are the patterns of the fields a build may require. A field
-// not listed here cannot be required.
-var fieldPatterns = map[string]*regexp.Regexp{
-	"ticket_key": regexp.MustCompile(`^[A-Z][A-Z0-9]*-[0-9]+$`),
-	"env":        regexp.MustCompile(`^[a-z][a-z0-9_-]*$`),
-}
-
-// FieldPattern is the pattern a required field's value must match, and false
-// for a field no build may require.
-func FieldPattern(name string) (*regexp.Regexp, bool) {
-	p, ok := fieldPatterns[name]
-	return p, ok
-}
+// FieldName is the shape of a field name: the keys of the fields mapping of
+// jitso/jitso.yaml and each name a build lists in requires. It has no digits,
+// so it agrees with the placeholder pattern below.
+var FieldName = regexp.MustCompile(`^[a-z][a-z_]*$`)
 
 var (
 	kebab       = regexp.MustCompile(`^[a-z][a-z0-9-]*$`)
@@ -64,9 +52,9 @@ func ValidateBuild(raw any, cfg Config, routeIDs []string) []string {
 // approved or retired, the draft layer takes exactly draft (defect N-15), so a
 // draft cannot pass as a saved build and a saved file cannot claim to be a draft.
 //
-// Worker and conductor builds are validated identically. A subagent-tier build
-// never launches alone, so route_scope and success are optional for it (checked
-// only when present, never used), and skills_first, mcp, requires and
+// Worker and conductor builds are validated identically. route_scope and
+// success are optional on every tier: they are checked only when present. A
+// subagent-tier build never launches alone, so skills_first, mcp, requires and
 // subagents must be empty (docs/decisions.md, tier matrix, defect N-11).
 func ValidateBuildIn(raw any, cfg Config, routeIDs []string, layer Layer) []string {
 	p, ok := raw.(*Map)
@@ -75,7 +63,6 @@ func ValidateBuildIn(raw any, cfg Config, routeIDs []string, layer Layer) []stri
 	}
 	var errs []string
 	add := func(msg string) { errs = append(errs, msg) }
-	subagent := tierOf(p) == TierSubagent
 
 	if id, ok := p.Value("id").(string); !ok || !kebab.MatchString(id) {
 		add("id must be kebab-case")
@@ -113,36 +100,31 @@ func ValidateBuildIn(raw any, cfg Config, routeIDs []string, layer Layer) []stri
 	if v, present := p.Get("subagents"); present && !kebabList(v) {
 		add("subagents must be a list of kebab-case names")
 	}
-	if _, present := p.Get("route_scope"); present || !subagent {
-		scope := jsconv.Strings(p.Value("route_scope"))
-		if len(scope) == 0 {
-			add("route_scope is empty (use [none])")
-		}
-		for _, id := range scope {
-			if id != "none" && !slices.Contains(routeIDs, id) {
-				add(`route_scope id "` + id + `" is not an instruction section`)
-			}
+	for _, id := range jsconv.Strings(p.Value("route_scope")) {
+		if id != "none" && !slices.Contains(routeIDs, id) {
+			add(`route_scope id "` + id + `" is not an instruction section`)
 		}
 	}
 	requires := jsconv.Strings(p.Value("requires"))
 	for _, field := range requires {
-		if _, ok := fieldPatterns[field]; !ok {
-			add(`required field "` + field + `" has no pattern`)
+		if !FieldName.MatchString(field) {
+			add(`required field "` + field + `" is not a field name`)
 		}
 	}
-	success, isList := p.Value("success").([]any)
-	if _, present := p.Get("success"); (present || !subagent) && (!isList || len(success) == 0) {
-		add("success must list at least one check")
-	}
-	for _, entry := range success {
-		check := propertyOf(entry, "check")
-		if s, ok := check.(string); !ok || !slices.Contains(SuccessChecks, s) {
-			add(`success check "` + jsconv.String(check) + `" is unknown`)
+	if v, present := p.Get("success"); present {
+		success, isList := v.([]any)
+		if !isList || len(success) == 0 {
+			add("success must list at least one check")
 		}
-		for _, value := range valuesOf(entry) {
-			for _, m := range placeholder.FindAllStringSubmatch(jsconv.String(value), -1) {
-				if !slices.Contains(requires, m[1]) {
-					add("success placeholder {" + m[1] + "} is not a required field")
+		for _, entry := range success {
+			if name, ok := propertyOf(entry, "check").(string); !ok || name == "" {
+				add("success entry must have a check name")
+			}
+			for _, value := range valuesOf(entry) {
+				for _, m := range placeholder.FindAllStringSubmatch(jsconv.String(value), -1) {
+					if !slices.Contains(requires, m[1]) {
+						add("success placeholder {" + m[1] + "} is not a required field")
+					}
 				}
 			}
 		}

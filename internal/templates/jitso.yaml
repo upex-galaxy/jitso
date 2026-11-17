@@ -12,3 +12,8 @@ mcp: []
 skills: []
 
 tools: []
+
+# fields: optional. A pattern (Go regexp, matched against the whole value) per field a build may require.
+# A field without one accepts any non-empty value on one line.
+# fields:
+#   release: '^v[0-9]+\.[0-9]+$'

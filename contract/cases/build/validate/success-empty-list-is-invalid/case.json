@@ -1,0 +1,40 @@
+{
+  "id": "build/validate/success-empty-list-is-invalid",
+  "title": "a present but empty success list is reported",
+  "source": [
+    "intended: docs/decisions.md, the v0.1.0 cut (success is optional; when present it lists at least one check)"
+  ],
+  "intent": "Leave the key out for no success list: an empty list is a shape error.",
+  "project": {
+    "files": {
+      "jitso/builds/emptysuccess.yaml": {
+        "from": "emptysuccess.yaml"
+      }
+    }
+  },
+  "steps": [
+    {
+      "run": [
+        "build",
+        "validate",
+        "emptysuccess"
+      ],
+      "expect": {
+        "exit": 2,
+        "stdout": [
+          {
+            "equals": "invalid emptysuccess repo jitso/builds/emptysuccess.yaml\n  success must list at least one check\nchecked 1 builds: 0 ok, 1 invalid\n"
+          }
+        ],
+        "stderr": [
+          {
+            "empty": true
+          }
+        ],
+        "orca_calls": {
+          "empty": true
+        }
+      }
+    }
+  ]
+}

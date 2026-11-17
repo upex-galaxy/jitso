@@ -46,8 +46,8 @@ func TestTemplateShape(t *testing.T) {
 		tier string
 		keys []string
 	}{
-		{"worker", []string{"id", "version", "status", "tier", "role", "type", "work_kind", "description", "harness", "model", "effort", "mode_default", "agents_md", "route_scope", "skills_first", "mcp", "subagents", "requires", "budget", "success"}},
-		{"conductor", []string{"id", "version", "status", "tier", "role", "type", "work_kind", "description", "harness", "model", "effort", "mode_default", "agents_md", "route_scope", "skills_first", "mcp", "subagents", "requires", "budget", "success"}},
+		{"worker", []string{"id", "version", "status", "tier", "role", "type", "work_kind", "description", "harness", "model", "effort", "mode_default", "agents_md", "skills_first", "mcp", "subagents", "requires", "budget"}},
+		{"conductor", []string{"id", "version", "status", "tier", "role", "type", "work_kind", "description", "harness", "model", "effort", "mode_default", "agents_md", "skills_first", "mcp", "subagents", "requires", "budget"}},
 		{"subagent", []string{"id", "version", "status", "tier", "description", "prompt", "model", "effort"}},
 	}
 	for _, tt := range tests {

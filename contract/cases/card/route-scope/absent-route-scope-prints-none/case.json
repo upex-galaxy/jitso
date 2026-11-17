@@ -1,0 +1,89 @@
+{
+  "id": "card/route-scope/absent-route-scope-prints-none",
+  "title": "a build without route_scope prints ROUTE-SCOPE: none on the card and on the first prompt of a direct launch",
+  "source": [
+    "intended: docs/decisions.md, the v0.1.0 cut (route_scope is optional on every tier; absent means none)"
+  ],
+  "tags": [
+    "posix"
+  ],
+  "intent": "Absent route_scope reads as the empty list, exactly what [none] gave: the dry-run card carries `ROUTE-SCOPE: none`, and the first prompt that run.sh hands to claude carries the same line, which parses to an empty scope.",
+  "project": {
+    "files": {
+      ".jitso/briefs/brief.md": {
+        "from": "brief.md"
+      },
+      "jitso/builds/bare.yaml": {
+        "from": "bare.yaml"
+      }
+    }
+  },
+  "steps": [
+    {
+      "run": [
+        "launch",
+        "--build",
+        "bare",
+        "--brief",
+        "{{PROJECT}}/.jitso/briefs/brief.md",
+        "--mode",
+        "direct",
+        "--dry-run"
+      ],
+      "expect": {
+        "exit": 0,
+        "stderr": [
+          {
+            "empty": true
+          }
+        ],
+        "stdout": [
+          "ROUTE-SCOPE: none",
+          {
+            "route_scope": []
+          },
+          "dry run: nothing was written"
+        ]
+      }
+    },
+    {
+      "run": [
+        "launch",
+        "--build",
+        "bare",
+        "--brief",
+        "{{PROJECT}}/.jitso/briefs/brief.md",
+        "--mode",
+        "direct"
+      ],
+      "capture": {
+        "LAUNCH_ID": {
+          "from": "stdout",
+          "regex": "JITSO (L\\d{8}T\\d{6}-[0-9a-f]{4})"
+        }
+      },
+      "expect": {
+        "exit": 0,
+        "stdout": [
+          "ROUTE-SCOPE: none"
+        ]
+      }
+    },
+    {
+      "exec": "run_sh",
+      "launch": "{{LAUNCH_ID}}",
+      "expect": {
+        "exit": 0,
+        "claude": {
+          "ran": true,
+          "last_arg": [
+            {
+              "route_scope": []
+            },
+            "ROUTE-SCOPE: none"
+          ]
+        }
+      }
+    }
+  ]
+}

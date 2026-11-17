@@ -25,6 +25,10 @@ checked 1 builds: 0 ok, 1 invalid
 
 (The two blocks are joined from different real runs, to show both shapes.)
 
+## Optional keys
+
+`route_scope` and `success` are optional on every tier. Without `route_scope` the card prints `ROUTE-SCOPE: none`. `success` is a list of entries with a `check` name of the project's own choosing; jitso checks the shape and does not evaluate it. A field a build `requires` is checked against the pattern the project gives it in the optional `fields` key of `jitso/jitso.yaml`, or only for being non-empty and on one line when it has none.
+
 ## Tiers
 
 | Tier | Launched alone | What it is for |

@@ -1,0 +1,73 @@
+{
+  "id": "validation/field/pattern-comes-from-jitso-yaml",
+  "title": "the pattern of ticket_key is read from the fields key of jitso/jitso.yaml, not from the code",
+  "source": [
+    "intended: docs/decisions.md, the v0.1.0 cut (the hardcoded field patterns move to the fields key of jitso/jitso.yaml)"
+  ],
+  "intent": "The project config gives ticket_key the pattern ^ZZ-[0-9]+$. PRJ-1 was valid under the old built-in pattern and is now rejected; ZZ-1 is accepted.",
+  "project": {
+    "files": {
+      "jitso/jitso.yaml": "# JITSO allowlists (ADR-0027). A build, and any override a launch asks for,\n# may name only what is listed here. `cli/jitso/catalog.test.ts` asserts that every\n# entry exists in this repo: skills under `.agents/skills/`, MCP servers in\n# `.mcp.json`, Sonnet/Opus ids in `.agents/project.yaml` (`orchestration:`).\n# Models are full ids, never aliases.\nversion: 1\n\nmodels:\n  - claude-haiku-5-5\n  - claude-sonnet-5-5\n  - claude-opus-5-5\n\nefforts: [low, medium, high]\n\nmcp: [dbhub, openapi]\n\nskills:\n  - sprint-testing\n  - shift-left-testing\n  - test-automation\n  - framework-development\n  - exploratory-testing\n  - orca-orchestration\n\ntools: [Read, Glob, Grep, Bash, Write, Edit]\n\nfields:\n  ticket_key: '^ZZ-[0-9]+$'\n",
+      ".jitso/briefs/b.md": "## Goal\n\nFind where the sync entry point of this project is defined and explain in a few sentences how it is wired to the rest of the code.\n\n## Scope\n\nRead only. Look at `src/sync.ts` and `docs/guide.md` and nothing outside the repo. Do not change any file.\n\n## Done when\n\nYou can name the file and the line that defines the entry point, and you have checked it by reading the file.\n\n## Report format\n\nOne short paragraph with the file path, the line number and a one line summary of what it does.\n"
+    }
+  },
+  "steps": [
+    {
+      "run": [
+        "launch",
+        "--build",
+        "sonnet-tester",
+        "--brief",
+        "{{PROJECT}}/.jitso/briefs/b.md",
+        "--mode",
+        "direct",
+        "--field",
+        "ticket_key=PRJ-1",
+        "--dry-run"
+      ],
+      "expect": {
+        "exit": 2,
+        "stdout": [
+          {
+            "empty": true
+          }
+        ],
+        "stderr": [
+          "JITSO REJECTED:",
+          "field ticket_key has an invalid value"
+        ],
+        "orca_calls": {
+          "empty": true
+        }
+      }
+    },
+    {
+      "run": [
+        "launch",
+        "--build",
+        "sonnet-tester",
+        "--brief",
+        "{{PROJECT}}/.jitso/briefs/b.md",
+        "--mode",
+        "direct",
+        "--field",
+        "ticket_key=ZZ-1",
+        "--dry-run"
+      ],
+      "expect": {
+        "exit": 0,
+        "stdout": [
+          "dry run: nothing was written"
+        ],
+        "stderr": [
+          {
+            "empty": true
+          }
+        ],
+        "orca_calls": {
+          "empty": true
+        }
+      }
+    }
+  ]
+}

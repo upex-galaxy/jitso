@@ -1,0 +1,67 @@
+{
+  "id": "validation/build/requires-any-field-name",
+  "title": "a build may require any well-formed field name, with or without a fields entry; a malformed name is reported",
+  "source": [
+    "intended: docs/decisions.md, the v0.1.0 cut (a required field needs only a well-formed name)"
+  ],
+  "intent": "With no fields key, requires [color] validates. requires [Color] is not a field name.",
+  "project": {
+    "files": {
+      "jitso/jitso.yaml": "# JITSO allowlists (ADR-0027). A build, and any override a launch asks for,\n# may name only what is listed here. `cli/jitso/catalog.test.ts` asserts that every\n# entry exists in this repo: skills under `.agents/skills/`, MCP servers in\n# `.mcp.json`, Sonnet/Opus ids in `.agents/project.yaml` (`orchestration:`).\n# Models are full ids, never aliases.\nversion: 1\n\nmodels:\n  - claude-haiku-5-5\n  - claude-sonnet-5-5\n  - claude-opus-5-5\n\nefforts: [low, medium, high]\n\nmcp: [dbhub, openapi]\n\nskills:\n  - sprint-testing\n  - shift-left-testing\n  - test-automation\n  - framework-development\n  - exploratory-testing\n  - orca-orchestration\n\ntools: [Read, Glob, Grep, Bash, Write, Edit]\n",
+      "jitso/builds/lower.yaml": {
+        "from": "lower.yaml"
+      },
+      "jitso/builds/upper.yaml": {
+        "from": "upper.yaml"
+      }
+    }
+  },
+  "steps": [
+    {
+      "run": [
+        "build",
+        "validate",
+        "lower"
+      ],
+      "expect": {
+        "exit": 0,
+        "stdout": [
+          {
+            "equals": "ok lower repo jitso/builds/lower.yaml\nchecked 1 builds: 1 ok, 0 invalid\n"
+          }
+        ],
+        "stderr": [
+          {
+            "empty": true
+          }
+        ],
+        "orca_calls": {
+          "empty": true
+        }
+      }
+    },
+    {
+      "run": [
+        "build",
+        "validate",
+        "upper"
+      ],
+      "expect": {
+        "exit": 2,
+        "stdout": [
+          {
+            "equals": "invalid upper repo jitso/builds/upper.yaml\n  required field \"Color\" is not a field name\nchecked 1 builds: 0 ok, 1 invalid\n"
+          }
+        ],
+        "stderr": [
+          {
+            "empty": true
+          }
+        ],
+        "orca_calls": {
+          "empty": true
+        }
+      }
+    }
+  ]
+}

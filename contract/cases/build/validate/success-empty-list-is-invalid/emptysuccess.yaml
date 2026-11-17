@@ -1,0 +1,18 @@
+# Worker with neither success nor route_scope.
+id: emptysuccess
+version: 1
+status: approved
+role: operator
+type: scanner
+work_kind: repo-scan
+description: A worker with no success list and no route scope.
+harness: claude
+model: claude-haiku-5-5
+effort: low
+mode_default: direct
+agents_md: exclude
+skills_first: []
+tools: [Read, Glob, Grep]
+mcp: []
+requires: []
+success: []
