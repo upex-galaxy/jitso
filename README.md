@@ -49,7 +49,7 @@ cd contract/runner && go build -o /tmp/jitso-contract . && cd ..
 | `cmd/jitso`, `internal/` | the CLI; `internal/skill` holds the usage skill the binary ships |
 | `contract/` | the contract: case format, cases, fixtures, runner |
 | `docs/architecture.md` | the design and the port milestones |
-| `docs/build-schema.md` | the schema of a build, its layers, drafts and validators |
+| `docs/build-schema.md` | the schema of a build, where builds live, drafts and validators |
 | `docs/decisions.md` | what was decided and the options it beat |
 | `docs/release.md` | the release procedure, with every outward step marked owner-gated |
 | `scripts/` | packaging, the install script, its offline test and the formula filler |

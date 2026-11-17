@@ -13,36 +13,34 @@ Every file is `<folder>/<id>.yaml`. Only `*.yaml` files directly inside a layer 
 | Layer | Folder | Shown as | Notes |
 |---|---|---|---|
 | `repo` | `<primary>/jitso/builds/` | `jitso/builds/<file>` | a missing folder is an empty layer |
-| `parent` | `<P>/jitso/builds/` for each trusted folder `P` that strictly contains the primary | `~/<rel>` under HOME, else absolute | trust comes only from the user config below |
-| `user` | `$HOME/.jitso/builds/` | `~/.jitso/builds/<file>` | a missing folder is an empty layer |
 | `draft` | `<primary>/.jitso/drafts/` | `.jitso/drafts/<file>` | git-ignored through its own `.gitignore` (`*`); the only layer where `status` is `draft` |
 
-A parent's own `jitso/jitso.yaml`, hard rules and `.jitso/` are never read.
+Nothing outside the project is read: not a parent folder, not `$HOME/.jitso/builds/`, not `$HOME/.jitso/config.yaml`. A file at one of those places is ignored without a warning.
 
 ### Precedence
 
 1. A file's id is its `id` value when the file decodes to a mapping with a kebab-case string `id`. A file without one has no id, shadows nothing and is reported invalid.
-2. For each id the build is the file of the nearest layer, in the order `repo`, `parent` (the nearest trusted folder first), `user`, `draft`. Inside one layer the first file by name wins.
+2. For each id the build is the file of the nearest layer, in the order `repo`, `draft`. Inside one layer the first file by name wins.
 3. The winner is the build of that id whether or not it is valid in this project. If it is invalid, the id is unusable here and the farther files of the same id are not used.
-4. A draft never shadows a saved build. `jitso build draft` and `jitso build new` refuse an id that any saved build, of any layer, already has. When a saved build with the id of a draft appears later, the saved build is the build of that id and the draft stays on disk, shown as shadowed by `jitso build list --drafts`.
+4. A draft never shadows a saved build. `jitso build draft` and `jitso build new` refuse an id that a saved build already has. When a saved build with the id of a draft appears later, the saved build is the build of that id and the draft stays on disk, shown as shadowed by `jitso build list --drafts`.
 
 ### What an invalid file does
 
 | Layer | Effect |
 |---|---|
 | `repo` | the catalog is validated as a whole: one invalid file is exit 3 for every command that loads it, `build <file> is invalid: <problems>` |
-| `parent`, `user`, `draft` | the file is skipped: `jitso build list` warns on stderr, `jitso launch --build <id>` is rejected (exit 2) with the problems, every other command is silent |
+| `draft` | the file is skipped: `jitso build list` warns on stderr, `jitso launch --build <id>` is rejected (exit 2) with the problems, every other command is silent |
 
-Every build, from any layer, is validated against the launching project: its `jitso/jitso.yaml`, its instruction sections and its subagent names, resolved with the same layered lookup. A user build that is valid in one project can be invalid in another.
+Every build is validated against the launching project: its `jitso/jitso.yaml`, its instruction sections and its subagent names, resolved with the same lookup.
 
 ### Statuses
 
 | Status | Where | Meaning |
 |---|---|---|
 | `draft` | `.jitso/drafts/` only | being written; launches like any build, marked `(draft)` |
-| `candidate` | any saved layer | not approved: it does not launch |
-| `approved` | any saved layer | launchable (subagent tier: usable by a worker) |
-| `retired` | any saved layer | kept for history: it does not launch |
+| `candidate` | `jitso/builds/` | not approved: it does not launch |
+| `approved` | `jitso/builds/` | launchable (subagent tier: usable by a worker) |
+| `retired` | `jitso/builds/` | kept for history: it does not launch |
 
 `jitso build save <id>` turns a draft into `jitso/builds/<id>.yaml` with the `status` scalar changed from `draft` to `approved` and every other byte kept. Only the owner saves a build, and the draft is removed.
 
@@ -99,29 +97,6 @@ Value types the rules above refer to:
 
 Unknown keys are accepted and ignored by the build validator. `jitso launch --field <name>=<value>` is the one place an unknown field name is rejected: `unknown field "<f>" for build "<id>"`.
 
-## User config
-
-`$HOME/.jitso/config.yaml` is the only place that can trust a parent folder. A repo can never declare its own trust. A missing file means no trusted parent.
-
-```yaml
-# JITSO user settings. Only this file can trust a parent folder.
-version: 1
-trusted_parents:
-  - ~/clients
-  - /work/monorepo-root
-```
-
-| Rule | Problem text (exit 3, `jitso: ~/.jitso/config.yaml is invalid: <problem>`) |
-|---|---|
-| the top level is a mapping | `the top level is not a mapping` |
-| keys are only `version`, `trusted_parents` | `unknown key "<k>"` |
-| `version`, when present, is 1 | `version must be 1` |
-| `trusted_parents` is a list of strings | `trusted_parents must be a list of folders` |
-| an entry is absolute or starts with `~/` | `trusted parent "<p>" must be an absolute path or start with ~/` |
-| an entry is not the filesystem root or HOME | `trusted parent "<p>" is too broad (the filesystem root or HOME)` |
-
-An entry is expanded (`~/` is HOME), cleaned and resolved through symlinks. A trusted folder counts only when the primary's real path is strictly inside it; siblings never match. An entry that does not exist is skipped.
-
 ## Rules text
 
 A project has no rules files. Every launch appends JITSO's short rules text to the end of the session's `brief.md`, after one blank line; the text is `card.Rules` in `internal/card`, and the contract case `launch/direct/brief-md-ends-with-the-direct-rules` pins the direct wording (`launch/fleet/brief-md-ends-with-the-fleet-rules` the fleet one).
@@ -134,7 +109,7 @@ A project has no rules files. Every launch appends JITSO's short rules text to t
 |---|---|
 | id | kebab-case, at most 64 characters (`^[a-z][a-z0-9-]{0,63}$`); anything else is `JITSO REJECTED: build id must be kebab-case`. No id is `JITSO REJECTED: build new needs a build id` |
 | tier | `worker` (the default), `conductor` or `subagent`; anything else is `JITSO REJECTED: --tier must be worker, conductor or subagent`; `--tier` with no value is `JITSO REJECTED: --tier needs a value` |
-| refuses | the id of any saved build of any layer (`JITSO REJECTED: build "<id>" already exists (<layer> <path>): a draft needs an id no build has`) and the id of an existing draft (`JITSO REJECTED: draft "<id>" already exists: edit .jitso/drafts/<id>.yaml or discard it`); both are checked before anything is written, and a draft is never overwritten |
+| refuses | the id of a saved build (`JITSO REJECTED: build "<id>" already exists (<layer> <path>): a draft needs an id no build has`) and the id of an existing draft (`JITSO REJECTED: draft "<id>" already exists: edit .jitso/drafts/<id>.yaml or discard it`); both are checked before anything is written, and a draft is never overwritten |
 | fresh project | with no `jitso/jitso.yaml` and no `*.yaml` in `jitso/builds/`, it first writes the `jitso/jitso.yaml` skeleton (the allowlists, all empty; it never overwrites a file) and prints `wrote jitso/jitso.yaml (empty allowlists: fill them first)`. With builds and no `jitso/jitso.yaml` it exits 3 with the missing-allowlists message of this page and writes nothing |
 | stdout | `wrote .jitso/drafts/<id>.yaml (tier <tier>, status draft): fill every empty value, check it with jitso build validate <id>, and ask the owner to run jitso build save <id>` |
 
@@ -158,4 +133,4 @@ A draft is a build that is not saved yet: the file `<primary>/.jitso/drafts/<id>
 
 ## Checking builds
 
-`jitso build validate` checks every build file of every layer against this project's allowlists and instruction sections, and also reports what only a launch would reject (a harness with no adapter, a listed subagent that is not approved). `jitso build validate <id>` checks the winner of one id and the files it shadows. It lists every problem of every file instead of stopping at the first, and an invalid file of the project is a finding here, not the exit 3 that other commands give. Exit codes: 0 when every checked build is ok, 2 when one is invalid or the id is unknown, 3 when the environment is wrong (no `jitso/jitso.yaml`, an invalid user config, outside a git checkout).
+`jitso build validate` checks every build file of the project against this project's allowlists and instruction sections, and also reports what only a launch would reject (a harness with no adapter, a listed subagent that is not approved). `jitso build validate <id>` checks the winner of one id and the files it shadows. It lists every problem of every file instead of stopping at the first, and an invalid file of the project is a finding here, not the exit 3 that other commands give. Exit codes: 0 when every checked build is ok, 2 when one is invalid or the id is unknown, 3 when the environment is wrong (no `jitso/jitso.yaml`, outside a git checkout).

@@ -17,7 +17,7 @@ JITSO is a strategy for orchestrating agents based on builds: a build is an appr
 | `contract/` | the behavioral contract: `README.md` (how to run it), `SPEC.md` (case format, normative), `PLAN.md` (contract design decisions), `fixtures/`, `cases/`, `runner/` (Go module, stdlib only) |
 | `internal/skill/jitso/` | the jitso usage skill the binary ships and `jitso install skill` writes; it is not one of this repo's own skills, which live in `.agents/skills/` |
 | `docs/decisions.md` | product and repo decisions, with the options beaten |
-| `docs/build-schema.md` | the schema of a build: layers, tiers, fields, drafts, the exact validator texts |
+| `docs/build-schema.md` | the schema of a build: where builds come from, tiers, fields, drafts, the exact validator texts |
 | `docs/release.md` | the release procedure; every outward step is marked OWNER-GATED |
 | `scripts/`, `packaging/`, `.github/workflows/` | packaging, the install script and its offline test, the Homebrew formula template and its filler, the release workflow |
 | `.session/` | local history and handoffs, gitignored, mostly Spanish: never commit it, never quote it or its tracker keys in committed files |
