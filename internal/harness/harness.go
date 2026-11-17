@@ -37,8 +37,6 @@ type SpecInput struct {
 	SessionID string
 	// MCPConfigPath is the strict MCP file written for this launch.
 	MCPConfigPath string
-	// CorePath is the rules file appended to the system prompt.
-	CorePath string
 	// MCPNames are the servers the session gets, in order.
 	MCPNames []string
 	// RepoServers is the mcpServers table of the repo's .mcp.json, as decoded JSON.

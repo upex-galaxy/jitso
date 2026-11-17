@@ -92,7 +92,6 @@
             "--mcp-config": "{{PROJECT}}/.jitso/launches/{{LAUNCH_ID}}/mcp.json",
             "--model": "claude-sonnet-5-5",
             "--effort": "medium",
-            "--append-system-prompt-file": "{{PROJECT}}/.jitso/launches/{{LAUNCH_ID}}/core.md",
             "--session-id": {
               "regex": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
             }
@@ -111,7 +110,7 @@
           },
           "last_arg": [
             {
-              "equals": "{{PROJECT}}/.jitso/launches/{{LAUNCH_ID}}/core.md"
+              "regex": "^\\{\""
             }
           ],
           "env": {

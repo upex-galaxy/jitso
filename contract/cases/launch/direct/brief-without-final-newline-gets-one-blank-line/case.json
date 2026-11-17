@@ -1,0 +1,58 @@
+{
+  "id": "launch/direct/brief-without-final-newline-gets-one-blank-line",
+  "title": "a brief that does not end in a newline is followed by exactly one blank line, then the rules, and the file ends with one newline",
+  "source": [
+    "intended: docs/decisions.md, the v0.1.0 cut, rows 1 and 2: the launch appends JITSO's rules text to the end of brief.md"
+  ],
+  "intent": "The brief bytes are never trimmed. When the brief has no final newline the launch adds one, so the rules always start after one blank line and the file ends with exactly one newline.",
+  "project": {
+    "files": {
+      ".jitso/briefs/brief.md": {
+        "from": "brief.md"
+      }
+    }
+  },
+  "steps": [
+    {
+      "run": [
+        "launch",
+        "--build",
+        "haiku-explorer",
+        "--brief",
+        "{{PROJECT}}/.jitso/briefs/brief.md",
+        "--mode",
+        "direct"
+      ],
+      "capture": {
+        "LAUNCH_ID": {
+          "from": "stdout",
+          "regex": "JITSO (L\\d{8}T\\d{6}-[0-9a-f]{4})",
+          "group": 1
+        },
+        "CARD": {
+          "from": "stdout",
+          "regex": "(?s)^(.*)\\n$",
+          "group": 1
+        }
+      },
+      "expect": {
+        "exit": 0,
+        "files": [
+          {
+            "path": ".jitso/launches/{{LAUNCH_ID}}/brief.md",
+            "not_contains": [
+              "Load first"
+            ],
+            "contains": [
+              "{{CARD}}\n\n## Goal",
+              "One short paragraph with the file path, the line number and a one line summary of what it does.\n\n## JITSO rules\n"
+            ],
+            "regex": [
+              "\\n\\n## JITSO rules\\nStart other agent sessions only with the card's `launch:` line\\. The card's budget is your ceiling: near it, stop and report\\.\\nLoad the card's skills before any other work\\. You may ask the human\\.\\nLeave `jitso/` and `\\.jitso/` alone except your own draft in `\\.jitso/drafts/`, and never run `jitso build save`\\.\\n$"
+            ]
+          }
+        ]
+      }
+    }
+  ]
+}

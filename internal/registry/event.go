@@ -38,7 +38,7 @@ var (
 	EndSources     = []string{"worker_done", "session_end_hook", "jitso_close", "reap"}
 	Outcomes       = []string{"succeeded", "failed", "blocked", "none"}
 	Verdicts       = []string{"success", "fail", "unknown"}
-	RuleBreakKinds = []string{"unlogged_worker", "secret_path_read", "direct_launch_denied", "brief_check_failed", "budget_over"}
+	RuleBreakKinds = []string{"unlogged_worker", "secret_path_read", "budget_over"}
 )
 
 var launchIDPattern = regexp.MustCompile(`^L[0-9]{8}T[0-9]{6}-[0-9a-f]{4}$`)

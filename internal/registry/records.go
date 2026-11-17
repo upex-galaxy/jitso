@@ -49,7 +49,6 @@ type LaunchEvent struct {
 	SkillsFirst    []string `json:"skills_first"`
 	RouteScope     []string `json:"route_scope"`
 	AgentsMD       string   `json:"agents_md"`
-	CoreSHA256     string   `json:"core_sha256"`
 	BriefPath      string   `json:"brief_path"`
 	BriefSHA256    string   `json:"brief_sha256"`
 	BriefLanguage  string   `json:"brief_language"`

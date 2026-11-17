@@ -27,7 +27,6 @@ const DryRunLine = "dry run: nothing was written and Orca was not called"
 // The files of a launch folder, .jitso/launches/<id>/.
 const (
 	FileBrief = "brief.md"
-	FileCore  = "core.md"
 	FileMCP   = "mcp.json"
 	FileRunSh = "run.sh"
 	FileCard  = "card.txt"
@@ -64,13 +63,20 @@ func Card(id, mode string, p profile.Profile, mcp []string, launchCommand string
 }
 
 // BriefFile is the brief.md the session reads: the card, a blank line, the
-// skills to load first (when the build lists any) and the brief as written.
-func BriefFile(cardText string, skillsFirst []string, briefText string) string {
+// skills to load first (when the build lists any), the brief as written and
+// the JITSO rules after one blank line. The brief bytes are never trimmed: a
+// brief without a final newline gets one, and the file ends with exactly one
+// newline.
+func BriefFile(cardText string, skillsFirst []string, briefText, rulesText string) string {
 	skills := ""
 	if len(skillsFirst) > 0 {
 		skills = "Load first: " + strings.Join(skillsFirst, ", ") + "\n\n"
 	}
-	return cardText + "\n\n" + skills + briefText
+	sep := ""
+	if !strings.HasSuffix(briefText, "\n") {
+		sep = "\n"
+	}
+	return cardText + "\n\n" + skills + briefText + sep + "\n" + rulesText + "\n"
 }
 
 // FirstPrompt is the first prompt of a direct launch: the pointer to the
@@ -160,7 +166,6 @@ type EventInput struct {
 	Harness   string
 	Argv      []string
 	Prompted  bool
-	Rules     string
 	BriefPath string
 	BriefText string
 	SessionID string
@@ -216,7 +221,6 @@ func Event(in EventInput) *registry.LaunchEvent {
 		SkillsFirst:    b.SkillsFirst,
 		RouteScope:     in.Profile.RouteScope,
 		AgentsMD:       b.AgentsMD,
-		CoreSHA256:     SHA256(in.Rules),
 		BriefPath:      in.BriefPath,
 		BriefSHA256:    SHA256(in.BriefText),
 		BriefLanguage:  in.Args.BriefLanguage,

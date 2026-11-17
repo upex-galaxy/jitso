@@ -84,7 +84,7 @@ func TestAppendLaunchShape(t *testing.T) {
 
 func TestAppendNoHTMLEscape(t *testing.T) {
 	s := newStore(t)
-	if err := s.Append(&RuleBreakEvent{TS: ts, Kind: "direct_launch_denied", Evidence: "<id> & <file>"}); err != nil {
+	if err := s.Append(&RuleBreakEvent{TS: ts, Kind: "unlogged_worker", Evidence: "<id> & <file>"}); err != nil {
 		t.Fatal(err)
 	}
 	data, _ := os.ReadFile(s.Path())

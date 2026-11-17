@@ -60,7 +60,7 @@ The guard hook runs only in a project that has `jitso/jitso.yaml`, on Bash, on t
 
 The match for the last two is on text, so a commit message that holds those words is denied too. After any denial: stop, do not retry, do not rephrase to slip past it. For a launch, go back to `jitso launch ... --dry-run`. For the other two, tell the owner what you wanted and why. The guard fails open on input it cannot read, so a missing denial is not permission: the hard rules still bind you.
 
-A bare `claude`, `codex` or `opencode` typed in a shell is not matched by the guard. It is still forbidden by the hard rules, because it makes a session with no card, no registry line and no budget.
+A bare `claude`, `codex` or `opencode` typed in a shell is not matched by the guard. It is still forbidden by JITSO's rules, because it makes a session with no card, no registry line and no budget.
 
 ## `jitso doctor`
 

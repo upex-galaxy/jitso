@@ -34,8 +34,8 @@ Fix what the message names and run `--dry-run` again. Do not pad a brief to pass
 ## What a good brief holds
 
 - **Goal**: one outcome in a sentence or two, with the ticket or story key if there is one.
-- **Scope**: what to touch, and what not to. Name folders and files the worker needs to read. Anything the brief does not ask for is out of bounds (the scope rule of the hard rules).
-- **Done when**: evidence the worker can produce, such as a test that passes or a file read back from disk. A success code from a tool is not evidence (the read-it-back rule of the hard rules).
+- **Scope**: what to touch, and what not to. Name folders and files the worker needs to read. Anything the brief does not ask for is out of bounds.
+- **Done when**: evidence the worker can produce, such as a test that passes or a file read back from disk. A success code from a tool is not evidence.
 - **Report format**: what to send back. Ask for a count (done, failed, open) and the paths touched, not a transcript. In fleet mode the report goes to the launcher, so say what the launcher needs to decide the next step.
 
 Also:
@@ -43,7 +43,7 @@ Also:
 - Name credentials by variable, never by value. Do not paste a secret into a brief; the brief is stored in the launch folder and its hash in the registry.
 - State assumptions you made and decisions already taken, so the worker does not reopen them.
 - One job per brief. Two jobs are two launches.
-- Do not tell a worker to start other sessions, push, publish or message a person unless the human asked for that (the nothing-leaves-the-machine rule of the hard rules).
+- Do not tell a worker to start other sessions, push, publish or message a person unless the human asked for that.
 
 ## A filled example
 

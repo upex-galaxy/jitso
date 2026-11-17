@@ -69,7 +69,7 @@
                 "brief_path": "{{PROJECT}}/.jitso/launches/{{LAUNCH_ID}}/brief.md",
                 "brief_language": "en",
                 "core_sha256": {
-                  "regex": "^[0-9a-f]{64}$"
+                  "absent": true
                 },
                 "brief_sha256": {
                   "regex": "^[0-9a-f]{64}$"

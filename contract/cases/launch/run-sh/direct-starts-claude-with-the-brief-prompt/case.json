@@ -50,8 +50,7 @@
             "--setting-sources": "project",
             "--model": "claude-haiku-5-5",
             "--effort": "low",
-            "--mcp-config": "{{PROJECT}}/.jitso/launches/{{LAUNCH_ID}}/mcp.json",
-            "--append-system-prompt-file": "{{PROJECT}}/.jitso/launches/{{LAUNCH_ID}}/core.md"
+            "--mcp-config": "{{PROJECT}}/.jitso/launches/{{LAUNCH_ID}}/mcp.json"
           },
           "last_arg": [
             {

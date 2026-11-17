@@ -11,10 +11,10 @@ import (
 )
 
 func TestArgv(t *testing.T) {
-	base := harness.SpecInput{Model: "claude-haiku-5-5", Effort: "low", SessionID: "sid", MCPConfigPath: "/l/mcp.json", CorePath: "/l/core.md"}
+	base := harness.SpecInput{Model: "claude-haiku-5-5", Effort: "low", SessionID: "sid", MCPConfigPath: "/l/mcp.json"}
 	head := []string{"claude", "--dangerously-skip-permissions", "--setting-sources", "project", "--settings", settings,
 		"--strict-mcp-config", "--mcp-config", "/l/mcp.json", "--model", "claude-haiku-5-5", "--effort", "low",
-		"--session-id", "sid", "--append-system-prompt-file", "/l/core.md"}
+		"--session-id", "sid"}
 	tests := []struct {
 		name string
 		edit func(*harness.SpecInput)
@@ -113,7 +113,7 @@ func TestTrustDialog(t *testing.T) {
 }
 
 func TestArgvAgents(t *testing.T) {
-	in := harness.SpecInput{Model: "m", Effort: "low", SessionID: "sid", MCPConfigPath: "/l/mcp.json", CorePath: "/l/core.md",
+	in := harness.SpecInput{Model: "m", Effort: "low", SessionID: "sid", MCPConfigPath: "/l/mcp.json",
 		Subagents: []harness.Subagent{
 			{Name: "plan", Description: "Plans <a> & b.", Prompt: "You plan.", Model: "claude-haiku-5-5", Tools: []string{"Read"}, ToolsSet: true},
 			{Name: "code", Description: "Codes.", Prompt: "You code."},
@@ -126,8 +126,7 @@ func TestArgvAgents(t *testing.T) {
 	want := []string{"claude", "--dangerously-skip-permissions", "--setting-sources", "project", "--settings", settings,
 		"--strict-mcp-config", "--mcp-config", "/l/mcp.json", "--model", "m", "--effort", "low", "--session-id", "sid",
 		"--agents", `{"plan":{"description":"Plans <a> & b.","prompt":"You plan.","model":"claude-haiku-5-5","tools":["Read"]},` +
-			`"code":{"description":"Codes.","prompt":"You code."},"none":{"description":"d","prompt":"p","tools":[]}}`,
-		"--append-system-prompt-file", "/l/core.md"}
+			`"code":{"description":"Codes.","prompt":"You code."},"none":{"description":"d","prompt":"p","tools":[]}}`}
 	if !reflect.DeepEqual(got, want) {
 		t.Errorf("got  %q\nwant %q", got, want)
 	}

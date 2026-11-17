@@ -1,16 +1,15 @@
 {
-  "id": "launch/registry/hashes-are-sha256-of-brief-and-rules",
-  "title": "brief_sha256 is the SHA-256 of the brief file text as given (without the card) and core_sha256 that of the joined hard rules",
+  "id": "launch/registry/hashes-are-sha256-of-brief-and-build",
+  "title": "brief_sha256 is the SHA-256 of the brief file text as given (without the card), build_sha256 is a SHA-256 and core_sha256 is gone",
   "source": [
-    "cli/jitso/launch.test.ts: launchForReal sha256(p.briefText), sha256(rules)"
+    "cli/jitso/launch.test.ts: launchForReal sha256(p.briefText)",
+    "intended: docs/decisions.md, the v0.1.0 cut: the hard rules are removed, so the launch records no core hash"
   ],
   "project": {
     "files": {
       ".jitso/briefs/brief.md": {
         "from": "brief.md"
-      },
-      "jitso/hard-rules/core.md": "CORE-RULE-LINE\n",
-      "jitso/hard-rules/style.md": "STYLE-RULE-LINE\n"
+      }
     }
   },
   "steps": [
@@ -41,7 +40,12 @@
               "event": "launch",
               "fields": {
                 "brief_sha256": "0a518dc169e3a5a1730e6219fce15b0b6bc16035d743c7138406e8fcc2aa13f8",
-                "core_sha256": "fd373877f753aab3dd3431b7c4096a5299a38b6e507f99ba51b18279cbd3f76f"
+                "build_sha256": {
+                  "regex": "^[0-9a-f]{64}$"
+                },
+                "core_sha256": {
+                  "absent": true
+                }
               }
             }
           ]

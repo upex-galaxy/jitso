@@ -46,7 +46,7 @@
               "event": "launch",
               "fields": {
                 "flags": {
-                  "regex": "^\\[\"--dangerously-skip-permissions\",\"--setting-sources\",\"project\",\"--settings\",\"\\{\\\\\"skipDangerousModePermissionPrompt\\\\\":true,\\\\\"promptSuggestionEnabled\\\\\":false\\}\",\"--strict-mcp-config\",\"--mcp-config\",\"{{PROJECT}}/.jitso/launches/{{LAUNCH_ID}}/mcp\\.json\",\"--model\",\"claude-sonnet-5-5\",\"--effort\",\"medium\",\"--session-id\",\"[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\",\"--append-system-prompt-file\",\"{{PROJECT}}/.jitso/launches/{{LAUNCH_ID}}/core\\.md\"\\]$"
+                  "regex": "^\\[\"--dangerously-skip-permissions\",\"--setting-sources\",\"project\",\"--settings\",\"\\{\\\\\"skipDangerousModePermissionPrompt\\\\\":true,\\\\\"promptSuggestionEnabled\\\\\":false\\}\",\"--strict-mcp-config\",\"--mcp-config\",\"{{PROJECT}}/.jitso/launches/{{LAUNCH_ID}}/mcp\\.json\",\"--model\",\"claude-sonnet-5-5\",\"--effort\",\"medium\",\"--session-id\",\"[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\"\\]$"
                 },
                 "session_id": {
                   "regex": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
@@ -93,7 +93,6 @@
             "--mcp-config": "{{PROJECT}}/.jitso/launches/{{LAUNCH_ID}}/mcp.json",
             "--model": "claude-sonnet-5-5",
             "--effort": "medium",
-            "--append-system-prompt-file": "{{PROJECT}}/.jitso/launches/{{LAUNCH_ID}}/core.md",
             "--session-id": {
               "regex": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
             }
@@ -112,7 +111,7 @@
           },
           "last_arg": [
             {
-              "equals": "{{PROJECT}}/.jitso/launches/{{LAUNCH_ID}}/core.md"
+              "regex": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
             }
           ],
           "env": {

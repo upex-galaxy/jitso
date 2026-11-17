@@ -69,14 +69,14 @@ A conductor starts every worker with the `launch:` command of its own card plus 
 In this order (read from the launch code, then seen with a fake Orca on a scratch project):
 
 1. Resolves the build and checks the brief. Any rejection stops here with exit 2. A `--worktree` that names a path (`path:<path>` or `id:<id>::<path>`) must be an absolute path of a worktree of this repo, or the launch is rejected here, before anything is written or Orca is called. A selector with no path (a worktree name) is not checked here.
-2. Creates `.jitso/launches/<id>/` and writes into it `brief.md` (the card, the skills to load first, then your brief), `core.md` (the hard rules), `mcp.json`, `card.txt` and `run.sh`.
+2. Creates `.jitso/launches/<id>/` and writes into it `brief.md` (the card, the skills to load first, your brief, then JITSO's rules), `mcp.json`, `card.txt` and `run.sh`.
 3. Opens an Orca terminal titled `[jitso:<id>] <build>` running `run.sh`. Right away, before it waits for anything, it checks the folder Orca reports for that terminal, on every launch, with or without the trust dialog: it must be a worktree of this repo, and the path `--worktree` names when it names one. A wrong or unknown folder closes the terminal and rejects the launch (exit 2). Then it waits for the harness prompt and answers the trust dialog.
 4. In fleet mode, adopts the terminal into the run.
 5. Appends the launch line to `.jitso/launches.jsonl` and prints the card.
 
 If anything fails before step 5, the launcher closes the terminal it opened and removes the launch folder, so nothing half-made stays. After step 5 nothing is removed.
 
-`run.sh` starts the harness with the build's model and effort, bypassed permissions, project settings only (`--setting-sources project`), a strict MCP file that holds only the servers the build names, the build's subagents as `--agents`, and the hard rules appended to the system prompt.
+`run.sh` starts the harness with the build's model and effort, bypassed permissions, project settings only (`--setting-sources project`), a strict MCP file that holds only the servers the build names, and the build's subagents as `--agents`.
 
 ## Preconditions
 

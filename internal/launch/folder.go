@@ -6,10 +6,10 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/upex-galaxy/jitso/internal/card"
 	"github.com/upex-galaxy/jitso/internal/harness"
 	"github.com/upex-galaxy/jitso/internal/jsonx"
 	"github.com/upex-galaxy/jitso/internal/orca"
-	"github.com/upex-galaxy/jitso/internal/rules"
 	"github.com/upex-galaxy/jitso/internal/shell"
 	"github.com/upex-galaxy/jitso/internal/trust"
 )
@@ -24,16 +24,15 @@ var errNoServerTable = errors.New(RepoMCPFile + " is null, not an object with mc
 // folder is what writeFolder wrote and what the terminal is started with.
 type folder struct {
 	brief     string
-	rules     string
 	sessionID string
 	argv      []string
 	title     string
 	command   string
 }
 
-// writeFolder writes brief.md, core.md, mcp.json, card.txt and run.sh into
-// dir, in the oracle's order of failure: the repo MCP table (when a server is
-// named) and the named servers first, then the hard rules, then the files.
+// writeFolder writes brief.md, mcp.json, card.txt and run.sh into dir, in
+// the oracle's order of failure: the repo MCP table (when a server is named)
+// and the named servers first, then the files.
 func writeFolder(p prepared, d Deps, dir string) (folder, error) {
 	// The repo table is read only when the launch names a server after
 	// --mcp-exclude (TS-ODDITIES L1, defect N-26).
@@ -54,7 +53,6 @@ func writeFolder(p prepared, d Deps, dir string) (folder, error) {
 		Effort:        p.profile.Effort,
 		SessionID:     f.sessionID,
 		MCPConfigPath: filepath.Join(dir, FileMCP),
-		CorePath:      filepath.Join(dir, FileCore),
 		MCPNames:      p.mcp,
 		RepoServers:   servers,
 		Tools:         b.Tools,
@@ -71,10 +69,6 @@ func writeFolder(p prepared, d Deps, dir string) (folder, error) {
 	}
 	f.argv = spec.Argv
 
-	if f.rules, err = rules.Load(os.DirFS(d.Root.Primary)); err != nil {
-		return folder{}, err
-	}
-
 	mcpJSON, err := jsonx.MarshalIndent(spec.MCPConfig, "  ")
 	if err != nil {
 		return folder{}, err
@@ -87,8 +81,7 @@ func writeFolder(p prepared, d Deps, dir string) (folder, error) {
 	writes := []struct {
 		path, text string
 	}{
-		{f.brief, BriefFile(p.card, b.SkillsFirst, p.briefText)},
-		{in.CorePath, f.rules},
+		{f.brief, BriefFile(p.card, b.SkillsFirst, p.briefText, card.Rules(string(p.args.Mode), true))},
 		{in.MCPConfigPath, string(mcpJSON) + "\n"},
 		{filepath.Join(dir, FileCard), p.card + "\n"},
 		{runSh, script},

@@ -35,7 +35,7 @@ var Adapters = map[string]harness.Adapter{claude.Adapter{}.ID(): claude.Adapter{
 
 // Deps is everything a launch reads, writes or calls.
 type Deps struct {
-	// Root is the project: the catalog, .mcp.json, the hard rules and
+	// Root is the project: the catalog, .mcp.json and
 	// .jitso/ come from its primary checkout.
 	Root     project.Root
 	Catalog  *catalog.Catalog
@@ -219,7 +219,7 @@ func execute(p prepared, d Deps) (err error) {
 	event := Event(EventInput{
 		ID: p.id, Args: p.args, Profile: p.profile, MCP: p.mcp, Lineage: p.lineage,
 		Repo: filepath.Base(d.Root.Primary), Harness: p.adapter.ID(), Argv: files.argv, Prompted: p.args.Mode == ModeDirect,
-		Rules: files.rules, BriefPath: files.brief, BriefText: p.briefText, SessionID: files.sessionID,
+		BriefPath: files.brief, BriefText: p.briefText, SessionID: files.sessionID,
 		Cwd: term.WorktreePath, Transcript: transcript, Trust: outcome, Terminal: term.Handle, Title: files.title, Now: d.Now(),
 	})
 	if err := d.Registry.Append(event); err != nil {

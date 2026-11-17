@@ -72,7 +72,7 @@
                   "regex": "^[0-9a-f]{64}$"
                 },
                 "core_sha256": {
-                  "regex": "^[0-9a-f]{64}$"
+                  "absent": true
                 },
                 "session_id": {
                   "regex": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"

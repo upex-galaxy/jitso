@@ -91,8 +91,8 @@ func AgentsJSON(subagents []harness.Subagent) (string, error) {
 }
 
 // Argv is the oracle's argv for in, program first. --agents, when the build
-// has subagents, goes right after the session id and before the rules file,
-// so a fleet launch without a tool list still ends on the rules file path.
+// has subagents, goes right after the session id; --tools and the initial
+// prompt, when there are any, follow it.
 func Argv(in harness.SpecInput) ([]string, error) {
 	argv := []string{
 		"claude",
@@ -112,7 +112,6 @@ func Argv(in harness.SpecInput) ([]string, error) {
 		}
 		argv = append(argv, "--agents", agents)
 	}
-	argv = append(argv, "--append-system-prompt-file", in.CorePath)
 	// --tools is variadic: as one --tools=<list> word it cannot swallow the
 	// prompt that follows.
 	if in.ToolsSet {

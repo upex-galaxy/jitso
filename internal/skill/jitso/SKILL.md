@@ -5,7 +5,7 @@ description: Use when launching, delegating to or supervising another agent sess
 
 # JITSO
 
-JITSO launches every agent session from an approved **build** (model, effort, MCP servers, skills, rules). The launch line is composed in code, not typed by a model. Each launch is one line in `.jitso/launches.jsonl`, and each worker carries the same hard rules (`.jitso/launches/<id>/core.md` holds the exact text it got).
+JITSO launches every agent session from an approved **build** (model, effort, MCP servers, skills, rules). The launch line is composed in code, not typed by a model. Each launch is one line in `.jitso/launches.jsonl`, and every launch appends JITSO's short rules to the end of the session's `brief.md`.
 
 ## Start a worker: the only way
 
@@ -55,14 +55,14 @@ Headings `Goal`, `Scope`, `Done when`, `Report format`. English. Within the word
 
 `jitso build list`, `jitso build validate [<id>]` and `jitso build list --drafts` are read-only. When no build fits, propose one with `jitso build draft <file.yaml|->` and tell the human. A draft launches like any build, but only the owner turns it into an approved build. Layers and the draft flow: `references/builds.md`.
 
-## Hard rules every launched session carries
+## The rules at the end of brief.md
 
-Credentials by name, never by value. Stay inside the brief and the card's route scope. Start sessions only with the card's `launch:` command. No repo-wide discards (`git reset --hard`, `git restore .`, an untargeted stash). Read a write back before calling it done. The card's budget is the ceiling. Report by mode (a fleet worker never asks the human). Load the card's skills first. JITSO's own files are not yours. Nothing leaves the machine unless the brief says so. The text is `jitso/hard-rules/` when the project has that folder (then it owns the rules completely), else the default shipped in the binary. Either way a launch copies it to `.jitso/launches/<id>/core.md`.
+Every launch appends JITSO's rules to the end of `brief.md`, after your brief. They say: start other sessions only with the card's `launch:` line; the card's budget is your ceiling, so near it stop and report; load the card's skills before any other work; a direct session may ask the human, a fleet worker never does and sends its questions and its final report to the session that launched it; leave `jitso/` and `.jitso/` alone except your own draft in `.jitso/drafts/`, and never run `jitso build save`. Read the end of your `brief.md` to see the exact text.
 
 ## Never run these
 
 - `jitso build save`, `jitso setup` and `jitso install` change what is approved or how the project is wired. The guard denies them (`--dry-run` previews are allowed). If you need one, ask the owner to run it in a terminal.
-- Hand edits of `jitso/builds/`, `jitso/jitso.yaml`, `jitso/hard-rules/` or `.jitso/`.
+- Hand edits of `jitso/builds/`, `jitso/jitso.yaml` or `.jitso/`.
 
 ## Exit codes
 

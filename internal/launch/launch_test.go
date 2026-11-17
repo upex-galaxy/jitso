@@ -227,7 +227,6 @@ func TestRunFailuresRemoveOnlyTheirFolder(t *testing.T) {
 	}{
 		{"missing .mcp.json", func(s *sandbox) { os.Remove(filepath.Join(s.root, ".mcp.json")) }, namesServers, "no such file", nil},
 		{"null .mcp.json", func(s *sandbox) { os.WriteFile(filepath.Join(s.root, ".mcp.json"), []byte("null"), 0o644) }, namesServers, "null", nil},
-		{"missing rules", func(s *sandbox) { os.Remove(filepath.Join(s.root, "jitso", "hard-rules", "style.md")) }, nil, "style.md", nil},
 		{"terminal create", func(s *sandbox) { s.orca.fail = map[string]bool{"terminal create": true} }, nil, "fake failure", []string{"terminal create"}},
 		{"idle timeout survives a failing close", func(s *sandbox) { s.orca.idle = false; s.orca.fail = map[string]bool{"terminal close": true} }, nil,
 			"terminal term_fake did not reach tui-idle in 90 s; it was closed", []string{"terminal create", "terminal wait", "terminal close"}},

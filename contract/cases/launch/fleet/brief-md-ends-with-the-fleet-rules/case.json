@@ -1,0 +1,62 @@
+{
+  "id": "launch/fleet/brief-md-ends-with-the-fleet-rules",
+  "title": "brief.md is the card, the brief as written, a blank line and the fleet JITSO rules with the budget sentence",
+  "source": [
+    "intended: docs/decisions.md, the v0.1.0 cut, rows 1 and 2: the launch appends JITSO's rules text to the end of brief.md"
+  ],
+  "intent": "A fleet launch of a build with a budget appends the fleet text: it never asks a human and reports to the session that launched it. The end of the file is pinned by an anchored regex and the card and the brief by contains. Every fixture build has a budget, so the no-budget texts are covered by the unit tests of internal/card only.",
+  "project": {
+    "files": {
+      ".jitso/briefs/brief.md": {
+        "from": "brief.md"
+      }
+    }
+  },
+  "steps": [
+    {
+      "run": [
+        "launch",
+        "--build",
+        "haiku-explorer",
+        "--brief",
+        "{{PROJECT}}/.jitso/briefs/brief.md",
+        "--mode",
+        "fleet",
+        "--run",
+        "run_1a2b",
+        "--task",
+        "task_9f"
+      ],
+      "capture": {
+        "LAUNCH_ID": {
+          "from": "stdout",
+          "regex": "JITSO (L\\d{8}T\\d{6}-[0-9a-f]{4})",
+          "group": 1
+        },
+        "CARD": {
+          "from": "stdout",
+          "regex": "(?s)^(.*)\\n$",
+          "group": 1
+        }
+      },
+      "expect": {
+        "exit": 0,
+        "files": [
+          {
+            "path": ".jitso/launches/{{LAUNCH_ID}}/brief.md",
+            "not_contains": [
+              "You may ask the human",
+              "Load first"
+            ],
+            "contains": [
+              "{{CARD}}\n\n## Goal"
+            ],
+            "regex": [
+              "\\n\\n## JITSO rules\\nStart other agent sessions only with the card's `launch:` line\\. The card's budget is your ceiling: near it, stop and report\\.\\nLoad the card's skills before any other work\\. Never ask a human: send your questions and your final report \\(a count of done, failed, open\\) to the session that launched you\\.\\nLeave `jitso/` and `\\.jitso/` alone except your own draft in `\\.jitso/drafts/`, and never run `jitso build save`\\.\\n$"
+            ]
+          }
+        ]
+      }
+    }
+  ]
+}

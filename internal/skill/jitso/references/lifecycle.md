@@ -11,7 +11,7 @@ Everything JITSO knows about a launch is in `.jitso/launches.jsonl`, an append-o
 
 The log is schema v2 (`"v": 2` on every line) and the build id is the key `build` of a launch line. A line an older jitso wrote (`"v": 1`, with `preset`) is skipped as invalid: close every running launch with the old version before upgrading, and `jitso doctor` counts the skipped v1 lines.
 
-The launch folder `.jitso/launches/<id>/` keeps what the session was given (`brief.md`, `card.txt`, `core.md`, `mcp.json`, `run.sh`) and, after `close`, `footer.txt`. Read `core.md` to see the exact hard rules a worker carried.
+The launch folder `.jitso/launches/<id>/` keeps what the session was given (`brief.md`, `card.txt`, `mcp.json`, `run.sh`) and, after `close`, `footer.txt`. Read the end of `brief.md` to see the exact rules a worker carried.
 
 ## `jitso close <launch id>`
 
