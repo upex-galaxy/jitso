@@ -14,9 +14,9 @@ func TestHook(t *testing.T) {
 		stderr string
 	}{
 		{"unknown name", []string{"hook", "nope"}, 2, "", `jitso hook: unknown hook "nope"`},
-		{"too many words", []string{"hook", "guard", "x"}, 2, "", "jitso hook: expected one of"},
+		{"too many words", []string{"hook", "guard", "x"}, 2, "", "jitso hook: expected guard"},
 		{"guard fails open outside a project", []string{"hook", "guard"}, 0, "", ""},
-		{"dispatch-guard fails closed", []string{"hook", "dispatch-guard"}, 0, `"permissionDecision":"deny"`, ""},
+		{"another hook word is unknown", []string{"hook", "other"}, 2, "", `jitso hook: unknown hook "other"`},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

@@ -6,7 +6,7 @@ import (
 )
 
 // version prints the one-line identity of this binary. `jitso --version` is
-// the same command (see dispatch).
+// the same command (see route).
 func init() {
 	Register(Command{
 		Name:    "version",

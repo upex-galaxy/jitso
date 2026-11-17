@@ -3,7 +3,7 @@
   "title": "build list is exactly four lines, sorted by build file name, nothing else",
   "source": [
     "cli/jitso/profile.ts: loadCatalog sorts the preset files by name",
-    "cli/jitso/dispatch.ts: summarizeCatalog joins with newlines",
+    "the oracle's catalog summary: summarizeCatalog joins with newlines",
     "intended: docs/decisions.md (tiers): a subagent-tier build is not a launchable build, so it is not listed"
   ],
   "defect": "N-5",

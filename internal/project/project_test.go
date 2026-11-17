@@ -55,21 +55,18 @@ func TestResolve(t *testing.T) {
 		t.Fatal(err)
 	}
 	tests := []struct {
-		name, cwd, override string
-		primary, checkout   string
-		linked              bool
+		name, cwd         string
+		primary, checkout string
+		linked            bool
 	}{
-		{"primary root", f.primary, "", f.primary, f.primary, false},
-		{"subfolder", f.sub, "", f.primary, f.primary, false},
-		{"linked worktree", f.worktree, "", f.primary, f.worktree, true},
-		{"through a symlink", link, "", f.primary, f.primary, false},
-		{"override wins over cwd", f.outside, f.primary, f.primary, f.primary, false},
-		{"override to a worktree", f.outside, f.worktree, f.primary, f.worktree, true},
-		{"relative override", f.primary, "src", f.primary, f.primary, false},
+		{"primary root", f.primary, f.primary, f.primary, false},
+		{"subfolder", f.sub, f.primary, f.primary, false},
+		{"linked worktree", f.worktree, f.primary, f.worktree, true},
+		{"through a symlink", link, f.primary, f.primary, false},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			r, err := Resolve(tt.cwd, tt.override)
+			r, err := Resolve(tt.cwd)
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -87,15 +84,14 @@ func TestResolveOutsideGit(t *testing.T) {
 	f := newFixture(t)
 	missing := filepath.Join(f.outside, "missing")
 	tests := []struct {
-		name, cwd, override, named string
+		name, cwd, named string
 	}{
-		{"cwd outside", f.outside, "", f.outside},
-		{"override outside, cwd inside", f.primary, f.outside, f.outside},
-		{"override missing", f.primary, missing, missing},
+		{"cwd outside", f.outside, f.outside},
+		{"cwd missing", missing, missing},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			_, err := Resolve(tt.cwd, tt.override)
+			_, err := Resolve(tt.cwd)
 			if fail.Code(err) != fail.CodeEnv {
 				t.Fatalf("code %d, err %v", fail.Code(err), err)
 			}
@@ -112,12 +108,6 @@ func TestResolveOutsideGit(t *testing.T) {
 
 func TestUserDir(t *testing.T) {
 	if got := UserDir("/h"); got != "/h/.jitso" {
-		t.Errorf("got %s", got)
-	}
-}
-
-func TestDispatchDir(t *testing.T) {
-	if got := DispatchDir("/h"); got != "/h/.jitso/dispatch-cwd" {
 		t.Errorf("got %s", got)
 	}
 }

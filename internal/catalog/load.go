@@ -85,8 +85,7 @@ func (c *Catalog) Invalid(id string) (*Skipped, bool) {
 	return nil, false
 }
 
-// Launchable are the builds `jitso launch` may start and the dispatcher may
-// offer: approved and not subagent tier, in catalog order.
+// Launchable are the builds `jitso launch` may start: approved and not subagent tier, in catalog order.
 func (c *Catalog) Launchable() []Build {
 	var out []Build
 	for _, b := range c.Builds {

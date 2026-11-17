@@ -70,7 +70,7 @@ func TestLoadAcceptsCapturesAndFromFiles(t *testing.T) {
 		 {"exec":"run_sh","launch":"{{LAUNCH_ID}}","expect":{"claude":{"ran":true}}},
 		 {"write":{"project":{"late.md":"text"}},"expect":{"registry":{"count":1}}},
 		 {"hook":"guard","input":{"tool_name":"Bash"},"expect":{"decision":"none"}},
-		 {"hook":"dispatch-guard","input":{"tool_input":{"command":"{{JITSO}} launch"}},"expect":{"reason":["{{JITSO}}"]}},
+		 {"hook":"guard","input":{"tool_input":{"command":"{{JITSO}} launch"}},"expect":{"reason":["{{JITSO}}"]}},
 		 {"run":["{{JITSO}}"],"expect":{"stdout":["{{JITSO}}"]}}]}`,
 		map[string]string{"brief.md": "brief at {{PROJECT}}"})
 	if err != nil {

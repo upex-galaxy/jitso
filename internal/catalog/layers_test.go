@@ -371,9 +371,6 @@ func TestScanShadowing(t *testing.T) {
 		lines[4] != "- epsilon: claude-haiku-5-5 low. user epsilon requires: nothing (from user ~/.jitso/builds/eps.yaml)" {
 		t.Errorf("list lines:\n%s", cat.List())
 	}
-	if strings.Contains(cat.Summary(), "(from") {
-		t.Errorf("the dispatcher summary must not name the origin:\n%s", cat.Summary())
-	}
 }
 
 // The nearest file of an id is the build whether or not it is valid here: an

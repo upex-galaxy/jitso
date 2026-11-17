@@ -82,8 +82,3 @@ If anything fails before step 5, the launcher closes the terminal it opened and 
 
 - You are inside a git checkout of the project, and `jitso/jitso.yaml` exists (the allowlists). A linked worktree works: the project is its primary checkout.
 - A real launch reads `.mcp.json` in the project only when it still names an MCP server after `--mcp-exclude`. A build with no servers needs no `.mcp.json`.
-- `JITSO_PROJECT` names the project when set. The dispatcher uses it. You should not need it.
-
-## The dispatcher
-
-`jitso "<a request with spaces>"` is a different entry: it starts an interactive Claude Code session (the dispatcher) that can only write a brief and run one `jitso launch`. It is the human's door, and it starts a real session at once. Do not use it from an agent session.

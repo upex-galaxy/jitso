@@ -1,6 +1,6 @@
 {
   "id": "brief/path/outside-allowed-folders/home",
-  "title": "a brief in the HOME folder outside .jitso/dispatch-cwd/briefs is rejected",
+  "title": "a brief in the HOME folder outside .jitso/briefs is rejected",
   "source": [
     "cli/jitso/launch.test.ts: 'a brief outside the allowed folders is rejected'"
   ],

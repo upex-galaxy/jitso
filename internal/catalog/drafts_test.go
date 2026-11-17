@@ -64,7 +64,7 @@ func draftScan(t *testing.T, repo, drafts map[string]string, outer ...Source) *R
 }
 
 // The draft layer is last, a draft launches as a build of its layer, and a
-// draft is never a launchable build: not listed, not in the dispatcher catalog.
+// draft is never a launchable build: not listed.
 func TestDraftLayerIsLastAndNeverLaunchable(t *testing.T) {
 	res := draftScan(t,
 		map[string]string{"saved.yaml": layerBuild("saved", "A saved build.")},
@@ -81,10 +81,8 @@ func TestDraftLayerIsLastAndNeverLaunchable(t *testing.T) {
 	if !ok || b.Layer != LayerDraft || b.Status != StatusDraft || b.Display != ".jitso/drafts/scratch.yaml" || b.SHA256 == "" {
 		t.Fatalf("the draft build: %+v (found %v)", b, ok)
 	}
-	for _, text := range []string{cat.List(), cat.Summary()} {
-		if strings.Contains(text, "scratch") || !strings.Contains(text, "- saved:") {
-			t.Errorf("a listing holds a draft or lost a saved build:\n%s", text)
-		}
+	if text := cat.List(); strings.Contains(text, "scratch") || !strings.Contains(text, "- saved:") {
+		t.Errorf("a listing holds a draft or lost a saved build:\n%s", text)
 	}
 	for _, l := range cat.Launchable() {
 		if l.ID == "scratch" {

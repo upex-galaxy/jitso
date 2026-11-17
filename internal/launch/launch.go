@@ -41,7 +41,7 @@ type Deps struct {
 	Catalog  *catalog.Catalog
 	Registry registry.Store
 	Orca     Orca
-	// Home is $HOME: the dispatcher folder and the transcripts live under it.
+	// Home is $HOME: the transcripts live under it.
 	Home string
 	// Cwd is the working directory a relative --brief is read from.
 	Cwd   string
@@ -70,7 +70,7 @@ func Run(a Args, d Deps) error {
 	}
 	mcp := MCPAfterExclude(p.MCP, a.MCPExclude)
 
-	briefPath, err := brief.ResolvePath(a.Brief, d.Cwd, AllowedBriefDirs(project.DispatchDir(d.Home), d.Root.StateDir()))
+	briefPath, err := brief.ResolvePath(a.Brief, d.Cwd, AllowedBriefDirs(d.Root.StateDir()))
 	if err != nil {
 		return err
 	}

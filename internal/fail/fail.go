@@ -93,8 +93,8 @@ func Envf(format string, args ...any) *Error {
 	return Env(fmt.Sprintf(format, args...))
 }
 
-// Status ends the command with the given exit code and prints nothing. The
-// dispatcher uses it to return the exit code of the claude it ran.
+// Status ends the command with the given exit code and prints nothing: the
+// command has already printed its own report.
 func Status(code int) *Error {
 	return &Error{Kind: KindStatus, code: code}
 }

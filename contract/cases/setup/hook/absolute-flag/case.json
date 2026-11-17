@@ -5,7 +5,7 @@
     "intended: docs/decisions.md D8 (setup hook, defect N-17): jitso registers its guard in the project's .claude/settings.json without clobbering anything"
   ],
   "defect": "N-17",
-  "intent": "INTENDED behavior (defect N-17, setup hook). `--absolute` writes `'<real path>' hook guard` (the dispatcher's quoting) in the three handlers and prints no PATH warning (the command is not the bare word). A second `--absolute` run is `nothing to do`; a plain run then rewrites the handlers to the bare word.",
+  "intent": "INTENDED behavior (defect N-17, setup hook). `--absolute` writes `'<real path>' hook guard` (the launcher's quoting) in the three handlers and prints no PATH warning (the command is not the bare word). A second `--absolute` run is `nothing to do`; a plain run then rewrites the handlers to the bare word.",
   "steps": [
     {
       "run": [

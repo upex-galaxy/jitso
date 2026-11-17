@@ -1,6 +1,6 @@
 {
   "id": "launch/trust/untrusted-folder-with-dialog-is-refused",
-  "title": "a dialog in a folder outside the repo and the dispatcher folder exits 2 with 'untrusted folder', sends no key and closes the terminal",
+  "title": "a dialog in a folder outside the repo exits 2 with 'untrusted folder', sends no key and closes the terminal",
   "source": [
     "cli/jitso/launch.test.ts: 'dialog in an untrusted folder: stops with exit 2, an explicit message, closes the terminal, no event'",
     "cli/jitso/trust.test.ts: 'an untrusted folder with the dialog sends nothing and reports refused'",

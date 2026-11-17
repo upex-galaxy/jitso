@@ -92,7 +92,7 @@ It is then valid everywhere a text matcher is (`stdout`, `stderr`, `reason`, `la
 | `Name()` | the name the summary prints |
 | `Prepare(sb)` | installs what the implementation needs into a fresh sandbox (nothing for `bin`) |
 | `Command(sb, args)` | the argv that runs the CLI |
-| `HookCommand(sb, hook)` | the argv that runs `guard` or `dispatch-guard` |
+| `HookCommand(sb, hook)` | the argv that runs `guard` |
 | `Launcher(sb)` | the value of `{{JITSO}}` |
 
 A second adapter would be a new file there plus a case in `newImplementation` in `main.go` and a row in SPEC 9.

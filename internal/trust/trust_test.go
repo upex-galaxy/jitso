@@ -94,8 +94,8 @@ func git(t *testing.T, dir string, args ...string) {
 
 func TestTrusted(t *testing.T) {
 	root, _ := filepath.EvalSymlinks(t.TempDir())
-	repo, linked, dispatch := filepath.Join(root, "repo"), filepath.Join(root, "linked"), filepath.Join(root, "dispatch")
-	for _, d := range []string{repo, dispatch, filepath.Join(repo, "src"), filepath.Join(root, "repo-evil")} {
+	repo, linked, unrelated := filepath.Join(root, "repo"), filepath.Join(root, "linked"), filepath.Join(root, "unrelated")
+	for _, d := range []string{repo, unrelated, filepath.Join(repo, "src"), filepath.Join(root, "repo-evil")} {
 		if err := os.MkdirAll(d, 0o755); err != nil {
 			t.Fatal(err)
 		}
@@ -110,11 +110,11 @@ func TestTrusted(t *testing.T) {
 	for dir, want := range map[string]bool{
 		repo:                             true,
 		linked:                           true,
-		dispatch:                         false,
+		unrelated:                        false,
 		filepath.Join(root, "alias"):     true,
 		filepath.Join(root, "extra"):     true,
 		filepath.Join(repo, "src"):       false,
-		filepath.Join(dispatch, "sub"):   false,
+		filepath.Join(unrelated, "sub"):  false,
 		filepath.Join(root, "repo-evil"): false,
 		"":                               false,
 	} {
@@ -180,7 +180,7 @@ func repoWithWorktree(t *testing.T) (root, repo, linked string) {
 
 func TestPrecheck(t *testing.T) {
 	root, repo, linked := repoWithWorktree(t)
-	dispatch := filepath.Join(root, "dispatch")
+	unrelated := filepath.Join(root, "unrelated")
 	p := Policy{Primary: repo}
 	tests := []struct {
 		selector string
@@ -196,7 +196,7 @@ func TestPrecheck(t *testing.T) {
 		{"path:" + linked + "/", ""},
 		{"path:" + filepath.Join(root, "alias"), ""},
 		{"id:fake-uuid::" + linked, ""},
-		{"path:" + dispatch, "--worktree path:" + dispatch + " names " + dispatch + ", which is not a worktree of this repo"},
+		{"path:" + unrelated, "--worktree path:" + unrelated + " names " + unrelated + ", which is not a worktree of this repo"},
 		{"path:rel/x", "--worktree path:rel/x must name an absolute path"},
 		{"path:", "--worktree path: must name an absolute path"},
 		{"id:fake-uuid::rel", "--worktree id:fake-uuid::rel must name an absolute path"},
@@ -216,7 +216,7 @@ func TestPrecheck(t *testing.T) {
 
 func TestPlace(t *testing.T) {
 	root, repo, linked := repoWithWorktree(t)
-	dispatch := filepath.Join(root, "dispatch")
+	unrelated := filepath.Join(root, "unrelated")
 	elsewhere := filepath.Join(root, "elsewhere")
 	p := Policy{Primary: repo}
 	general := func(folder string) string {
@@ -234,7 +234,7 @@ func TestPlace(t *testing.T) {
 		{"primary, no selector", repo, "", ""},
 		{"linked, no selector", linked, "", ""},
 		{"symlink to the primary", filepath.Join(root, "alias"), "", ""},
-		{"dispatcher folder", dispatch, "", general(dispatch)},
+		{"unrelated folder", unrelated, "", general(unrelated)},
 		{"name selector, a worktree", linked, "wt-1", ""},
 		{"id without a path, a worktree", repo, "id:fake-uuid", ""},
 		{"path selector honoured", linked, "path:" + linked, ""},
@@ -245,7 +245,7 @@ func TestPlace(t *testing.T) {
 		{"elsewhere", elsewhere, "", general(elsewhere)},
 		{"lookalike of the primary", filepath.Join(root, "repo-evil"), "", general(filepath.Join(root, "repo-evil"))},
 		{"subfolder of the primary", filepath.Join(repo, "src"), "", general(filepath.Join(repo, "src"))},
-		{"subfolder of the dispatcher folder", filepath.Join(dispatch, "sub"), "", general(filepath.Join(dispatch, "sub"))},
+		{"subfolder of the unrelated folder", filepath.Join(unrelated, "sub"), "", general(filepath.Join(unrelated, "sub"))},
 		{"name selector, elsewhere", elsewhere, "feature/x-1", general(elsewhere)},
 		{"path selector, another worktree", repo, "path:" + linked, asked(repo, linked)},
 		{"id selector, another worktree", repo, "id:fake-uuid::" + linked, asked(repo, linked)},

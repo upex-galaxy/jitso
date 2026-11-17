@@ -1,0 +1,67 @@
+{
+  "id": "cli/unknown-command-with-spaces",
+  "title": "a first word that holds spaces is an unknown command like any other word: exit 2, the usage on stderr, nothing started",
+  "source": [
+    "intended: docs/decisions.md, the v0.1.0 cut (the `jitso \"<request>\"` entry is gone)"
+  ],
+  "intent": "INTENDED behavior. There is no request entry: `jitso \"fix the login\"`, a Spanish request and a request with newlines are an unknown command, named on stderr with the usage, exit 2, and nothing is written, started or looked up in git.",
+  "for_each": {
+    "var": "word",
+    "values": [
+      "fix the login",
+      "arregla el login",
+      "launch the build",
+      "two\nlines"
+    ]
+  },
+  "steps": [
+    {
+      "run": [
+        "{{word}}"
+      ],
+      "expect": {
+        "exit": 2,
+        "stdout": [
+          {
+            "empty": true
+          }
+        ],
+        "stderr": [
+          "unknown command",
+          "{{word}}",
+          "Usage"
+        ],
+        "orca_calls": {
+          "empty": true
+        },
+        "files": [
+          {
+            "path": ".jitso",
+            "exists": false
+          }
+        ]
+      }
+    },
+    {
+      "run": [
+        "{{word}}",
+        "and more words"
+      ],
+      "expect": {
+        "exit": 2,
+        "stdout": [
+          {
+            "empty": true
+          }
+        ],
+        "stderr": [
+          "unknown command",
+          "Usage"
+        ],
+        "orca_calls": {
+          "empty": true
+        }
+      }
+    }
+  ]
+}

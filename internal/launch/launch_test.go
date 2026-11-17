@@ -234,11 +234,6 @@ func TestRunFailuresRemoveOnlyTheirFolder(t *testing.T) {
 			[]string{"terminal create", "terminal wait", "terminal read", "terminal close"}},
 		{"refused with a dialog", func(s *sandbox) { s.orca.cwd = s.home; s.orca.screens = []string{dialogScreen} }, nil, "JITSO REJECTED: untrusted folder ",
 			[]string{"terminal create", "terminal close"}},
-		{"refused in the dispatcher folder", func(s *sandbox) {
-			s.orca.cwd = filepath.Join(s.home, ".jitso", "dispatch-cwd")
-			s.orca.screens = []string{dialogScreen}
-		}, nil,
-			"JITSO REJECTED: untrusted folder ", []string{"terminal create", "terminal close"}},
 		{"refused without a dialog", func(s *sandbox) { s.orca.cwd = s.home }, nil, "JITSO REJECTED: untrusted folder ",
 			[]string{"terminal create", "terminal close"}},
 		{"refused without a folder", func(s *sandbox) { s.orca.cwd = "" }, nil, "untrusted folder (unknown):",

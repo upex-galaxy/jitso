@@ -11,7 +11,7 @@ import (
 )
 
 // Hook names (SPEC 6.2).
-var hookNames = map[string]bool{"guard": true, "dispatch-guard": true}
+var hookNames = map[string]bool{"guard": true}
 
 // Keys each step kind accepts besides its own (SPEC 6).
 var stepKeys = map[string][]string{
@@ -177,7 +177,7 @@ func parseHook(s map[string]any, a *Action) error {
 		return err
 	}
 	if !hookNames[a.Hook] {
-		return fmt.Errorf("hook: want guard or dispatch-guard, got %q", a.Hook)
+		return fmt.Errorf("hook: want guard, got %q", a.Hook)
 	}
 	input, ok := s["input"]
 	if !ok {

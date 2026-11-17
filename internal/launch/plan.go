@@ -235,10 +235,10 @@ func Event(in EventInput) *registry.LaunchEvent {
 	return e
 }
 
-// AllowedBriefDirs are the folders a brief may be read from: the dispatcher's
-// briefs folder and the project's .jitso/briefs.
-func AllowedBriefDirs(dispatchDir, stateDir string) []string {
-	return []string{filepath.Join(dispatchDir, "briefs"), filepath.Join(stateDir, "briefs")}
+// AllowedBriefDirs are the folders a brief may be read from: the project's
+// .jitso/briefs.
+func AllowedBriefDirs(stateDir string) []string {
+	return []string{filepath.Join(stateDir, "briefs")}
 }
 
 // subagentsOf are the harness entries of the build's subagent-tier builds.

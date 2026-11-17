@@ -1,9 +1,8 @@
-// Package hook is the decision logic and the I/O shell of the two Claude Code
-// hooks that ship inside the jitso binary: `jitso hook guard` (the launch
-// guard and the SessionEnd registry writer) and `jitso hook dispatch-guard`
-// (the guard of the interactive dispatcher).
+// Package hook is the decision logic and the I/O shell of the Claude Code
+// hook that ships inside the jitso binary: `jitso hook guard` (the launch
+// guard and the SessionEnd registry writer).
 //
-// Both read the hook JSON on stdin and answer on stdout as SPEC section 6.2
+// It reads the hook JSON on stdin and answers on stdout as SPEC section 6.2
 // says: nothing and exit 0 to stay out of the way, or one JSON object with a
 // permissionDecision. The decisions are pure functions of the parsed input;
 // stdin, stdout, the filesystem and the clock are injected by the caller.

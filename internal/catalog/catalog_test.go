@@ -262,9 +262,6 @@ func TestLoad(t *testing.T) {
 	if subs := cat.SubagentsOf(w); len(subs) != 1 || subs[0].Prompt != "You help." {
 		t.Errorf("subagents %+v", subs)
 	}
-	if got := cat.Summary(); got != "- haiku-explorer: claude-haiku-5-5 low. Read-only search. requires: nothing" {
-		t.Errorf("summary %q", got)
-	}
 }
 
 // A subagent-tier build with only the fields claude needs loads, resolves

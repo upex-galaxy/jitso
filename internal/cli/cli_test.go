@@ -32,7 +32,7 @@ func TestRun(t *testing.T) {
 		{"unknown", []string{"frobnicate"}, 2, "", `jitso: unknown command "frobnicate"`},
 		{"case matters", []string{"Launch"}, 2, "", `unknown command "Launch"`},
 		{"empty word", []string{""}, 2, "", `jitso: unknown command ""`},
-		{"dispatch is not a word", []string{"dispatch"}, 2, "", `unknown command "dispatch"`},
+		{"a request is not a command", []string{"test PRJ-1", "now"}, 2, "", `unknown command "test PRJ-1"`},
 		{"tree needs the project", []string{"tree"}, 3, "", "jitso: the cwd must not be read"},
 		{"tree with a launch id needs the project", []string{"tree", "L20261113T140000-0001"}, 3, "", "jitso: the cwd must not be read"},
 		{"tree checks its arguments before the project", []string{"tree", "x"}, 2, "", "JITSO REJECTED: usage: jitso tree [<launch_id>]"},
@@ -44,7 +44,6 @@ func TestRun(t *testing.T) {
 		{"build --help", []string{"build", "--help"}, 0, "Usage: jitso build <subcommand>", ""},
 		{"build -h", []string{"build", "-h"}, 0, "Usage: jitso build <subcommand>", ""},
 		{"build list needs the project", []string{"build", "list"}, 3, "", "jitso: the cwd must not be read"},
-		{"request needs the project", []string{"test PRJ-1", "now"}, 3, "", "jitso: the cwd must not be read"},
 		{"launch checks its arguments before the project", []string{"launch"}, 2, "", "JITSO REJECTED: --build is required"},
 		{"launch --help prints the usage", []string{"launch", "--help"}, 0, "Usage: jitso launch --build <id> --brief <file> --mode direct|fleet [options]\n\nLaunches a worker", ""},
 		{"launch -h with later words", []string{"launch", "-h", "--build", "x", "bogus"}, 0, "  --mcp-exclude <name>         leave one MCP server", ""},
@@ -52,7 +51,7 @@ func TestRun(t *testing.T) {
 		{"launch help only as the first word", []string{"launch", "--build", "x", "--help"}, 2, "", `unknown argument "--help"`},
 		{"launch value starting with two dashes", []string{"launch", "--build", "--dry-run"}, 2, "", "JITSO REJECTED: --build needs a value"},
 		{"close keeps rejecting --help", []string{"close", "--help"}, 2, "", "JITSO REJECTED:"},
-		{"hook needs a name", []string{"hook"}, 2, "", "jitso hook: expected one of guard or dispatch-guard"},
+		{"hook needs a name", []string{"hook"}, 2, "", "jitso hook: expected guard"},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -89,25 +88,6 @@ func TestUsageOrder(t *testing.T) {
 	}
 	if !strings.Contains(u, "--help") {
 		t.Error("usage must name --help")
-	}
-}
-
-func TestIsRequest(t *testing.T) {
-	for word, want := range map[string]bool{
-		"launch":     false,
-		"":           false,
-		"a b":        true,
-		"a\tb":       true,
-		"a\u00a0b":   true,
-		"a\u2003b":   true,
-		"a\ufeffb":   true,
-		"a\u0085b":   false,
-		"a\u200bb":   false,
-		"trailing\n": true,
-	} {
-		if IsRequest(word) != want {
-			t.Errorf("IsRequest(%q) != %v", word, want)
-		}
 	}
 }
 

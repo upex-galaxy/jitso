@@ -2,7 +2,7 @@
   "id": "build/list/hides-unapproved",
   "title": "build list shows only approved builds: a candidate and a retired build are not listed",
   "source": [
-    "cli/jitso/dispatch.ts: summarizeCatalog filters on status === approved",
+    "the oracle's catalog summary: summarizeCatalog filters on status === approved",
     "intended: docs/decisions.md (tiers): a subagent-tier build is not a launchable build, so it is not listed"
   ],
   "defect": "N-5",

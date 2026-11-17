@@ -9,7 +9,6 @@ package shell
 
 import (
 	"errors"
-	"regexp"
 	"strings"
 )
 
@@ -24,16 +23,4 @@ func Quote(value string) (string, error) {
 		return "", ErrNUL
 	}
 	return "'" + strings.ReplaceAll(value, "'", `'\''`) + "'", nil
-}
-
-var plainWord = regexp.MustCompile(`^[\w@%+=:,./-]+$`)
-
-// Word is value as it must be written in a command line a human or a model
-// types: unchanged when it holds plain characters only, else one single-quoted
-// word (Quote). The dispatch guard reads exactly this form.
-func Word(value string) (string, error) {
-	if plainWord.MatchString(value) {
-		return value, nil
-	}
-	return Quote(value)
 }

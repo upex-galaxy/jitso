@@ -37,7 +37,7 @@ Two prefixes tell you whose problem it is. `JITSO REJECTED: <reason>` (exit 2) m
 
 | Message | Cause and fix |
 |---|---|
-| `jitso: <folder> is not inside a git checkout` | `cd` into the project. `JITSO_PROJECT` can name it, but only the dispatcher is meant to set it |
+| `jitso: <folder> is not inside a git checkout` | `cd` into the project |
 | `jitso: jitso/jitso.yaml is missing: this project has no JITSO allowlists (create it with jitso build new <id>)` | the project has not adopted JITSO yet. Tell the owner |
 | `build <file> is invalid: <problems>` | one file of the project's own `jitso/builds/` is broken, and it fails every catalog command. Run `jitso build validate` for every problem at once. Do not edit `jitso/builds/` yourself: report it |
 | `build <id> has no budget mapping` | a worker or conductor build needs `budget` with `tokens` and `usd_list_cap` |
@@ -69,7 +69,6 @@ A read-only check that prints one line per check, `ok`, `warn` or `fail`, then a
 |---|---|---|
 | `binary`, `path` | the running jitso is not the one on PATH, or is not on PATH | hooks and the launch card use the bare word `jitso`: tell the owner |
 | `git`, `shell` | no git, or no `/bin/sh` (launch does not run on Windows) | environment, not yours to fix |
-| `dispatcher` | the binary's own path has characters the dispatch guard cannot allow | tell the owner |
 | `orca`, `claude` | the Orca CLI or `claude` is not found | a launch cannot start. Tell the human |
 | `user-config` | `~/.jitso/config.yaml` is invalid | tell the owner |
 | `project` | not inside a git checkout (the later checks are skipped) | `cd` into the project |

@@ -1,6 +1,5 @@
-// Package cli is the command layer: the command table, the usage text, the
-// request rule (a first word with whitespace opens the dispatcher) and the one
-// place an error becomes an exit code and a stderr text.
+// Package cli is the command layer: the command table, the usage text and the
+// one place an error becomes an exit code and a stderr text.
 //
 // Each command lives in its own cmd_<name>.go and registers itself from an
 // init function, so parallel work on two commands never edits a shared file.

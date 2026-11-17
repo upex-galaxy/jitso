@@ -197,7 +197,7 @@ func Run(p Ports) []Line {
 	add := func(l ...Line) { lines = append(lines, l...) }
 
 	binary, self := checkBinary(p)
-	add(binary, checkPath(p, self), checkGit(p), checkShell(p), checkDispatcher(p, self), checkOrca(p), checkClaude(p), checkUserConfig(p))
+	add(binary, checkPath(p, self), checkGit(p), checkShell(p), checkOrca(p), checkClaude(p), checkUserConfig(p))
 
 	proj, root, ok := checkProject(p)
 	add(proj)

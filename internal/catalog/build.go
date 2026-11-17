@@ -85,8 +85,8 @@ func (b *Build) LayerWord() Layer {
 	return b.Layer
 }
 
-// Launchable is true for a build that `jitso launch` and the dispatcher may
-// offer: approved and not subagent tier.
+// Launchable is true for a build that `jitso launch` may start:
+// approved and not subagent tier.
 func (b *Build) Launchable() bool {
 	return b.Status == "approved" && b.Tier != TierSubagent
 }

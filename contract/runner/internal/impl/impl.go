@@ -13,7 +13,7 @@ type Implementation interface {
 	Prepare(sb *sandbox.Sandbox) error
 	// Command is the argv that runs the CLI with the given arguments.
 	Command(sb *sandbox.Sandbox, args []string) ([]string, error)
-	// HookCommand is the argv that runs a hook (`guard` or `dispatch-guard`).
+	// HookCommand is the argv that runs a hook (`guard`).
 	HookCommand(sb *sandbox.Sandbox, hook string) ([]string, error)
 	// Launcher is the value of {{JITSO}}: the command line, as one string of words, that a
 	// hook or a shell would use to start this implementation in the sandbox.

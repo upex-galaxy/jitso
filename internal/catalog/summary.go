@@ -6,8 +6,8 @@ import (
 	"github.com/upex-galaxy/jitso/internal/jsconv"
 )
 
-// SummaryLine is one build as `build list` and the dispatcher prompt show
-// it: `- <id>: <model> <effort>. <description> requires: <fields or nothing>`.
+// SummaryLine is one build as `build list` shows it:
+// `- <id>: <model> <effort>. <description> requires: <fields or nothing>`.
 // Values are rendered with String(), so a missing description reads
 // "undefined", as in the oracle.
 func SummaryLine(b *Build) string {
@@ -63,18 +63,6 @@ func (c *Catalog) List() string {
 	lines := make([]string, len(launchable))
 	for i := range launchable {
 		lines[i] = ListLine(&launchable[i])
-	}
-	return strings.Join(lines, "\n")
-}
-
-// Summary is one SummaryLine per launchable build, joined with newlines, in
-// catalog order, without the origin of a parent or user build: the dispatcher
-// model does not need it. It is "" for a catalog with no launchable build.
-func (c *Catalog) Summary() string {
-	launchable := c.Launchable()
-	lines := make([]string, len(launchable))
-	for i := range launchable {
-		lines[i] = SummaryLine(&launchable[i])
 	}
 	return strings.Join(lines, "\n")
 }

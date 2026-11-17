@@ -15,7 +15,7 @@ import (
 // the hook shares a 1.5 s budget with Claude Code's shutdown.
 const sessionEndLockWait = 600 * time.Millisecond
 
-// Deps are the ports of both hooks. The zero value of an optional field
+// Deps are the ports of the hook. The zero value of an optional field
 // falls back to the real one.
 type Deps struct {
 	Stdin  io.Reader
@@ -62,12 +62,12 @@ func (d Deps) readInput() (input map[string]any, ok bool) {
 	return input, ok
 }
 
-// own is the real path of the running executable and the predicate "this word
-// is that executable": an absolute path whose real path is the same. When the
+// own is the predicate "this word is the running executable": an absolute
+// path whose real path is the real path of the executable. When the
 // executable cannot be resolved the predicate is always false.
-func (d Deps) own() (self string, isOwn func(string) bool) {
+func (d Deps) own() (isOwn func(string) bool) {
 	self, err := project.Self(d.Executable)
-	return self, func(word string) bool {
+	return func(word string) bool {
 		return err == nil && filepath.IsAbs(word) && project.Real(word) == self
 	}
 }
@@ -86,7 +86,7 @@ func RunGuard(d Deps) {
 		if err != nil {
 			return
 		}
-		root, err := project.Resolve(cwd, "")
+		root, err := project.Resolve(cwd)
 		if err != nil {
 			return
 		}
@@ -103,7 +103,7 @@ func RunGuard(d Deps) {
 		d.endSession(dir, input["session_id"])
 		return
 	}
-	_, isOwn := d.own()
+	isOwn := d.own()
 	launcher := Launcher{IsOwn: isOwn}
 	if denial := launcher.Guard(input); denial.Verb != "" {
 		pkg, _ := os.ReadFile(filepath.Join(dir, "package.json"))
@@ -120,7 +120,7 @@ func (d Deps) endSession(dir string, sessionID any) {
 		return
 	}
 	state := filepath.Join(dir, ".jitso")
-	if root, err := project.Resolve(dir, ""); err == nil {
+	if root, err := project.Resolve(dir); err == nil {
 		state = root.StateDir()
 	}
 	store := registry.NewFileStore(state)
@@ -132,59 +132,4 @@ func (d Deps) endSession(dir string, sessionID any) {
 		store.Sleep = d.Sleep
 	}
 	_ = EndLaunch(store, store.Path(), id, d.now())
-}
-
-// RunDispatchGuard is `jitso hook dispatch-guard`: it answers allow for the
-// one launcher line and the brief writes the dispatcher may do, and deny for
-// everything else, including input it cannot read (it fails closed).
-func RunDispatchGuard(d Deps) {
-	answer := func(decision, reason string) {
-		io.WriteString(d.Stdout, string(Answer(decision, DispatchReason(reason))))
-	}
-	input, ok := d.readInput()
-	if !ok {
-		answer(Deny, "the hook input was not a JSON object")
-		return
-	}
-	home := d.Getenv("HOME")
-	if home == "" {
-		answer(Deny, "HOME is not set, so the dispatcher folder is unknown")
-		return
-	}
-	self, isOwn := d.own()
-	g := DispatchGuard{
-		DispatchDir: project.DispatchDir(home),
-		Launcher:    self,
-		IsOwn:       isOwn,
-		Real:        project.Real,
-		IsSymlink: func(path string) bool {
-			info, err := os.Lstat(path)
-			return err == nil && info.Mode()&os.ModeSymlink != 0
-		},
-		Exists: func(path string) bool {
-			_, err := os.Lstat(path)
-			return err == nil
-		},
-	}
-	g.Primary, g.PrimaryProblem = d.primary(home)
-	if problem := g.Problem(input); problem != "" {
-		answer(Deny, problem)
-		return
-	}
-	answer(Allow, AllowedReason)
-}
-
-// primary is the real path of the primary checkout JITSO_PROJECT names, which
-// the dispatcher sets for its claude. When it cannot be known, problem says why
-// and the guard denies a line that holds --worktree.
-func (d Deps) primary(home string) (primary, problem string) {
-	env := d.Getenv(project.EnvVar)
-	if env == "" {
-		return "", project.EnvVar + " is not set, so the primary worktree is unknown"
-	}
-	root, err := project.Resolve(project.DispatchDir(home), env)
-	if err != nil {
-		return "", project.EnvVar + " does not name a git checkout"
-	}
-	return root.Primary, ""
 }

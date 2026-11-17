@@ -2,7 +2,7 @@
 // validated profile or a rejection (exit 2, "JITSO REJECTED: <reason>"). It
 // is pure: the catalog is already loaded and validated.
 //
-// The dispatcher model asks; this code decides. A request picks a build and
+// The launching model asks; this code decides. A request picks a build and
 // gives the fields that build requires; every field value must match its
 // pattern, so nothing a model wrote carries shell syntax further.
 package profile

@@ -30,9 +30,6 @@ type System struct {
 	Rand io.Reader
 	// Orca runs the orca program.
 	Orca orca.Runner
-	// Spawn runs a program in the foreground with the terminal inherited and
-	// returns its exit status; an error means it could not start.
-	Spawn func(argv []string, dir string, env []string) (int, error)
 	// StdinIsTerminal reports whether standard input is a terminal
 	// (tty.IsTerminal(os.Stdin)); nil means it is not. A command that asks
 	// a person a question asks only when it is true.
@@ -77,9 +74,8 @@ func (c *Context) Warn(line string) {
 	io.WriteString(c.Sys.Stderr, line+"\n")
 }
 
-// Project resolves the project once: the git primary checkout of
-// JITSO_PROJECT when it is set and not empty, else of the cwd. Outside a
-// checkout it is an Env error (exit 3) naming the folder.
+// Project resolves the project once: the git primary checkout of the cwd.
+// Outside a checkout it is an Env error (exit 3) naming the folder.
 func (c *Context) Project() (project.Root, error) {
 	if c.root == nil && c.rootErr == nil {
 		getwd := c.Sys.Getwd
@@ -90,7 +86,7 @@ func (c *Context) Project() (project.Root, error) {
 		if err != nil {
 			c.rootErr = err
 		} else {
-			r, err := project.Resolve(cwd, c.Getenv(project.EnvVar))
+			r, err := project.Resolve(cwd)
 			c.root, c.rootErr = &r, err
 		}
 	}

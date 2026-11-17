@@ -357,7 +357,6 @@ func TestIsJitsoCommand(t *testing.T) {
 		"'/x/jitso.exe' hook guard",
 	}
 	no := []string{
-		"jitso hook dispatch-guard",
 		"jitso hook guard extra",
 		"bun run jitso hook guard",
 		"./jitso hook guard",

@@ -79,23 +79,3 @@ func TestCheckLaunchField(t *testing.T) {
 		t.Errorf("unknown field: %q", got)
 	}
 }
-
-func TestWord(t *testing.T) {
-	tests := []struct{ in, want string }{
-		{"/opt/jitso", "/opt/jitso"},
-		{"/Users/a-b/.local/bin/jitso", "/Users/a-b/.local/bin/jitso"},
-		{"/opt/my tools/jitso", "'/opt/my tools/jitso'"},
-		{"it's", `'it'\''s'`},
-		{"a$b", "'a$b'"},
-		{"", "''"},
-	}
-	for _, tt := range tests {
-		got, err := Word(tt.in)
-		if err != nil || got != tt.want {
-			t.Errorf("Word(%q) = %q, %v, want %q", tt.in, got, err, tt.want)
-		}
-	}
-	if _, err := Word("a\x00b"); !errors.Is(err, ErrNUL) {
-		t.Errorf("NUL: got %v, want ErrNUL", err)
-	}
-}

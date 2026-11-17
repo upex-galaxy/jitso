@@ -1,8 +1,7 @@
 // Package project finds the project a command works on: the git primary
-// checkout of the working directory, or of JITSO_PROJECT when it is set (the
-// dispatcher handoff, docs/architecture.md section 6). It also names the fixed
-// folders jitso uses (the state folder, the dispatcher folder) and the real
-// path of the running executable.
+// checkout of the working directory (docs/architecture.md section 6). It also
+// names the fixed folders jitso uses (the state folder, the user folder) and
+// the real path of the running executable.
 package project
 
 import (
@@ -13,10 +12,6 @@ import (
 
 	"github.com/upex-galaxy/jitso/internal/fail"
 )
-
-// EnvVar is the variable that names the project when the cwd cannot, set by
-// the dispatcher for the claude it starts.
-const EnvVar = "JITSO_PROJECT"
 
 // Root is where a command runs: the checkout holding the folder and the
 // primary checkout that holds the catalog and the state.
@@ -34,19 +29,11 @@ type Root struct {
 // StateDir is the .jitso/ folder of the primary checkout.
 func (r Root) StateDir() string { return filepath.Join(r.Primary, ".jitso") }
 
-// Resolve finds the project. When override is not empty (the value of
-// JITSO_PROJECT) it names the folder, relative to cwd when it is not absolute,
-// and cwd is ignored. Outside a git checkout it returns an Env error (exit 3)
-// that names the folder: `<folder> is not inside a git checkout`.
-func Resolve(cwd, override string) (Root, error) {
-	dir := cwd
-	if override != "" {
-		dir = override
-		if !filepath.IsAbs(dir) {
-			dir = filepath.Join(cwd, dir)
-		}
-	}
-	dir = Real(dir)
+// Resolve finds the project of cwd. Outside a git checkout it returns an Env
+// error (exit 3) that names the folder: `<folder> is not inside a git
+// checkout`.
+func Resolve(cwd string) (Root, error) {
+	dir := Real(cwd)
 	root, ok := checkout(dir)
 	if !ok {
 		return Root{}, fail.Envf("%s is not inside a git checkout", dir)
@@ -84,20 +71,13 @@ func Real(path string) string {
 	return path
 }
 
-// UserDir is the user's own jitso folder, <home>/.jitso: the dispatcher's
-// folder, the user's builds and the user config live in it.
+// UserDir is the user's own jitso folder, <home>/.jitso.
 func UserDir(home string) string {
 	return filepath.Join(home, ".jitso")
 }
 
-// DispatchDir is the fixed folder the dispatcher runs from:
-// <home>/.jitso/dispatch-cwd, outside every checkout.
-func DispatchDir(home string) string {
-	return filepath.Join(UserDir(home), "dispatch-cwd")
-}
-
 // Self is the real path of the running executable (symlinks resolved), the
-// identity both hooks compare a command's first word against.
+// identity the hook compares a command's first word against.
 func Self(executable func() (string, error)) (string, error) {
 	if executable == nil {
 		executable = os.Executable

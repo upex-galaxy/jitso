@@ -8,7 +8,6 @@ import (
 	"strings"
 
 	"github.com/upex-galaxy/jitso/internal/catalog"
-	"github.com/upex-galaxy/jitso/internal/dispatch"
 	"github.com/upex-galaxy/jitso/internal/orca"
 	"github.com/upex-galaxy/jitso/internal/project"
 )
@@ -70,33 +69,15 @@ func orDefault(s, def string) string {
 	return s
 }
 
-// checkShell: `launch` and the dispatcher run through /bin/sh.
+// checkShell: `launch` runs through /bin/sh.
 func checkShell(p Ports) Line {
 	if p.GOOS == "windows" {
-		return Line{Warn, "shell", "launch and the dispatcher need /bin/sh and do not run on windows"}
+		return Line{Warn, "shell", "launch needs /bin/sh and does not run on windows"}
 	}
 	if _, err := p.Stat("/bin/sh"); err != nil {
-		return Line{Fail, "shell", "/bin/sh is missing: launch and the dispatcher need it"}
+		return Line{Fail, "shell", "/bin/sh is missing: launch needs it"}
 	}
 	return Line{OK, "shell", "/bin/sh is present"}
-}
-
-// checkDispatcher asks the dispatch guard's own rule (N-9) whether it can
-// allow the path of this binary as the one launcher. On windows a path the
-// rule refuses (a backslash is not in it) is a warning, not a failure: the
-// dispatcher does not run there (defect N-32).
-func checkDispatcher(p Ports, self string) Line {
-	switch {
-	case self == "":
-		return Line{Fail, "dispatcher", "the path of this binary is unknown, so the dispatch guard cannot allow it"}
-	case dispatch.LauncherPathOK(self):
-		return Line{OK, "dispatcher", "the dispatch guard can allow this launcher path"}
-	}
-	detail := fmt.Sprintf("the dispatch guard cannot allow the path of this binary (%s): only letters, digits, single spaces and . _ - / @ %% + = : , are supported", self)
-	if p.GOOS == "windows" {
-		return Line{Warn, "dispatcher", detail + "; launch and the dispatcher do not run on windows, so this is not a failure"}
-	}
-	return Line{Fail, "dispatcher", detail}
 }
 
 // checkOrca looks the orca program up on PATH and never runs it: a call is
@@ -221,9 +202,6 @@ func checkProject(p Ports) (line Line, root project.Root, ok bool) {
 	detail := root.Primary
 	if root.Linked {
 		detail += ", checkout " + root.Checkout + " (linked worktree)"
-	}
-	if p.Getenv(project.EnvVar) != "" {
-		detail += ", from " + project.EnvVar
 	}
 	return Line{OK, "project", detail}, root, true
 }

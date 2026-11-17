@@ -2,9 +2,7 @@
 // trust-this-folder dialog of a freshly started session. A launch runs only in
 // a worktree of the primary checkout, or a folder the caller configured
 // (tests): Precheck and Place enforce it on every launch (defect N-22),
-// whether or not a dialog shows. The dispatcher folder is not one of them: the
-// dispatcher names the primary worktree on its launch line (defect N-23). The
-// dialog appears even in bypass mode, and Enter alone picks "No, exit"; Handle
+// whether or not a dialog shows. The dialog appears even in bypass mode, and Enter alone picks "No, exit"; Handle
 // confirms it only for a trusted folder and leaves it alone anywhere else.
 package trust
 

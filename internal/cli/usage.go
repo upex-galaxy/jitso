@@ -10,7 +10,7 @@ import (
 func Usage() string {
 	var b strings.Builder
 	b.WriteString("Usage: jitso <command> [options]\n")
-	b.WriteString("       jitso \"<request>\"   (a request with spaces opens the dispatcher)\n\n")
+	b.WriteString("\n")
 	for _, c := range Commands() {
 		fmt.Fprintf(&b, "  %-8s %s\n", c.Name, c.Summary)
 	}

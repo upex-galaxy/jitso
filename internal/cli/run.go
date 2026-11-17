@@ -2,7 +2,6 @@ package cli
 
 import (
 	"io"
-	"strings"
 
 	"github.com/upex-galaxy/jitso/internal/fail"
 )
@@ -14,14 +13,14 @@ import (
 //	no argument, --help or -h       usage on stdout, 0
 //	--version                       the version command (same output as `version`)
 //	a known command                 that command
-//	an unknown word with whitespace the dispatcher, with argv joined by spaces
-//	any other word (also "")        "jitso: unknown command" and the usage on stderr, 2
+//	any other word (also "", or a word with spaces)
+//	                                "jitso: unknown command" and the usage on stderr, 2
 func Run(argv []string, sys System) int {
 	ctx := &Context{Sys: sys}
-	return report(sys.Stderr, dispatch(ctx, argv))
+	return report(sys.Stderr, route(ctx, argv))
 }
 
-func dispatch(ctx *Context, argv []string) error {
+func route(ctx *Context, argv []string) error {
 	if len(argv) == 0 || argv[0] == "--help" || argv[0] == "-h" {
 		ctx.Println(Usage())
 		return nil
@@ -31,12 +30,6 @@ func dispatch(ctx *Context, argv []string) error {
 		first = "version"
 	}
 	cmd, ok := Lookup(first)
-	if !ok && IsRequest(first) {
-		if requestHandler == nil {
-			return fail.Env("the dispatcher is not available in this build")
-		}
-		return requestHandler(ctx, strings.Join(argv, " "))
-	}
 	if !ok {
 		return fail.Usage(`jitso: unknown command "` + first + "\"\n\n" + Usage())
 	}

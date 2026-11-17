@@ -12,7 +12,7 @@ role: conductor
 type:
 # work_kind: a short slug for the work this build coordinates (for example automation-batch).
 work_kind:
-# description: one sentence a dispatcher reads to choose this build.
+# description: one sentence a launching session reads to choose this build.
 description:
 harness: claude
 # model: a full model id from the models list of jitso/jitso.yaml. Never an alias.
