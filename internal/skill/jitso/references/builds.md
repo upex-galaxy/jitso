@@ -69,7 +69,7 @@ drafted my-scout: .jitso/drafts/my-scout.yaml (launch it with --build my-scout; 
 
 ## What `build save` does (the owner's command)
 
-It checks the draft again, prints the exact bytes it would write with every line prefixed `+ `, and on a terminal asks `[y/N]`. Only `y` or `yes` saves it as `jitso/builds/<id>.yaml` with `status: approved` and removes the draft. Without a terminal it refuses and prints a token that the owner can pass as `--confirm` after reading the file. The hook denies the command to agent sessions, and JITSO's rules forbid it. If you run it, you have approved your own build, which is the one thing the design exists to prevent.
+It checks the draft again, prints the exact bytes it would write with every line prefixed `+ `, and on a terminal asks `[y/N]` (`--yes` skips the question). Only `y` or `yes` saves it as `jitso/builds/<id>.yaml` with `status: approved` and removes the draft. Without a terminal it refuses unless the owner passes `--yes` after reading the file. The hook denies the command to agent sessions, and JITSO's rules forbid it. If you run it, you have approved your own build, which is the one thing the design exists to prevent.
 
 ## Subagents of a worker
 

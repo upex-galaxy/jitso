@@ -176,12 +176,10 @@ func directPrefix(prefix string, pathTail bool) bool {
 }
 
 // saveID is the draft id among the words after `build save`: the first word
-// that is not a flag (or the value of --confirm) and looks like an id.
+// that is not a flag and looks like an id.
 func saveID(words []string) string {
-	for i := 0; i < len(words); i++ {
-		switch w := words[i]; {
-		case w == "--confirm":
-			i++
+	for _, w := range words {
+		switch {
 		case strings.HasPrefix(w, "-"):
 		case buildIDWord.MatchString(w):
 			return w

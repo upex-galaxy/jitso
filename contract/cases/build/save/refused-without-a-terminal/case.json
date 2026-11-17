@@ -1,11 +1,11 @@
 {
   "id": "build/save/refused-without-a-terminal",
-  "title": "build save with no terminal and no --confirm shows the file, prints the token on stderr, exits 2 and writes nothing",
+  "title": "build save with no terminal and no --yes shows the file, refuses with exit 2 and writes nothing",
   "source": [
-    "intended: docs/decisions.md D7 and B3-18/B3-19 (a draft becomes a build only with the owner's OK: a terminal, or the token of the content he read; the guard denies the agent)"
+    "intended: docs/decisions.md \"The v0.1.0 cut\" (build save asks on a terminal or takes --yes): a draft becomes a build only with the owner's OK, which is a terminal answer or --yes; the guard denies the agent"
   ],
   "defect": "N-15",
-  "intent": "INTENDED behavior (defect N-15, drafts; docs/decisions.md D7). `jitso build save <id>` shows the build it would write (the draft bytes with `status: approved`) on stdout, every line prefixed with `+ `. Standard input is not a terminal here, and the runner never gives one, so with no `--confirm` it refuses: `JITSO REJECTED: saving a build needs the owner: run \"jitso build save <id>\" in a terminal, or \"jitso build save <id> --confirm <token>\" after reading the file above`, exit 2, where the token is the first 12 hex characters of the SHA-256 of the bytes it would write. Nothing is written and the draft is kept.",
+  "intent": "INTENDED behavior (defect N-15, drafts; docs/decisions.md \"The v0.1.0 cut\"). `jitso build save <id>` shows the build it would write (the draft bytes with `status: approved`) on stdout, every line prefixed with `+ `. Standard input is not a terminal here, and the runner never gives one, so with no `--yes` it refuses: `JITSO REJECTED: saving a build needs the owner: read the file above, then run it again with --yes, or in a terminal to answer the prompt; nothing saved`, exit 2. Nothing is written and the draft is kept.",
   "project": {
     "files": {
       ".jitso/drafts/scout.yaml": "# Draft written by a drafts case.\nid: scout\nversion: 1\nstatus: draft\nrole: operator\ntype: scanner\nwork_kind: repo-scan\ndescription: Scan the repo for TODO comments and report them.\nharness: claude\nmodel: claude-haiku-5-5\neffort: low\nmode_default: direct\nagents_md: exclude\nroute_scope: [none]\nskills_first: []\ntools: [Read, Glob, Grep]\nmcp: []\nrequires: []\nbudget: { tokens: 150000, usd_list_cap: 0.30 }\nsuccess:\n  - { check: answer_delivered }\n  - { check: no_rule_breaks }\n"
@@ -27,7 +27,7 @@
         ],
         "stderr": [
           {
-            "regex": "^JITSO REJECTED: saving a build needs the owner: run \"jitso build save scout\" in a terminal, or \"jitso build save scout --confirm [0-9a-f]{12}\" after reading the file above\\n$"
+            "regex": "^JITSO REJECTED: saving a build needs the owner: read the file above, then run it again with --yes, or in a terminal to answer the prompt; nothing saved\\n$"
           }
         ],
         "orca_calls": {

@@ -11,7 +11,7 @@
     "values": [
       "jitso build save x",
       "bun run jitso build save x",
-      "{{JITSO}} build save x --confirm abc",
+      "{{JITSO}} build save x --yes",
       "FOO=1 jitso build save x",
       "cd a && jitso build save x",
       "sh -c 'jitso build save x'",

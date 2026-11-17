@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"os"
 	"path/filepath"
-	"regexp"
 	"strings"
 	"testing"
 
@@ -20,16 +19,16 @@ func TestParseSaveArgs(t *testing.T) {
 		err  string // the rejection text, "" when accepted
 	}{
 		{"an id", []string{"scout"}, saveArgs{id: "scout"}, ""},
-		{"an id and a token", []string{"scout", "--confirm", "abc"}, saveArgs{id: "scout", confirm: "abc", confirmed: true}, ""},
-		{"a token first", []string{"--confirm", "abc", "scout"}, saveArgs{id: "scout", confirm: "abc", confirmed: true}, ""},
-		{"an empty token is still given", []string{"scout", "--confirm", ""}, saveArgs{id: "scout", confirmed: true}, ""},
-		{"a later token wins", []string{"scout", "--confirm", "a", "--confirm", "b"}, saveArgs{id: "scout", confirm: "b", confirmed: true}, ""},
-		{"a token that looks like a flag is a value", []string{"scout", "--confirm", "--x"}, saveArgs{id: "scout", confirm: "--x", confirmed: true}, ""},
+		{"an id and --yes", []string{"scout", "--yes"}, saveArgs{id: "scout", yes: true}, ""},
+		{"--yes first", []string{"--yes", "scout"}, saveArgs{id: "scout", yes: true}, ""},
+		{"--yes twice is once", []string{"scout", "--yes", "--yes"}, saveArgs{id: "scout", yes: true}, ""},
 		{"no id", nil, saveArgs{}, "JITSO REJECTED: build save needs a draft id"},
-		{"only a token", []string{"--confirm", "abc"}, saveArgs{}, "JITSO REJECTED: build save needs a draft id"},
-		{"a token without a value", []string{"scout", "--confirm"}, saveArgs{}, "JITSO REJECTED: --confirm needs a value"},
+		{"only --yes", []string{"--yes"}, saveArgs{}, "JITSO REJECTED: build save needs a draft id"},
+		{"--confirm is gone", []string{"scout", "--confirm", "abc"}, saveArgs{}, `JITSO REJECTED: unknown argument "--confirm"`},
+		{"--confirm without a value is gone", []string{"scout", "--confirm"}, saveArgs{}, `JITSO REJECTED: unknown argument "--confirm"`},
 		{"a second id", []string{"a", "b"}, saveArgs{}, `JITSO REJECTED: unknown argument "b"`},
 		{"another flag", []string{"scout", "--force"}, saveArgs{}, `JITSO REJECTED: unknown argument "--force"`},
+		{"--dry-run is not taken", []string{"scout", "--dry-run"}, saveArgs{}, `JITSO REJECTED: unknown argument "--dry-run"`},
 		{"the equals spelling is another flag", []string{"scout", "--confirm=abc"}, saveArgs{}, `JITSO REJECTED: unknown argument "--confirm=abc"`},
 		{"a path", []string{"../scout"}, saveArgs{}, "JITSO REJECTED: build id must be kebab-case"},
 		{"an upper case id", []string{"Scout"}, saveArgs{}, "JITSO REJECTED: build id must be kebab-case"},
@@ -86,10 +85,10 @@ func TestBuildSaveWithoutATerminal(t *testing.T) {
 	root := gitProject(t)
 	draftIn(t, root)
 
-	// No terminal, no token: the file is shown, the token is told, nothing is written.
+	// No terminal, no --yes: the file is shown, nothing is written, even when
+	// the standard input holds a yes.
 	code, out, errOut := runWith(t, root, "y\n", false, "build", "save", "scout")
-	token := drafts.Token([]byte(approvedText))
-	wantErr := `JITSO REJECTED: saving a build needs the owner: run "jitso build save scout" in a terminal, or "jitso build save scout --confirm ` + token + `" after reading the file above` + "\n"
+	wantErr := "JITSO REJECTED: saving a build needs the owner: read the file above, then run it again with --yes, or in a terminal to answer the prompt; nothing saved\n"
 	if code != 2 || out != drafts.Show([]byte(approvedText)) || errOut != wantErr {
 		t.Fatalf("exit %d, stdout %q, stderr %q", code, out, errOut)
 	}
@@ -100,20 +99,17 @@ func TestBuildSaveWithoutATerminal(t *testing.T) {
 		t.Fatal("a refused save removed the draft")
 	}
 
-	// A wrong token: refused, shown, nothing written.
+	// --confirm is gone: an unknown flag, before anything is shown.
 	code, out, errOut = runWith(t, root, "", false, "build", "save", "scout", "--confirm", "000000000000")
-	if code != 2 || out != drafts.Show([]byte(approvedText)) || !strings.Contains(errOut, "--confirm 000000000000 does not match the draft") {
-		t.Fatalf("wrong token: exit %d, stdout %q, stderr %q", code, out, errOut)
-	}
-	if _, ok := fileAt(root, "jitso/builds/scout.yaml"); ok {
-		t.Fatal("a wrong token wrote the build")
+	if code != 2 || out != "" || errOut != "JITSO REJECTED: unknown argument \"--confirm\"\n" {
+		t.Fatalf("--confirm: exit %d, stdout %q, stderr %q", code, out, errOut)
 	}
 
-	// The token of the content: saved.
-	code, out, errOut = runWith(t, root, "", false, "build", "save", "scout", "--confirm", token)
+	// --yes: saved.
+	code, out, errOut = runWith(t, root, "", false, "build", "save", "scout", "--yes")
 	wantOut := drafts.Show([]byte(approvedText)) + "saved scout: jitso/builds/scout.yaml (status approved); the draft is removed\n"
 	if code != 0 || out != wantOut || errOut != "" {
-		t.Fatalf("with the token: exit %d, stdout %q, stderr %q", code, out, errOut)
+		t.Fatalf("with --yes: exit %d, stdout %q, stderr %q", code, out, errOut)
 	}
 	if got, _ := fileAt(root, "jitso/builds/scout.yaml"); got != approvedText {
 		t.Errorf("build file %q", got)
@@ -126,30 +122,8 @@ func TestBuildSaveWithoutATerminal(t *testing.T) {
 	}
 
 	// Saving again: no draft any more.
-	if code, _, errOut := runWith(t, root, "", false, "build", "save", "scout", "--confirm", token); code != 2 || errOut != "JITSO REJECTED: no draft \"scout\"\n" {
+	if code, _, errOut := runWith(t, root, "", false, "build", "save", "scout", "--yes"); code != 2 || errOut != "JITSO REJECTED: no draft \"scout\"\n" {
 		t.Errorf("second save: exit %d, %q", code, errOut)
-	}
-}
-
-// The token of a draft that changed after it was read no longer matches.
-func TestBuildSaveTokenFollowsTheContent(t *testing.T) {
-	root := gitProject(t)
-	draftIn(t, root)
-	_, _, errOut := runWith(t, root, "", false, "build", "save", "scout")
-	old := regexp.MustCompile(`--confirm ([0-9a-f]{12})`).FindStringSubmatch(errOut)
-	if old == nil {
-		t.Fatalf("no token in %q", errOut)
-	}
-	changed := strings.Replace(draftText, "Scan.", "Scan more.", 1)
-	if err := os.WriteFile(filepath.Join(root, ".jitso/drafts/scout.yaml"), []byte(changed), 0o644); err != nil {
-		t.Fatal(err)
-	}
-	code, _, errOut := runWith(t, root, "", false, "build", "save", "scout", "--confirm", old[1])
-	if code != 2 || !strings.Contains(errOut, "does not match the draft (it changed, or the token is wrong); nothing saved") {
-		t.Fatalf("exit %d, stderr %q", code, errOut)
-	}
-	if _, ok := fileAt(root, "jitso/builds/scout.yaml"); ok {
-		t.Error("a stale token wrote the build")
 	}
 }
 
@@ -203,19 +177,17 @@ func TestBuildSaveOnATerminal(t *testing.T) {
 	}
 }
 
-// On a terminal a given token decides: no question, and a wrong token is still
-// refused.
-func TestBuildSaveOnATerminalWithAToken(t *testing.T) {
+// On a terminal --yes skips the question, as it does for the adoption
+// commands: the standard input is never read.
+func TestBuildSaveOnATerminalWithYes(t *testing.T) {
 	root := gitProject(t)
 	draftIn(t, root)
-	code, out, errOut := runWith(t, root, "y\n", true, "build", "save", "scout", "--confirm", "000000000000")
-	if code != 2 || strings.Contains(out, "[y/N]") || !strings.Contains(errOut, "does not match the draft") {
-		t.Fatalf("wrong token: exit %d, stdout %q, stderr %q", code, out, errOut)
-	}
-	token := drafts.Token([]byte(approvedText))
-	code, out, errOut = runWith(t, root, "", true, "build", "save", "scout", "--confirm", token)
+	code, out, errOut := runWith(t, root, "n\n", true, "build", "save", "scout", "--yes")
 	if code != 0 || strings.Contains(out, "[y/N]") || errOut != "" {
-		t.Fatalf("right token: exit %d, stdout %q, stderr %q", code, out, errOut)
+		t.Fatalf("exit %d, stdout %q, stderr %q", code, out, errOut)
+	}
+	if got, _ := fileAt(root, "jitso/builds/scout.yaml"); got != approvedText {
+		t.Errorf("build file %q", got)
 	}
 }
 
@@ -245,7 +217,7 @@ func TestBuildSaveRechecksTheDraft(t *testing.T) {
 	if err := os.WriteFile(cfg, []byte(strings.Replace(draftConfig, "claude-haiku-5-5", "claude-other", 1)), 0o644); err != nil {
 		t.Fatal(err)
 	}
-	code, out, errOut := runWith(t, root, "", false, "build", "save", "scout", "--confirm", drafts.Token([]byte(approvedText)))
+	code, out, errOut := runWith(t, root, "", false, "build", "save", "scout", "--yes")
 	if code != 2 || out != "" || errOut != "JITSO REJECTED: draft \"scout\" is invalid: model \"claude-haiku-5-5\" is not in the allowlist\n" {
 		t.Fatalf("exit %d, stdout %q, stderr %q", code, out, errOut)
 	}
@@ -265,7 +237,7 @@ func TestBuildSaveNeverOverwrites(t *testing.T) {
 	if err := os.WriteFile(filepath.Join(root, "jitso/builds/scout.yaml"), []byte(other), 0o644); err != nil {
 		t.Fatal(err)
 	}
-	code, out, errOut := runWith(t, root, "", false, "build", "save", "scout", "--confirm", drafts.Token([]byte(approvedText)))
+	code, out, errOut := runWith(t, root, "", false, "build", "save", "scout", "--yes")
 	if code != 2 || out != "" || errOut != "JITSO REJECTED: jitso/builds/scout.yaml already exists: save never overwrites a build\n" {
 		t.Fatalf("exit %d, stdout %q, stderr %q", code, out, errOut)
 	}
@@ -297,7 +269,7 @@ func TestBuildSaveRefusals(t *testing.T) {
 				t.Fatal(err)
 			}
 			id := strings.TrimSuffix(tt.file, ".yaml")
-			code, out, errOut := runWith(t, root, "", false, "build", "save", id, "--confirm", "123456789abc")
+			code, out, errOut := runWith(t, root, "", false, "build", "save", id, "--yes")
 			if code != 2 || out != "" || errOut != tt.want {
 				t.Errorf("exit %d, stdout %q, stderr %q", code, out, errOut)
 			}

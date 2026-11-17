@@ -1,0 +1,112 @@
+{
+  "id": "build/save/confirm-flag-is-gone",
+  "title": "build save has no --confirm: the flag is an unknown argument, with or without a value, even next to --yes; nothing is shown or saved",
+  "source": [
+    "intended: docs/decisions.md \"The v0.1.0 cut\" (build save asks on a terminal or takes --yes): a draft becomes a build only with the owner's OK, which is a terminal answer or --yes; the guard denies the agent"
+  ],
+  "defect": "N-15",
+  "intent": "INTENDED behavior (defect N-15, drafts; docs/decisions.md \"The v0.1.0 cut\"). The confirmation token is gone, so `--confirm` is a flag `build save` does not take: `JITSO REJECTED: unknown argument \"--confirm\"`, exit 2, with nothing on stdout, nothing written and the draft kept. It is refused before the draft is read, so it is the same with a value, without one, and next to `--yes`.",
+  "project": {
+    "files": {
+      ".jitso/drafts/scout.yaml": "# Draft written by a drafts case.\nid: scout\nversion: 1\nstatus: draft\nrole: operator\ntype: scanner\nwork_kind: repo-scan\ndescription: Scan the repo for TODO comments and report them.\nharness: claude\nmodel: claude-haiku-5-5\neffort: low\nmode_default: direct\nagents_md: exclude\nroute_scope: [none]\nskills_first: []\ntools: [Read, Glob, Grep]\nmcp: []\nrequires: []\nbudget: { tokens: 150000, usd_list_cap: 0.30 }\nsuccess:\n  - { check: answer_delivered }\n  - { check: no_rule_breaks }\n"
+    }
+  },
+  "steps": [
+    {
+      "run": [
+        "build",
+        "save",
+        "scout",
+        "--confirm",
+        "000000000000"
+      ],
+      "expect": {
+        "exit": 2,
+        "stdout": [
+          {
+            "empty": true
+          }
+        ],
+        "stderr": [
+          {
+            "equals": "JITSO REJECTED: unknown argument \"--confirm\"\n"
+          }
+        ],
+        "files": [
+          {
+            "path": "jitso/builds/scout.yaml",
+            "exists": false
+          },
+          {
+            "path": ".jitso/drafts/scout.yaml",
+            "equals": "# Draft written by a drafts case.\nid: scout\nversion: 1\nstatus: draft\nrole: operator\ntype: scanner\nwork_kind: repo-scan\ndescription: Scan the repo for TODO comments and report them.\nharness: claude\nmodel: claude-haiku-5-5\neffort: low\nmode_default: direct\nagents_md: exclude\nroute_scope: [none]\nskills_first: []\ntools: [Read, Glob, Grep]\nmcp: []\nrequires: []\nbudget: { tokens: 150000, usd_list_cap: 0.30 }\nsuccess:\n  - { check: answer_delivered }\n  - { check: no_rule_breaks }\n"
+          }
+        ]
+      }
+    },
+    {
+      "run": [
+        "build",
+        "save",
+        "scout",
+        "--confirm"
+      ],
+      "expect": {
+        "exit": 2,
+        "stdout": [
+          {
+            "empty": true
+          }
+        ],
+        "stderr": [
+          {
+            "equals": "JITSO REJECTED: unknown argument \"--confirm\"\n"
+          }
+        ],
+        "files": [
+          {
+            "path": "jitso/builds/scout.yaml",
+            "exists": false
+          },
+          {
+            "path": ".jitso/drafts/scout.yaml",
+            "equals": "# Draft written by a drafts case.\nid: scout\nversion: 1\nstatus: draft\nrole: operator\ntype: scanner\nwork_kind: repo-scan\ndescription: Scan the repo for TODO comments and report them.\nharness: claude\nmodel: claude-haiku-5-5\neffort: low\nmode_default: direct\nagents_md: exclude\nroute_scope: [none]\nskills_first: []\ntools: [Read, Glob, Grep]\nmcp: []\nrequires: []\nbudget: { tokens: 150000, usd_list_cap: 0.30 }\nsuccess:\n  - { check: answer_delivered }\n  - { check: no_rule_breaks }\n"
+          }
+        ]
+      }
+    },
+    {
+      "run": [
+        "build",
+        "save",
+        "scout",
+        "--yes",
+        "--confirm",
+        "abc"
+      ],
+      "expect": {
+        "exit": 2,
+        "stdout": [
+          {
+            "empty": true
+          }
+        ],
+        "stderr": [
+          {
+            "equals": "JITSO REJECTED: unknown argument \"--confirm\"\n"
+          }
+        ],
+        "files": [
+          {
+            "path": "jitso/builds/scout.yaml",
+            "exists": false
+          },
+          {
+            "path": ".jitso/drafts/scout.yaml",
+            "equals": "# Draft written by a drafts case.\nid: scout\nversion: 1\nstatus: draft\nrole: operator\ntype: scanner\nwork_kind: repo-scan\ndescription: Scan the repo for TODO comments and report them.\nharness: claude\nmodel: claude-haiku-5-5\neffort: low\nmode_default: direct\nagents_md: exclude\nroute_scope: [none]\nskills_first: []\ntools: [Read, Glob, Grep]\nmcp: []\nrequires: []\nbudget: { tokens: 150000, usd_list_cap: 0.30 }\nsuccess:\n  - { check: answer_delivered }\n  - { check: no_rule_breaks }\n"
+          }
+        ]
+      }
+    }
+  ]
+}

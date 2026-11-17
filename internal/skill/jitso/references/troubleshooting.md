@@ -30,7 +30,7 @@ Two prefixes tell you whose problem it is. `JITSO REJECTED: <reason>` (exit 2) m
 | `untrusted folder <path>: --worktree asked for <path>; the terminal was closed` | `--worktree` names a path and Orca opened the terminal somewhere else. Name the worktree you want, or drop the flag |
 | `--worktree <selector> must name an absolute path`, `--worktree <selector> names <path>, which is not a worktree of this repo` | a `path:` or `id:<id>::<path>` selector was rejected before anything was written or Orca was called. Use an absolute path of a worktree of this repo |
 | `draft <...> is invalid: <problems>`, `build "<id>" already exists (<layer> <path>): a draft needs an id no build has` | fix the draft, or pick an id no saved build has |
-| `saving a build needs the owner: run "jitso build save <id>" in a terminal` | not yours to run. Show the owner the draft and ask |
+| `saving a build needs the owner: read the file above, then run it again with --yes, or in a terminal` | not yours to run. Show the owner the draft and ask |
 
 ## Environment errors (exit 3)
 

@@ -7,6 +7,7 @@ import (
 	"os"
 	"strings"
 
+	"github.com/upex-galaxy/jitso/internal/adopt"
 	"github.com/upex-galaxy/jitso/internal/catalog"
 	"github.com/upex-galaxy/jitso/internal/drafts"
 	"github.com/upex-galaxy/jitso/internal/fail"
@@ -20,61 +21,49 @@ import (
 //
 //   - it shows the content it would write, every line prefixed with `+ `;
 //   - on a terminal it asks `[y/N]`; anything but y or yes is `not saved`;
-//   - without a terminal it refuses and prints the token of the content, the
-//     first 12 hex characters of its SHA-256, which `--confirm <token>` must
-//     repeat: the OK is bound to the bytes that were read;
+//   - `--yes` saves without asking, on a terminal or not, as it does for the
+//     adoption commands (the rule is adopt.Confirm);
+//   - without a terminal and without `--yes` it refuses and saves nothing;
 //   - it never overwrites a file of jitso/builds/ and never takes an id a saved
 //     build already has;
 //   - the draft is checked again against the current allowlists first.
 //
 // The agent boundary is not this command but the launch guard, which denies
-// every Bash segment that runs it (hook.VerbBuildSave): an agent can compute a
-// token. Exit 0 when saved, 2 for a bad argument, a rejected draft, a missing
-// OK or a wrong token, 3 for the environment.
+// every Bash segment that runs it (hook.VerbBuildSave). Exit 0 when saved, 2
+// for a bad argument, a rejected draft or a missing OK, 3 for the environment.
 func init() {
 	RegisterSubcommand(Subcommand{
 		Name:  "save",
 		Order: 50,
-		Usage: "save <id> [--confirm <token>]  turn a draft into an approved build (the owner only)",
+		Usage: "save <id> [--yes]  turn a draft into an approved build (the owner only)",
 		Run:   runBuildSave,
 	})
 }
 
 // saveArgs are the words after `build save`.
 type saveArgs struct {
-	id      string
-	confirm string
-	// confirmed is true when --confirm was given.
-	confirmed bool
+	id string
+	// yes is true when --yes was given.
+	yes bool
 }
 
-// parseSaveArgs reads `<id> [--confirm <token>]`. A later --confirm replaces an
-// earlier one, as a later value of a launch flag does. The id is checked last,
-// so it is never turned into a path unless it is kebab-case.
+// parseSaveArgs reads `<id> [--yes]`. The id is checked last, so it is never
+// turned into a path unless it is kebab-case.
 func parseSaveArgs(args []string) (saveArgs, error) {
-	var a saveArgs
-	haveID := false
-	for i := 0; i < len(args); i++ {
-		switch w := args[i]; {
-		case w == "--confirm":
-			if i+1 >= len(args) {
-				return saveArgs{}, fail.Rejected("--confirm needs a value")
-			}
-			i++
-			a.confirm, a.confirmed = args[i], true
-		case haveID || strings.HasPrefix(w, "-"):
-			return saveArgs{}, fail.Rejectedf(`unknown argument "%s"`, w)
-		default:
-			a.id, haveID = w, true
-		}
+	flags, rest, err := ParseFlags(args, FlagYes)
+	if err != nil {
+		return saveArgs{}, err
 	}
-	switch {
-	case !haveID:
+	if len(rest) == 0 {
 		return saveArgs{}, fail.Rejected("build save needs a draft id")
-	case !drafts.ValidID(a.id):
+	}
+	if err := RejectExtra(rest[1:]); err != nil {
+		return saveArgs{}, err
+	}
+	if !drafts.ValidID(rest[0]) {
 		return saveArgs{}, fail.Rejected("build id must be kebab-case")
 	}
-	return a, nil
+	return saveArgs{id: rest[0], yes: flags.Yes}, nil
 }
 
 func runBuildSave(ctx *Context, args []string) error {
@@ -109,19 +98,15 @@ func runBuildSave(ctx *Context, args []string) error {
 		return fail.Rejectedf(`draft "%s" cannot be saved: write its status as the plain word draft, or in quotes`, a.id)
 	}
 
-	token := drafts.Token(content)
 	io.WriteString(ctx.Sys.Stdout, drafts.Show(content))
-	switch {
-	case a.confirmed:
-		if a.confirm != token {
-			return fail.Rejectedf("--confirm %s does not match the draft (it changed, or the token is wrong); nothing saved", a.confirm)
-		}
-	case ctx.Sys.StdinIsTerminal != nil && ctx.Sys.StdinIsTerminal():
+	terminal := ctx.Sys.StdinIsTerminal != nil && ctx.Sys.StdinIsTerminal()
+	switch (adopt.Confirm{Yes: a.yes, Terminal: terminal}).Before() {
+	case adopt.DecideRefuse:
+		return fail.Rejected("saving a build needs the owner: read the file above, then run it again with --yes, or in a terminal to answer the prompt; nothing saved")
+	case adopt.DecideAsk:
 		if !askOwner(ctx, a.id) {
 			return fail.Rejected("not saved")
 		}
-	default:
-		return fail.Rejectedf(`saving a build needs the owner: run "jitso build save %s" in a terminal, or "jitso build save %s --confirm %s" after reading the file above`, a.id, a.id, token)
 	}
 
 	if err := drafts.Save(root.Primary, a.id, content); err != nil {
@@ -165,18 +150,14 @@ func checkSavable(res *catalog.Result, id string, data []byte, primary string) e
 	return nil
 }
 
-// askOwner asks the person at the terminal whether to save and reads one line:
-// y or yes, in any case, is a yes; anything else, and the end of input, is a
-// no.
+// askOwner asks the person at the terminal whether to save and reads one line,
+// which adopt.Reply judges: y or yes, in any case, is a yes; anything else, and
+// the end of input, is a no.
 func askOwner(ctx *Context, id string) bool {
 	io.WriteString(ctx.Sys.Stdout, "Save it as "+catalog.BuildsDir+"/"+id+drafts.ExtensionYAML+" with status approved? [y/N] ")
 	if ctx.Sys.Stdin == nil {
 		return false
 	}
-	line, _ := bufio.NewReader(ctx.Sys.Stdin).ReadString('\n')
-	switch strings.ToLower(strings.TrimSpace(line)) {
-	case "y", "yes":
-		return true
-	}
-	return false
+	line, err := bufio.NewReader(ctx.Sys.Stdin).ReadString('\n')
+	return adopt.Reply(line, err != nil) == adopt.DecideApply
 }

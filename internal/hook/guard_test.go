@@ -40,7 +40,7 @@ func TestGuardVerb(t *testing.T) {
 		{"send_instruction", mcp("send_instruction", map[string]any{}), ""},
 		{"other tool", map[string]any{"tool_name": "Write", "tool_input": map[string]any{"command": "orca orchestration worker-start"}}, ""},
 		{"build save", bash("jitso build save x"), VerbBuildSave},
-		{"build save by own path", bash("/opt/jitso build save x --confirm abc"), VerbBuildSave},
+		{"build save by own path", bash("/opt/jitso build save x --yes"), VerbBuildSave},
 		{"build draft", bash("jitso build draft x.yaml"), ""},
 		{"setup", bash("jitso setup hook --remove --yes"), VerbSetup},
 		{"install by own path", bash("/opt/jitso install skill --scope user --yes"), VerbInstall},

@@ -1,11 +1,11 @@
 {
-  "id": "build/save/with-the-confirm-token",
-  "title": "build save <id> --confirm <token> writes jitso/builds/<id>.yaml with status approved and every other byte of the draft, removes the draft, and the build is then listed and valid",
+  "id": "build/save/with-yes",
+  "title": "build save <id> --yes writes jitso/builds/<id>.yaml with status approved and every other byte of the draft, removes the draft, and the build is then listed and valid",
   "source": [
-    "intended: docs/decisions.md D7 and B3-18/B3-19 (a draft becomes a build only with the owner's OK: a terminal, or the token of the content he read; the guard denies the agent)"
+    "intended: docs/decisions.md \"The v0.1.0 cut\" (build save asks on a terminal or takes --yes): a draft becomes a build only with the owner's OK, which is a terminal answer or --yes; the guard denies the agent"
   ],
   "defect": "N-15",
-  "intent": "INTENDED behavior (defect N-15, drafts; docs/decisions.md D7). The token printed by the refusal binds the owner's OK to the content he read: `jitso build save <id> --confirm <token>` with that token writes `jitso/builds/<id>.yaml`, which is the draft bytes with the `status` scalar `draft` replaced by `approved` and nothing else changed, removes `.jitso/drafts/<id>.yaml`, shows the file with `+ ` prefixes and prints `saved <id>: jitso/builds/<id>.yaml (status approved); the draft is removed`, exit 0. The saved build is a repo build: `build list` shows it and `build validate <id>` says ok.",
+  "intent": "INTENDED behavior (defect N-15, drafts; docs/decisions.md \"The v0.1.0 cut\"). Without a terminal, `jitso build save <id>` refuses and writes nothing; with `--yes` it writes `jitso/builds/<id>.yaml`, which is the draft bytes with the `status` scalar `draft` replaced by `approved` and nothing else changed, removes `.jitso/drafts/<id>.yaml`, shows the file with `+ ` prefixes and prints `saved <id>: jitso/builds/<id>.yaml (status approved); the draft is removed`, exit 0. The saved build is a repo build: `build list` shows it and `build validate <id>` says ok.",
   "project": {
     "files": {
       ".jitso/drafts/scout.yaml": "# Draft written by a drafts case.\nid: scout\nversion: 1\nstatus: draft\nrole: operator\ntype: scanner\nwork_kind: repo-scan\ndescription: Scan the repo for TODO comments and report them.\nharness: claude\nmodel: claude-haiku-5-5\neffort: low\nmode_default: direct\nagents_md: exclude\nroute_scope: [none]\nskills_first: []\ntools: [Read, Glob, Grep]\nmcp: []\nrequires: []\nbudget: { tokens: 150000, usd_list_cap: 0.30 }\nsuccess:\n  - { check: answer_delivered }\n  - { check: no_rule_breaks }\n"
@@ -18,13 +18,6 @@
         "save",
         "scout"
       ],
-      "capture": {
-        "TOKEN": {
-          "from": "stderr",
-          "regex": "--confirm ([0-9a-f]{12})",
-          "group": 1
-        }
-      },
       "expect": {
         "exit": 2
       }
@@ -34,8 +27,7 @@
         "build",
         "save",
         "scout",
-        "--confirm",
-        "{{TOKEN}}"
+        "--yes"
       ],
       "expect": {
         "exit": 0,

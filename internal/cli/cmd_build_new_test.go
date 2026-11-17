@@ -8,7 +8,6 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/upex-galaxy/jitso/internal/drafts"
 	"github.com/upex-galaxy/jitso/internal/fail"
 	"github.com/upex-galaxy/jitso/internal/templates"
 )
@@ -124,7 +123,7 @@ func TestBuildNewNeverOverwrites(t *testing.T) {
 func TestBuildNewRefusesASavedID(t *testing.T) {
 	root := gitProject(t)
 	draftIn(t, root)
-	code, _, _ := runWith(t, root, "", false, "build", "save", "scout", "--confirm", drafts.Token([]byte(approvedText)))
+	code, _, _ := runWith(t, root, "", false, "build", "save", "scout", "--yes")
 	if code != 0 {
 		t.Fatalf("save: exit %d", code)
 	}

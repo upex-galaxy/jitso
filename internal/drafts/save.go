@@ -1,8 +1,6 @@
 package drafts
 
 import (
-	"crypto/sha256"
-	"encoding/hex"
 	"errors"
 	"fmt"
 	"io/fs"
@@ -19,9 +17,6 @@ const (
 	statusDraft    = "draft"
 	statusApproved = "approved"
 )
-
-// TokenLength is the number of hex characters of a confirmation token.
-const TokenLength = 12
 
 // ErrStatusForm is returned by SaveContent for a draft whose status cannot be
 // changed without touching any other byte: it is not written as the plain word
@@ -46,14 +41,6 @@ func SaveContent(draft []byte) ([]byte, error) {
 	out = append(out, draft[:start]...)
 	out = append(out, statusApproved...)
 	return append(out, draft[end:]...), nil
-}
-
-// Token is the confirmation token of content: the first TokenLength hex
-// characters of its SHA-256. It binds an approval to the exact bytes that were
-// read; it is not a secret.
-func Token(content []byte) string {
-	sum := sha256.Sum256(content)
-	return hex.EncodeToString(sum[:])[:TokenLength]
 }
 
 // Show is how content is shown to the person who approves it: every line

@@ -1,8 +1,6 @@
 package drafts
 
 import (
-	"crypto/sha256"
-	"encoding/hex"
 	"errors"
 	"os"
 	"path/filepath"
@@ -54,22 +52,6 @@ func TestSaveContentChangesOnlyTheStatus(t *testing.T) {
 	}
 	if len(got)-len(src) != len("approved")-len("draft") {
 		t.Errorf("length changed by %d", len(got)-len(src))
-	}
-}
-
-func TestToken(t *testing.T) {
-	sum := sha256.Sum256([]byte("abc"))
-	if got, want := Token([]byte("abc")), hex.EncodeToString(sum[:])[:12]; got != want || len(got) != TokenLength {
-		t.Errorf("Token = %q, want %q", got, want)
-	}
-	if got := Token([]byte("abc")); got != "ba7816bf8f01" {
-		t.Errorf("Token of abc = %q (the known SHA-256 prefix is ba7816bf8f01)", got)
-	}
-	if Token([]byte("abc")) == Token([]byte("abd")) {
-		t.Error("two contents share a token")
-	}
-	if got := Token(nil); got != "e3b0c44298fc" {
-		t.Errorf("Token of nothing = %q", got)
 	}
 }
 
