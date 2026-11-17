@@ -19,7 +19,7 @@ type File struct {
 	// Name is the file name, for example haiku-explorer.yaml.
 	Name string
 	// Display is the file as people see it: jitso/builds/<name> for the
-	// project, ~/.jitso/builds/<name> for the user folder.
+	// project, .jitso/drafts/<name> for a draft.
 	Display string
 	// Path is the real absolute path of the file.
 	Path string
@@ -81,9 +81,9 @@ func (r *Result) Winner(id string) *File {
 	return nil
 }
 
-// Saved is the file that is the build of id among the saved layers (the
-// project's own, the parents' and the user's), valid or not: the first file
-// with that id in source order that is not a draft. Nil when no saved file has
+// Saved is the file that is the build of id among the saved builds (the
+// project's own jitso/builds), valid or not: the first file with that id in
+// source order that is not a draft. Nil when no saved file has
 // it. A draft may not take an id that Saved returns.
 func (r *Result) Saved(id string) *File {
 	if id == "" {
@@ -115,10 +115,9 @@ func (r *Result) Drafts() []*File {
 // fails because of an invalid build file; Load and `build validate` decide
 // what an invalid file means for each layer.
 //
-// primary and home are the real path of the primary checkout and $HOME, from
-// which the layers are computed. An empty primary means the project layer
-// only (tests); an empty home means no user layer and no trusted parent.
-func Scan(fsys fs.FS, primary, home string) (*Result, error) {
+// primary is the real path of the primary checkout, from which the layers are
+// computed. An empty primary means the project layer only (tests).
+func Scan(fsys fs.FS, primary string) (*Result, error) {
 	cfg, err := LoadConfig(fsys)
 	if err != nil {
 		return nil, err
@@ -127,15 +126,11 @@ func Scan(fsys fs.FS, primary, home string) (*Result, error) {
 	if err != nil {
 		return nil, err
 	}
-	user, err := LoadUserConfig(home)
-	if err != nil {
-		return nil, err
-	}
 	var sources []Source
 	if primary == "" {
 		sources = []Source{{Layer: LayerRepo, Dir: filepath.FromSlash(BuildsDir), Display: BuildsDir}}
 	} else {
-		sources = Sources(primary, home, user)
+		sources = Sources(primary)
 	}
 	sources[0].fsys = subFS(fsys, BuildsDir)
 	return ScanSources(cfg, ids, sources)

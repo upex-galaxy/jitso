@@ -19,7 +19,7 @@ Two prefixes tell you whose problem it is. `JITSO REJECTED: <reason>` (exit 2) m
 | `unknown build "<id>"` | no build has that id for this project. Check `jitso build list`, `jitso build list --drafts` and `jitso build validate` |
 | `build "<id>" has tier subagent: it is not launched alone, a worker lists it in its subagents` | launch the worker that lists it |
 | `build "<worker>" lists subagent "<s>", which is <status>, not approved` | a subagent must be approved. Ask the owner, or pick another build |
-| `build "<id>" from <layer> <path> is invalid here: <problems>` | a parent or user build does not fit this project's allowlists. `jitso build validate <id>` |
+| `build "<id>" from <layer> <path> is invalid here: <problems>` | a draft does not fit this project's allowlists. `jitso build validate <id>` |
 | `brief failed: sections (...)`, `length (...)`, `language (...)`, `paths (...)` | see `briefs.md`; the text names what is wrong |
 | `brief file does not exist`, `brief path is not a regular file`, `brief path is empty or contains a NUL byte` | the `--brief` path is wrong |
 | `brief file is outside the allowed folders` | move the brief to `.jitso/briefs/` of the project |
@@ -43,7 +43,6 @@ Two prefixes tell you whose problem it is. `JITSO REJECTED: <reason>` (exit 2) m
 | `jitso: the trust dialog of terminal <handle> did not clear in 10 s; the launch is registered` | a warning with exit 0. Look at the terminal and tell the human |
 | `terminal <handle> is still open after close`, or an Orca error from `jitso close` | the terminal was not closed. Nothing was written: the launch is still running and has no `footer.txt`. Run `jitso close` again, or tell the human |
 | an Orca error, `terminal <handle> did not reach ... ; it was closed` | Orca did not answer or the harness never became ready. The launch folder was removed. Try once more, then report the message |
-| `jitso: ~/.jitso/config.yaml is invalid: <problem>` | the owner's trust file is broken. Tell the owner |
 
 ## What the hook denies
 
@@ -67,9 +66,8 @@ A read-only check that prints one line per check, `ok`, `warn` or `fail`, then a
 | `binary`, `path` | the running jitso is not the one on PATH, or is not on PATH | hooks and the launch card use the bare word `jitso`: tell the owner |
 | `git`, `shell` | no git, or no `/bin/sh` (launch does not run on Windows) | environment, not yours to fix |
 | `orca`, `claude` | the Orca CLI or `claude` is not found | a launch cannot start. Tell the human |
-| `user-config` | `~/.jitso/config.yaml` is invalid | tell the owner |
 | `project` | not inside a git checkout (the later checks are skipped) | `cd` into the project |
-| `catalog` | `jitso/jitso.yaml` missing, a repo build invalid, or outer-layer files skipped | `jitso build validate` lists every problem |
+| `catalog` | `jitso/jitso.yaml` missing, a repo build invalid, or draft files skipped | `jitso build validate` lists every problem |
 | `mcp` | a launchable build lists servers and `.mcp.json` is missing or invalid | tell the owner |
 | `state`, `drafts`, `registry`, `backups` | `.jitso/` is not git-ignored, drafts are old or not ignored, or the log has invalid lines | ignored lines are skipped. Tell the owner about the rest |
 | `hooks` | the guard is not registered, only on some events, the file is untracked, hooks are disabled, or the registered command does not resolve | the guard is off, so nothing denies a bad launch. Ask the owner to run `jitso setup hook` |

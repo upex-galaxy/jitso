@@ -25,7 +25,7 @@ import (
 // first writes the jitso/jitso.yaml skeleton with empty allowlists. A project
 // that has builds and no allowlists is broken, not new: that is the missing
 // allowlists error, exit 3, like every catalog command. It never overwrites,
-// and refuses the id of a saved build of any layer and the id of an existing
+// and refuses the id of a saved build and the id of an existing
 // draft, before anything is written.
 //
 //	build new <id> [--tier worker|conductor|subagent]
@@ -85,9 +85,9 @@ func runBuildNew(ctx *Context, args []string) error {
 	fresh := isFreshProject(root.Primary)
 	var res *catalog.Result
 	if fresh {
-		// No allowlists to validate against yet: the layers are scanned only
+		// No allowlists to validate against yet: the folders are scanned only
 		// for the ids they hold.
-		res, err = scanIDs(root.Primary, ctx.Home())
+		res, err = scanIDs(root.Primary)
 	} else {
 		// The whole-catalog rule, and the missing allowlists error.
 		if _, err = ctx.Catalog(); err == nil {
@@ -140,14 +140,10 @@ func isFreshProject(primary string) bool {
 	return true
 }
 
-// scanIDs scans the layers of the project with no allowlists, which is enough
-// to know which ids its saved builds, the parents' and the user's, hold.
-func scanIDs(primary, home string) (*catalog.Result, error) {
-	user, err := catalog.LoadUserConfig(home)
-	if err != nil {
-		return nil, err
-	}
-	return catalog.ScanSources(catalog.Config{}, nil, catalog.Sources(primary, home, user))
+// scanIDs scans the build folders of the project with no allowlists, which is enough
+// to know which ids its saved builds hold.
+func scanIDs(primary string) (*catalog.Result, error) {
+	return catalog.ScanSources(catalog.Config{}, nil, catalog.Sources(primary))
 }
 
 // writeSkeleton writes jitso/jitso.yaml from the template, never over a file

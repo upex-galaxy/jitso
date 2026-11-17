@@ -35,10 +35,8 @@ func TestValidateBuildInStatusByLayer(t *testing.T) {
 		{"a number in the draft layer", "status: 1", LayerDraft, []string{draftProblem}},
 		{"Draft in the draft layer", "status: Draft", LayerDraft, []string{draftProblem}},
 		{"draft in the repo layer", "status: draft", LayerRepo, []string{savedProblem}},
-		{"draft in a parent layer", "status: draft", LayerParent, []string{savedProblem}},
-		{"draft in the user layer", "status: draft", LayerUser, []string{savedProblem}},
 		{"approved in the repo layer", "status: approved", LayerRepo, nil},
-		{"candidate in the user layer", "status: candidate", LayerUser, nil},
+		{"candidate in the repo layer", "status: candidate", LayerRepo, nil},
 		{"missing in the repo layer", "status:-", LayerRepo, []string{savedProblem}},
 	}
 	for _, tt := range tests {
@@ -55,12 +53,9 @@ func TestValidateBuildInStatusByLayer(t *testing.T) {
 	}
 }
 
-func draftScan(t *testing.T, repo, drafts map[string]string, outer ...Source) *Result {
+func draftScan(t *testing.T, repo, drafts map[string]string) *Result {
 	t.Helper()
-	sources := []Source{folder(LayerRepo, "jitso/builds", repo)}
-	sources = append(sources, outer...)
-	sources = append(sources, folder(LayerDraft, ".jitso/drafts", drafts))
-	return scan(t, sources...)
+	return scan(t, folder(LayerRepo, "jitso/builds", repo), folder(LayerDraft, ".jitso/drafts", drafts))
 }
 
 // The draft layer is last, a draft launches as a build of its layer, and a
@@ -68,9 +63,8 @@ func draftScan(t *testing.T, repo, drafts map[string]string, outer ...Source) *R
 func TestDraftLayerIsLastAndNeverLaunchable(t *testing.T) {
 	res := draftScan(t,
 		map[string]string{"saved.yaml": layerBuild("saved", "A saved build.")},
-		map[string]string{"scratch.yaml": draftBuild("scratch", "A draft build.")},
-		folder(LayerUser, "~/.jitso/builds", map[string]string{"mine.yaml": layerBuild("mine", "A user build.")}))
-	if got, want := ids(res.Files), []string{"repo:saved.yaml", "user:mine.yaml", "draft:scratch.yaml"}; !reflect.DeepEqual(got, want) {
+		map[string]string{"scratch.yaml": draftBuild("scratch", "A draft build.")})
+	if got, want := ids(res.Files), []string{"repo:saved.yaml", "draft:scratch.yaml"}; !reflect.DeepEqual(got, want) {
 		t.Fatalf("files %q, want %q", got, want)
 	}
 	cat, err := res.Catalog()
@@ -91,45 +85,29 @@ func TestDraftLayerIsLastAndNeverLaunchable(t *testing.T) {
 	}
 }
 
-// A draft never shadows a saved build, whichever layer saves it and whether or
-// not the saved build is valid here: the saved file is the build of the id.
+// A draft never shadows a saved build: the saved file is the build of the id.
 func TestDraftNeverShadowsASavedBuild(t *testing.T) {
-	tests := []struct {
-		name  string
-		saved Source
-	}{
-		{"repo", folder(LayerRepo, "jitso/builds", map[string]string{"dup.yaml": layerBuild("dup", "SAVED")})},
-		{"user", folder(LayerUser, "~/.jitso/builds", map[string]string{"dup.yaml": layerBuild("dup", "SAVED")})},
-		{"an invalid saved build", folder(LayerUser, "~/.jitso/builds", map[string]string{"dup.yaml": strings.Replace(layerBuild("dup", "SAVED"), "claude-haiku-5-5", "gpt", 1)})},
+	sources := []Source{
+		folder(LayerRepo, "jitso/builds", map[string]string{"dup.yaml": layerBuild("dup", "SAVED")}),
+		folder(LayerDraft, ".jitso/drafts", map[string]string{"dup.yaml": draftBuild("dup", "DRAFT")}),
 	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			sources := []Source{folder(LayerRepo, "jitso/builds", nil)}
-			if tt.saved.Layer != LayerRepo {
-				sources = append(sources, tt.saved)
-			} else {
-				sources[0] = tt.saved
-			}
-			sources = append(sources, folder(LayerDraft, ".jitso/drafts", map[string]string{"dup.yaml": draftBuild("dup", "DRAFT")}))
-			res := scan(t, sources...)
-			draft := res.Files[len(res.Files)-1]
-			if draft.Layer != LayerDraft || draft.ShadowedBy == nil || draft.ShadowedBy.Layer == LayerDraft {
-				t.Fatalf("the draft is not shadowed by the saved build: %+v", draft)
-			}
-			if w := res.Winner("dup"); w == nil || w.Layer == LayerDraft {
-				t.Errorf("winner %+v", w)
-			}
-			if saved := res.Saved("dup"); saved == nil || saved.Layer == LayerDraft {
-				t.Errorf("Saved %+v", saved)
-			}
-			cat, err := res.Catalog()
-			if err != nil {
-				t.Fatal(err)
-			}
-			if b, ok := cat.Find("dup"); ok && b.Layer == LayerDraft {
-				t.Errorf("a draft is the build of a saved id: %+v", b)
-			}
-		})
+	res := scan(t, sources...)
+	draft := res.Files[len(res.Files)-1]
+	if draft.Layer != LayerDraft || draft.ShadowedBy == nil || draft.ShadowedBy.Layer == LayerDraft {
+		t.Fatalf("the draft is not shadowed by the saved build: %+v", draft)
+	}
+	if w := res.Winner("dup"); w == nil || w.Layer == LayerDraft {
+		t.Errorf("winner %+v", w)
+	}
+	if saved := res.Saved("dup"); saved == nil || saved.Layer == LayerDraft {
+		t.Errorf("Saved %+v", saved)
+	}
+	cat, err := res.Catalog()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if b, ok := cat.Find("dup"); ok && b.Layer == LayerDraft {
+		t.Errorf("a draft is the build of a saved id: %+v", b)
 	}
 }
 

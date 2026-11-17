@@ -1,20 +1,16 @@
 {
   "id": "build/draft/id-of-a-saved-build-is-refused",
-  "title": "a draft cannot use the id of a saved build of any layer, so an agent cannot shadow an approved build with its own draft",
+  "title": "a draft cannot use the id of a saved build, so an agent cannot shadow an approved build with its own draft",
   "source": [
     "intended: docs/decisions.md D7 and the drafts rows of the other decisions (a just-in-time build is a draft kept in .jitso/drafts/ and validated by code)"
   ],
   "defect": "N-15",
-  "intent": "INTENDED behavior (defect N-15, drafts; docs/decisions.md D7). A draft needs an id that no saved build has: `JITSO REJECTED: build \"<id>\" already exists (<layer> <display path>): a draft needs an id no build has`, exit 2, nothing written. The id of a build of the project and the id of a build of the user folder are both refused. A draft never shadows a saved build.",
+  "intent": "INTENDED behavior (defect N-15, drafts; docs/decisions.md D7). A draft needs an id that no saved build has: `JITSO REJECTED: build \"<id>\" already exists (<layer> <display path>): a draft needs an id no build has`, exit 2, nothing written. The ids of two different saved builds of the project are both refused. A draft never shadows a saved build.",
   "project": {
     "files": {
       "proposals/dup-repo.yaml": "# Draft written by a drafts case.\nid: haiku-explorer\nversion: 1\nstatus: draft\nrole: operator\ntype: scanner\nwork_kind: repo-scan\ndescription: Scan the repo for TODO comments and report them.\nharness: claude\nmodel: claude-haiku-5-5\neffort: low\nmode_default: direct\nagents_md: exclude\nroute_scope: [none]\nskills_first: []\ntools: [Read, Glob, Grep]\nmcp: []\nrequires: []\nbudget: { tokens: 150000, usd_list_cap: 0.30 }\nsuccess:\n  - { check: answer_delivered }\n  - { check: no_rule_breaks }\n",
-      "proposals/dup-user.yaml": "# Draft written by a drafts case.\nid: shared-scan\nversion: 1\nstatus: draft\nrole: operator\ntype: scanner\nwork_kind: repo-scan\ndescription: Scan the repo for TODO comments and report them.\nharness: claude\nmodel: claude-haiku-5-5\neffort: low\nmode_default: direct\nagents_md: exclude\nroute_scope: [none]\nskills_first: []\ntools: [Read, Glob, Grep]\nmcp: []\nrequires: []\nbudget: { tokens: 150000, usd_list_cap: 0.30 }\nsuccess:\n  - { check: answer_delivered }\n  - { check: no_rule_breaks }\n"
-    }
-  },
-  "home": {
-    "files": {
-      ".jitso/builds/shared-scan.yaml": "# Build written by a layers case.\nid: shared-scan\nversion: 1\nstatus: approved\nrole: operator\ntype: scanner\nwork_kind: repo-scan\ndescription: Scan the repo for shared settings and report them.\nharness: claude\nmodel: claude-haiku-5-5\neffort: low\nmode_default: direct\nagents_md: exclude\nroute_scope: [none]\nskills_first: []\ntools: [Read, Glob, Grep]\nmcp: []\nrequires: []\nbudget: { tokens: 150000, usd_list_cap: 0.30 }\nsuccess:\n  - { check: answer_delivered }\n  - { check: no_rule_breaks }\n"
+      "proposals/dup-user.yaml": "# Draft written by a drafts case.\nid: shared-scan\nversion: 1\nstatus: draft\nrole: operator\ntype: scanner\nwork_kind: repo-scan\ndescription: Scan the repo for TODO comments and report them.\nharness: claude\nmodel: claude-haiku-5-5\neffort: low\nmode_default: direct\nagents_md: exclude\nroute_scope: [none]\nskills_first: []\ntools: [Read, Glob, Grep]\nmcp: []\nrequires: []\nbudget: { tokens: 150000, usd_list_cap: 0.30 }\nsuccess:\n  - { check: answer_delivered }\n  - { check: no_rule_breaks }\n",
+      "jitso/builds/shared-scan.yaml": "# Build written by a layers case.\nid: shared-scan\nversion: 1\nstatus: approved\nrole: operator\ntype: scanner\nwork_kind: repo-scan\ndescription: Scan the repo for shared settings and report them.\nharness: claude\nmodel: claude-haiku-5-5\neffort: low\nmode_default: direct\nagents_md: exclude\nroute_scope: [none]\nskills_first: []\ntools: [Read, Glob, Grep]\nmcp: []\nrequires: []\nbudget: { tokens: 150000, usd_list_cap: 0.30 }\nsuccess:\n  - { check: answer_delivered }\n  - { check: no_rule_breaks }\n"
     }
   },
   "steps": [
@@ -53,7 +49,7 @@
         ],
         "stderr": [
           {
-            "equals": "JITSO REJECTED: build \"shared-scan\" already exists (user ~/.jitso/builds/shared-scan.yaml): a draft needs an id no build has\n"
+            "equals": "JITSO REJECTED: build \"shared-scan\" already exists (repo jitso/builds/shared-scan.yaml): a draft needs an id no build has\n"
           }
         ],
         "files": [

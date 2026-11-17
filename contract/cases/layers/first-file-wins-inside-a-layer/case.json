@@ -2,10 +2,10 @@
   "id": "layers/first-file-wins-inside-a-layer",
   "title": "two files of one layer with the same id are one build: the first file by name wins and the second is not listed",
   "source": [
-    "intended: builds come from layers (repo, trusted parent folders, user folder), nearest wins (docs/decisions.md)"
+    "intended: builds come from the repo's jitso/builds folder and from drafts (docs/decisions.md, The v0.1.0 cut)"
   ],
   "defect": "N-12",
-  "intent": "INTENDED behavior (defect N-12, build layers). Shadowing is by id, also inside one layer: when two files of the project's jitso/builds/ carry the same id, the first by file name is the build of that id and the second is never listed or launched.",
+  "intent": "INTENDED behavior (defect N-12, build layers, narrowed by the v0.1.0 cut). Shadowing is by id, also inside one layer: when two files of the project's jitso/builds/ carry the same id, the first by file name is the build of that id and the second is never listed or launched.",
   "project": {
     "files": {
       "jitso/builds/a-dup.yaml": {

@@ -45,24 +45,13 @@ func DraftLine(f *File) string {
 	return line
 }
 
-// ListLine is one build as `build list` shows it: the SummaryLine, plus
-// ` (from <layer> <display path>)` for a build of a parent or user folder. A
-// build of the project itself has no suffix.
-func ListLine(b *Build) string {
-	line := SummaryLine(b)
-	if b.LayerWord() != LayerRepo {
-		line += " (from " + string(b.Layer) + " " + b.Display + ")"
-	}
-	return line
-}
-
-// List is one ListLine per launchable build, joined with newlines, in catalog
+// List is one SummaryLine per launchable build, joined with newlines, in catalog
 // order. It is "" for a catalog with no launchable build.
 func (c *Catalog) List() string {
 	launchable := c.Launchable()
 	lines := make([]string, len(launchable))
 	for i := range launchable {
-		lines[i] = ListLine(&launchable[i])
+		lines[i] = SummaryLine(&launchable[i])
 	}
 	return strings.Join(lines, "\n")
 }

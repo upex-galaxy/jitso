@@ -1,4 +1,4 @@
-# Builds, layers and drafts
+# Builds and drafts
 
 A build is one YAML file: the approved profile a session launches with. JITSO ships no builds of its own. Each project writes its builds, and each build is validated against that project's allowlists in `jitso/jitso.yaml` (the models, efforts, MCP servers, skills and tools a build may name). In the jitso repository the field-by-field rules are in `docs/build-schema.md`. In a consumer project, `jitso build validate` is the schema check, and it prints each problem by name.
 
@@ -11,7 +11,7 @@ A build is one YAML file: the approved profile a session launches with. JITSO sh
 - sonnet-tester: claude-sonnet-5-5 medium. Manual QA of one user story end to end with sprint-testing. requires: ticket_key
 ```
 
-It lists only approved builds of the worker and conductor tiers. Subagent builds, candidates, retired builds and drafts are not shown. A build from a trusted parent folder or from the user folder ends with `(from <layer> <path>)`.
+It lists only approved builds of the worker and conductor tiers. Subagent builds, candidates, retired builds and drafts are not shown.
 
 `jitso build validate` checks every build file and prints one line each, then a summary. With an id it checks the winner of that id and the files it shadows. Exit 0 when all are fine, 2 when one is invalid or the id is unknown.
 
@@ -35,18 +35,16 @@ checked 1 builds: 0 ok, 1 invalid
 
 `jitso launch --build <a subagent>` is `JITSO REJECTED: build "plan" has tier subagent: it is not launched alone, a worker lists it in its subagents`. A worker may launch only when every subagent it lists is approved.
 
-## Layers
+## Where builds live
 
-The same id can exist in several places. The nearest wins, and a farther file with the same id is never used:
+Builds come from two places only:
 
-| Layer | Where | Notes |
+| Place | Where | Notes |
 |---|---|---|
 | `repo` | `jitso/builds/` in the primary checkout | the project's own; one invalid file here fails every catalog command with exit 3 |
-| `parent` | `jitso/builds/` of a trusted parent folder | trust comes only from the owner's `~/.jitso/config.yaml` |
-| `user` | `~/.jitso/builds/` | the owner's own builds |
 | `draft` | `.jitso/drafts/` in the primary checkout | git-ignored; last in the order, and a draft never shadows a saved build |
 
-An invalid parent, user or draft file is skipped: `build list` warns on stderr, and `jitso launch --build <that id>` is rejected with the problems. Every build, from any layer, is validated against the project that launches it.
+Nothing outside the project is read: a folder of builds under the user's home or in a parent folder is not a source of builds. Two files with the same id are one build: the first one by file name wins, and the other is never used. An invalid draft file is skipped: `build list` warns on stderr, and `jitso launch --build <that id>` is rejected with the problems. Every build is validated against the project that launches it.
 
 Statuses: `draft` (only in `.jitso/drafts/`, launches like any build), `candidate` (not approved, does not launch), `approved` (launches), `retired` (history, does not launch).
 

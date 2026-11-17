@@ -26,25 +26,26 @@ const (
 	buildsExtension = ".yaml"
 )
 
-// Catalog is a loaded catalog: the builds of every layer that are valid for
-// the project that loaded it.
+// Catalog is a loaded catalog: the builds of the project and its drafts that
+// are valid for the project that loaded it.
 type Catalog struct {
 	Config Config
 	// Builds are the build of every id that is valid here: for each id the file
-	// of the nearest layer. They come in layer order (the project, each trusted
-	// parent nearest first, the user folder) and by file name inside a layer.
+	// of the nearest layer. They come in layer order (the project, then its
+	// drafts) and by file name inside a layer.
 	// Every tier and status is here.
 	Builds []Build
 	// RouteIDs are the valid route-scope ids, in file name order.
 	RouteIDs []string
-	// Skipped are the parent and user files that are invalid for this project
-	// and so are no build here. A file is listed when it is the build of its id
-	// (the nearest file with that id) or has no id; a farther file that a
-	// nearer one shadows is not used and not listed.
+	// Skipped are the files that are invalid for this project and so are no
+	// build here: the draft files for Catalog, any file for Tolerant. A file is
+	// listed when it is the build of its id (the nearest file with that id) or
+	// has no id; a farther file that a nearer one shadows is not used and not
+	// listed.
 	Skipped []Skipped
 }
 
-// Skipped is an outer-layer file that is invalid for the launching project.
+// Skipped is a file that is invalid for the launching project and is left out.
 type Skipped struct {
 	// ID is the file's id, "" when it has none.
 	ID      string
@@ -97,7 +98,7 @@ func (c *Catalog) Launchable() []Build {
 }
 
 // SubagentsOf resolves the subagents b lists, in its order, with the same
-// layered lookup as every build. Load already checked that each name is a
+// lookup as every build. Load already checked that each name is a
 // subagent-tier build.
 func (c *Catalog) SubagentsOf(b *Build) []*Build {
 	out := make([]*Build, 0, len(b.Subagents))
@@ -173,24 +174,22 @@ func (e *FileError) Error() string {
 }
 
 // Load reads the catalog of the project's own builds only (fsys is its
-// primary checkout), with no parent and no user layer.
+// primary checkout), with no draft layer.
 func Load(fsys fs.FS) (*Catalog, error) {
-	return LoadLayers(fsys, "", "")
+	return LoadLayers(fsys, "")
 }
 
-// LoadLayers reads the layered catalog of a project. fsys is its primary
-// checkout, primary the real path of that checkout and home $HOME; the layers
-// are computed from them (see Sources and LoadUserConfig). An empty primary
-// loads the project layer only.
+// LoadLayers reads the catalog of a project. fsys is its primary checkout and
+// primary the real path of that checkout; the layers are computed from it (see
+// Sources). An empty primary loads the project layer only.
 //
 // The project's own files keep the whole-catalog rule: it fails on the first
 // invalid build file in file name order (the oracle's rule), then on the first
 // build whose subagents do not all name a subagent-tier build, so one invalid
-// file fails every command that loads it. A parent or user file that is
-// invalid for this project is skipped instead (Catalog.Skipped): a build that
-// is valid in one project and not in another must not break the other.
-func LoadLayers(fsys fs.FS, primary, home string) (*Catalog, error) {
-	res, err := Scan(fsys, primary, home)
+// file fails every command that loads it. An invalid draft file is skipped
+// instead (Catalog.Skipped): a draft in progress must not break every command.
+func LoadLayers(fsys fs.FS, primary string) (*Catalog, error) {
+	res, err := Scan(fsys, primary)
 	if err != nil {
 		return nil, err
 	}

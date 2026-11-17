@@ -23,8 +23,8 @@ type Input struct {
 	Mode         string
 	Build        string
 	BuildVersion string
-	// Layer is where the build file lives: repo, parent or user. The header
-	// names it for a parent or user build; "" and repo print nothing.
+	// Layer is where the build file lives: repo or draft. The header names it
+	// for a draft; "" and repo print nothing.
 	Layer       string
 	Model       string
 	Effort      string

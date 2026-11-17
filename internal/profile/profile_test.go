@@ -172,11 +172,11 @@ func TestFieldsKeys(t *testing.T) {
 func TestResolveInvalidHere(t *testing.T) {
 	cat := load(t)
 	cat.Skipped = []catalog.Skipped{
-		{ID: "future", Layer: catalog.LayerUser, Display: "~/.jitso/builds/future.yaml", Problems: []string{`model "x" is not in the allowlist`, `effort "y" is not in the allowlist`}},
-		{ID: "", Layer: catalog.LayerParent, Display: "/p/jitso/builds/noid.yaml", Problems: []string{"id must be kebab-case"}},
+		{ID: "future", Layer: catalog.LayerDraft, Display: ".jitso/drafts/future.yaml", Problems: []string{`model "x" is not in the allowlist`, `effort "y" is not in the allowlist`}},
+		{ID: "", Layer: catalog.LayerDraft, Display: ".jitso/drafts/noid.yaml", Problems: []string{"id must be kebab-case"}},
 	}
 	_, err := Resolve(Request{Build: "future"}, cat)
-	want := `JITSO REJECTED: build "future" from user ~/.jitso/builds/future.yaml is invalid here: model "x" is not in the allowlist; effort "y" is not in the allowlist`
+	want := `JITSO REJECTED: build "future" from draft .jitso/drafts/future.yaml is invalid here: model "x" is not in the allowlist; effort "y" is not in the allowlist`
 	if err == nil || err.Error() != want {
 		t.Errorf("got %v\nwant %s", err, want)
 	}

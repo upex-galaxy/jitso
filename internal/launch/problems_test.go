@@ -61,7 +61,7 @@ func TestProblems(t *testing.T) {
 			t.Fatal(err)
 		}
 	}
-	res, err := catalog.Scan(os.DirFS(root), "", "")
+	res, err := catalog.Scan(os.DirFS(root), "")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -109,7 +109,7 @@ func TestAdapterOfAgreesWithAdapters(t *testing.T) {
 	if err := os.CopyFS(root, os.DirFS("../../contract/fixtures/default")); err != nil {
 		t.Fatal(err)
 	}
-	res, err := catalog.Scan(os.DirFS(root), "", "")
+	res, err := catalog.Scan(os.DirFS(root), "")
 	if err != nil {
 		t.Fatal(err)
 	}

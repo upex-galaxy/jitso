@@ -10,15 +10,16 @@ import (
 )
 
 // scan builds the scan result `build validate` reports from, by hand: a
-// repo file, an invalid repo file, a user copy of the first one (shadowed),
-// a user file with no id and a second user copy of the invalid one.
+// repo file, an invalid repo file, a second repo file with the id of the first
+// one (shadowed), a repo file with no id and a second repo file with the id of
+// the invalid one.
 func scan() *catalog.Result {
 	a := &catalog.File{Layer: catalog.LayerRepo, Name: "a.yaml", Display: "jitso/builds/a.yaml", ID: "a"}
 	broken := &catalog.File{Layer: catalog.LayerRepo, Name: "broken.yaml", Display: "jitso/builds/broken.yaml", ID: "broken",
 		Problems: []string{`model "x" is not in the allowlist`, `effort "y" is not in the allowlist`}}
-	userA := &catalog.File{Layer: catalog.LayerUser, Name: "a.yaml", Display: "~/.jitso/builds/a.yaml", ID: "a", ShadowedBy: a}
-	noID := &catalog.File{Layer: catalog.LayerUser, Name: "noid.yaml", Display: "~/.jitso/builds/noid.yaml", Problems: []string{"id must be kebab-case"}}
-	userBroken := &catalog.File{Layer: catalog.LayerUser, Name: "broken.yaml", Display: "~/.jitso/builds/broken.yaml", ID: "broken", ShadowedBy: broken,
+	userA := &catalog.File{Layer: catalog.LayerRepo, Name: "z-a.yaml", Display: "jitso/builds/z-a.yaml", ID: "a", ShadowedBy: a}
+	noID := &catalog.File{Layer: catalog.LayerRepo, Name: "z-noid.yaml", Display: "jitso/builds/z-noid.yaml", Problems: []string{"id must be kebab-case"}}
+	userBroken := &catalog.File{Layer: catalog.LayerRepo, Name: "z-broken.yaml", Display: "jitso/builds/z-broken.yaml", ID: "broken", ShadowedBy: broken,
 		Problems: []string{"status must be one of candidate, approved, retired"}}
 	return &catalog.Result{Files: []*catalog.File{a, broken, userA, noID, userBroken}}
 }
@@ -27,7 +28,7 @@ func noLaunchProblems(*catalog.File) []string { return nil }
 
 func TestValidateReport(t *testing.T) {
 	launchOnA := func(f *catalog.File) []string {
-		if f.Layer == catalog.LayerRepo && f.ID == "a" {
+		if f.Name == "a.yaml" {
 			return []string{"harness \"other\" has no adapter"}
 		}
 		return nil
@@ -44,10 +45,10 @@ func TestValidateReport(t *testing.T) {
 			"invalid broken repo jitso/builds/broken.yaml",
 			`  model "x" is not in the allowlist`,
 			`  effort "y" is not in the allowlist`,
-			"ok a user ~/.jitso/builds/a.yaml (shadowed by repo jitso/builds/a.yaml)",
-			"invalid - user ~/.jitso/builds/noid.yaml",
+			"ok a repo jitso/builds/z-a.yaml (shadowed by repo jitso/builds/a.yaml)",
+			"invalid - repo jitso/builds/z-noid.yaml",
 			"  id must be kebab-case",
-			"invalid broken user ~/.jitso/builds/broken.yaml (shadowed by repo jitso/builds/broken.yaml)",
+			"invalid broken repo jitso/builds/z-broken.yaml (shadowed by repo jitso/builds/broken.yaml)",
 			"  status must be one of candidate, approved, retired",
 			"checked 5 builds: 2 ok, 3 invalid",
 		}, 3},
@@ -57,30 +58,30 @@ func TestValidateReport(t *testing.T) {
 			"invalid broken repo jitso/builds/broken.yaml",
 			`  model "x" is not in the allowlist`,
 			`  effort "y" is not in the allowlist`,
-			"ok a user ~/.jitso/builds/a.yaml (shadowed by repo jitso/builds/a.yaml)",
-			"invalid - user ~/.jitso/builds/noid.yaml",
+			"ok a repo jitso/builds/z-a.yaml (shadowed by repo jitso/builds/a.yaml)",
+			"invalid - repo jitso/builds/z-noid.yaml",
 			"  id must be kebab-case",
-			"invalid broken user ~/.jitso/builds/broken.yaml (shadowed by repo jitso/builds/broken.yaml)",
+			"invalid broken repo jitso/builds/z-broken.yaml (shadowed by repo jitso/builds/broken.yaml)",
 			"  status must be one of candidate, approved, retired",
 			"checked 5 builds: 1 ok, 4 invalid",
 		}, 4},
 		{"one id: the winner and the files it shadows, the winner counted", "a", noLaunchProblems, []string{
 			"ok a repo jitso/builds/a.yaml",
-			"ok a user ~/.jitso/builds/a.yaml (shadowed by repo jitso/builds/a.yaml)",
+			"ok a repo jitso/builds/z-a.yaml (shadowed by repo jitso/builds/a.yaml)",
 			"checked 1 builds: 1 ok, 0 invalid",
 		}, 0},
 		{"one id: an invalid winner, and an invalid shadowed file is not counted", "broken", noLaunchProblems, []string{
 			"invalid broken repo jitso/builds/broken.yaml",
 			`  model "x" is not in the allowlist`,
 			`  effort "y" is not in the allowlist`,
-			"invalid broken user ~/.jitso/builds/broken.yaml (shadowed by repo jitso/builds/broken.yaml)",
+			"invalid broken repo jitso/builds/z-broken.yaml (shadowed by repo jitso/builds/broken.yaml)",
 			"  status must be one of candidate, approved, retired",
 			"checked 1 builds: 0 ok, 1 invalid",
 		}, 1},
 		{"one id: a launch problem of the winner", "a", launchOnA, []string{
 			"invalid a repo jitso/builds/a.yaml",
 			"  harness \"other\" has no adapter",
-			"ok a user ~/.jitso/builds/a.yaml (shadowed by repo jitso/builds/a.yaml)",
+			"ok a repo jitso/builds/z-a.yaml (shadowed by repo jitso/builds/a.yaml)",
 			"checked 1 builds: 0 ok, 1 invalid",
 		}, 1},
 	}

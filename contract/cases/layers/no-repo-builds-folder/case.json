@@ -1,24 +1,14 @@
 {
   "id": "layers/no-repo-builds-folder",
-  "title": "a project with no jitso/builds folder has an empty project layer, and the user layer still works",
+  "title": "a project with no jitso/builds folder has an empty catalog: build list lists nothing and exits 0",
   "source": [
-    "intended: builds come from layers (repo, trusted parent folders, user folder), nearest wins (docs/decisions.md)"
+    "intended: builds come from the repo's jitso/builds folder and from drafts (docs/decisions.md, The v0.1.0 cut)"
   ],
   "defect": "N-12",
-  "intent": "INTENDED behavior (defect N-12, build layers). A missing jitso/builds folder is an empty project layer, not an error: the user folder's builds are still listed and launchable.",
+  "intent": "INTENDED behavior (defect N-12, build layers, narrowed by the v0.1.0 cut). A missing jitso/builds folder is an empty layer, not an error: build list exits 0 and lists no build.",
   "project": {
     "files": {
-      ".jitso/briefs/brief.md": {
-        "from": "brief.md"
-      },
       "jitso/builds": null
-    }
-  },
-  "home": {
-    "files": {
-      ".jitso/builds/shared-scan.yaml": {
-        "from": "shared-scan.yaml"
-      }
     }
   },
   "steps": [
@@ -36,27 +26,10 @@
         ],
         "stdout": [
           {
-            "regex": "^- shared-scan: claude-haiku-5-5 low\\. [^\\n]+ \\(from user ~/\\.jitso/builds/shared-scan\\.yaml\\)\\n$"
-          }
-        ]
-      }
-    },
-    {
-      "run": [
-        "launch",
-        "--build",
-        "shared-scan",
-        "--brief",
-        "{{PROJECT}}/.jitso/briefs/brief.md",
-        "--mode",
-        "direct",
-        "--dry-run"
-      ],
-      "expect": {
-        "exit": 0,
-        "stdout": [
+            "regex": "^\\n?$"
+          },
           {
-            "contains": "| build shared-scan v1 (user)"
+            "not_contains": "- "
           }
         ]
       }

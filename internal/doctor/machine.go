@@ -1,13 +1,9 @@
 package doctor
 
 import (
-	"errors"
 	"fmt"
-	"io/fs"
 	"path/filepath"
-	"strings"
 
-	"github.com/upex-galaxy/jitso/internal/catalog"
 	"github.com/upex-galaxy/jitso/internal/orca"
 	"github.com/upex-galaxy/jitso/internal/project"
 )
@@ -109,87 +105,6 @@ func checkClaude(p Ports) Line {
 		return Line{OK, "claude", found + ", " + v}
 	}
 	return Line{OK, "claude", found + ", version unknown"}
-}
-
-// userConfigShown is the file as people see it.
-const userConfigShown = "~/.jitso/" + catalog.UserConfigFile
-
-// checkUserConfig loads ~/.jitso/config.yaml through the catalog, which owns
-// the format, and lists the trusted folders that do not exist (the catalog
-// skips those silently).
-func checkUserConfig(p Ports) Line {
-	if p.Home == "" {
-		return Line{Warn, "user-config", "HOME is not set, so there is no " + userConfigShown}
-	}
-	cfg, err := catalog.LoadUserConfig(p.Home)
-	if err != nil {
-		return Line{Fail, "user-config", message(err)}
-	}
-	data, err := p.ReadFile(catalog.UserConfigPath(p.Home))
-	if errors.Is(err, fs.ErrNotExist) {
-		return Line{OK, "user-config", "no " + userConfigShown}
-	}
-	if err != nil {
-		return Line{Fail, "user-config", userConfigShown + " cannot be read: " + message(err)}
-	}
-	detail := userConfigShown + ": " + plural(len(cfg.TrustedParents), "trusted parent")
-	if missing := missingTrusted(p, data); len(missing) > 0 {
-		return Line{Warn, "user-config", detail + "; not found, so skipped: " + strings.Join(missing, ", ")}
-	}
-	return Line{OK, "user-config", detail}
-}
-
-// missingTrusted lists the trusted_parents entries, as written, whose folder
-// does not exist. The catalog is the only package that decodes YAML, and it
-// drops such an entry without a word, so this reads the one shape the config
-// documents, a block list under `trusted_parents:`; a flow list
-// (`[a, b]`) is not listed here. It runs only on a file the catalog accepted.
-func missingTrusted(p Ports, data []byte) []string {
-	var missing []string
-	inList := false
-	for _, raw := range strings.Split(string(data), "\n") {
-		line := strings.TrimRight(raw, " \t\r")
-		trimmed := strings.TrimSpace(line)
-		if trimmed == "" || strings.HasPrefix(trimmed, "#") {
-			continue
-		}
-		indent := len(line) - len(strings.TrimLeft(line, " \t"))
-		item, isItem := strings.CutPrefix(trimmed, "- ")
-		if indent == 0 && !isItem {
-			inList = strings.HasPrefix(line, "trusted_parents:")
-			continue
-		}
-		if !inList || !isItem {
-			continue
-		}
-		entry := yamlScalar(item)
-		dir := entry
-		if rest, ok := strings.CutPrefix(entry, "~/"); ok {
-			dir = filepath.Join(p.Home, filepath.FromSlash(rest))
-		}
-		if entry == "" || !filepath.IsAbs(dir) {
-			continue
-		}
-		if _, err := p.Stat(dir); err != nil {
-			missing = append(missing, entry)
-		}
-	}
-	return missing
-}
-
-// yamlScalar is a list item's text without a trailing comment and quotes.
-func yamlScalar(s string) string {
-	s = strings.TrimSpace(s)
-	if len(s) > 0 && (s[0] == '"' || s[0] == '\'') {
-		if end := strings.IndexByte(s[1:], s[0]); end >= 0 {
-			return s[1 : 1+end]
-		}
-		return strings.Trim(s, `"'`)
-	}
-	if i := strings.Index(s, " #"); i >= 0 {
-		s = s[:i]
-	}
-	return strings.TrimSpace(s)
 }
 
 // checkProject resolves the project of the working folder. ok is false

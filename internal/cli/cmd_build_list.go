@@ -7,12 +7,9 @@ import (
 	"github.com/upex-galaxy/jitso/internal/fail"
 )
 
-// build list prints one line per launchable build of the project's layered
-// catalog (approved and not subagent tier), in layer order (the project, the
-// trusted parents nearest first, the user folder) and by file name inside a
-// layer. A build of a parent or user folder ends with ` (from <layer> <path>)`.
-// A parent, user or draft file that is invalid for this project is skipped with
-// one warning line on stderr. A catalog that fails to load is exit 3 with the
+// build list prints one line per launchable build of the project's catalog
+// (approved and not subagent tier), by file name. A draft file that is invalid
+// for this project is skipped with one warning line on stderr. A catalog that fails to load is exit 3 with the
 // file named, the same handled error launch gives (TS-ODDITIES C3: the oracle
 // crashes here). A draft is never launchable, so it is never listed here.
 //

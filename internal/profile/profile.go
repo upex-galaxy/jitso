@@ -39,8 +39,7 @@ type Profile struct {
 
 // Resolve validates req against cat, in the oracle's order: the build exists
 // (the nearest layer that has the id; invalid for this project is a rejection
-// that names the file and its problems, defect N-12),
-// is approved (a draft of the draft layer launches too, and only that layer:
+// that names the file and its problems, defect N-12), is approved (a draft of the draft layer launches too, and only that layer:
 // defect N-15), is not subagent tier (a subagent-tier build is never launched
 // alone, defect N-5), its model and effort are allowlisted, every MCP server
 // is known, the route scope is valid, every field is required by the build

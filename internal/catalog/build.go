@@ -8,11 +8,11 @@ import "github.com/upex-galaxy/jitso/internal/jsconv"
 type Build struct {
 	// File is the file name under its builds folder, for example haiku-explorer.yaml.
 	File string
-	// Layer is where the file lives: repo, parent or user. It is empty only for
-	// a Build made by hand (tests), which reads as repo.
+	// Layer is where the file lives: repo or draft. It is empty only for a
+	// Build made by hand (tests), which reads as repo.
 	Layer Layer
 	// Display is the file as people see it: jitso/builds/<file> for the
-	// project's own builds, ~/.jitso/builds/<file> for the user's.
+	// project's own builds, .jitso/drafts/<file> for a draft.
 	Display string
 	// Path is the real absolute path of the file.
 	Path string

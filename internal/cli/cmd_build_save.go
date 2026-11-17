@@ -141,8 +141,8 @@ func neverOverwrite(id string) error {
 
 // checkSavable re-checks the draft data of id as it would be written: it is a
 // valid draft of this project now (the allowlists may have changed), its id is
-// its file name, nothing is at jitso/builds/<id>.yaml, and no saved build of
-// any layer has the id.
+// its file name, nothing is at jitso/builds/<id>.yaml, and no saved build has
+// the id.
 func checkSavable(res *catalog.Result, id string, data []byte, primary string) error {
 	cand, f := res.Candidate(data)
 	problems := append([]string(nil), f.Problems...)

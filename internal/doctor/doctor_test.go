@@ -161,36 +161,6 @@ func TestCheckClaude(t *testing.T) {
 	want(t, checkClaude(Ports{LookPath: lookup(nil)}), Fail, "claude", "claude is not on PATH")
 }
 
-func TestCheckUserConfig(t *testing.T) {
-	home := t.TempDir()
-	write := func(text string) {
-		t.Helper()
-		os.MkdirAll(filepath.Join(home, ".jitso"), 0o755)
-		if err := os.WriteFile(filepath.Join(home, ".jitso", "config.yaml"), []byte(text), 0o644); err != nil {
-			t.Fatal(err)
-		}
-	}
-	p := Ports{Home: home}.withDefaults()
-
-	want(t, checkUserConfig(p), OK, "user-config", "no ~/.jitso/config.yaml")
-
-	os.MkdirAll(filepath.Join(home, "clients"), 0o755)
-	write("version: 1\ntrusted_parents:\n  - ~/clients\n")
-	want(t, checkUserConfig(p), OK, "user-config", "~/.jitso/config.yaml: 1 trusted parent")
-
-	write("trusted_parents:\n  - ~/clients\n  - \"~/gone\"   # moved\n  - /nowhere/else\n")
-	want(t, checkUserConfig(p), Warn, "user-config", "1 trusted parent; not found, so skipped: ~/gone, /nowhere/else")
-	// A block list may start at the key's own indent.
-	write("trusted_parents:\n- ~/gone\n")
-	want(t, checkUserConfig(p), Warn, "user-config", "0 trusted parents; not found, so skipped: ~/gone")
-
-	write("trusted_parents: [\n")
-	want(t, checkUserConfig(p), Fail, "user-config", "~/.jitso/config.yaml is invalid")
-	write("trusted_parents:\n  - /\n")
-	want(t, checkUserConfig(p), Fail, "user-config", "too broad")
-	want(t, checkUserConfig(Ports{}.withDefaults()), Warn, "user-config", "HOME is not set")
-}
-
 func TestCheckProject(t *testing.T) {
 	root := project.Root{Primary: "/p", Checkout: "/p"}
 	line, got, ok := checkProject(Ports{Resolve: func() (project.Root, error) { return root, nil }})
@@ -232,7 +202,7 @@ func TestRunOutsideGitLeavesProjectChecksOut(t *testing.T) {
 		checks = append(checks, l.Check)
 	}
 	got := strings.Join(checks, " ")
-	const wantChecks = "binary path git shell orca claude user-config project skill-user instructions-user"
+	const wantChecks = "binary path git shell orca claude project skill-user instructions-user"
 	if got != wantChecks {
 		t.Errorf("checks = %s\nwant     %s", got, wantChecks)
 	}

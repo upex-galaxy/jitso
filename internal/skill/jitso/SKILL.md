@@ -51,7 +51,7 @@ Headings `Goal`, `Scope`, `Done when`, `Report format`. English. Within the word
 
 ## Builds and drafts
 
-`jitso build list`, `jitso build validate [<id>]` and `jitso build list --drafts` are read-only. When no build fits, propose one with `jitso build draft <file.yaml|->` and tell the human. A draft launches like any build, but only the owner turns it into an approved build. Layers and the draft flow: `references/builds.md`.
+`jitso build list`, `jitso build validate [<id>]` and `jitso build list --drafts` are read-only. When no build fits, propose one with `jitso build draft <file.yaml|->` and tell the human. A draft launches like any build, but only the owner turns it into an approved build. Where builds live and the draft flow: `references/builds.md`.
 
 ## The rules at the end of brief.md
 

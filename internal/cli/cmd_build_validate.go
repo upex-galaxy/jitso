@@ -10,7 +10,7 @@ import (
 	"github.com/upex-galaxy/jitso/internal/launch"
 )
 
-// build validate checks the builds of every layer against this project's
+// build validate checks every build file of the project against this project's
 // allowlists and route ids, and against the rules a launch enforces
 // (launch.Problems). It never stops at the first problem and never fails
 // because a build file is invalid: an invalid file of the project itself is a
@@ -43,7 +43,7 @@ func runBuildValidate(ctx *Context, args []string) error {
 	if err != nil {
 		return err
 	}
-	res, err := catalog.Scan(os.DirFS(root.Primary), root.Primary, ctx.Home())
+	res, err := catalog.Scan(os.DirFS(root.Primary), root.Primary)
 	if err != nil {
 		return err
 	}

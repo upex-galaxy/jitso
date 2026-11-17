@@ -35,7 +35,7 @@ func projectWith(t *testing.T, saved, drafts map[string]string) *catalog.Catalog
 	for name, text := range drafts {
 		put(".jitso/drafts/"+name, text)
 	}
-	res, err := catalog.Scan(os.DirFS(root), root, "")
+	res, err := catalog.Scan(os.DirFS(root), root)
 	if err != nil {
 		t.Fatal(err)
 	}

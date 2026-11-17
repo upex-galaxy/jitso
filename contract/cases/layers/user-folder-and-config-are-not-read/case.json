@@ -1,0 +1,114 @@
+{
+  "id": "layers/user-folder-and-config-are-not-read",
+  "title": "a build file in ~/.jitso/builds is unknown and unlisted, and a garbage ~/.jitso/config.yaml breaks no command",
+  "source": [
+    "intended: builds come from the repo's jitso/builds folder and from drafts (docs/decisions.md, The v0.1.0 cut)"
+  ],
+  "defect": "N-12",
+  "intent": "INTENDED behavior (the v0.1.0 cut of the parent and user layers). The home folder holds shared-scan.yaml, a valid build that the user layer used to launch, and a ~/.jitso/config.yaml that is not YAML. Neither file is ever read: build list does not show shared-scan, launch --build shared-scan --dry-run is the unknown build error, build validate does not list it, and a launch of a repo build still works.",
+  "project": {
+    "files": {
+      ".jitso/briefs/brief.md": {
+        "from": "brief.md"
+      }
+    }
+  },
+  "home": {
+    "files": {
+      ".jitso/builds/shared-scan.yaml": {
+        "from": "shared-scan.yaml"
+      },
+      ".jitso/config.yaml": "trusted_parents: [[[ not: yaml\n\t:::\n"
+    }
+  },
+  "steps": [
+    {
+      "run": [
+        "build",
+        "list"
+      ],
+      "expect": {
+        "exit": 0,
+        "stderr": [
+          {
+            "empty": true
+          }
+        ],
+        "stdout": [
+          {
+            "regex": "(?m)^- haiku-explorer: "
+          },
+          {
+            "not_contains": "shared-scan"
+          }
+        ]
+      }
+    },
+    {
+      "run": [
+        "build",
+        "validate"
+      ],
+      "expect": {
+        "exit": 0,
+        "stderr": [
+          {
+            "empty": true
+          }
+        ],
+        "stdout": [
+          {
+            "not_contains": "shared-scan"
+          },
+          {
+            "regex": "(?m)^checked \\d+ builds: \\d+ ok, 0 invalid$"
+          }
+        ]
+      }
+    },
+    {
+      "run": [
+        "launch",
+        "--build",
+        "shared-scan",
+        "--brief",
+        "{{PROJECT}}/.jitso/briefs/brief.md",
+        "--mode",
+        "direct",
+        "--dry-run"
+      ],
+      "expect": {
+        "exit": 2,
+        "stdout": [
+          {
+            "empty": true
+          }
+        ],
+        "stderr": [
+          "JITSO REJECTED:",
+          "unknown build \"shared-scan\""
+        ]
+      }
+    },
+    {
+      "run": [
+        "launch",
+        "--build",
+        "haiku-explorer",
+        "--brief",
+        "{{PROJECT}}/.jitso/briefs/brief.md",
+        "--mode",
+        "direct",
+        "--dry-run"
+      ],
+      "expect": {
+        "exit": 0,
+        "stdout": [
+          {
+            "contains": "| build haiku-explorer v1\n"
+          }
+        ]
+      }
+    }
+  ]
+}

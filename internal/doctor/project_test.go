@@ -72,13 +72,13 @@ func TestCatalogErrorKeepsTheFileName(t *testing.T) {
 	want(t, c.catalog(), Fail, "catalog", ".agents/instructions")
 }
 
-func TestCatalogNamesSkippedOuterFiles(t *testing.T) {
+func TestCatalogNamesSkippedDrafts(t *testing.T) {
 	dir := fixture(t)
 	c, _ := checksFor(t, dir, nil)
-	// A user build that is invalid here is skipped, and doctor says which.
-	put(t, c.p.Home, ".jitso/builds/mine.yaml", "id: mine\nversion: 1\nstatus: approved\n")
+	// A draft that is invalid here is skipped, and doctor says which.
+	put(t, dir, ".jitso/drafts/mine.yaml", "id: mine\nversion: 1\nstatus: draft\n")
 	got := c.catalog()
-	want(t, got, Warn, "catalog", "jitso/jitso.yaml, 7 builds, 4 launchable; skipped user ~/.jitso/builds/mine.yaml (")
+	want(t, got, Warn, "catalog", "jitso/jitso.yaml, 7 builds, 4 launchable; skipped draft .jitso/drafts/mine.yaml (")
 }
 
 func TestMCP(t *testing.T) {

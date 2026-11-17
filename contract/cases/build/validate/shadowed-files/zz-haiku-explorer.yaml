@@ -1,11 +1,11 @@
-# Build written by a layers case.
+# Build written by a validate case.
 id: haiku-explorer
 version: 1
 status: approved
 role: operator
 type: scanner
 work_kind: repo-scan
-description: USER COPY of the explorer.
+description: SECOND FILE of the explorer id.
 harness: claude
 model: claude-sonnet-5-5
 effort: medium

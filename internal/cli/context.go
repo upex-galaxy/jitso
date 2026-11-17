@@ -96,7 +96,7 @@ func (c *Context) Project() (project.Root, error) {
 	return *c.root, nil
 }
 
-// Scan reads every build file of every layer once, with no whole-catalog rule:
+// Scan reads every build file of the project once, with no whole-catalog rule:
 // an invalid file is a problem of that file (see catalog.Scan). Commands that
 // show files, drafts included, use it after Catalog has applied the rule.
 func (c *Context) Scan() (*catalog.Result, error) {
@@ -105,16 +105,15 @@ func (c *Context) Scan() (*catalog.Result, error) {
 		if err != nil {
 			return nil, err
 		}
-		c.scan, c.scanErr = catalog.Scan(os.DirFS(root.Primary), root.Primary, c.Home())
+		c.scan, c.scanErr = catalog.Scan(os.DirFS(root.Primary), root.Primary)
 	}
 	return c.scan, c.scanErr
 }
 
-// Catalog loads the project's layered catalog once: its own builds from the
-// primary checkout, the builds of the trusted parent folders and the user's
-// folder under $HOME, then its drafts (the layers and the trust are computed
-// from the primary's real path and ~/.jitso/config.yaml). The project's own
-// files keep the whole-catalog rule: one invalid file is the error.
+// Catalog loads the project's catalog once: its own builds from the primary
+// checkout, then its drafts (the folders are computed from the primary's real
+// path). The project's own files keep the whole-catalog rule: one invalid file
+// is the error.
 func (c *Context) Catalog() (*catalog.Catalog, error) {
 	if c.catalog == nil && c.catalogErr == nil {
 		res, err := c.Scan()

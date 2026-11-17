@@ -44,11 +44,11 @@ func (c *projectChecks) gitSays(dir string, args ...string) (exit int, ok bool) 
 	return res.Exit, true
 }
 
-// catalog loads the layered catalog the way every catalog command does: the
-// project's own files keep the whole-catalog rule, outer files that are
-// invalid here are skipped and named.
+// catalog loads the catalog the way every catalog command does: the project's
+// own files keep the whole-catalog rule, drafts that are invalid here are
+// skipped and named.
 func (c *projectChecks) catalog() Line {
-	res, err := catalog.Scan(os.DirFS(c.root.Primary), c.root.Primary, c.p.Home)
+	res, err := catalog.Scan(os.DirFS(c.root.Primary), c.root.Primary)
 	if err == nil {
 		c.cat, err = res.Catalog()
 	}

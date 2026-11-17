@@ -1,0 +1,69 @@
+{
+  "id": "build/validate/shadowed-files",
+  "title": "build validate lists every file, by file name, and marks a file whose id an earlier file already has; with an id it adds the shadowed copies",
+  "source": [
+    "intended: docs/decisions.md (build validate: a tolerant check of every build, one line per file, problem lines, one summary line)"
+  ],
+  "defect": "N-13",
+  "intent": "INTENDED behavior (defect N-13, build validate, narrowed by the v0.1.0 cut). Files are listed by file name. A file whose id an earlier file already has is still checked and listed, with ` (shadowed by <layer> <display path>)` after its line; it is not the build of that id. The project here holds a second file, zz-haiku-explorer.yaml, with the id of haiku-explorer. With an id the command prints the winner first, then the files it shadows, and its summary counts the winner only.",
+  "steps": [
+    {
+      "run": [
+        "build",
+        "validate"
+      ],
+      "expect": {
+        "exit": 0,
+        "stdout": [
+          {
+            "regex": "(?m)^ok verifier repo jitso/builds/verifier\\.yaml\nok haiku-explorer repo jitso/builds/zz-haiku-explorer\\.yaml \\(shadowed by repo jitso/builds/haiku-explorer\\.yaml\\)\nchecked 8 builds: 8 ok, 0 invalid$"
+          },
+          {
+            "line_count": 9
+          }
+        ],
+        "stderr": [
+          {
+            "empty": true
+          }
+        ],
+        "orca_calls": {
+          "empty": true
+        }
+      }
+    },
+    {
+      "run": [
+        "build",
+        "validate",
+        "haiku-explorer"
+      ],
+      "expect": {
+        "exit": 0,
+        "stdout": [
+          {
+            "regex": "(?m)^ok haiku-explorer repo jitso/builds/haiku-explorer\\.yaml\nok haiku-explorer repo jitso/builds/zz-haiku-explorer\\.yaml \\(shadowed by repo jitso/builds/haiku-explorer\\.yaml\\)\nchecked 1 builds: 1 ok, 0 invalid$"
+          },
+          {
+            "line_count": 3
+          }
+        ],
+        "stderr": [
+          {
+            "empty": true
+          }
+        ],
+        "orca_calls": {
+          "empty": true
+        }
+      }
+    }
+  ],
+  "project": {
+    "files": {
+      "jitso/builds/zz-haiku-explorer.yaml": {
+        "from": "zz-haiku-explorer.yaml"
+      }
+    }
+  }
+}

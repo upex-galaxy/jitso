@@ -31,7 +31,7 @@ type LaunchEvent struct {
 	Build        string `json:"build"`
 	BuildVersion any    `json:"build_version"`
 	// BuildLayer, BuildFile and BuildSHA256 name the file the session was
-	// launched from: its layer (repo, parent or user), its real absolute path
+	// launched from: its layer (repo or draft), its real absolute path
 	// and the SHA-256 of its bytes.
 	BuildLayer     string   `json:"build_layer"`
 	BuildFile      string   `json:"build_file"`

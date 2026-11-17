@@ -50,8 +50,7 @@ var (
 )
 
 // ValidateBuild checks one decoded build file of a saved layer (the project's
-// own, a parent's or the user's) against the allowlists and the route ids. See
-// ValidateBuildIn.
+// own) against the allowlists and the route ids. See ValidateBuildIn.
 func ValidateBuild(raw any, cfg Config, routeIDs []string) []string {
 	return ValidateBuildIn(raw, cfg, routeIDs, LayerRepo)
 }

@@ -535,10 +535,10 @@ func TestEventFlags(t *testing.T) {
 
 // The launch event names the file the session was launched from.
 func TestEventNamesTheBuildFile(t *testing.T) {
-	b := &catalog.Build{ID: "x", Version: 1, Layer: catalog.LayerUser, Path: "/h/.jitso/builds/x.yaml", SHA256: "abc"}
+	b := &catalog.Build{ID: "x", Version: 1, Layer: catalog.LayerRepo, Path: "/p/jitso/builds/x.yaml", SHA256: "abc"}
 	in := EventInput{ID: id, Args: Args{Mode: ModeFleet, BriefLanguage: "en"}, Argv: []string{"claude"}}
 	in.Profile.Build = b
-	if e := Event(in); e.BuildLayer != "user" || e.BuildFile != "/h/.jitso/builds/x.yaml" || e.BuildSHA256 != "abc" {
+	if e := Event(in); e.BuildLayer != "repo" || e.BuildFile != "/p/jitso/builds/x.yaml" || e.BuildSHA256 != "abc" {
 		t.Errorf("event %+v", e)
 	}
 	b.Layer = catalog.LayerDraft

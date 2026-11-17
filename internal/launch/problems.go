@@ -21,7 +21,7 @@ func adapterOf(b *catalog.Build) (harness.Adapter, string, bool) {
 // adapter is a rejection there). A subagent-tier build never launches alone,
 // so the harness rule does not apply to it (the tier matrix of
 // docs/decisions.md). cat resolves the
-// subagent names with the same layered lookup as a launch.
+// subagent names with the same lookup as a launch.
 //
 // It is pure, and it answers what Run would reject or fail on for this
 // build: the same predicates, in the order the problem lines list them.
