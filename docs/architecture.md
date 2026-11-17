@@ -36,9 +36,7 @@ What the CLI does, split by responsibility. "Pure" means no file, process, clock
 | Registry | `log.ts` | event validation (schema `v: 2` with `build` keys, N-31), folding events into launches | append under a `mkdir` lock, read the file | `internal/registry` |
 | Launch execution | `launch.ts` (`launchForReal`) | the plan: files, argv, event | files, Orca, registry | `internal/launch` |
 | Close | `close.ts` | none worth isolating | Orca, registry, footer file | `internal/closeout` |
-| Reap | `reap.ts` | worker matching (handle or `[jitso:<id>]` mark), evidence de-duplication | Orca, registry | `internal/reap` |
-| Analyze | `analyze.ts` | transcript scan, prices, verdict, budget percentage | streamed transcript read, `prices.json`, registry | `internal/analyze` |
-| Tree | `tree.ts` (`buildTree`) | the nesting by parent, the branch rollups and the line text (N-30); the TypeScript code wired none of it to a command | none (the command reads the registry) | `internal/tree`, `internal/cli` |
+| Reap | `reap.ts` | worker matching (handle or `[jitso:<id>]` mark), evidence text | Orca, registry | `internal/reap` |
 | Guard hook | `.agents/hooks/jitso-guard.mjs` | Bash segment splitting, launch-verb detection, orca-bridge tool rules, the program of a segment (N-24) | `jitso/jitso.yaml` probe; SessionEnd appends to the registry | `internal/hook` |
 | Rules text | none | the short JITSO rules a launch appends to the end of `brief.md`, by mode and budget, and the join of the brief file | writes `brief.md` | `internal/card` (`Rules`), `internal/launch` (`BriefFile`) |
 | Templates | none (N-14) | one embedded template per tier and the `jitso/jitso.yaml` skeleton | none | `internal/templates` |
@@ -51,7 +49,7 @@ What the CLI does, split by responsibility. "Pure" means no file, process, clock
 | Version | none (N-21) | the one-line text | build info | `internal/version` |
 | Terminal test | none | none | the termios ioctl on standard input | `internal/tty` |
 
-The rules text is `card.Rules(mode, hasBudget)`, pure: a heading and three lines, the direct or the fleet wording, with or without the sentence that names the card's budget as the ceiling. `launch.BriefFile` appends it to the end of `brief.md` after one blank line (`docs/decisions.md`, the v0.1.0 cut).
+The rules text is `card.Rules(mode, hasBudget)`, called with the build's budget presence, pure: a heading and three lines, the direct or the fleet wording, with or without the sentence that names the card's budget as the ceiling. `launch.BriefFile` appends it to the end of `brief.md` after one blank line (`docs/decisions.md`, the v0.1.0 cut).
 
 ## 3. Module and layout
 
@@ -69,7 +67,7 @@ internal/<package>/        everything else
 | Command layer | `cli`: command table, usage, error kinds and exit codes, one `cmd_<name>.go` per command (and per subcommand of the groups `build`, `install` and `setup`), the shared flag parser (`flags.go`) and the sub-command group helper (`group.go`) |
 | Project and catalog | `project` (primary checkout, state and user folders, own executable identity), `catalog` (load, validate and scan builds in layers, the user config; `decode.go` is the only file that names the YAML decoder, section 8), `profile` (request plus catalog to profile or rejection, pure), `drafts` (the drafts folder and the save of a draft as a build) |
 | Launch | `launch` (argument parsing, plan, execute), `brief` (brief checks and the path guard), `card` (card text and the `ROUTE-SCOPE` line), `shell` (quoting, `run.sh` text, launcher field patterns), `harness` (the `Adapter` interface and launch spec types) with `harness/claude` (the Claude Code adapter), `trust` (trusted-folder check and dialog state machine) |
-| Lifecycle | `orca` (client over an injectable runner), `registry` (events, validation, fold, file store with a `mkdir` lock), `closeout` (`jitso close`), `reap`, `analyze`, `tree` (`jitso tree`, pure) |
+| Lifecycle | `orca` (client over an injectable runner), `registry` (events, validation, fold, file store with a `mkdir` lock), `closeout` (`jitso close`), `reap` |
 | Hooks | `hook` (guard, SessionEnd) |
 | Authoring | `templates` (the embedded build templates and the `jitso/jitso.yaml` skeleton) |
 | Adoption | `adopt` (the shared core: plan, diff, confirmation, backups, apply), `settingsjson` (the order-preserving settings edit), `instructions` (the delimited block), `skill` (the embedded usage skill, its manifest and install plan), `tty` (is a file a terminal; `tty_darwin.go`, `tty_linux.go`, `tty_other.go`) |
@@ -151,25 +149,21 @@ Launcher identity. Under `--impl bin`, `{{JITSO}}` is whatever path was passed t
 | L2 (N-2) | the execute step creates `.jitso/launches/<id>/` with `os.Mkdir` (so the folder is new) and removes exactly that folder when anything fails before the registry line is appended: a file write, terminal create, idle timeout, a refused trust dialog, `worker-start`, a stuck lock. A terminal it opened is closed first, as today. After the line is written, nothing is removed | `internal/launch` (execute) |
 | L3 (N-3) | trust outcome `timeout` keeps exit 0 and the registry line with `trust_dialog: timeout`, and prints one stderr line, for example `jitso: the trust dialog of terminal <handle> did not clear in 10 s; the launch is registered` | `internal/launch`, outcome from `internal/trust` |
 | L4 (N-22) | `execute` builds one `trust.Policy` and checks the folder on every launch: `Precheck` of the `--worktree` selector before the launch folder is made, `Place` of the folder Orca reports right after `terminal create` and before the idle wait. A failure closes the terminal and rejects with exit 2, so the deferred removal of L2 leaves no folder and no registry line. The trust dialog is answered after that, for a folder that already passed. | `internal/trust` (pure), `internal/launch` (execute, `answerTrust`) |
-| L6 (N-26) | after the build, the brief, the parent and the budget have passed and before the card is printed, `Run` calls the pure `UnknownExcludes(mcp, exclude)` and prints one stderr line per distinct `--mcp-exclude` value that is not exactly a name of the build's `mcp` list, with a `did you mean` hint for a case-only match. Dry run and real launch alike; nothing is excluded and the exit code is unchanged | `internal/launch` (`plan.go`, `launch.go`) |
+| L6 (N-26) | after the build, the brief and the parent have passed and before the card is printed, `Run` calls the pure `UnknownExcludes(mcp, exclude)` and prints one stderr line per distinct `--mcp-exclude` value that is not exactly a name of the build's `mcp` list, with a `did you mean` hint for a case-only match. Dry run and real launch alike; nothing is excluded and the exit code is unchanged | `internal/launch` (`plan.go`, `launch.go`) |
 | L7 (N-26) | one predicate, `card.DeclaresJitsoScript(packageJSON)`: `scripts.jitso` is a JSON string that is not blank. `card.LaunchCommand` and the guard's `hook.LauncherWord` both call it, so the card and the deny reason name the same launcher | `internal/card`, `internal/hook` |
 | L8 (N-4) | `direct` and `fleet` are the only mode values: `launch --mode` rejects anything else (exit 2, `--mode must be direct or fleet`) and the registry validator treats a line with another mode as invalid, so readers skip it. No alias table exists anywhere | `internal/launch`, `internal/registry` |
-| L10 (N-26) | `runLaunch` prints the `launchUsage` constant on stdout and returns when the first word after `launch` is `--help` or `-h`, before `launch.Parse`, so no project, catalog or Orca is needed. Any other position leaves the word to `Parse` as an unknown argument. `close`, `reap`, `analyze` and `tree` have no help screen | `internal/cli` (`cmd_launch.go`) |
+| L10 (N-26) | `runLaunch` prints the `launchUsage` constant on stdout and returns when the first word after `launch` is `--help` or `-h`, before `launch.Parse`, so no project, catalog or Orca is needed. Any other position leaves the word to `Parse` as an unknown argument. `close` and `reap` have no help screen | `internal/cli` (`cmd_launch.go`) |
 | L11 (N-26) | in `launch.Parse` a value flag whose next word starts with `--`, or that is last, is `--<flag> needs a value`; a value that starts with a single `-` is taken | `internal/launch` (`args.go`) |
 | B1 (N-27) | the pure `countWords(text)` of `internal/brief`: the text is split on newlines, a line that starts with one to six `#` not followed by another `#` adds nothing, and every other whitespace-separated token that holds a letter is one word. `Check` uses it for `length` only; `language` keeps the letter runs of the whole lowered text | `internal/brief` (`check.go`) |
 | R1 (N-28) | `closeout.Run` reads the footer into memory, closes the terminal, lists the terminals and only then calls `record`, which creates the launch folder, writes `footer.txt` and appends the `end` event. A failure before `record` writes nothing | `internal/closeout` |
 | R3 (N-28) | `reap.endGone` skips a launch only when it has a string handle that is still listed; every other launch without an end event is ended as source `reap`, outcome `none` | `internal/reap` |
-| R4 (N-28) | `reap.auditWorkers` keys a worker by `handle:<h>` (or by its evidence text when it has no handle), rebuilds the known keys from every `unlogged_worker` line of the log (`keysOfEvidence`) and returns the number of lines it appended | `internal/reap` |
-| R6 (N-28) | `analyze.ParseArgs` returns a `Request`; `cmd_analyze.go` parses, then resolves the project, then `analyze.Run` loads the prices. `reap` builds a `Request` for its own analysis | `internal/analyze`, `internal/cli` |
-| R7 (N-28) | `pathTools` maps a tool name to the input keys that name its file: the read tools as before, `Write`, `Edit` and `MultiEdit` by `file_path`, `NotebookEdit` by `notebook_path`; the counter keeps the name `secret_path_reads` | `internal/analyze` (`secret.go`) |
-| R10 (N-28) | `budgetBreaks` gives the evidence of each exceeded limit; `byID` appends one `budget_over` rule break per limit not already in the log, lists them in `rule_breaks`, and `verdictOf` returns `fail` for a launch over budget | `internal/analyze` (`run.go`) |
-| C1, tree half (N-30) | `tree.Build(launches, root)` nests the folded launches by parent (roots: no parent or a parent not in the log, in registry order; a launch a cycle hides is added as a root; none printed twice) and sums the branch into `Metrics`; `tree.Lines` renders one line per node in preorder. `cmd_tree.go` checks the arguments, resolves the project, reads the registry and prints; no write, no Orca call | `internal/tree`, `internal/cli` (`cmd_tree.go`) |
+| R4 (N-28) | `reap.auditWorkers` keys a worker by `handle:<h>` (or by its evidence text when it has no handle) and returns the evidence text of each worker it lists; the phase is output only (`docs/decisions.md`, the v0.1.0 cut): `reap.Run` prints one `unlogged worker: <evidence>` line per worker before the summary, writes no event and remembers nothing between reaps | `internal/reap` |
 
 ### S1 `route_scope`
 
 One function, `card.ScopeLine(ids)`, returns `ROUTE-SCOPE: <ids joined by ,>` (or `ROUTE-SCOPE: none`). The card prints it as a line of its own, so it starts a line as the router's regex requires; the `| ROUTE-SCOPE ...` tail of the subagents line goes away. In direct mode the first prompt becomes `Read <brief> and follow it exactly.` followed by a newline and the same scope line. In fleet mode the brief file already starts with the card, so the scope reaches the session through the brief. Lives in `internal/card`; `internal/launch` builds the first prompt from the same function.
 
-Consequence, DECIDED: the card grows from five lines to six, in this order: header, model line, subagents line, `ROUTE-SCOPE: <ids>`, launch line, budget line. The card goldens (`card/build/*`, `launch/direct/files-written`) pin that card (defect S1). A five-line card that satisfies both the old goldens and the router regex exists only through an artificial `. ROUTE-SCOPE:` inside another line, which is rejected here.
+Consequence, DECIDED: the card grows from five lines to six, in this order: header, model line, subagents line, `ROUTE-SCOPE: <ids>`, launch line, budget line (without its budget segment when the build has no budget). The card goldens (`card/build/*`, `launch/direct/files-written`) pin that card (defect S1). A five-line card that satisfies both the old goldens and the router regex exists only through an artificial `. ROUTE-SCOPE:` inside another line, which is rejected here.
 
 ### S2 `agents_md`
 
@@ -243,7 +237,7 @@ Every milestone ended with the runner against the built binary: `<runner> --impl
 | 2 | Foundation: catalog load and validation (tiers and subagent names included), `build list`; registry, Orca client, JSON encoder and the harness interface with unit tests only | `catalog`, `registry`, `orca`, `jsonx`, `harness`, `shell` (quoting only) | done: filter 2 |
 | 3 | Launch up to the dry run: arguments, field allowlist, profile, brief checks and path guard, card, launch line | `launch` (parse and plan), `profile`, `brief`, `card`, `shell` | done: filter 3 |
 | 4 | Real launch: files, `run.sh`, Claude adapter, trust dialog, fleet adoption, registry append, L2 and L3, S1 to S3 | `launch` (execute), `harness/claude`, `trust` | done: filter 4 |
-| 5 | Lifecycle: close, reap, analyze | `closeout`, `reap`, `analyze` | done: filter 5 |
+| 5 | Lifecycle: close, reap | `closeout`, `reap` | done: filter 5 |
 | 6 | (empty: its piece was cut from v0.1.0, see `docs/decisions.md`) | none | none |
 | 7 | Hooks | `hook` | done: filter 7 |
 | 8 | Full suite, then cross-compile for the three targets | all | done: the whole suite passes on `--impl bin`; the cross-compile is `scripts/package.sh` |
@@ -256,7 +250,7 @@ The `--filter` value that proves each milestone (milestone 8 runs with no filter
 2  ^(build/list|project/(linked-worktree|outside-git)/build-list)
 3  ^(validation/|brief/|card/|cli/reject-wiring/|smoke/launch-dry-run|project/subfolder-launch-dry-run|project/outside-git/launch|defects/s1[ab])
 4  ^(launch|argv|escape|registry|defects|project)/
-5  ^(close|reap|analyze)/
+5  ^(close|reap)/
 6  (no cases)
 7  ^(hooks/|smoke/guard)
 ```
@@ -288,9 +282,8 @@ Each block after milestone 8 is its own contract change, cases first, run agains
 | A harness started directly is denied | N-24 | `hook` | `^hooks/guard/(deny-direct-harness\|harness-word-after-a-separator-is-denied\|allows-commands-that-only-name-a-harness)` |
 | Launch arguments: `.mcp.json` only when needed, exclusion warning, blank script, `launch --help`, `--` values | N-26 | `launch`, `card`, `hook`, `cli` | `^(launch/mcp-json/\|card/(mcp-exclude\|launch-line)/\|validation/\|hooks/guard/blank-jitso-script)` |
 | Brief word count | N-27 | `brief` | `^brief/` |
-| Close, reap and analyze rows: close order, reap without a handle, unlogged workers once, analyze arguments first, secret writes, `budget_over` | N-28 | `closeout`, `reap`, `analyze`, `cli` | `^(close\|reap\|analyze)/` |
-| `jitso tree` | N-30 | `tree`, `cli` | `^(tree/\|cli/\|smoke/help)` |
-| Registry v2: `v: 2` with `build` keys, v1 lines skipped, `doctor` counts them | N-31 | `registry`, `analyze`, `tree`, `hook`, `doctor` | `^(registry\|close\|reap\|analyze\|launch\|layers\|project\|hooks/guard/session-end\|tree\|doctor)/`, then the whole suite |
+| Close and reap rows: close order, reap without a handle, unlogged workers | N-28 | `closeout`, `reap`, `cli` | `^(close\|reap)/` |
+| Registry v2: `v: 2` with `build` keys, v1 lines skipped, `doctor` counts them | N-31 | `registry`, `hook`, `doctor` | `^(registry\|close\|reap\|launch\|layers\|project\|hooks/guard/session-end\|doctor)/`, then the whole suite |
 | Release files: packaging, install script, workflow, formula template | none (no case) | `scripts/`, `.github/`, `packaging/` | `scripts/test-install.sh` (offline), and the steps of `docs/release.md` section 3 |
 
 The pipes inside the table are escaped for Markdown; the filter is the text without the backslashes.
@@ -302,7 +295,7 @@ Kept as the record of how the port was split; the port is finished. Milestones 1
 | Track | Milestones | Owns | Reads only |
 |---|---|---|---|
 | A, launch | 3 then 4 | `launch`, `profile`, `brief`, `card`, `shell`, `trust`, `harness/claude`, `cmd_launch.go` | `catalog`, `registry`, `orca`, `project` |
-| B, lifecycle | 5 | `closeout`, `reap`, `analyze`, `cmd_close.go`, `cmd_reap.go`, `cmd_analyze.go` | `registry`, `orca`, `catalog` |
+| B, lifecycle | 5 | `closeout`, `reap`, `cmd_close.go`, `cmd_reap.go` | `registry`, `orca`, `catalog` |
 | C, hooks | 7 | `hook`, `cmd_hook.go` | `catalog`, `registry`, `project`, `shell` (quoting only) |
 
 Track C needs `shell.Quote` for the `--settings` command, so `shell` starts in milestone 2 with only that function; from then on track A owns `shell`, and track C uses `Quote` alone and gets no new symbol from it during the tracks. A few lifecycle cases (for example `reap/unlogged-worker-after-a-real-fleet-launch`) start with a real launch and pass only once track A lands; track B reports them as pending, not as failures of its own. The package boundaries make this safe because no two tracks own the same file, and the only shared registration point is a file per command.
