@@ -34,7 +34,9 @@ type Input struct {
 	RouteScope  []string
 	// LaunchCommand starts another session in the project (LaunchCommand).
 	LaunchCommand string
-	// BudgetTokens and BudgetUSD are the build's budget.
+	// HasBudget is true when the build declares a budget. BudgetTokens and
+	// BudgetUSD are that budget and are read only when HasBudget is true.
+	HasBudget    bool
 	BudgetTokens float64
 	BudgetUSD    float64
 }
@@ -47,6 +49,9 @@ type Input struct {
 //	ROUTE-SCOPE: <ids>
 //	launch: <command>
 //	budget <n>k tokens (100%), list cap US$ <x.xx> | reports to: <whom> | log .jitso/launches.jsonl
+//
+// A build without a budget prints the sixth line without its first segment:
+// reports to: <whom> | log .jitso/launches.jsonl.
 func Render(in Input) string {
 	asks, reports := "asks your conductor", "your conductor"
 	if in.Mode == "direct" {
@@ -56,14 +61,17 @@ func Render(in Input) string {
 	if in.Layer != "" && in.Layer != "repo" {
 		layer = " (" + in.Layer + ")"
 	}
+	last := "reports to: " + reports + " | log .jitso/launches.jsonl"
+	if in.HasBudget {
+		last = "budget " + jsconv.Number(jsRound(in.BudgetTokens/1000)) + "k tokens (100%), list cap US$ " + toFixed2(in.BudgetUSD) + " | " + last
+	}
 	return strings.Join([]string{
 		"JITSO " + in.ID + " | " + in.Role + "/" + in.Type + " | mode " + in.Mode + " (" + asks + ") | build " + in.Build + " v" + in.BuildVersion + layer,
 		"model " + in.Model + " effort " + in.Effort + " | bypass | MCP " + list(in.MCP) + " | skill " + list(in.SkillsFirst),
 		"subagents " + subagents(in.Subagents),
 		ScopeLine(in.RouteScope),
 		"launch: " + in.LaunchCommand,
-		"budget " + jsconv.Number(jsRound(in.BudgetTokens/1000)) + "k tokens (100%), list cap US$ " + toFixed2(in.BudgetUSD) +
-			" | reports to: " + reports + " | log .jitso/launches.jsonl",
+		last,
 	}, "\n")
 }
 

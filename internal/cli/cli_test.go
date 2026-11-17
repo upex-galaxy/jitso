@@ -33,12 +33,10 @@ func TestRun(t *testing.T) {
 		{"case matters", []string{"Launch"}, 2, "", `unknown command "Launch"`},
 		{"empty word", []string{""}, 2, "", `jitso: unknown command ""`},
 		{"a request is not a command", []string{"test PRJ-1", "now"}, 2, "", `unknown command "test PRJ-1"`},
-		{"tree needs the project", []string{"tree"}, 3, "", "jitso: the cwd must not be read"},
-		{"tree with a launch id needs the project", []string{"tree", "L20261113T140000-0001"}, 3, "", "jitso: the cwd must not be read"},
-		{"tree checks its arguments before the project", []string{"tree", "x"}, 2, "", "JITSO REJECTED: usage: jitso tree [<launch_id>]"},
-		{"tree takes one id at most", []string{"tree", "L20261113T140000-0001", "L20261113T140000-0001"}, 2, "", "JITSO REJECTED: usage: jitso tree [<launch_id>]"},
 		{"presets is not a command", []string{"presets"}, 2, "", `jitso: unknown command "presets"`},
 		{"presets list is not a command", []string{"presets", "list"}, 2, "", `jitso: unknown command "presets"`},
+		{"analyze is not a command", []string{"analyze", "L20261113T140000-0001"}, 2, "", `jitso: unknown command "analyze"`},
+		{"tree is not a command", []string{"tree"}, 2, "", `jitso: unknown command "tree"`},
 		{"build alone", []string{"build"}, 2, "", "jitso build: missing subcommand\n\nUsage: jitso build <subcommand>"},
 		{"build unknown subcommand", []string{"build", "show"}, 2, "", "jitso build: unknown subcommand \"show\"\n\nUsage: jitso build <subcommand>"},
 		{"build --help", []string{"build", "--help"}, 0, "Usage: jitso build <subcommand>", ""},
@@ -79,7 +77,7 @@ func TestUnknownCommandPrintsUsage(t *testing.T) {
 func TestUsageOrder(t *testing.T) {
 	u := Usage()
 	last := -1
-	for _, name := range []string{"launch", "close", "reap", "tree", "analyze", "build", "hook"} {
+	for _, name := range []string{"launch", "close", "reap", "build", "hook"} {
 		i := strings.Index(u, "\n  "+name+" ")
 		if i <= last {
 			t.Fatalf("%s out of order in\n%s", name, u)
@@ -97,5 +95,5 @@ func TestRegisterDuplicatePanics(t *testing.T) {
 			t.Error("want a panic")
 		}
 	}()
-	Register(Command{Name: "tree", Run: func(*Context, []string) error { return nil }})
+	Register(Command{Name: "reap", Run: func(*Context, []string) error { return nil }})
 }

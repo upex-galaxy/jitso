@@ -4,7 +4,7 @@
   "source": [
     "intended: docs/decisions.md, the v0.1.0 cut, rows 1 and 2: the launch appends JITSO's rules text to the end of brief.md"
   ],
-  "intent": "A fleet launch of a build with a budget appends the fleet text: it never asks a human and reports to the session that launched it. The end of the file is pinned by an anchored regex and the card and the brief by contains. Every fixture build has a budget, so the no-budget texts are covered by the unit tests of internal/card only.",
+  "intent": "A fleet launch of a build with a budget appends the fleet text: it never asks a human and reports to the session that launched it. The end of the file is pinned by an anchored regex and the card and the brief by contains. The no-budget fleet text is covered by the unit tests of internal/card only.",
   "project": {
     "files": {
       ".jitso/briefs/brief.md": {

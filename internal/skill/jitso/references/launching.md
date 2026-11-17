@@ -23,7 +23,7 @@ jitso launch --build <id> --brief <file> --mode direct|fleet [--run <run> --task
 
 A flag whose next word starts with `--` has no value: `launch --build --dry-run` is `JITSO REJECTED: --build needs a value`. Old spellings are unknown: `--preset` is `JITSO REJECTED: unknown argument "--preset"`.
 
-`jitso launch --help` (or `-h`) as the first word after `launch` prints the usage on stdout and exits 0, in any folder. Anywhere else `--help` is an unknown argument. `jitso build --help` and `jitso install skill --help` print usage too; `close`, `reap` and `analyze` have no help screen.
+`jitso launch --help` (or `-h`) as the first word after `launch` prints the usage on stdout and exits 0, in any folder. Anywhere else `--help` is an unknown argument. `jitso build --help` and `jitso install skill --help` print usage too; `close` and `reap` have no help screen.
 
 An `--mcp-exclude` name that is not exactly one of the build's MCP servers excludes nothing and prints one warning on stderr, for example `jitso: warning: --mcp-exclude "DBHUB" is not an MCP server of build sonnet-tester (did you mean "dbhub"?); nothing excluded`. The launch goes on.
 

@@ -28,7 +28,7 @@ func noLaunchProblems(*catalog.File) []string { return nil }
 func TestValidateReport(t *testing.T) {
 	launchOnA := func(f *catalog.File) []string {
 		if f.Layer == catalog.LayerRepo && f.ID == "a" {
-			return []string{"budget must be a mapping with tokens and usd_list_cap"}
+			return []string{"harness \"other\" has no adapter"}
 		}
 		return nil
 	}
@@ -53,7 +53,7 @@ func TestValidateReport(t *testing.T) {
 		}, 3},
 		{"launch problems follow the file's own", "", launchOnA, []string{
 			"invalid a repo jitso/builds/a.yaml",
-			"  budget must be a mapping with tokens and usd_list_cap",
+			"  harness \"other\" has no adapter",
 			"invalid broken repo jitso/builds/broken.yaml",
 			`  model "x" is not in the allowlist`,
 			`  effort "y" is not in the allowlist`,
@@ -79,7 +79,7 @@ func TestValidateReport(t *testing.T) {
 		}, 1},
 		{"one id: a launch problem of the winner", "a", launchOnA, []string{
 			"invalid a repo jitso/builds/a.yaml",
-			"  budget must be a mapping with tokens and usd_list_cap",
+			"  harness \"other\" has no adapter",
 			"ok a user ~/.jitso/builds/a.yaml (shadowed by repo jitso/builds/a.yaml)",
 			"checked 1 builds: 0 ok, 1 invalid",
 		}, 1},

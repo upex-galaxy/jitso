@@ -5,11 +5,8 @@ type Launch struct {
 	ID string
 	// Launch is the first launch event of the id.
 	Launch Event
-	// End and Analyzed are the last such event of the id, nil when none.
-	End      Event
-	Analyzed Event
-	// RuleBreaks are the rule_break events of the id, in file order.
-	RuleBreaks []Event
+	// End is the last end event of the id, nil when none.
+	End Event
 }
 
 // Ended reports whether the launch has an end event.
@@ -33,13 +30,8 @@ func Fold(events []Event) []Launch {
 		if id == "" || !ok {
 			continue
 		}
-		switch e.Kind() {
-		case KindEnd:
+		if e.Kind() == KindEnd {
 			launches[i].End = e
-		case KindAnalyzed:
-			launches[i].Analyzed = e
-		case KindRuleBreak:
-			launches[i].RuleBreaks = append(launches[i].RuleBreaks, e)
 		}
 	}
 	return launches

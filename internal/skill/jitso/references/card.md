@@ -13,20 +13,22 @@ launch: jitso launch
 budget 400k tokens (100%), list cap US$ 6.00 | reports to: you | log .jitso/launches.jsonl
 ```
 
+A build without a `budget` prints the sixth line without its first segment: `reports to: you | log .jitso/launches.jsonl`.
+
 ## Line by line
 
 | Line | Fields | What it limits or tells |
 |---|---|---|
-| 1 header | launch id, `role/type`, mode and who it asks, build id and version | The id is what `close`, `analyze` and the registry use. `mode direct (asks you)` means the worker may ask its human. `mode fleet (asks your conductor)` means it never does. A build from another layer ends with its layer in parentheses, `(parent)` or `(user)`. A draft ends with `(draft)`: it is not approved. |
+| 1 header | launch id, `role/type`, mode and who it asks, build id and version | The id is what `close` and the registry use. `mode direct (asks you)` means the worker may ask its human. `mode fleet (asks your conductor)` means it never does. A build from another layer ends with its layer in parentheses, `(parent)` or `(user)`. A draft ends with `(draft)`: it is not approved. |
 | 2 model | model, effort, `bypass`, MCP servers, skills | `bypass` means the session runs with permission prompts skipped, so JITSO's rules at the end of `brief.md` and the hook are the only guard rails. `MCP` lists the only servers the session has (others are stripped). `skill` is what it must load before any other work (`none` when empty). |
 | 3 subagents | helper names, or `unrestricted (harness default)` | A listed set is a suggestion: `(suggested; others allowed)`. The names are the builds the worker was given as `--agents`. |
 | 4 `ROUTE-SCOPE:` | instruction-section ids, or `none` | The sections of the project's `.agents/instructions/` the session is routed to. It starts its own line so the instruction router can read it. Work outside this scope is outside the brief. |
 | 5 `launch:` | the command to start another session | `jitso launch`, or `bun run jitso launch` in a project whose `package.json` has a `jitso` script that is not blank. It is bare: a conductor adds `--mode fleet --run <run> --task <task>` itself. Only this command may start a session. |
-| 6 budget | token ceiling, list-price cap, who the report goes to, the registry path | The budget is the ceiling: near it, stop expanding and report. `(100%)` is the ceiling itself, not progress. The cap is a list-price estimate for comparing runs, not what was billed. `reports to: you` is direct mode, `your conductor` is fleet mode (read as "the launcher"). |
+| 6 budget | token ceiling, list-price cap (only when the build has a budget), who the report goes to, the registry path | When there is a budget it is the ceiling: near it, stop expanding and report. `(100%)` is the ceiling itself, not progress. The cap is a list-price estimate, not what was billed. `reports to: you` is direct mode, `your conductor` is fleet mode (read as "the launcher"). |
 
 ## Reading a card back to a human
 
-Say what the numbers mean, not just what they are. For the example: this is a direct launch of the automator build, it may ask the human, it runs with permissions bypassed and two MCP servers, it must load one skill first, it is routed to two instruction sections, and its budget ceiling is the token figure on line six. If a field you expected is `none`, say so: an empty `MCP none` means the session has no MCP servers at all.
+Say what the numbers mean, not just what they are. For the example: this is a direct launch of the automator build, it may ask the human, it runs with permissions bypassed and two MCP servers, it must load one skill first, it is routed to two instruction sections, and, if line six has a budget, its ceiling is the token figure there. If a field you expected is `none`, say so: an empty `MCP none` means the session has no MCP servers at all.
 
 ## What differs by mode
 

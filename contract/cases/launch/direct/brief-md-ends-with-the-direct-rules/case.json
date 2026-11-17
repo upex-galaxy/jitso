@@ -4,7 +4,7 @@
   "source": [
     "intended: docs/decisions.md, the v0.1.0 cut, rows 1 and 2: the launch appends JITSO's rules text to the end of brief.md"
   ],
-  "intent": "A direct launch of a build with a budget appends the short JITSO rules to the end of brief.md: a blank line after the brief, then the four-line direct text (it says the human may be asked, and it names the card's budget as the ceiling). The end of the file is pinned by an anchored regex and the card and the brief by contains. Every fixture build has a budget, so the no-budget texts are covered by the unit tests of internal/card only.",
+  "intent": "A direct launch of a build with a budget appends the short JITSO rules to the end of brief.md: a blank line after the brief, then the four-line direct text (it says the human may be asked, and it names the card's budget as the ceiling). The end of the file is pinned by an anchored regex and the card and the brief by contains. The text of a build without a budget is pinned by launch/direct/no-budget-brief-md-ends-with-the-direct-rules.",
   "project": {
     "files": {
       ".jitso/briefs/brief.md": {

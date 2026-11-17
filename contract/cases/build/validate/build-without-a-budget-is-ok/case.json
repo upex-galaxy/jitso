@@ -1,0 +1,40 @@
+{
+  "id": "build/validate/build-without-a-budget-is-ok",
+  "title": "a worker build without a budget mapping validates: build validate prints ok and exits 0",
+  "source": [
+    "intended: docs/decisions.md, the v0.1.0 cut (budget is optional on every build)"
+  ],
+  "intent": "A build with no `budget` key is valid on every tier. `build validate no-budget` prints its ok line and the summary, exits 0, prints nothing on stderr and never calls orca. The file is a complete worker build that differs from a normal one only in having no budget.",
+  "project": {
+    "files": {
+      "jitso/builds/no-budget.yaml": {
+        "from": "no-budget.yaml"
+      }
+    }
+  },
+  "steps": [
+    {
+      "run": [
+        "build",
+        "validate",
+        "no-budget"
+      ],
+      "expect": {
+        "exit": 0,
+        "stdout": [
+          {
+            "equals": "ok no-budget repo jitso/builds/no-budget.yaml\nchecked 1 builds: 1 ok, 0 invalid\n"
+          }
+        ],
+        "stderr": [
+          {
+            "empty": true
+          }
+        ],
+        "orca_calls": {
+          "empty": true
+        }
+      }
+    }
+  ]
+}

@@ -1,19 +1,17 @@
 {
   "id": "registry/v1-lines-are-skipped",
-  "title": "a registry line written at schema v1 (preset keys) is an invalid line for every reader: close, analyze, launch --parent, reap, tree and the SessionEnd hook see no launch, and nothing is written",
+  "title": "a registry line written at schema v1 (preset keys) is an invalid line for every reader: close, launch --parent, reap and the SessionEnd hook see no launch, and nothing is written",
   "source": [
     "intended: docs/decisions.md registry v2 decision (defect N-31)"
   ],
   "defect": "N-31",
-  "intent": "INTENDED behavior (defect N-31, owner answer A6). The registry log is schema v2: a line with `v: 1` is an invalid line like any other, skipped by every reader. The one line of the project is a complete v1 launch line, so `close <id>`, `analyze <id>` and `launch --parent <id>` answer that the id is unknown (exit 2, no orca call), `reap` ends nothing and counts zero, `tree` prints `jitso tree: no launches`, the SessionEnd hook of the line's session appends nothing, and the file keeps its one line.",
+  "intent": "INTENDED behavior (defect N-31, owner answer A6). The registry log is schema v2: a line with `v: 1` is an invalid line like any other, skipped by every reader. The one line of the project is a complete v1 launch line, so `close <id>` and `launch --parent <id>` answer that the id is unknown (exit 2, no orca call), `reap` ends nothing and counts zero, the SessionEnd hook of the line's session appends nothing, and the file keeps its one line.",
   "project": {
     "files": {
       ".jitso/launches.jsonl": "{\"event\":\"launch\",\"v\":1,\"id\":\"L20261113T142233-a3f9\",\"parent\":null,\"root\":\"L20261113T142233-a3f9\",\"depth\":0,\"ts\":\"2026-11-13T14:22:33.000Z\",\"mode\":\"direct\",\"preset\":\"haiku-explorer\",\"session_id\":\"sess-1\",\"orca\":{\"run\":null,\"task\":null,\"terminal\":\"term_fake\",\"title\":\"t [jitso:L20261113T142233-a3f9]\"},\"transcript_path\":\"{{PROJECT}}/.jitso/transcripts/11111111-2222-3333-4444-555555555555.jsonl\"}\n",
       ".jitso/briefs/brief.md": {
         "from": "brief.md"
-      },
-      "jitso/prices.json": "{\n  \"version\": 1,\n  \"label\": \"predicho\",\n  \"source\": \"Fit from the E9 verdict of the JITSO design work (.session/jitso), carried over from analyzer v0. It is NOT an official price list: it estimates list cost for comparing runs, not what was billed.\",\n  \"verified_on\": \"2030-01-01\",\n  \"unit\": \"USD per million tokens\",\n  \"models\": {\n    \"sonnet\": {\n      \"input\": 2.0,\n      \"cache_read\": 0.1,\n      \"cache_write_5m\": 2.5,\n      \"cache_write_1h\": 4.0,\n      \"output\": 10.0\n    },\n    \"opus\": {\n      \"input\": 4.0,\n      \"cache_read\": 0.2,\n      \"cache_write_5m\": 5.0,\n      \"cache_write_1h\": 8.0,\n      \"output\": 20.0\n    },\n    \"haiku\": {\n      \"input\": 100.0,\n      \"cache_read\": 0.01,\n      \"cache_write_5m\": 0.125,\n      \"cache_write_1h\": 0.2,\n      \"output\": 1000.0\n    }\n  }\n}\n",
-      ".jitso/transcripts/11111111-2222-3333-4444-555555555555.jsonl": "{\"type\":\"assistant\",\"uuid\":\"u-m1-0:00.000\",\"timestamp\":\"2026-11-13T05:00:00.000Z\",\"message\":{\"id\":\"m1\",\"model\":\"claude-haiku-5-5\",\"usage\":{\"input_tokens\":10,\"output_tokens\":5},\"content\":[{\"type\":\"tool_use\",\"name\":\"Read\",\"input\":{\"file_path\":\"/repo/README.md\"}}]}}\n"
+      }
     }
   },
   "orca": {
@@ -23,24 +21,6 @@
     {
       "run": [
         "close",
-        "L20261113T142233-a3f9"
-      ],
-      "expect": {
-        "exit": 2,
-        "stderr": [
-          "JITSO REJECTED: unknown launch L20261113T142233-a3f9"
-        ],
-        "orca_calls": {
-          "empty": true
-        },
-        "registry": {
-          "count": 1
-        }
-      }
-    },
-    {
-      "run": [
-        "analyze",
         "L20261113T142233-a3f9"
       ],
       "expect": {
@@ -90,7 +70,7 @@
         "exit": 0,
         "stdout": [
           {
-            "regex": "(?m)^jitso reap: 0 launch\\(es\\) marked ended, 0 unlogged worker\\(s\\), 0 analyzed$"
+            "regex": "(?m)^jitso reap: 0 launch\\(es\\) marked ended, 0 unlogged worker\\(s\\)$"
           }
         ],
         "registry": {
@@ -112,22 +92,6 @@
       },
       "expect": {
         "exit": 0,
-        "registry": {
-          "count": 1
-        }
-      }
-    },
-    {
-      "run": [
-        "tree"
-      ],
-      "expect": {
-        "exit": 0,
-        "stdout": [
-          {
-            "equals": "jitso tree: no launches\n"
-          }
-        ],
         "registry": {
           "count": 1
         }

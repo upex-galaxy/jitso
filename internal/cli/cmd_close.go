@@ -6,7 +6,7 @@ import (
 	"github.com/upex-galaxy/jitso/internal/closeout"
 )
 
-// lifecycleNow is the clock of close, reap and analyze: the context's, or the
+// lifecycleNow is the clock of close and reap: the context's, or the
 // real one when a test left it unset.
 func lifecycleNow(ctx *Context) func() time.Time {
 	if ctx.Sys.Now != nil {

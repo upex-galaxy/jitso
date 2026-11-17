@@ -6,7 +6,7 @@
     "intended: defect N-28"
   ],
   "defect": "N-28",
-  "intent": "INTENDED behavior (defect N-28). A worker with a terminal handle is flagged once across every run and every reap (the first run it was seen in names the evidence), and the summary counts the rule_break lines this reap wrote.",
+  "intent": "INTENDED behavior (defect N-28). A worker with a terminal handle is listed once per reap however many runs show it (the first run it was seen in names the evidence), and the summary counts the lines this reap printed.",
   "project": {
     "files": {
       ".jitso/launches.jsonl": "{\"v\":2,\"event\":\"launch\",\"id\":\"L20261113T142233-a3f9\",\"parent\":null,\"root\":\"L20261113T142233-a3f9\",\"depth\":0,\"ts\":\"2026-11-13T14:22:33.000Z\",\"mode\":\"direct\",\"build\":\"haiku-explorer\",\"orca\":{\"run\":\"run_1\",\"task\":\"t\",\"terminal\":\"term_logged\",\"title\":\"t [jitso:L20261113T142233-a3f9]\"}}\n"
@@ -47,7 +47,10 @@
         "exit": 0,
         "stdout": [
           {
-            "regex": "(?m)^jitso reap: 0 launch\\(es\\) marked ended, 1 unlogged worker\\(s\\), 0 analyzed$"
+            "regex": "(?m)^jitso reap: 0 launch\\(es\\) marked ended, 1 unlogged worker\\(s\\)$"
+          },
+          {
+            "regex": "(?m)^unlogged worker: worker term_rogue in run run_9 has no launch event$"
           }
         ],
         "orca_calls": {
@@ -88,17 +91,7 @@
           ]
         },
         "registry": {
-          "count": 2,
-          "events": [
-            {
-              "at": 1,
-              "event": "rule_break",
-              "fields": {
-                "kind": "unlogged_worker",
-                "evidence": "worker term_rogue in run run_9 has no launch event"
-              }
-            }
-          ]
+          "count": 1
         }
       }
     }

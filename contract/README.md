@@ -66,7 +66,7 @@ nested or parent folders, or other versions; re-measure when Claude Code is upgr
 
 ## What the suite does not cover
 
-Orca's own behavior, the real Claude Code TUI, the price numbers in `prices.json`, and
+Orca's own behavior, the real Claude Code TUI, and
 white-box details of the Go code (function names, types). Cases that execute a
 generated `run.sh` need `/bin/sh` and carry the tag `posix`. A case also cannot run as another OS: the host binary always reports the host's `GOOS`, so the Windows branch of `doctor` (N-20 `shell`) is a Go unit test.
 

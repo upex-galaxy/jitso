@@ -1,9 +1,6 @@
 package registry
 
-import "github.com/upex-galaxy/jitso/internal/jsonx"
-
-// Record is an event a writer appends: one of *LaunchEvent, *EndEvent,
-// *AnalyzedEvent or *RuleBreakEvent. Append sets V and Event itself.
+// Record is an event a writer appends: one of *LaunchEvent or *EndEvent. Append sets V and Event itself.
 type Record interface {
 	kind() string
 	stamp()
@@ -98,72 +95,3 @@ type EndEvent struct {
 
 func (*EndEvent) kind() string { return KindEnd }
 func (e *EndEvent) stamp()     { e.V, e.Event = Version, KindEnd }
-
-// AnalyzedEvent is what jitso analyze appends for a launch.
-type AnalyzedEvent struct {
-	V           int    `json:"v"`
-	Event       string `json:"event"`
-	ID          string `json:"id"`
-	TS          string `json:"ts"`
-	Analyzer    string `json:"analyzer"`
-	Turns       int64  `json:"turns"`
-	Requests    int64  `json:"requests"`
-	PeakContext int64  `json:"peak_context"`
-	// BudgetPct is left out when the launch has no token budget.
-	BudgetPct     *float64    `json:"budget_pct,omitempty"`
-	Tokens        TokenCounts `json:"tokens"`
-	CostUSDList   float64     `json:"cost_usd_list"`
-	PriceTable    string      `json:"price_table"`
-	DurationMin   *float64    `json:"duration_min"`
-	SubagentFiles int64       `json:"subagent_files"`
-	// ByModel maps a model family to its totals, in the analyzer's order.
-	ByModel jsonx.Object `json:"by_model"`
-	// ToolsUsed maps a tool name to its call count, in the analyzer's order.
-	ToolsUsed     jsonx.Object     `json:"tools_used"`
-	RuleBreaks    []RuleBreakCount `json:"rule_breaks"`
-	Verdict       string           `json:"verdict"`
-	VerdictReason string           `json:"verdict_reason"`
-}
-
-// TokenCounts are the token totals of an analysis.
-type TokenCounts struct {
-	Input      int64 `json:"input"`
-	CacheRead  int64 `json:"cache_read"`
-	CacheWrite int64 `json:"cache_write"`
-	Output     int64 `json:"output"`
-}
-
-// RuleBreakCount is one entry of an analyzed event's rule_breaks.
-type RuleBreakCount struct {
-	Kind  string `json:"kind"`
-	Count int64  `json:"count"`
-}
-
-func (*AnalyzedEvent) kind() string { return KindAnalyzed }
-
-func (e *AnalyzedEvent) stamp() {
-	e.V, e.Event = Version, KindAnalyzed
-	if e.ByModel == nil {
-		e.ByModel = jsonx.Object{}
-	}
-	if e.ToolsUsed == nil {
-		e.ToolsUsed = jsonx.Object{}
-	}
-	if e.RuleBreaks == nil {
-		e.RuleBreaks = []RuleBreakCount{}
-	}
-}
-
-// RuleBreakEvent records a broken rule; ID is nil for one with no launch
-// (an unlogged worker).
-type RuleBreakEvent struct {
-	V        int     `json:"v"`
-	Event    string  `json:"event"`
-	ID       *string `json:"id"`
-	TS       string  `json:"ts"`
-	Kind     string  `json:"kind"`
-	Evidence string  `json:"evidence"`
-}
-
-func (*RuleBreakEvent) kind() string { return KindRuleBreak }
-func (e *RuleBreakEvent) stamp()     { e.V, e.Event = Version, KindRuleBreak }

@@ -13,7 +13,7 @@ func TestRender(t *testing.T) {
 	}{
 		{"direct, no lists", Input{ID: "L20261113T142233-a3f9", Role: "operator", Type: "explorer", Mode: "direct", Build: "haiku-explorer",
 			BuildVersion: "1", Model: "claude-haiku-5-5", Effort: "low", RouteScope: []string{"none"}, LaunchCommand: CommandPlain,
-			BudgetTokens: 250000, BudgetUSD: 0.5},
+			HasBudget: true, BudgetTokens: 250000, BudgetUSD: 0.5},
 			"JITSO L20261113T142233-a3f9 | operator/explorer | mode direct (asks you) | build haiku-explorer v1\n" +
 				"model claude-haiku-5-5 effort low | bypass | MCP none | skill none\n" +
 				"subagents unrestricted (harness default)\n" +
@@ -22,7 +22,7 @@ func TestRender(t *testing.T) {
 				"budget 250k tokens (100%), list cap US$ 0.50 | reports to: you | log .jitso/launches.jsonl"},
 		{"fleet, lists", Input{ID: "L1", Role: "operator", Type: "automator", Mode: "fleet", Build: "sonnet-automator", BuildVersion: "2",
 			Model: "m", Effort: "medium", MCP: []string{"dbhub", "openapi"}, SkillsFirst: []string{"a", "b"}, Subagents: []string{"plan", "code"},
-			RouteScope: []string{"code-quickref", "ticket-work"}, LaunchCommand: CommandBunRun, BudgetTokens: 400000, BudgetUSD: 6},
+			RouteScope: []string{"code-quickref", "ticket-work"}, LaunchCommand: CommandBunRun, HasBudget: true, BudgetTokens: 400000, BudgetUSD: 6},
 			"JITSO L1 | operator/automator | mode fleet (asks your conductor) | build sonnet-automator v2\n" +
 				"model m effort medium | bypass | MCP dbhub,openapi | skill a,b\n" +
 				"subagents plan,code (suggested; others allowed)\n" +
@@ -30,6 +30,18 @@ func TestRender(t *testing.T) {
 				"launch: bun run jitso launch\n" +
 				"budget 400k tokens (100%), list cap US$ 6.00 | reports to: your conductor | log .jitso/launches.jsonl"},
 	}
+	// A build without a budget keeps six lines and drops the budget segment.
+	tests = append(tests, struct {
+		name string
+		in   Input
+		want string
+	}{"fleet, no budget", Input{ID: "L1", Role: "operator", Type: "automator", Mode: "fleet", Build: "b", BuildVersion: "1", Model: "m", Effort: "low", LaunchCommand: CommandPlain},
+		"JITSO L1 | operator/automator | mode fleet (asks your conductor) | build b v1\n" +
+			"model m effort low | bypass | MCP none | skill none\n" +
+			"subagents unrestricted (harness default)\n" +
+			"ROUTE-SCOPE: none\n" +
+			"launch: jitso launch\n" +
+			"reports to: your conductor | log .jitso/launches.jsonl"})
 	// The header names the layer of a parent, user or draft build, and only those.
 	base := Input{ID: "L1", Role: "operator", Type: "explorer", Mode: "direct", Build: "b", BuildVersion: "1", Model: "m", Effort: "low", LaunchCommand: CommandPlain}
 	for _, layer := range []string{"", "repo", "parent", "user", "draft"} {
@@ -45,7 +57,7 @@ func TestRender(t *testing.T) {
 			want string
 		}{"layer " + layer, in, want + "\n" + "model m effort low | bypass | MCP none | skill none\n" +
 			"subagents unrestricted (harness default)\nROUTE-SCOPE: none\nlaunch: jitso launch\n" +
-			"budget 0k tokens (100%), list cap US$ 0.00 | reports to: you | log .jitso/launches.jsonl"})
+			"reports to: you | log .jitso/launches.jsonl"})
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

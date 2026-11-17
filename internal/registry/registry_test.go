@@ -84,38 +84,21 @@ func TestAppendLaunchShape(t *testing.T) {
 
 func TestAppendNoHTMLEscape(t *testing.T) {
 	s := newStore(t)
-	if err := s.Append(&RuleBreakEvent{TS: ts, Kind: "unlogged_worker", Evidence: "<id> & <file>"}); err != nil {
+	if err := s.Append(&EndEvent{ID: "L20261113T142233-ab12", TS: ts, Source: "reap", OutcomeReported: "none", FooterPath: str("<id> & <file>")}); err != nil {
 		t.Fatal(err)
 	}
 	data, _ := os.ReadFile(s.Path())
-	if !strings.Contains(string(data), `"evidence":"<id> & <file>"`) || !strings.Contains(string(data), `"id":null`) {
+	if !strings.Contains(string(data), `"footer_path":"<id> & <file>"`) {
 		t.Errorf("line %s", data)
 	}
 }
 
-func TestAppendAnalyzed(t *testing.T) {
-	s := newStore(t)
-	if err := s.Append(&AnalyzedEvent{ID: "L20261113T142233-ab12", TS: ts, Analyzer: "jitso-analyze@1", Verdict: "unknown"}); err != nil {
-		t.Fatal(err)
-	}
-	got := readLines(t, s)[0]
-	if _, present := got["budget_pct"]; present {
-		t.Error("budget_pct must be left out when nil")
-	}
-	for _, k := range []string{"by_model", "tools_used"} {
-		if !reflect.DeepEqual(got[k], map[string]any{}) {
-			t.Errorf("%s = %#v", k, got[k])
+func TestValidateRejectsRetiredKinds(t *testing.T) {
+	for _, kind := range []string{"analyzed", "rule_break"} {
+		problems := Validate(map[string]any{"v": 2.0, "event": kind, "ts": ts})
+		if len(problems) != 1 || problems[0] != "event must be one of launch|end" {
+			t.Errorf("%s: %v", kind, problems)
 		}
-	}
-	if got["duration_min"] != nil || !reflect.DeepEqual(got["rule_breaks"], []any{}) {
-		t.Errorf("duration_min %v rule_breaks %v", got["duration_min"], got["rule_breaks"])
-	}
-	pct := 12.5
-	if err := s.Append(&AnalyzedEvent{ID: "L20261113T142233-ab12", TS: ts, Analyzer: "a", Verdict: "fail", BudgetPct: &pct}); err != nil {
-		t.Fatal(err)
-	}
-	if got := readLines(t, s)[1]["budget_pct"]; got != 12.5 {
-		t.Errorf("budget_pct %v", got)
 	}
 }
 
@@ -129,7 +112,6 @@ func TestAppendRejectsInvalid(t *testing.T) {
 		{"bad ts", func() Record { l := launch("L20261113T142233-ab12"); l.TS = "not a date"; return l }(), "invalid launch event: ts must be an ISO timestamp"},
 		{"empty build", func() Record { l := launch("L20261113T142233-ab12"); l.Build = ""; return l }(), "invalid launch event: build must be a non-empty string"},
 		{"bad source", &EndEvent{ID: "x", TS: ts, Source: "nope", OutcomeReported: "none"}, "invalid end event: source must be one of worker_done|session_end_hook|jitso_close|reap"},
-		{"bad kind", &RuleBreakEvent{TS: ts, Kind: "x", Evidence: "e"}, "invalid rule_break event: kind must be one of"},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -228,10 +210,6 @@ func TestFold(t *testing.T) {
 		&EndEvent{ID: "L20261113T142233-cccc", TS: ts, Source: "reap", OutcomeReported: "none"},
 		launch(b),
 		second,
-		&AnalyzedEvent{ID: a, TS: ts, Analyzer: "one", Verdict: "unknown"},
-		&AnalyzedEvent{ID: a, TS: ts, Analyzer: "two", Verdict: "unknown"},
-		&RuleBreakEvent{ID: str(a), TS: ts, Kind: "secret_path_read", Evidence: "e"},
-		&RuleBreakEvent{TS: ts, Kind: "unlogged_worker", Evidence: "w"},
 		&EndEvent{ID: b, TS: ts, Source: "jitso_close", OutcomeReported: "none", FooterPath: str("/f")},
 	}
 	for _, r := range recs {
@@ -250,11 +228,8 @@ func TestFold(t *testing.T) {
 	if p, _ := la.Launch.String("build"); p != "first" {
 		t.Errorf("first launch line must win, got %s", p)
 	}
-	if an, _ := la.Analyzed.String("analyzer"); an != "two" {
-		t.Errorf("later analyzed must win, got %s", an)
-	}
-	if la.Ended() || len(la.RuleBreaks) != 1 {
-		t.Errorf("a: ended %v rule breaks %d", la.Ended(), len(la.RuleBreaks))
+	if la.Ended() {
+		t.Error("a must not be ended")
 	}
 	lb, _ := Find(launches, b)
 	if !lb.Ended() {

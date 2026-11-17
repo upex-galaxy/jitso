@@ -59,11 +59,10 @@ func (f *fakeOrca) Call(args []string) (map[string]any, error) {
 }
 
 type harness struct {
-	deps    Deps
-	store   *registry.FileStore
-	orca    *fakeOrca
-	stderr  []string
-	analyze []string
+	deps   Deps
+	store  *registry.FileStore
+	orca   *fakeOrca
+	stderr []string
 }
 
 func newHarness(t *testing.T, registryText string, f *fakeOrca) *harness {
@@ -83,12 +82,7 @@ func newHarness(t *testing.T, registryText string, f *fakeOrca) *harness {
 		Store: store,
 		Orca:  f,
 		Now:   func() time.Time { return time.Date(2026, 11, 13, 14, 23, 33, 0, time.UTC) },
-		Analyze: func(id string) error {
-			h.analyze = append(h.analyze, id)
-			return nil
-		},
-		TranscriptExists: func(p string) bool { return p == "/there.jsonl" },
-		Err:              func(line string) { h.stderr = append(h.stderr, line) },
+		Err:   func(line string) { h.stderr = append(h.stderr, line) },
 	}
 	return h
 }
@@ -102,8 +96,14 @@ func (h *harness) events(t *testing.T) []registry.Event {
 	return events
 }
 
-func summary(ended, unlogged, analyzed int) string {
-	return "jitso reap: " + strconv.Itoa(ended) + " launch(es) marked ended, " + strconv.Itoa(unlogged) + " unlogged worker(s), " + strconv.Itoa(analyzed) + " analyzed"
+// output is what Run returns: one `unlogged worker:` line per evidence, then
+// the summary line.
+func output(ended int, evidence ...string) string {
+	var b strings.Builder
+	for _, e := range evidence {
+		b.WriteString("unlogged worker: " + e + "\n")
+	}
+	return b.String() + "jitso reap: " + strconv.Itoa(ended) + " launch(es) marked ended, " + strconv.Itoa(len(evidence)) + " unlogged worker(s)"
 }
 
 func TestParseArgs(t *testing.T) {
@@ -175,7 +175,7 @@ func TestEndPhase(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			h := newHarness(t, tt.registry, &fakeOrca{live: tt.live})
 			out, err := Run(nil, h.deps)
-			if err != nil || out != summary(tt.ended, 0, 0) {
+			if err != nil || out != output(tt.ended) {
 				t.Fatalf("out %q err %v", out, err)
 			}
 			events := h.events(t)
@@ -203,7 +203,7 @@ func TestEndPhase(t *testing.T) {
 
 func TestSecondReapIsANoOp(t *testing.T) {
 	h := newHarness(t, launch(idA, orcaRef("term_a", ""), ""), &fakeOrca{})
-	for i, want := range []string{summary(1, 0, 0), summary(0, 0, 0)} {
+	for i, want := range []string{output(1), output(0)} {
 		if out, err := Run(nil, h.deps); err != nil || out != want {
 			t.Fatalf("run %d: %q %v, want %q", i+1, out, err, want)
 		}
@@ -238,55 +238,47 @@ func TestAuditPhase(t *testing.T) {
 	tests := []struct {
 		name     string
 		workers  []map[string]any
-		unlogged int
-		evidence string // the evidence of the rule_break written, "" for none
+		evidence string // the evidence of the line printed, "" for none
 	}{
-		{"explained by handle", []map[string]any{{"agentTerminalHandle": "term_logged"}}, 0, ""},
-		{"explained by nested handle", []map[string]any{{"resource": map[string]any{"terminalHandle": "term_logged"}}}, 0, ""},
-		{"explained by a mark in a field", []map[string]any{{"agentTerminalHandle": "term_x", "title": mark}}, 0, ""},
-		{"explained by a mark at depth", []map[string]any{{"agentTerminalHandle": "term_y", "meta": map[string]any{"tags": []any{"x", mark}}}}, 0, ""},
-		{"a key holding the mark does not explain", []map[string]any{{"agentTerminalHandle": "term_k", "meta": map[string]any{mark: "v"}}}, 1, "worker term_k in run run_1 has no launch event"},
-		{"unknown handle", []map[string]any{{"agentTerminalHandle": "term_rogue"}}, 1, "worker term_rogue in run run_1 has no launch event"},
-		{"the mark of an unknown launch explains nothing", []map[string]any{{"agentTerminalHandle": "term_o", "title": "x [jitso:L20990101T000000-ffff]"}}, 1, "worker term_o in run run_1 has no launch event"},
-		{"no handle", []map[string]any{{"title": "nameless"}}, 1, "worker (no terminal handle) in run run_1 has no launch event"},
-		{"non-string handle falls back to nested", []map[string]any{{"agentTerminalHandle": 5.0, "resource": map[string]any{"terminalHandle": "term_logged"}}}, 0, ""},
+		{"explained by handle", []map[string]any{{"agentTerminalHandle": "term_logged"}}, ""},
+		{"explained by nested handle", []map[string]any{{"resource": map[string]any{"terminalHandle": "term_logged"}}}, ""},
+		{"explained by a mark in a field", []map[string]any{{"agentTerminalHandle": "term_x", "title": mark}}, ""},
+		{"explained by a mark at depth", []map[string]any{{"agentTerminalHandle": "term_y", "meta": map[string]any{"tags": []any{"x", mark}}}}, ""},
+		{"a key holding the mark does not explain", []map[string]any{{"agentTerminalHandle": "term_k", "meta": map[string]any{mark: "v"}}}, "worker term_k in run run_1 has no launch event"},
+		{"unknown handle", []map[string]any{{"agentTerminalHandle": "term_rogue"}}, "worker term_rogue in run run_1 has no launch event"},
+		{"the mark of an unknown launch explains nothing", []map[string]any{{"agentTerminalHandle": "term_o", "title": "x [jitso:L20990101T000000-ffff]"}}, "worker term_o in run run_1 has no launch event"},
+		{"no handle", []map[string]any{{"title": "nameless"}}, "worker (no terminal handle) in run run_1 has no launch event"},
+		{"non-string handle falls back to nested", []map[string]any{{"agentTerminalHandle": 5.0, "resource": map[string]any{"terminalHandle": "term_logged"}}}, ""},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			f := &fakeOrca{live: []string{"term_logged"}, workers: map[string]map[string]any{"run_1": workersResult(tt.workers...)}}
 			h := newHarness(t, known, f)
+			var want []string
+			if tt.evidence != "" {
+				want = []string{tt.evidence}
+			}
 			out, err := Run(nil, h.deps)
-			if err != nil || out != summary(0, tt.unlogged, 0) {
+			if err != nil || out != output(0, want...) {
 				t.Fatalf("out %q err %v", out, err)
 			}
-			events := h.events(t)
-			if tt.evidence == "" {
-				if len(events) != 1 {
-					t.Errorf("%d events, want 1", len(events))
-				}
-				return
-			}
-			rb := events[len(events)-1]
-			if ev, _ := rb.String("evidence"); rb.Kind() != registry.KindRuleBreak || ev != tt.evidence || rb["id"] != nil {
-				t.Errorf("rule_break %v", rb)
-			}
-			if kind, _ := rb.String("kind"); kind != "unlogged_worker" {
-				t.Errorf("kind %q", kind)
+			if n := len(h.events(t)); n != 1 {
+				t.Errorf("%d events, want 1: the audit writes nothing", n)
 			}
 		})
 	}
 }
 
-func TestRuleBreakIsWrittenOnce(t *testing.T) {
+func TestUnloggedWorkerIsListedByEveryReap(t *testing.T) {
 	f := &fakeOrca{live: []string{"term_logged", "term_rogue"}, workers: map[string]map[string]any{"run_1": workersResult(map[string]any{"agentTerminalHandle": "term_rogue"})}}
 	h := newHarness(t, launch(idA, orcaRef("term_logged", "run_1"), ""), f)
-	for i, want := range []int{1, 0} {
-		if out, err := Run(nil, h.deps); err != nil || out != summary(0, want, 0) {
-			t.Fatalf("run %d: %q %v (the count is what this reap wrote)", i+1, out, err)
+	for i := 1; i <= 2; i++ {
+		if out, err := Run(nil, h.deps); err != nil || out != output(0, "worker term_rogue in run run_1 has no launch event") {
+			t.Fatalf("run %d: %q %v", i, out, err)
 		}
 	}
-	if n := len(h.events(t)); n != 2 {
-		t.Errorf("%d events, want 2", n)
+	if n := len(h.events(t)); n != 1 {
+		t.Errorf("%d events, want 1: nothing is written", n)
 	}
 }
 
@@ -298,53 +290,40 @@ func TestRunOrderAndDedup(t *testing.T) {
 	}
 	h := newHarness(t, launch(idA, orcaRef("term_logged", "run_1"), ""), f)
 	out, err := Run([]string{"run_9", "run_8", "run_9", "run_1"}, h.deps)
-	if err != nil || out != summary(0, 1, 0) {
+	if err != nil || out != output(0, "worker term_rogue in run run_9 has no launch event") {
 		t.Fatalf("out %q err %v", out, err)
 	}
 	want := []string{"terminal list", "orchestration worker-list run_9", "orchestration worker-list run_8", "orchestration worker-list run_1"}
 	if !reflect.DeepEqual(f.calls, want) {
 		t.Errorf("calls %v, want %v", f.calls, want)
 	}
-	events := h.events(t)
-	if len(events) != 2 {
-		t.Fatalf("%d events: one rule_break for the worker across all runs, want 2", len(events))
-	}
-	if ev, _ := events[1].String("evidence"); ev != "worker term_rogue in run run_9 has no launch event" {
-		t.Errorf("the evidence names the first run it was seen in: %q", ev)
-	}
 }
 
-// TestUnloggedWorkerKeys pins TS-ODDITIES R4 (defect N-28): a worker with a
-// handle is flagged once across runs and across reaps, a worker with no handle
-// once per run, and a handle already named in the log is known.
+// TestUnloggedWorkerKeys pins what one reap lists: a worker with a handle once
+// however many runs show it, a worker with no handle once per run. Nothing is
+// remembered between reaps.
 func TestUnloggedWorkerKeys(t *testing.T) {
 	rogue := workersResult(map[string]any{"agentTerminalHandle": "term_rogue"})
 	nameless := workersResult(map[string]any{"title": "nameless"})
-	old := `{"v":2,"event":"rule_break","id":null,"ts":"2026-11-13T14:30:00.000Z","kind":"unlogged_worker","evidence":"worker term_rogue in run run_old has no launch event"}` + "\n"
 	tests := []struct {
-		name     string
-		registry string
-		runs     []string
-		workers  map[string]map[string]any
-		written  int
+		name    string
+		runs    []string
+		workers map[string]map[string]any
+		want    []string
 	}{
-		{"same handle in two runs", "", []string{"run_a", "run_b"}, map[string]map[string]any{"run_a": rogue, "run_b": rogue}, 1},
-		{"a handle named by an older line in another run", old, []string{"run_a"}, map[string]map[string]any{"run_a": rogue}, 0},
-		{"no handle in two runs is one line per run", "", []string{"run_a", "run_b"}, map[string]map[string]any{"run_a": nameless, "run_b": nameless}, 2},
-		{"no handle again in a known run", `{"v":2,"event":"rule_break","id":null,"ts":"2026-11-13T14:30:00.000Z","kind":"unlogged_worker","evidence":"worker (no terminal handle) in run run_a has no launch event"}` + "\n", []string{"run_a", "run_b"}, map[string]map[string]any{"run_a": nameless, "run_b": nameless}, 1},
-		{"another rule break kind is not a known worker", `{"v":2,"event":"rule_break","id":null,"ts":"2026-11-13T14:30:00.000Z","kind":"other","evidence":"worker term_rogue in run run_a has no launch event"}` + "\n", []string{"run_a"}, map[string]map[string]any{"run_a": rogue}, 1},
+		{"same handle in two runs", []string{"run_a", "run_b"}, map[string]map[string]any{"run_a": rogue, "run_b": rogue}, []string{"worker term_rogue in run run_a has no launch event"}},
+		{"no handle in two runs is one line per run", []string{"run_a", "run_b"}, map[string]map[string]any{"run_a": nameless, "run_b": nameless}, []string{"worker (no terminal handle) in run run_a has no launch event", "worker (no terminal handle) in run run_b has no launch event"}},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			f := &fakeOrca{workers: tt.workers}
-			h := newHarness(t, tt.registry, f)
-			before := len(h.events(t))
+			h := newHarness(t, "", f)
 			out, err := Run(tt.runs, h.deps)
-			if err != nil || out != summary(0, tt.written, 0) {
+			if err != nil || out != output(0, tt.want...) {
 				t.Fatalf("out %q err %v", out, err)
 			}
-			if n := len(h.events(t)) - before; n != tt.written {
-				t.Errorf("%d lines written, want %d", n, tt.written)
+			if n := len(h.events(t)); n != 0 {
+				t.Errorf("%d events written, want 0", n)
 			}
 		})
 	}
@@ -365,7 +344,7 @@ func TestRunUnknownToOrcaIsReportedAndSkipped(t *testing.T) {
 	f := &fakeOrca{errs: map[string]error{"run_1": errors.New("orca orchestration worker-list failed: no such run")}}
 	h := newHarness(t, launch(idA, orcaRef("term_a", "run_1"), ""), f)
 	out, err := Run(nil, h.deps)
-	if err != nil || out != summary(1, 0, 0) {
+	if err != nil || out != output(1) {
 		t.Fatalf("out %q err %v", out, err)
 	}
 	want := []string{"jitso: could not list the workers of run run_1: orca orchestration worker-list failed: no such run"}
@@ -395,70 +374,6 @@ func TestWorkersOf(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			if got := len(workersOf(tt.result)); got != tt.want {
 				t.Errorf("got %d workers, want %d", got, tt.want)
-			}
-		})
-	}
-}
-
-func TestAnalyzePhase(t *testing.T) {
-	withTranscript := func(id string) string {
-		return launch(id, orcaRef("term_a", ""), `,"transcript_path":"/there.jsonl"`)
-	}
-	analyzed := `{"v":2,"event":"analyzed","id":"` + idA + `","ts":"2026-11-13T15:00:00.000Z","analyzer":"x","peak_context":1,"cost_usd_list":0,"verdict":"unknown","tokens":{"input":0,"cache_read":0,"cache_write":0,"output":0}}` + "\n"
-	tests := []struct {
-		name     string
-		registry string
-		live     []string
-		ended    int
-		analyzed int
-		calls    []string
-	}{
-		{"just ended with a transcript", withTranscript(idA), nil, 1, 1, []string{idA}},
-		{"ended earlier with a transcript", withTranscript(idA) + endOf(idA), []string{"term_a"}, 0, 1, []string{idA}},
-		{"running launch is not analyzed", withTranscript(idA), []string{"term_a"}, 0, 0, nil},
-		{"already analyzed", withTranscript(idA) + endOf(idA) + analyzed, nil, 0, 0, nil},
-		{"transcript not on disk", launch(idA, orcaRef("term_a", ""), `,"transcript_path":"/missing.jsonl"`), nil, 1, 0, nil},
-		{"transcript path null", launch(idA, orcaRef("term_a", ""), `,"transcript_path":null`), nil, 1, 0, nil},
-		{"no transcript path", launch(idA, orcaRef("term_a", ""), ""), nil, 1, 0, nil},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			h := newHarness(t, tt.registry, &fakeOrca{live: tt.live})
-			out, err := Run(nil, h.deps)
-			if err != nil || out != summary(tt.ended, 0, tt.analyzed) {
-				t.Fatalf("out %q err %v", out, err)
-			}
-			if !reflect.DeepEqual(h.analyze, tt.calls) && !(len(h.analyze) == 0 && len(tt.calls) == 0) {
-				t.Errorf("analyze calls %v, want %v", h.analyze, tt.calls)
-			}
-			if len(h.stderr) != 0 {
-				t.Errorf("stderr %v", h.stderr)
-			}
-		})
-	}
-}
-
-func TestAnalyzeFailureIsReportedNotFatal(t *testing.T) {
-	text := launch(idA, orcaRef("term_a", ""), `,"transcript_path":"/there.jsonl"`)
-	tests := []struct {
-		name   string
-		err    error
-		stderr []string
-	}{
-		{"plain error", errors.New("open prices.json: no such file"), []string{"jitso: could not analyze " + idA + ": open prices.json: no such file"}},
-		{"rejection says why, then that reap moved on", fail.Rejectedf("launch %s has no transcript on disk yet", idA),
-			[]string{"JITSO REJECTED: launch " + idA + " has no transcript on disk yet", "jitso: could not analyze " + idA}},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			h := newHarness(t, text, &fakeOrca{})
-			h.deps.Analyze = func(string) error { return tt.err }
-			out, err := Run(nil, h.deps)
-			if err != nil || out != summary(1, 0, 0) {
-				t.Fatalf("out %q err %v", out, err)
-			}
-			if !reflect.DeepEqual(h.stderr, tt.stderr) {
-				t.Errorf("stderr %q, want %q", h.stderr, tt.stderr)
 			}
 		})
 	}

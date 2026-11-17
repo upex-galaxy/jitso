@@ -1,0 +1,52 @@
+{
+  "id": "registry/analyzed-and-rule-break-lines-are-invalid",
+  "title": "a line with event analyzed or rule_break, written by an older binary, is an invalid line every reader skips",
+  "source": [
+    "intended: docs/decisions.md, the v0.1.0 cut (the registry event kinds are launch and end)"
+  ],
+  "intent": "The registry accepts only `launch` and `end` events. A log written by an older binary can hold `analyzed` and `rule_break` lines: each is an invalid line, skipped like any corrupt line, so the launch before them still reads as running (reap leaves it alone and counts it nowhere), `jitso doctor` counts the two lines as skipped invalid lines, and the file is never rewritten.",
+  "project": {
+    "files": {
+      ".jitso/launches.jsonl": "{\"v\":2,\"event\":\"launch\",\"id\":\"L20261113T142233-a3f9\",\"parent\":null,\"root\":\"L20261113T142233-a3f9\",\"depth\":0,\"ts\":\"2026-11-13T14:22:33.000Z\",\"mode\":\"direct\",\"build\":\"haiku-explorer\",\"orca\":{\"run\":null,\"task\":null,\"terminal\":\"term_fake\",\"title\":\"t [jitso:L20261113T142233-a3f9]\"}}\n{\"v\":2,\"event\":\"analyzed\",\"id\":\"L20261113T142233-a3f9\",\"ts\":\"2026-11-13T15:00:00.000Z\",\"analyzer\":\"jitso-analyze@1\",\"verdict\":\"unknown\",\"rule_breaks\":[]}\n{\"v\":2,\"event\":\"rule_break\",\"id\":null,\"ts\":\"2026-11-13T15:00:00.000Z\",\"kind\":\"unlogged_worker\",\"evidence\":\"worker term_rogue in run run_1 has no launch event\"}\n"
+    }
+  },
+  "orca": {
+    "listed": [
+      "term_fake"
+    ]
+  },
+  "steps": [
+    {
+      "run": [
+        "reap"
+      ],
+      "expect": {
+        "exit": 0,
+        "stdout": [
+          {
+            "equals": "jitso reap: 0 launch(es) marked ended, 0 unlogged worker(s)\n"
+          }
+        ],
+        "registry": {
+          "count": 3
+        }
+      }
+    },
+    {
+      "run": [
+        "doctor"
+      ],
+      "expect": {
+        "exit": 0,
+        "stdout": [
+          {
+            "contains": "warn registry: .jitso/launches.jsonl: 1 launch, 1 running; 2 invalid lines skipped\n"
+          }
+        ],
+        "registry": {
+          "count": 3
+        }
+      }
+    }
+  ]
+}

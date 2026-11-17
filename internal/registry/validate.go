@@ -59,38 +59,8 @@ func Validate(v any) []string {
 		if !isOneOf(Outcomes, e["outcome_reported"]) {
 			add("outcome_reported must be one of " + strings.Join(Outcomes, "|"))
 		}
-	case KindAnalyzed:
-		if !isID(e["id"]) {
-			add("id must be a safe id")
-		}
-		if s, ok := e["analyzer"].(string); !ok || s == "" {
-			add("analyzer must be a non-empty string")
-		}
-		if !isCount(e["peak_context"]) {
-			add("peak_context must be a number >= 0")
-		}
-		if !isCount(e["cost_usd_list"]) {
-			add("cost_usd_list must be a number >= 0")
-		}
-		if !isOneOf(Verdicts, e["verdict"]) {
-			add("verdict must be one of " + strings.Join(Verdicts, "|"))
-		}
-		tokens, ok := e["tokens"].(map[string]any)
-		if !ok || !isCount(tokens["input"]) || !isCount(tokens["cache_read"]) || !isCount(tokens["cache_write"]) || !isCount(tokens["output"]) {
-			add("tokens must hold input, cache_read, cache_write and output as numbers >= 0")
-		}
-	case KindRuleBreak:
-		if id, present := e["id"]; !present || (id != nil && !isID(id)) {
-			add("id must be null or a safe id")
-		}
-		if !isOneOf(RuleBreakKinds, e["kind"]) {
-			add("kind must be one of " + strings.Join(RuleBreakKinds, "|"))
-		}
-		if s, ok := e["evidence"].(string); !ok || s == "" {
-			add("evidence must be a non-empty string")
-		}
 	default:
-		add("event must be one of launch|end|analyzed|rule_break")
+		add("event must be one of launch|end")
 	}
 	return problems
 }
@@ -103,11 +73,6 @@ func isID(v any) bool {
 func isOneOf(list []string, v any) bool {
 	s, ok := v.(string)
 	return ok && slices.Contains(list, s)
-}
-
-func isCount(v any) bool {
-	f, ok := v.(float64)
-	return ok && !math.IsInf(f, 0) && !math.IsNaN(f) && f >= 0
 }
 
 // timestampLayouts are the ISO 8601 forms accepted where the oracle accepts

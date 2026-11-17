@@ -1,26 +1,24 @@
 // Package reap is `jitso reap`: the audit that catches what the hooks cannot
-// see. Prevention lives in the guard hook; this is detection, in three phases.
+// see. Prevention lives in the guard hook; this is detection, in two phases.
 //
 //  1. A launch with no end event whose terminal is gone from `terminal list`
 //     gets an end event with source reap.
 //  2. Every worker of the runs the registry knows (plus any --run) that no
-//     launch explains becomes a rule_break of kind unlogged_worker. A worker
-//     is explained by its terminal handle matching a launch's, or by the
+//     launch explains is printed as an `unlogged worker:` line. A worker is
+//     explained by its terminal handle matching a launch's, or by the
 //     [jitso:<id>] mark of a known launch in any string of its entry. Orca has
 //     no verb that lists every run, so a run the registry never heard of is
-//     audited only when named with --run.
-//  3. Ended launches that have a transcript on disk and no analyzed event are
-//     analyzed; a failure there is reported and does not stop the reap.
+//     audited only when named with --run. The phase is output only: it writes
+//     no event and remembers nothing, so every reap lists the same worker
+//     again. A worker seen in several runs of one reap is listed once.
 //
-// The registry is read again at the start of every phase, so a later phase
-// sees what an earlier one wrote.
+// The registry is read again at the start of every phase, so the second sees
+// what the first wrote.
 package reap
 
 import (
-	"errors"
 	"fmt"
 	"math"
-	"os"
 	"regexp"
 	"slices"
 	"sort"
@@ -54,14 +52,8 @@ type Deps struct {
 	Store registry.Store
 	Orca  Orca
 	Now   func() time.Time
-	// Analyze analyzes one launch and returns nil when its analyzed event was
-	// written. A *fail.Error of kind Rejected is the analyzer's own refusal.
-	Analyze func(id string) error
-	// TranscriptExists tells whether a transcript path is on disk; nil means
-	// os.Stat.
-	TranscriptExists func(path string) bool
-	// Err receives the lines for stderr (a run that could not be listed, an
-	// analysis that failed); they do not fail the reap.
+	// Err receives the lines for stderr (a run that could not be listed); they
+	// do not fail the reap.
 	Err func(line string)
 }
 
@@ -78,7 +70,8 @@ func ParseArgs(args []string) ([]string, error) {
 	return runs, nil
 }
 
-// Run reaps and returns the summary line for stdout. extraRuns are the --run
+// Run reaps and returns the text for stdout: one `unlogged worker:` line per
+// worker no launch explains, then the summary line. extraRuns are the --run
 // values, audited in the order given before the runs the registry knows.
 func Run(extraRuns []string, d Deps) (string, error) {
 	live, err := d.Orca.ListHandles()
@@ -93,11 +86,12 @@ func Run(extraRuns []string, d Deps) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	analyzed, err := analyzeEnded(d)
-	if err != nil {
-		return "", err
+	lines := make([]string, 0, len(unlogged)+1)
+	for _, evidence := range unlogged {
+		lines = append(lines, "unlogged worker: "+evidence)
 	}
-	return fmt.Sprintf("jitso reap: %d launch(es) marked ended, %d unlogged worker(s), %d analyzed", ended, unlogged, analyzed), nil
+	lines = append(lines, fmt.Sprintf("jitso reap: %d launch(es) marked ended, %d unlogged worker(s)", ended, len(unlogged)))
+	return strings.Join(lines, "\n"), nil
 }
 
 // endGone is phase 1. A launch whose terminal handle is not in the list is
@@ -132,14 +126,14 @@ func endGone(d Deps, live []string) (int, error) {
 	return ended, nil
 }
 
-// auditWorkers is phase 2. It returns the number of rule_break lines this reap
-// wrote (TS-ODDITIES R4, defect N-28). A worker is keyed by its terminal handle
-// when it has one (so it is flagged once across runs and reaps) and by its
-// evidence text when it has none; a key already in the log is skipped.
-func auditWorkers(d Deps, extraRuns []string) (int, error) {
+// auditWorkers is phase 2. It returns the evidence text of each worker no
+// launch explains, in the order found. A worker is keyed by its terminal handle
+// when it has one (so it is listed once across runs) and by its evidence text
+// when it has none.
+func auditWorkers(d Deps, extraRuns []string) ([]string, error) {
 	launches, err := registry.ReadLaunches(d.Store)
 	if err != nil {
-		return 0, err
+		return nil, err
 	}
 	handles := map[string]bool{}
 	var marks []string
@@ -162,24 +156,8 @@ func auditWorkers(d Deps, extraRuns []string) (int, error) {
 		marks = append(marks, "[jitso:"+l.ID+"]")
 	}
 
-	// The workers already reported come from the raw events: a rule_break with
-	// a null id belongs to no launch, so the fold drops it.
-	events, err := d.Store.Events()
-	if err != nil {
-		return 0, err
-	}
-	known := map[string]bool{}
-	for _, e := range events {
-		if kind, _ := e.String("kind"); e.Kind() == registry.KindRuleBreak && kind == "unlogged_worker" {
-			if ev, ok := e.String("evidence"); ok {
-				for _, key := range keysOfEvidence(ev) {
-					known[key] = true
-				}
-			}
-		}
-	}
-
-	written := 0
+	var unlogged []string
+	seen := map[string]bool{}
 	for _, run := range runs {
 		res, err := d.Orca.Call([]string{"orchestration", "worker-list", "--run", run})
 		if err != nil {
@@ -201,68 +179,14 @@ func auditWorkers(d Deps, extraRuns []string) (int, error) {
 			if !hasHandle {
 				key = "evidence:" + evidence
 			}
-			if known[key] || known["evidence:"+evidence] {
+			if seen[key] {
 				continue
 			}
-			known[key] = true
-			known["evidence:"+evidence] = true
-			err := d.Store.Append(&registry.RuleBreakEvent{TS: jsonx.Time(d.Now()), Kind: "unlogged_worker", Evidence: evidence})
-			if err != nil {
-				return 0, err
-			}
-			written++
+			seen[key] = true
+			unlogged = append(unlogged, evidence)
 		}
 	}
-	return written, nil
-}
-
-// evidencePattern is the evidence text of an unlogged worker. Run ids hold no
-// space (runPattern), so the run is the last word before "has".
-var evidencePattern = regexp.MustCompile(`^worker (.+) in run ([^ ]+) has no launch event$`)
-
-// keysOfEvidence are the keys an unlogged_worker rule break already in the log
-// makes known: its evidence text, and the terminal handle it names, if any.
-func keysOfEvidence(evidence string) []string {
-	keys := []string{"evidence:" + evidence}
-	if m := evidencePattern.FindStringSubmatch(evidence); m != nil && m[1] != "(no terminal handle)" {
-		keys = append(keys, "handle:"+m[1])
-	}
-	return keys
-}
-
-// analyzeEnded is phase 3.
-func analyzeEnded(d Deps) (int, error) {
-	launches, err := registry.ReadLaunches(d.Store)
-	if err != nil {
-		return 0, err
-	}
-	exists := d.TranscriptExists
-	if exists == nil {
-		exists = func(p string) bool { _, err := os.Stat(p); return err == nil }
-	}
-	analyzed := 0
-	for _, l := range launches {
-		if !l.Ended() || l.Analyzed != nil {
-			continue
-		}
-		if path, ok := l.Launch.String("transcript_path"); !ok || !exists(path) {
-			continue
-		}
-		err := d.Analyze(l.ID)
-		if err == nil {
-			analyzed++
-			continue
-		}
-		var fe *fail.Error
-		if errors.As(err, &fe) && fe.Kind == fail.KindRejected {
-			// The analyzer refused and said why; reap adds that it moved on.
-			d.Err(fail.Text(err))
-			d.Err("jitso: could not analyze " + l.ID)
-		} else {
-			d.Err("jitso: could not analyze " + l.ID + ": " + err.Error())
-		}
-	}
-	return analyzed, nil
+	return unlogged, nil
 }
 
 // workersOf is the list of worker objects in a worker-list result: the

@@ -9,7 +9,7 @@
       "run": ["--help"],
       "expect": {
         "exit": 0,
-        "stdout": ["launch", "close", "reap", "tree", "analyze", "build", "list, validate, create, draft, save and discard builds", "version"],
+        "stdout": [{ "not_regex": "(?m)^  (tree|analyze) " }, "launch", "close", "reap", "build", "list, validate, create, draft, save and discard builds", "version"],
         "stderr": [{ "empty": true }],
         "orca_calls": { "empty": true }
       }

@@ -1,6 +1,6 @@
 ---
 name: jitso
-description: Use when launching, delegating to or supervising another agent session (a worker, conductor or subagent) in a project that has jitso/jitso.yaml, when writing a brief for one, reading a JITSO launch card, or running jitso launch, close, reap, analyze, build list, build validate or build draft. Also use for a JITSO REJECTED message, for a hook denial that names worker-start, start_worker, terminal create, build save, setup or install, and whenever the words worker, conductor, subagent, build, card, brief, route scope or fleet come up. Load it before spawning any agent session, even if the user never says JITSO, because in these projects only jitso launch may start one.
+description: Use when launching, delegating to or supervising another agent session (a worker, conductor or subagent) in a project that has jitso/jitso.yaml, when writing a brief for one, reading a JITSO launch card, or running jitso launch, close, reap, build list, build validate or build draft. Also use for a JITSO REJECTED message, for a hook denial that names worker-start, start_worker, terminal create, build save, setup or install, and whenever the words worker, conductor, subagent, build, card, brief, route scope or fleet come up. Load it before spawning any agent session, even if the user never says JITSO, because in these projects only jitso launch may start one.
 ---
 
 # JITSO
@@ -16,7 +16,7 @@ JITSO launches every agent session from an approved **build** (model, effort, MC
 
 `--mode` is required (a build's `mode_default` is not used). Fleet adds `--run <run> --task <task>`, and `--worktree <sel>` picks the Orca worktree. A build that `requires` a field needs `--field name=value`. Full flag list: `references/launching.md`.
 
-Never start a session any other way: not Orca worker start, not an Orca terminal or worktree that runs a harness, not the orca-bridge `start_worker` tool, not `claude`, `codex` or `opencode` by hand. A launch outside `jitso launch` has no card, no registry line and no budget. The hook denies the Orca forms. It does not catch a bare `claude`, so the rule binds you anyway.
+Never start a session any other way: not Orca worker start, not an Orca terminal or worktree that runs a harness, not the orca-bridge `start_worker` tool, not `claude`, `codex` or `opencode` by hand. A launch outside `jitso launch` has no card and no registry line. The hook denies the Orca forms. It does not catch a bare `claude`, so the rule binds you anyway.
 
 When the hook denies something, the reply looks like this:
 
@@ -37,7 +37,7 @@ Conductor, worker and subagent are tiers of one build (`tier:` in its file, work
 
 ## Read the card
 
-Six lines: header (launch id, role/type, mode, build), model line (model, effort, MCP servers, skills to load first), subagents (a suggestion, not a limit), `ROUTE-SCOPE:`, the `launch:` command, the budget and who it reports to. Line by line: `references/card.md`.
+Six lines: header (launch id, role/type, mode, build), model line (model, effort, MCP servers, skills to load first), subagents (a suggestion, not a limit), `ROUTE-SCOPE:`, the `launch:` command, the budget (only when the build has one) and who it reports to. Line by line: `references/card.md`.
 
 ## Brief rules in one breath
 
@@ -46,9 +46,7 @@ Headings `Goal`, `Scope`, `Done when`, `Report format`. English. Within the word
 ## After a launch
 
 - `jitso close <launch id>` saves the screen footer, writes the end event and closes that terminal.
-- `jitso reap` ends launches whose terminal is gone, flags workers no launch explains and analyzes ended launches that have a transcript.
-- `jitso analyze <launch id>` reads the transcript and writes turns, tokens, list cost and a verdict. It needs `jitso/prices.json`.
-- `jitso tree [<launch id>]` prints the launch tree with the rollups of each branch (read only).
+- `jitso reap` ends launches whose terminal is gone and lists workers no launch explains.
 - When a session ends, the SessionEnd hook writes its end event too. Details: `references/lifecycle.md`.
 
 ## Builds and drafts
@@ -57,7 +55,7 @@ Headings `Goal`, `Scope`, `Done when`, `Report format`. English. Within the word
 
 ## The rules at the end of brief.md
 
-Every launch appends JITSO's rules to the end of `brief.md`, after your brief. They say: start other sessions only with the card's `launch:` line; the card's budget is your ceiling, so near it stop and report; load the card's skills before any other work; a direct session may ask the human, a fleet worker never does and sends its questions and its final report to the session that launched it; leave `jitso/` and `.jitso/` alone except your own draft in `.jitso/drafts/`, and never run `jitso build save`. Read the end of your `brief.md` to see the exact text.
+Every launch appends JITSO's rules to the end of `brief.md`, after your brief. They say: start other sessions only with the card's `launch:` line; when the build has a budget, the card's budget is your ceiling, so near it stop and report; load the card's skills before any other work; a direct session may ask the human, a fleet worker never does and sends its questions and its final report to the session that launched it; leave `jitso/` and `.jitso/` alone except your own draft in `.jitso/drafts/`, and never run `jitso build save`. Read the end of your `brief.md` to see the exact text.
 
 ## Never run these
 
@@ -76,5 +74,5 @@ Every launch appends JITSO's rules to the end of `brief.md`, after your brief. T
 | `references/briefs.md` | writing a brief, or a brief was rejected |
 | `references/card.md` | reading or explaining a card |
 | `references/builds.md` | choosing, validating or drafting a build |
-| `references/lifecycle.md` | closing, reaping, analyzing, the registry |
+| `references/lifecycle.md` | closing, reaping, the registry |
 | `references/troubleshooting.md` | any `JITSO REJECTED`, exit 3, hook denial or doctor line |

@@ -1,0 +1,68 @@
+{
+  "id": "reap/unlogged-worker-is-listed-by-every-reap",
+  "title": "reaping twice lists the worker on both reaps: the line is output only, it writes no event and nothing de-duplicates it across reaps",
+  "source": [
+    "intended: docs/decisions.md, The v0.1.0 cut (the unlogged worker is output only)"
+  ],
+  "intent": "An unlogged worker is reported as one stdout line per reap, `unlogged worker: <evidence>`. It writes no registry event and is not remembered: the second reap lists the same worker again and the registry keeps its one launch line.",
+  "project": {
+    "files": {
+      ".jitso/launches.jsonl": "{\"v\":2,\"event\":\"launch\",\"id\":\"L20261113T142233-a3f9\",\"parent\":null,\"root\":\"L20261113T142233-a3f9\",\"depth\":0,\"ts\":\"2026-11-13T14:22:33.000Z\",\"mode\":\"direct\",\"build\":\"haiku-explorer\",\"orca\":{\"run\":\"run_1\",\"task\":\"t\",\"terminal\":\"term_logged\",\"title\":\"t [jitso:L20261113T142233-a3f9]\"}}\n"
+    }
+  },
+  "orca": {
+    "listed": [
+      "term_logged",
+      "term_rogue"
+    ],
+    "responses": {
+      "orchestration worker-list": {
+        "workers": [
+          {
+            "agentTerminalHandle": "term_rogue"
+          }
+        ]
+      }
+    }
+  },
+  "steps": [
+    {
+      "run": [
+        "reap"
+      ],
+      "expect": {
+        "exit": 0,
+        "stdout": [
+          {
+            "regex": "(?m)^jitso reap: 0 launch\\(es\\) marked ended, 1 unlogged worker\\(s\\)$"
+          },
+          {
+            "regex": "(?m)^unlogged worker: worker term_rogue in run run_1 has no launch event$"
+          }
+        ],
+        "registry": {
+          "count": 1
+        }
+      }
+    },
+    {
+      "run": [
+        "reap"
+      ],
+      "expect": {
+        "exit": 0,
+        "stdout": [
+          {
+            "regex": "(?m)^jitso reap: 0 launch\\(es\\) marked ended, 1 unlogged worker\\(s\\)$"
+          },
+          {
+            "regex": "(?m)^unlogged worker: worker term_rogue in run run_1 has no launch event$"
+          }
+        ],
+        "registry": {
+          "count": 1
+        }
+      }
+    }
+  ]
+}

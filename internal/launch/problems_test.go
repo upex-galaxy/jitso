@@ -54,7 +54,7 @@ func TestProblems(t *testing.T) {
 		"odd-harness.yaml": worker(t, "odd-harness", map[string]string{"harness:": "harness: other"}),
 		"no-harness.yaml":  worker(t, "no-harness", map[string]string{"harness:": ""}),
 		"lists-cand.yaml":  worker(t, "lists-cand", map[string]string{"mcp:": "subagents: [cand, plan]\nmcp: []"}),
-		"every-rule.yaml":  worker(t, "every-rule", map[string]string{"budget:": "", "harness:": "harness: other", "mcp:": "subagents: [cand]\nmcp: []"}),
+		"every-rule.yaml":  worker(t, "every-rule", map[string]string{"harness:": "harness: other", "mcp:": "subagents: [cand]\nmcp: []"}),
 	}
 	for name, text := range builds {
 		if err := os.WriteFile(filepath.Join(root, "jitso", "builds", name), []byte(text), 0o644); err != nil {
@@ -73,15 +73,14 @@ func TestProblems(t *testing.T) {
 	}{
 		{"haiku-explorer", nil},
 		{"fine", nil},
-		{"cand", nil}, // a subagent-tier build needs no budget and no harness
+		{"cand", nil}, // a subagent-tier build needs no harness
 		{"plan", nil},
-		{"no-budget", []string{"budget must be a mapping with tokens and usd_list_cap"}},
+		{"no-budget", nil}, // the budget is optional
 		{"odd-harness", []string{`harness "other" has no adapter`}},
 		{"no-harness", []string{`harness "undefined" has no adapter`}},
 		{"lists-cand", []string{`subagent "cand" is candidate, not approved`}},
-		// the order of the lines: budget, harness, then the subagents
+		// the order of the lines: harness, then the subagents
 		{"every-rule", []string{
-			"budget must be a mapping with tokens and usd_list_cap",
 			`harness "other" has no adapter`,
 			`subagent "cand" is candidate, not approved`,
 		}},

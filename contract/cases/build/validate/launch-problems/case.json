@@ -1,11 +1,11 @@
 {
   "id": "build/validate/launch-problems",
-  "title": "build validate also reports what only a launch would reject: a worker without a budget, one listing a candidate subagent, one with a harness that has no adapter; a subagent-tier build needs none of them",
+  "title": "build validate also reports what only a launch would reject: one listing a candidate subagent, one with a harness that has no adapter; a subagent-tier build needs none of them",
   "source": [
     "intended: docs/decisions.md (build validate: a tolerant check of every build of every layer, one line per file, problem lines, one summary line)"
   ],
   "defect": "N-13",
-  "intent": "INTENDED behavior (defect N-13, build validate). Besides the load rules, the command reports the launch rules: a worker or conductor must have a `budget` mapping (`budget must be a mapping with tokens and usd_list_cap`), a harness with an adapter (`harness \"<h>\" has no adapter`), and every subagent it lists must be approved (`subagent \"<s>\" is <status>, not approved`). Each file below is otherwise valid, so it is the only problem of its file. The subagent-tier candidate has no budget and no harness and is still ok (those fields are unused in that tier), and a candidate subagent is not an error by itself, only a worker that lists it. Exit 2, the summary counts the four extra files.",
+  "intent": "INTENDED behavior (defect N-13, build validate). Besides the load rules, the command reports the launch rules: a worker or conductor must have a harness with an adapter (`harness \"<h>\" has no adapter`), and every subagent it lists must be approved (`subagent \"<s>\" is <status>, not approved`). Each file below is otherwise valid, so it is the only problem of its file. The subagent-tier candidate has no harness and is still ok (that field is unused in that tier), and a candidate subagent is not an error by itself, only a worker that lists it. Exit 2, the summary counts the three extra files.",
   "project": {
     "files": {
       "jitso/builds/candidate-helper.yaml": {
@@ -13,9 +13,6 @@
       },
       "jitso/builds/lists-candidate.yaml": {
         "from": "lists-candidate.yaml"
-      },
-      "jitso/builds/no-budget.yaml": {
-        "from": "no-budget.yaml"
       },
       "jitso/builds/odd-harness.yaml": {
         "from": "odd-harness.yaml"
@@ -38,16 +35,13 @@
             "regex": "(?m)^invalid lists-candidate repo jitso/builds/lists-candidate\\.yaml\n  subagent \"candidate-helper\" is candidate, not approved$"
           },
           {
-            "regex": "(?m)^invalid no-budget repo jitso/builds/no-budget\\.yaml\n  budget must be a mapping with tokens and usd_list_cap$"
-          },
-          {
             "regex": "(?m)^invalid odd-harness repo jitso/builds/odd-harness\\.yaml\n  harness \"some-other-harness\" has no adapter$"
           },
           {
-            "regex": "(?m)^checked 11 builds: 8 ok, 3 invalid$"
+            "regex": "(?m)^checked 10 builds: 8 ok, 2 invalid$"
           },
           {
-            "line_count": 15
+            "line_count": 13
           }
         ],
         "stderr": [

@@ -1,0 +1,63 @@
+{
+  "id": "card/budget/dry-run-card-drops-the-budget-segment",
+  "title": "the dry-run card of a build without a budget keeps six lines; the sixth drops the budget segment",
+  "source": [
+    "intended: docs/decisions.md, the v0.1.0 cut (the card's budget line is printed only when the build has a budget)"
+  ],
+  "intent": "A build without a `budget` prints the card with six lines as always, but the sixth line is `reports to: <whom> | log .jitso/launches.jsonl`, with no budget segment. The whole line is pinned, and no line of stdout starts a budget segment.",
+  "project": {
+    "files": {
+      ".jitso/briefs/brief.md": {
+        "from": "brief.md"
+      },
+      "jitso/builds/no-budget.yaml": {
+        "from": "no-budget.yaml"
+      }
+    }
+  },
+  "steps": [
+    {
+      "run": [
+        "launch",
+        "--build",
+        "no-budget",
+        "--brief",
+        "{{PROJECT}}/.jitso/briefs/brief.md",
+        "--mode",
+        "direct",
+        "--dry-run"
+      ],
+      "expect": {
+        "exit": 0,
+        "stderr": [
+          {
+            "empty": true
+          }
+        ],
+        "stdout": [
+          {
+            "line_count": 7
+          },
+          {
+            "regex": "(?m)^launch:\\ jitso\\ launch\\nreports\\ to:\\ you\\ \\|\\ log\\ \\.jitso/launches\\.jsonl$"
+          },
+          {
+            "not_contains": "list cap"
+          },
+          {
+            "not_regex": "(?m)^budget "
+          },
+          {
+            "not_contains": "tokens (100%)"
+          }
+        ],
+        "orca_calls": {
+          "empty": true
+        },
+        "registry": {
+          "count": 0
+        }
+      }
+    }
+  ]
+}

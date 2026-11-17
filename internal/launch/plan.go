@@ -57,6 +57,7 @@ func Card(id, mode string, p profile.Profile, mcp []string, launchCommand string
 		Subagents:     b.Subagents,
 		RouteScope:    p.RouteScope,
 		LaunchCommand: launchCommand,
+		HasBudget:     b.Budget.Set,
 		BudgetTokens:  b.Budget.Tokens,
 		BudgetUSD:     b.Budget.USDListCap,
 	}

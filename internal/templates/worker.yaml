@@ -32,7 +32,7 @@ mcp: []
 subagents: []
 # requires: fields the launch must be given with --field name=value (for example ticket_key).
 requires: []
-# budget: a mapping with the two numbers a launch needs: { tokens: <number>, usd_list_cap: <number> }.
+# budget: optional. A mapping with the two numbers of a ceiling: { tokens: <number>, usd_list_cap: <number> }. Leave it out for a build with no budget.
 budget:
 # success: the checks that say whether a launch did its job. Known checks: answer_delivered, jira_comment_on, xray_execution_with_env, no_rule_breaks.
 success:

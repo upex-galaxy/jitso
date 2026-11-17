@@ -21,7 +21,7 @@
         "exit": 0,
         "stdout": [
           {
-            "regex": "(?m)^jitso reap: 1 launch\\(es\\) marked ended, 0 unlogged worker\\(s\\), 0 analyzed$"
+            "regex": "(?m)^jitso reap: 1 launch\\(es\\) marked ended, 0 unlogged worker\\(s\\)$"
           }
         ],
         "registry": {
@@ -37,7 +37,7 @@
         "exit": 0,
         "stdout": [
           {
-            "regex": "(?m)^jitso reap: 0 launch\\(es\\) marked ended, 0 unlogged worker\\(s\\), 0 analyzed$"
+            "regex": "(?m)^jitso reap: 0 launch\\(es\\) marked ended, 0 unlogged worker\\(s\\)$"
           }
         ],
         "registry": {

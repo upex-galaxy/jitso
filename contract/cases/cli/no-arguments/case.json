@@ -16,11 +16,12 @@
           "launch",
           "close",
           "reap",
-          "tree",
-          "analyze",
           "build",
           "list, validate, create, draft, save and discard builds",
-          "version"
+          "version",
+          {
+            "not_regex": "(?m)^  (tree|analyze) "
+          }
         ],
         "stderr": [
           {

@@ -32,22 +32,14 @@
         "exit": 0,
         "stdout": [
           {
-            "regex": "(?m)^jitso reap: 0 launch\\(es\\) marked ended, 1 unlogged worker\\(s\\), 0 analyzed$"
+            "regex": "(?m)^jitso reap: 0 launch\\(es\\) marked ended, 1 unlogged worker\\(s\\)$"
+          },
+          {
+            "regex": "(?m)^unlogged worker: worker \\(no terminal handle\\) in run run_1 has no launch event$"
           }
         ],
         "registry": {
-          "count": 2,
-          "events": [
-            {
-              "at": 1,
-              "event": "rule_break",
-              "fields": {
-                "kind": "unlogged_worker",
-                "id": null,
-                "evidence": "worker (no terminal handle) in run run_1 has no launch event"
-              }
-            }
-          ]
+          "count": 1
         }
       }
     }

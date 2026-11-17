@@ -2,14 +2,15 @@
 // primary checkout, one JSON event per line, append-only, schema version 2.
 //
 // A launch's state is the fold of its events by id: the first launch line of
-// an id wins, a later end or analyzed event wins over an earlier one, nothing
-// is rewritten. Every write is one line under the launches.lock folder (mkdir
-// is atomic), so concurrent writers never interleave.
+// an id wins, a later end event wins over an earlier one, nothing is
+// rewritten. Every write is one line under the launches.lock folder (mkdir is
+// atomic), so concurrent writers never interleave.
 //
-// Writers build one of the typed records (LaunchEvent, EndEvent,
-// AnalyzedEvent, RuleBreakEvent). Readers get Event values: the decoded JSON
-// object of a valid line, read through tolerant accessors, because lines may
-// be written by other versions or by hand and carry fields of any type.
+// Writers build one of the typed records (LaunchEvent, EndEvent). Readers get
+// Event values: the decoded JSON object of a valid line, read through tolerant
+// accessors, because lines may be written by other versions or by hand and
+// carry fields of any type. An event of any other kind (an older binary wrote
+// analyzed and rule_break lines) is an invalid line and is skipped.
 package registry
 
 import (
@@ -20,10 +21,8 @@ import (
 
 // The event kinds.
 const (
-	KindLaunch    = "launch"
-	KindEnd       = "end"
-	KindAnalyzed  = "analyzed"
-	KindRuleBreak = "rule_break"
+	KindLaunch = "launch"
+	KindEnd    = "end"
 )
 
 // Version is the schema version of every line a writer appends and the only one
@@ -34,11 +33,9 @@ const Version = 2
 // Allowed values (schema v2). Modes are only direct and fleet: the Spanish
 // aliases are invalid everywhere, registry lines included (TS-ODDITIES L8).
 var (
-	Modes          = []string{"direct", "fleet"}
-	EndSources     = []string{"worker_done", "session_end_hook", "jitso_close", "reap"}
-	Outcomes       = []string{"succeeded", "failed", "blocked", "none"}
-	Verdicts       = []string{"success", "fail", "unknown"}
-	RuleBreakKinds = []string{"unlogged_worker", "secret_path_read", "budget_over"}
+	Modes      = []string{"direct", "fleet"}
+	EndSources = []string{"worker_done", "session_end_hook", "jitso_close", "reap"}
+	Outcomes   = []string{"succeeded", "failed", "blocked", "none"}
 )
 
 var launchIDPattern = regexp.MustCompile(`^L[0-9]{8}T[0-9]{6}-[0-9a-f]{4}$`)
@@ -51,7 +48,7 @@ func IsLaunchID(s string) bool { return launchIDPattern.MatchString(s) }
 // objects map[string]any, lists []any).
 type Event map[string]any
 
-// Kind is the event field: launch, end, analyzed or rule_break.
+// Kind is the event field: launch or end.
 func (e Event) Kind() string { s, _ := e["event"].(string); return s }
 
 // ID is the id field, "" when it is null or not a string.

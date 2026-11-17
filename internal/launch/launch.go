@@ -93,9 +93,6 @@ func Run(a Args, d Deps) error {
 		return err
 	}
 	id := ID(d.Now(), random)
-	if !p.Build.Budget.Set {
-		return fail.Envf("build %s has no budget mapping", p.Build.ID)
-	}
 	pkg, _ := os.ReadFile(filepath.Join(d.Root.Primary, "package.json"))
 	cardText := card.Render(Card(id, a.Mode, p, mcp, card.LaunchCommand(pkg)))
 	for _, u := range UnknownExcludes(p.MCP, a.MCPExclude) {

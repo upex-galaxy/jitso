@@ -61,16 +61,16 @@ Source counts are test cases found by `grep` in the original TypeScript repo, no
 
 | Area | Source | Cases (approx) |
 |---|---|---|
-| CLI surface: help, no args, unknown command, `tree`, `presets list` | `index.test.ts` | 8 |
+| CLI surface: help, no args, unknown command, `presets list` | `index.test.ts` | 8 |
 | Launch validation: required flags, every field x hostile value, mode, brief language, fleet needs run+task, unknown preset, missing required field | `launch.test.ts`, `profile.test.ts`, `escape.test.ts` | 40 |
 | Brief checks and brief path guard: sections, length, language, ghost paths, symlink, traversal, outside folders | `brief.test.ts`, `escape.test.ts` | 22 |
 | Card and dry run: golden text per preset, launch command resolution, subagents text | `card.test.ts`, `launch.test.ts` | 10 |
 | Real launch with fake `orca`: files, call order, trust dialog, fleet adoption, orca failure closes the terminal, untrusted folder refuses | `launch.test.ts`, `trust.test.ts`, `orca.test.ts` | 25 |
 | Shell-escape gate: 18 hostile briefs as content and as filename, run through `run.sh` | `escape.test.ts`, `shell.test.ts` | 36 |
-| Registry log, `close`, `reap`, `analyze` | `log.test.ts`, `close.test.ts`, `reap.test.ts`, `analyze.test.ts` | 25 |
+| Registry log, `close`, `reap` | `log.test.ts`, `close.test.ts`, `reap.test.ts` | 25 |
 | Hooks: `jitso-guard` (deny table, allow table, linear-time prefix, segment splitting) | `.agents/hooks/jitso-*.test.ts` | 30 |
 
-Not in the contract: Orca's own behavior, the real Claude Code TUI, pricing numbers in `prices.json`.
+Not in the contract: Orca's own behavior, the real Claude Code TUI.
 
 ## The three defects (intended behavior)
 
