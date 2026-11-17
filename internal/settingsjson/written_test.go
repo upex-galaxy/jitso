@@ -13,7 +13,7 @@ func TestWrittenLine(t *testing.T) {
 		{`"SessionEnd": [`, true},
 		{`"matcher": "Bash"`, true},
 		{`"matcher": "mcp__.*orca.*__.*"`, true},
-		{`"matcher": "Write|Edit|MultiEdit|NotebookEdit"`, true},
+		{`"matcher": "Write|Edit|MultiEdit|NotebookEdit"`, false},
 		{`"matcher": "Write|Edit"`, false},
 		{`"type": "command"`, true},
 		{`"command": "jitso hook guard"`, true},

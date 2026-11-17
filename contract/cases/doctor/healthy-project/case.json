@@ -5,7 +5,7 @@
     "intended: B4B5-DESIGN.md B4-22 and the doctor spec (defect N-20): a read-only health check"
   ],
   "defect": "N-20",
-  "intent": "INTENDED behavior (defect N-20, B4.5). Adoption done with the three commands and a `jitso` on PATH that is this binary: `ok   skill-project`, `ok   instructions`, `ok   path: jitso on PATH is this binary`, no `fail` line. The hook line says the guard is registered on all four slots (PreToolUse for Bash, the orca MCP tools and file writes, and SessionEnd) and resolves, and warns only that the settings file is not tracked by git: the sandbox project is never committed, and the runner has no step that stages a file, so `ok   hooks` cannot be reached from a case (the unit tests cover it). The `bin/jitso` link in the sandbox home is a link to the implementation under test.",
+  "intent": "INTENDED behavior (defect N-20, B4.5). Adoption done with the three commands and a `jitso` on PATH that is this binary: `ok   skill-project`, `ok   instructions`, `ok   path: jitso on PATH is this binary`, no `fail` line. The hook line says the guard is registered on all three slots (PreToolUse for Bash and the orca MCP tools, and SessionEnd) and resolves, and warns only that the settings file is not tracked by git: the sandbox project is never committed, and the runner has no step that stages a file, so `ok   hooks` cannot be reached from a case (the unit tests cover it). The `bin/jitso` link in the sandbox home is a link to the implementation under test.",
   "home": {
     "files": {
       "bin/jitso": {
@@ -66,7 +66,7 @@
             "regex": "(?m)^ok   path: jitso on PATH is this binary$"
           },
           {
-            "regex": "(?m)^warn hooks: jitso hook guard is registered on PreToolUse \\(Bash, orca MCP, file writes\\) and SessionEnd in \\.claude/settings\\.json; \\.claude/settings\\.json is not tracked by git"
+            "regex": "(?m)^warn hooks: jitso hook guard is registered on PreToolUse \\(Bash, orca MCP\\) and SessionEnd in \\.claude/settings\\.json; \\.claude/settings\\.json is not tracked by git"
           },
           {
             "not_regex": "(?m)^fail "

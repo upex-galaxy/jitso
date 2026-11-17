@@ -5,7 +5,7 @@
     "intended: docs/decisions.md D8 (setup hook, defect N-17): jitso registers its guard in the project's .claude/settings.json without clobbering anything"
   ],
   "defect": "N-17",
-  "intent": "INTENDED behavior (defect N-17, setup hook). The layout check guards a rewrite. When the guard is already registered, nothing is rewritten, so the answer is `nothing to do` even though the file would not re-encode to its own bytes (the canonical groups with one extra key on a single line). Since N-25 the guard also has a third PreToolUse group, `Write|Edit|MultiEdit|NotebookEdit`.",
+  "intent": "INTENDED behavior (defect N-17, setup hook). The layout check guards a rewrite. When the guard is already registered, nothing is rewritten, so the answer is `nothing to do` even though the file would not re-encode to its own bytes (the canonical groups with one extra key on a single line).",
   "project": {
     "files": {
       ".claude/settings.json": "{{seed}}"
@@ -17,7 +17,7 @@
     ],
     "rows": [
       [
-        "{\n  \"x\": 1, \"hooks\": {\n    \"PreToolUse\": [\n      {\n        \"matcher\": \"Bash\",\n        \"hooks\": [\n          {\n            \"type\": \"command\",\n            \"command\": \"jitso hook guard\"\n          }\n        ]\n      },\n      {\n        \"matcher\": \"mcp__.*orca.*__.*\",\n        \"hooks\": [\n          {\n            \"type\": \"command\",\n            \"command\": \"jitso hook guard\"\n          }\n        ]\n      },\n      {\n        \"matcher\": \"Write|Edit|MultiEdit|NotebookEdit\",\n        \"hooks\": [\n          {\n            \"type\": \"command\",\n            \"command\": \"jitso hook guard\"\n          }\n        ]\n      }\n    ],\n    \"SessionEnd\": [\n      {\n        \"hooks\": [\n          {\n            \"type\": \"command\",\n            \"command\": \"jitso hook guard\"\n          }\n        ]\n      }\n    ]\n  }\n}\n"
+        "{\n  \"x\": 1, \"hooks\": {\n    \"PreToolUse\": [\n      {\n        \"matcher\": \"Bash\",\n        \"hooks\": [\n          {\n            \"type\": \"command\",\n            \"command\": \"jitso hook guard\"\n          }\n        ]\n      },\n      {\n        \"matcher\": \"mcp__.*orca.*__.*\",\n        \"hooks\": [\n          {\n            \"type\": \"command\",\n            \"command\": \"jitso hook guard\"\n          }\n        ]\n      }\n    ],\n    \"SessionEnd\": [\n      {\n        \"hooks\": [\n          {\n            \"type\": \"command\",\n            \"command\": \"jitso hook guard\"\n          }\n        ]\n      }\n    ]\n  }\n}\n"
       ]
     ],
     "ids": [

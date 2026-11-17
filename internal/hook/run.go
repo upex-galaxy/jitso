@@ -104,7 +104,7 @@ func RunGuard(d Deps) {
 		return
 	}
 	_, isOwn := d.own()
-	launcher := Launcher{IsOwn: isOwn, Bounds: d.boundary(dir)}
+	launcher := Launcher{IsOwn: isOwn}
 	if denial := launcher.Guard(input); denial.Verb != "" {
 		pkg, _ := os.ReadFile(filepath.Join(dir, "package.json"))
 		io.WriteString(d.Stdout, string(Answer(Deny, denial.Reason(pkg))))
@@ -187,25 +187,4 @@ func (d Deps) primary(home string) (primary, problem string) {
 		return "", project.EnvVar + " does not name a git checkout"
 	}
 	return root.Primary, ""
-}
-
-// boundary is the write boundary of a guard that runs for the checkout dir.
-// The primary checkout is looked up only when a removal operand needs it.
-func (d Deps) boundary(dir string) *Boundary {
-	var primary string
-	var done bool
-	return &Boundary{
-		Dir:  dir,
-		Home: d.Getenv("HOME"),
-		FS:   OSFS(),
-		Primary: func() string {
-			if !done {
-				done = true
-				if root, err := project.Resolve(dir, ""); err == nil {
-					primary = root.Primary
-				}
-			}
-			return primary
-		},
-	}
 }

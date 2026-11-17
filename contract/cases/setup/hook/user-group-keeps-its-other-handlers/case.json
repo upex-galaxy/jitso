@@ -5,7 +5,7 @@
     "intended: docs/decisions.md D8 (setup hook, defect N-17): jitso registers its guard in the project's .claude/settings.json without clobbering anything"
   ],
   "defect": "N-17",
-  "intent": "INTENDED behavior (defect N-17, setup hook). jitso never edits a user's group beyond removing its own handler: a group that held `./a.sh` and a JITSO handler keeps `./a.sh`; two duplicate JITSO `Bash` groups disappear; the three desired groups are appended after the user's. Since N-25 the guard also has a third PreToolUse group, `Write|Edit|MultiEdit|NotebookEdit`.",
+  "intent": "INTENDED behavior (defect N-17, setup hook). jitso never edits a user's group beyond removing its own handler: a group that held `./a.sh` and a JITSO handler keeps `./a.sh`; two duplicate JITSO `Bash` groups disappear; the desired groups are appended after the user's.",
   "project": {
     "files": {
       ".claude/settings.json": {
@@ -30,7 +30,7 @@
         "files": [
           {
             "path": ".claude/settings.json",
-            "equals": "{\n  \"hooks\": {\n    \"PreToolUse\": [\n      {\n        \"matcher\": \"Bash\",\n        \"hooks\": [\n          {\n            \"type\": \"command\",\n            \"command\": \"./a.sh\"\n          }\n        ]\n      },\n      {\n        \"matcher\": \"Bash\",\n        \"hooks\": [\n          {\n            \"type\": \"command\",\n            \"command\": \"jitso hook guard\"\n          }\n        ]\n      },\n      {\n        \"matcher\": \"mcp__.*orca.*__.*\",\n        \"hooks\": [\n          {\n            \"type\": \"command\",\n            \"command\": \"jitso hook guard\"\n          }\n        ]\n      },\n      {\n        \"matcher\": \"Write|Edit|MultiEdit|NotebookEdit\",\n        \"hooks\": [\n          {\n            \"type\": \"command\",\n            \"command\": \"jitso hook guard\"\n          }\n        ]\n      }\n    ],\n    \"SessionEnd\": [\n      {\n        \"hooks\": [\n          {\n            \"type\": \"command\",\n            \"command\": \"jitso hook guard\"\n          }\n        ]\n      }\n    ]\n  }\n}\n"
+            "equals": "{\n  \"hooks\": {\n    \"PreToolUse\": [\n      {\n        \"matcher\": \"Bash\",\n        \"hooks\": [\n          {\n            \"type\": \"command\",\n            \"command\": \"./a.sh\"\n          }\n        ]\n      },\n      {\n        \"matcher\": \"Bash\",\n        \"hooks\": [\n          {\n            \"type\": \"command\",\n            \"command\": \"jitso hook guard\"\n          }\n        ]\n      },\n      {\n        \"matcher\": \"mcp__.*orca.*__.*\",\n        \"hooks\": [\n          {\n            \"type\": \"command\",\n            \"command\": \"jitso hook guard\"\n          }\n        ]\n      }\n    ],\n    \"SessionEnd\": [\n      {\n        \"hooks\": [\n          {\n            \"type\": \"command\",\n            \"command\": \"jitso hook guard\"\n          }\n        ]\n      }\n    ]\n  }\n}\n"
           }
         ]
       }

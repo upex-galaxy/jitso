@@ -14,9 +14,6 @@ const (
 	MatcherBash = "Bash"
 	// MatcherMCP is the regex of the orca MCP tools the guard judges.
 	MatcherMCP = "mcp__.*orca.*__.*"
-	// MatcherWrite is the tool names of the file-writing tools the guard judges
-	// (defect N-25).
-	MatcherWrite = "Write|Edit|MultiEdit|NotebookEdit"
 )
 
 // Command is the handler command jitso writes: the bare word.
@@ -91,13 +88,13 @@ func wanted(command string) []struct {
 		event  string
 		groups []jsonx.Object
 	}{
-		{EventPreToolUse, []jsonx.Object{group(MatcherBash, command), group(MatcherMCP, command), group(MatcherWrite, command)}},
+		{EventPreToolUse, []jsonx.Object{group(MatcherBash, command), group(MatcherMCP, command)}},
 		{EventSessionEnd, []jsonx.Object{group("", command)}},
 	}
 }
 
 // Fragment is the document jitso writes into a project with no settings file:
-// the four groups, 2-space indent, trailing newline. It is also what a person
+// the three groups, 2-space indent, trailing newline. It is also what a person
 // adds by hand when the layout of a file is refused.
 func Fragment(command string) []byte {
 	doc, err := Register(nil, command)
@@ -158,8 +155,8 @@ func hooksOf(root jsonx.Object) jsonx.Object {
 }
 
 // desired reports whether the desired state already holds: exactly one JITSO
-// group each with the Bash, the orca and the file-writes matcher under
-// PreToolUse, exactly one without matcher under SessionEnd, each exactly the canonical
+// group each with the Bash and the orca matcher under PreToolUse, exactly one
+// without matcher under SessionEnd, each exactly the canonical
 // group for command, and no other JITSO handler anywhere under hooks.
 func desired(hooks jsonx.Object, command string) bool {
 	total := 0
@@ -172,7 +169,7 @@ func desired(hooks jsonx.Object, command string) bool {
 			}
 		}
 	}
-	if total != 4 {
+	if total != 3 {
 		return false
 	}
 	for _, w := range wanted(command) {
@@ -198,7 +195,7 @@ func asList(v any) []any {
 }
 
 // Register returns the settings file with the guard registered for command:
-// the four JITSO groups appended after the user's own, every other JITSO
+// the three JITSO groups appended after the user's own, every other JITSO
 // handler (an older absolute path, a duplicate) taken out first. A nil doc is
 // an absent file and gives the file jitso creates.
 //
@@ -286,19 +283,18 @@ type HookState struct {
 	// Err is why the file could not be read as settings (a *Problem); the
 	// other fields are then empty.
 	Err error
-	// Bash, MCP, Write and SessionEnd: a JITSO group is registered on that slot
-	// (the Bash, the orca MCP and the file-writes matcher of PreToolUse,
-	// SessionEnd with no matcher).
-	Bash, MCP, Write, SessionEnd bool
+	// Bash, MCP and SessionEnd: a JITSO group is registered on that slot (the
+	// Bash and the orca MCP matcher of PreToolUse, SessionEnd with no matcher).
+	Bash, MCP, SessionEnd bool
 	// Commands are the distinct JITSO handler commands found, in file order.
 	Commands []string
 	// DisableAllHooks is true when the file sets disableAllHooks to true.
 	DisableAllHooks bool
 }
 
-// Registered reports whether the guard is on all four slots.
+// Registered reports whether the guard is on all three slots.
 func (s HookState) Registered() bool {
-	return s.Err == nil && s.Bash && s.MCP && s.Write && s.SessionEnd
+	return s.Err == nil && s.Bash && s.MCP && s.SessionEnd
 }
 
 // None reports whether the file holds no JITSO handler at all.
@@ -341,8 +337,6 @@ func State(doc []byte) HookState {
 				s.Bash = true
 			case ev.Key == EventPreToolUse && m == MatcherMCP:
 				s.MCP = true
-			case ev.Key == EventPreToolUse && m == MatcherWrite:
-				s.Write = true
 			case ev.Key == EventSessionEnd && !hasMatcher:
 				s.SessionEnd = true
 			}

@@ -5,7 +5,7 @@
     "intended: docs/decisions.md D8 (setup hook, defect N-17): jitso registers its guard in the project's .claude/settings.json without clobbering anything"
   ],
   "defect": "N-17",
-  "intent": "INTENDED behavior (defect N-17, setup hook). `.claude/settings.json` can hold `env` values and other hooks' commands with tokens (AGENTS.md rule 1). jitso only adds lines here, so the diff of a settings file prints zero context lines: the unified diff has its `---`/`+++` headers and `@@` hunks but never the user's own entries (`TOKEN-CANARY-7`, `ENV-CANARY-9`). Since N-25 the guard also has a third PreToolUse group, `Write|Edit|MultiEdit|NotebookEdit`.",
+  "intent": "INTENDED behavior (defect N-17, setup hook). `.claude/settings.json` can hold `env` values and other hooks' commands with tokens (AGENTS.md rule 1). jitso only adds lines here, so the diff of a settings file prints zero context lines: the unified diff has its `---`/`+++` headers and `@@` hunks but never the user's own entries (`TOKEN-CANARY-7`, `ENV-CANARY-9`).",
   "project": {
     "files": {
       ".claude/settings.json": {
@@ -26,7 +26,6 @@
           "+++ b/.claude/settings.json",
           "@@",
           "+        \"matcher\": \"mcp__.*orca.*__.*\",",
-          "+        \"matcher\": \"Write|Edit|MultiEdit|NotebookEdit\",",
           {
             "not_contains": "TOKEN-CANARY-7"
           },

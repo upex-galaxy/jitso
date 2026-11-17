@@ -34,15 +34,6 @@ const setupCanonical = `{
             "command": "jitso hook guard"
           }
         ]
-      },
-      {
-        "matcher": "Write|Edit|MultiEdit|NotebookEdit",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "jitso hook guard"
-          }
-        ]
       }
     ],
     "SessionEnd": [
@@ -417,8 +408,8 @@ func TestSetupHookAbsolute(t *testing.T) {
 	got, _ := setupRead(root, ".claude/settings.json")
 	re := regexp.MustCompile(`"command": "('[^"]*/jitso') hook guard"`)
 	all := re.FindAllStringSubmatch(got, -1)
-	if len(all) != 4 {
-		t.Fatalf("want 4 absolute handlers:\n%s", got)
+	if len(all) != 3 {
+		t.Fatalf("want 3 absolute handlers:\n%s", got)
 	}
 	// A second --absolute run is nothing to do ...
 	if code, out, _ := setupRun(t, root, "", false, "setup", "hook", "--absolute", "--yes"); code != 0 || !strings.Contains(out, "nothing to do") {

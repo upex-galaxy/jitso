@@ -5,15 +5,14 @@ import "encoding/json"
 // writtenLines are the lines, trimmed of their spaces and a trailing comma,
 // that Register writes besides the handler command and the braces.
 var writtenLines = map[string]bool{
-	`"hooks": {`:                        true,
-	`"hooks": {}`:                       true,
-	`"hooks": [`:                        true,
-	`"` + EventPreToolUse + `": [`:      true,
-	`"` + EventSessionEnd + `": [`:      true,
-	`"matcher": "` + MatcherBash + `"`:  true,
-	`"matcher": "` + MatcherMCP + `"`:   true,
-	`"matcher": "` + MatcherWrite + `"`: true,
-	`"type": "command"`:                 true,
+	`"hooks": {`:                       true,
+	`"hooks": {}`:                      true,
+	`"hooks": [`:                       true,
+	`"` + EventPreToolUse + `": [`:     true,
+	`"` + EventSessionEnd + `": [`:     true,
+	`"matcher": "` + MatcherBash + `"`: true,
+	`"matcher": "` + MatcherMCP + `"`:  true,
+	`"type": "command"`:                true,
 }
 
 // WrittenLine returns the test for the lines Register(_, command) writes: a

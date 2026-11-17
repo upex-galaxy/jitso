@@ -5,7 +5,7 @@
     "intended: docs/decisions.md D8 (setup hook, defect N-17): jitso registers its guard in the project's .claude/settings.json without clobbering anything"
   ],
   "defect": "N-17",
-  "intent": "INTENDED behavior (defect N-17, setup hook). `.claude/settings.json` is committed content of the branch you are on, so the file is written into the checkout of the working folder (the worktree), never into the primary. Backups and state live under the primary's `.jitso/`: removing the hook from the worktree backs the file up there, and the worktree gets no `.jitso`. Since N-25 the guard also has a third PreToolUse group, `Write|Edit|MultiEdit|NotebookEdit`.",
+  "intent": "INTENDED behavior (defect N-17, setup hook). `.claude/settings.json` is committed content of the branch you are on, so the file is written into the checkout of the working folder (the worktree), never into the primary. Backups and state live under the primary's `.jitso/`: removing the hook from the worktree backs the file up there, and the worktree gets no `.jitso`.",
   "steps": [
     {
       "git_worktree": {
@@ -32,7 +32,7 @@
         "files": [
           {
             "path": "{{WORKTREE_w}}/.claude/settings.json",
-            "equals": "{\n  \"hooks\": {\n    \"PreToolUse\": [\n      {\n        \"matcher\": \"Bash\",\n        \"hooks\": [\n          {\n            \"type\": \"command\",\n            \"command\": \"jitso hook guard\"\n          }\n        ]\n      },\n      {\n        \"matcher\": \"mcp__.*orca.*__.*\",\n        \"hooks\": [\n          {\n            \"type\": \"command\",\n            \"command\": \"jitso hook guard\"\n          }\n        ]\n      },\n      {\n        \"matcher\": \"Write|Edit|MultiEdit|NotebookEdit\",\n        \"hooks\": [\n          {\n            \"type\": \"command\",\n            \"command\": \"jitso hook guard\"\n          }\n        ]\n      }\n    ],\n    \"SessionEnd\": [\n      {\n        \"hooks\": [\n          {\n            \"type\": \"command\",\n            \"command\": \"jitso hook guard\"\n          }\n        ]\n      }\n    ]\n  }\n}\n"
+            "equals": "{\n  \"hooks\": {\n    \"PreToolUse\": [\n      {\n        \"matcher\": \"Bash\",\n        \"hooks\": [\n          {\n            \"type\": \"command\",\n            \"command\": \"jitso hook guard\"\n          }\n        ]\n      },\n      {\n        \"matcher\": \"mcp__.*orca.*__.*\",\n        \"hooks\": [\n          {\n            \"type\": \"command\",\n            \"command\": \"jitso hook guard\"\n          }\n        ]\n      }\n    ],\n    \"SessionEnd\": [\n      {\n        \"hooks\": [\n          {\n            \"type\": \"command\",\n            \"command\": \"jitso hook guard\"\n          }\n        ]\n      }\n    ]\n  }\n}\n"
           },
           {
             "path": "{{PROJECT}}/.claude",
