@@ -19,7 +19,7 @@ JITSO is a strategy for orchestrating agents based on builds: a build is an appr
 | `docs/decisions.md` | product and repo decisions, with the options beaten |
 | `docs/build-schema.md` | the schema of a build: where builds come from, tiers, fields, drafts, the exact validator texts |
 | `docs/release.md` | the release procedure; every outward step is marked OWNER-GATED |
-| `scripts/`, `packaging/`, `.github/workflows/` | packaging, the install script and its offline test, the Homebrew formula template and its filler, the release workflow |
+| `scripts/`, `.github/workflows/` | packaging, the install script and its offline test, the release workflow |
 | `.session/` | local history and handoffs, gitignored, mostly Spanish: never commit it, never quote it or its tracker keys in committed files |
 
 Not done: the first release and every outward step of `docs/release.md` (no remote, no tag, nothing published; the release workflow has never run), a real Orca run, the real Claude Code interactive path, a Linux run of the contract suite, and Windows testing. The contract runs against the built Go binary only.
@@ -34,7 +34,7 @@ Load the skill before acting when the request matches. If none matches and the t
 | writing or reviewing Go (runner or CLI), `go build` / `test` / `vet`, cross-compiling, binary size, a new dependency | `go-development` |
 | staging, committing, a branch, a worktree, history, trailers, a remote | `git-flow-master` |
 | the context window is high, or the work must continue in a fresh session | `session-handoff` |
-| a release, an install script, a Homebrew tap, publishing anything | no skill: `docs/release.md` is the procedure, and every outward step is owner-gated (rule 4) |
+| a release, an install script, publishing anything | no skill: `docs/release.md` is the procedure, and every outward step is owner-gated (rule 4) |
 | Orca workers or terminals | no repo skill: use the user-level `orca-cli` / `orchestration` skills if installed; when `orca` is absent, say nothing about it |
 
 ## 4. Critical rules

@@ -48,4 +48,4 @@ Then the contract cases the change touches (`contract-driven-development`). Cros
 
 - Never build into the repo tree with a name `.gitignore` does not cover; build into a scratch directory, as `contract/README.md` does.
 - `go run` turns every non-zero exit into 1: build a binary wherever an exit code matters.
-- Version stamping, the release archives and the install script exist: `scripts/package.sh` builds the archives and stamps `internal/version.Version` with `-ldflags -X`, and `docs/release.md` is the procedure. Use them; do not hand-roll a release build. Publishing anything (a tag, a remote, a GitHub Release, the tap) stays the owner's call (AGENTS.md rule 4).
+- Version stamping, the release archives and the install script exist: `scripts/package.sh` builds the archives and stamps `internal/version.Version` with `-ldflags -X`, and `docs/release.md` is the procedure. Use them; do not hand-roll a release build. Publishing anything (a tag, a remote, a GitHub Release) stays the owner's call (AGENTS.md rule 4).

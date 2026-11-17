@@ -284,7 +284,7 @@ Each block after milestone 8 is its own contract change, cases first, run agains
 | Brief word count | N-27 | `brief` | `^brief/` |
 | Close and reap rows: close order, reap without a handle, unlogged workers | N-28 | `closeout`, `reap`, `cli` | `^(close\|reap)/` |
 | Registry v2: `v: 2` with `build` keys, v1 lines skipped, `doctor` counts them | N-31 | `registry`, `hook`, `doctor` | `^(registry\|close\|reap\|launch\|layers\|project\|hooks/guard/session-end\|doctor)/`, then the whole suite |
-| Release files: packaging, install script, workflow, formula template | none (no case) | `scripts/`, `.github/`, `packaging/` | `scripts/test-install.sh` (offline), and the steps of `docs/release.md` section 3 |
+| Release files: packaging, install script, workflow | none (no case) | `scripts/`, `.github/` | `scripts/test-install.sh` (offline), and the steps of `docs/release.md` section 3 |
 
 The pipes inside the table are escaped for Markdown; the filter is the text without the backslashes.
 

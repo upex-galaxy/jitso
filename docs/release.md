@@ -4,7 +4,7 @@ How a JITSO release is built, checked and published. Everything that leaves this
 
 The repository `upex-galaxy/jitso` is to be public (decided by the owner on 2026-11-15). Creating it and every other publishing step is OWNER-GATED and done with the owner present.
 
-Nothing here has been published. The files this procedure uses exist and have been run locally: `scripts/package.sh`, `scripts/install.sh`, `scripts/test-install.sh`, `scripts/fill-formula.sh`, `packaging/homebrew/jitso.rb`. `.github/workflows/release.yml` is written and has never run.
+Nothing here has been published. The files this procedure uses exist and have been run locally: `scripts/package.sh`, `scripts/install.sh`, `scripts/test-install.sh`. `.github/workflows/release.yml` is written and has never run.
 
 Committed prose names the source of truth, not its value (AGENTS.md rule 12), so this file has no sizes, counts or dates: it says which file or command holds each one.
 
@@ -19,7 +19,7 @@ A release is a tag `v<x>` on `main` and a GitHub Release of that tag. Its assets
 | `checksums.txt` | one line per asset above and `install.sh`, in the output format of `sha256sum` |
 | `install.sh` | a copy of `scripts/install.sh` |
 
-`scripts/package.sh` is the only definition of these names and of the build flags (`CGO_ENABLED=0`, `-trimpath`, `-ldflags '-s -w -X ...'`). The release workflow and `scripts/test-install.sh` both call it, so the local test proves the format the release ships. The tag is the version: it is stamped into the binary with `-X github.com/upex-galaxy/jitso/internal/version.Version=<tag>`, and `jitso version` prints it. The decisions behind this layout are in `docs/decisions.md` (rows on release assets, the plain `go build` matrix, the install script and the Homebrew formula).
+`scripts/package.sh` is the only definition of these names and of the build flags (`CGO_ENABLED=0`, `-trimpath`, `-ldflags '-s -w -X ...'`). The release workflow and `scripts/test-install.sh` both call it, so the local test proves the format the release ships. The tag is the version: it is stamped into the binary with `-X github.com/upex-galaxy/jitso/internal/version.Version=<tag>`, and `jitso version` prints it. The decisions behind this layout are in `docs/decisions.md` (rows on release assets, the plain `go build` matrix and the install script). Homebrew is deferred (`docs/decisions.md`, "The v0.1.0 cut").
 
 ## 2. Version policy
 
@@ -47,11 +47,10 @@ These steps run on this machine and change nothing outside the repository and yo
 4. Package every target: `scripts/package.sh v<x> <scratch>/dist`. Check the archives against `checksums.txt` with `shasum -a 256 -c checksums.txt` (or `sha256sum -c`) inside that folder.
 5. Measure each stripped binary with `ls -l` and compare with the previous release's numbers. Those numbers live in `.session/`, not in a committed file. A noticeable growth goes to the owner with before and after labelled `measured`, as `.agents/skills/go-development/references/builds.md` asks.
 6. `scripts/test-install.sh <scratch>/dist v<x>` (the archives just built) or `scripts/test-install.sh` (it builds the host target itself). Every check prints `ok`. It runs in throwaway folders and never touches your HOME.
-7. `scripts/fill-formula.sh <x without v> <scratch>/dist/checksums.txt <scratch>/jitso.rb`, then `ruby -c <scratch>/jitso.rb`. **OWNER-GATED**: `brew style` and `brew audit` need Homebrew and may reach the network. Whether `brew audit` flags the explicit `version` line as redundant with the URLs is predicted, not measured.
-8. **OWNER-GATED** Resolve the action SHAs in `.github/workflows/release.yml`. Every `uses:` line carries a placeholder (forty zeros) and a `PLACEHOLDER` comment; replace each with the full commit SHA of a release tag of that action and review the tag. This is a network read; a command such as `gh api repos/actions/checkout/git/ref/tags/<tag> --jq .object.sha` does it (an annotated tag needs one more dereference). Check that none is left: `grep -c '0000000000000000000000000000000000000000' .github/workflows/release.yml` prints 0.
-9. The toolchain pin `GO_VERSION` in the workflow matches the toolchain you verified with (`go version`), and `go.mod` says what you intend: its `go` line is a language version, not a toolchain.
-10. **OWNER-GATED** The contract suite has to pass on Linux at least once before the first tag. A container or a VM is the owner's call, since it may mean a download. The first tag would otherwise be the suite's first Linux run.
-11. Release notes: the workflow asks GitHub to generate them. Read them after the release, and say in the notes which earlier version to skip when one is bad.
+7. **OWNER-GATED** Resolve the action SHAs in `.github/workflows/release.yml`. Every `uses:` line carries a placeholder (forty zeros) and a `PLACEHOLDER` comment; replace each with the full commit SHA of a release tag of that action and review the tag. This is a network read; a command such as `gh api repos/actions/checkout/git/ref/tags/<tag> --jq .object.sha` does it (an annotated tag needs one more dereference). Check that none is left: `grep -c '0000000000000000000000000000000000000000' .github/workflows/release.yml` prints 0.
+8. The toolchain pin `GO_VERSION` in the workflow matches the toolchain you verified with (`go version`), and `go.mod` says what you intend: its `go` line is a language version, not a toolchain.
+9. **OWNER-GATED** The contract suite has to pass on Linux at least once before the first tag. A container or a VM is the owner's call, since it may mean a download. The first tag would otherwise be the suite's first Linux run.
+10. Release notes: the workflow asks GitHub to generate them. Read them after the release, and say in the notes which earlier version to skip when one is bad.
 
 ## 4. Publishing, in order
 
@@ -65,9 +64,7 @@ Every step in this list is **OWNER-GATED**. Do not run one without the owner's s
 | 4 | **OWNER-GATED** Create the annotated tag `v<x>` on the verified commit and push it | The tag push starts the workflow. |
 | 5 | **OWNER-GATED** Run and watch the release workflow | The workflow verifies both modules, builds the archives, runs the contract on the Linux binary, runs the install test, then the `release` job creates the GitHub Release. If anything fails, nothing is published: the `release` job needs the `build` job. |
 | 6 | **OWNER-GATED** Verify the published release from a clean machine or container | Download `checksums.txt` and one archive, `shasum -a 256 -c` it, run `jitso version`. Then download `install.sh` from the release, read it, and run `sh install.sh v<x>`. |
-| 7 | **OWNER-GATED** Create the tap repository `upex-galaxy/homebrew-tap` and publish the formula | Fill the formula from the release's own `checksums.txt` (section 3, step 7), commit it as `Formula/jitso.rb`, push. |
-| 8 | **OWNER-GATED** `brew install upex-galaxy/tap/jitso` and `brew test jitso` on macOS | Proves the formula, including the single top folder of the archive (predicted to stage correctly). |
-| 9 | **OWNER-GATED** Announce | Where and what is the owner's call. |
+| 7 | **OWNER-GATED** Announce | Where and what is the owner's call. |
 
 The workflow uses no configured secret: `github.token` is the automatic token, scoped by the `permissions` blocks (`contents: read` for the build job, `contents: write` only for the release job, which checks out no code).
 
@@ -76,7 +73,6 @@ The workflow uses no configured secret: `github.token` is the automatic token, s
 | Route | Command or action | Notes |
 |---|---|---|
 | Install script | `sh install.sh v<x>` from the release's own `install.sh`, or `latest` | Installs into `$HOME/.local/bin` unless `JITSO_INSTALL_DIR` says otherwise, never with `sudo`. It checks the SHA-256 of the archive against `checksums.txt` and fails closed when neither `sha256sum` nor `shasum` exists. Pin a tag in documentation. |
-| Homebrew | `brew install upex-galaxy/tap/jitso` | After step 7 of section 4. |
 | `go install` | `go install github.com/upex-galaxy/jitso/cmd/jitso@v<x>` | Needs Go at the `go.mod` language version or newer. Works once the repository is public and the tag is pushed; a private repository needs `GOPRIVATE=github.com/upex-galaxy/*` and git credentials. Such a build reports the tag as its version and `commit unknown`. |
 | Windows (experimental) | download the zip and `checksums.txt` by hand, check the SHA-256, put `jitso.exe` on `PATH` | `launch` does not run there. See section 7. |
 
@@ -89,8 +85,7 @@ Never re-tag, never force-push, never rewrite a pushed history.
 1. **OWNER-GATED** Mark the release a prerelease, or remove its assets, with `gh release edit` or `gh release delete-asset`. The release page and the install script's `latest` link then stop offering the bad version.
 2. Ship a fixed patch version through the whole procedure.
 3. In that patch, add `retract v<x> // <reason>` to `go.mod`, so `go install ...@latest` skips the bad version.
-4. **OWNER-GATED** Revert the tap formula commit, or push the fixed formula.
-5. Say in the release notes of the fix which version to skip.
+4. Say in the release notes of the fix which version to skip.
 
 ## 7. Windows
 
