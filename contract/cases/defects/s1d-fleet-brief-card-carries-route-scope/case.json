@@ -3,12 +3,8 @@
   "source": [
     "intended: PLAN.md defect S1; fleet mode passes no prompt (adapters/claude.ts), so brief.md is what carries the scope"
   ],
-  "status": {
-    "ts": "xfail",
-    "go": "pass"
-  },
   "defect": "S1",
-  "intent": "INTENDED behavior (defect S1, route_scope). The router reads a scope with the regex (?:^|[.!?])[ \\t>*-]*ROUTE-SCOPE:([^\\n]*), so the card line must start with ROUTE-SCOPE: (with the colon, at a line start or after . ! ?) and list the build ids comma separated. On the TS binary today the card writes 'ROUTE-SCOPE <ids>' with no colon, after a '|' separator, so the matcher finds nothing and this case FAILS on TS. In fleet mode no prompt reaches claude, so .jitso/launches/<id>/brief.md (card first, then the brief) is the carrier: it must have a line starting with 'ROUTE-SCOPE: code-quickref,ticket-work'. On TS the card line reads 'subagents ... | ROUTE-SCOPE code-quickref,ticket-work', so the regex finds nothing and this case FAILS on TS. (The file check has no route_scope matcher, hence the regex.)",
+  "intent": "INTENDED behavior (defect S1, route_scope). The router reads a scope with the regex (?:^|[.!?])[ \\t>*-]*ROUTE-SCOPE:([^\\n]*), so the card line must start with ROUTE-SCOPE: (with the colon, at a line start or after . ! ?) and list the build ids comma separated. In fleet mode no prompt reaches claude, so .jitso/launches/<id>/brief.md (card first, then the brief) is the carrier: it must have a line starting with 'ROUTE-SCOPE: code-quickref,ticket-work'.",
   "project": {
     "files": {
       ".jitso/briefs/brief.md": {

@@ -2,14 +2,10 @@
   "id": "build/usage",
   "title": "build with no subcommand, or an unknown one, exits 2 with the build usage on stderr; build --help prints it and exits 0",
   "source": [
-    "intended: docs/decisions.md D6 and the command-group row (jitso build <subcommand>); replaces the oracle's `presets` alone answer, which is the 'not implemented yet' line with exit 0 (TS-ODDITIES C1)"
+    "intended: docs/decisions.md D6 and the command-group row (jitso build <subcommand>); `presets` is no longer a command"
   ],
-  "status": {
-    "ts": "xfail",
-    "go": "pass"
-  },
   "defect": "N-10",
-  "intent": "INTENDED behavior (defect N-10, build vocabulary; docs/decisions.md D6). The catalog commands live under one command group, `jitso build <subcommand>`. With no subcommand it exits 2 and prints `jitso build: missing subcommand`, a blank line and the build usage on stderr; with a subcommand it does not know it prints `jitso build: unknown subcommand \"<x>\"` and the same usage; `--help` and `-h` print the usage on stdout and exit 0. The oracle has no `build` command at all (its catalog command is `presets`): it answers `unknown command` on stderr with exit 2, so the `missing subcommand` and `unknown subcommand` expectations and the `--help` exit code FAIL on TS. The build usage also lists `validate [<id>]` (defect N-13). It also lists `list [--drafts]`, `draft <file.yaml|->`, `save <id> [--confirm <token>]` and `discard <id>|--all` (defect N-15, drafts) and `new <id> [--tier <tier>]` (defect N-14, templates).",
+  "intent": "INTENDED behavior (defect N-10, build vocabulary; docs/decisions.md D6). The catalog commands live under one command group, `jitso build <subcommand>`. With no subcommand it exits 2 and prints `jitso build: missing subcommand`, a blank line and the build usage on stderr; with a subcommand it does not know it prints `jitso build: unknown subcommand \"<x>\"` and the same usage; `--help` and `-h` print the usage on stdout and exit 0. The build usage also lists `validate [<id>]` (defect N-13). It also lists `list [--drafts]`, `draft <file.yaml|->`, `save <id> [--confirm <token>]` and `discard <id>|--all` (defect N-15, drafts) and `new <id> [--tier <tier>]` (defect N-14, templates).",
   "steps": [
     {
       "run": [

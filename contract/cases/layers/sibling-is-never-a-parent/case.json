@@ -4,12 +4,8 @@
   "source": [
     "intended: builds come from layers (repo, trusted parent folders, user folder), nearest wins (docs/decisions.md)"
   ],
-  "status": {
-    "ts": "xfail",
-    "go": "pass"
-  },
   "defect": "N-12",
-  "intent": "INTENDED behavior (defect N-12, build layers). A trusted folder is a parent only when the project's real path is strictly inside it. The config trusts zone (which contains the project: the positive control, listed as a parent), zone/nes (a name prefix of the project's folder zone/nested, which a plain string-prefix check would accept) and zone/other (a sibling): only the project's own build and zone's build are listed, and the trap and sibling builds never are. The oracle knows no layers and no nested project, so the case FAILS on it. The oracle also resolves its project from its own script folder, so from a nested checkout it reads the outer fixture catalog (defect N-1) and fails here as well.",
+  "intent": "INTENDED behavior (defect N-12, build layers). A trusted folder is a parent only when the project's real path is strictly inside it. The config trusts zone (which contains the project: the positive control, listed as a parent), zone/nes (a name prefix of the project's folder zone/nested, which a plain string-prefix check would accept) and zone/other (a sibling): only the project's own build and zone's build are listed, and the trap and sibling builds never are.",
   "project": {
     "files": {
       "zone/nested/jitso/jitso.yaml": {

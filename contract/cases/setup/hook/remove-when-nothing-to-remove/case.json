@@ -4,12 +4,8 @@
   "source": [
     "intended: docs/decisions.md D8 (setup hook, defect N-17): jitso registers its guard in the project's .claude/settings.json without clobbering anything"
   ],
-  "status": {
-    "ts": "xfail",
-    "go": "pass"
-  },
   "defect": "N-17",
-  "intent": "INTENDED behavior (defect N-17, setup hook). `--remove` on a file that holds only the user's hooks, and on a project with no file, prints `jitso setup hook: nothing to do (no jitso hook entries in .claude/settings.json)`, exit 0; the user's file is untouched and no backup is made. The oracle has no `setup` command: it answers `unknown command \"setup\"` on stderr with exit 2 and prints nothing on stdout, so every expectation that needs this output or file effect FAILS on it.",
+  "intent": "INTENDED behavior (defect N-17, setup hook). `--remove` on a file that holds only the user's hooks, and on a project with no file, prints `jitso setup hook: nothing to do (no jitso hook entries in .claude/settings.json)`, exit 0; the user's file is untouched and no backup is made.",
   "project": {
     "files": {
       ".claude/settings.json": {

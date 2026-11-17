@@ -4,12 +4,8 @@
   "source": [
     "intended: docs/decisions.md (a subagent is a build with tier: subagent and cannot be launched alone)"
   ],
-  "status": {
-    "ts": "xfail",
-    "go": "pass"
-  },
   "defect": "N-5",
-  "intent": "INTENDED behavior (defect N-5, tiers). `build list` prints the launchable builds only. The default fixture has three approved subagent-tier builds (jitso/builds/plan.yaml, code.yaml, verifier.yaml); none of them is listed and none appears as a line. The TS binary lists every approved build, so the not_regex expectation FAILS on TS (the `plan`, `code` and `verifier` lines are there).",
+  "intent": "INTENDED behavior (defect N-5, tiers). `build list` prints the launchable builds only. The default fixture has three approved subagent-tier builds (jitso/builds/plan.yaml, code.yaml, verifier.yaml); none of them is listed and none appears as a line.",
   "steps": [
     {
       "run": [

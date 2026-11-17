@@ -4,12 +4,8 @@
   "source": [
     "intended: docs/decisions.md D8 (setup hook, defect N-17): jitso registers its guard in the project's .claude/settings.json without clobbering anything"
   ],
-  "status": {
-    "ts": "xfail",
-    "go": "pass"
-  },
   "defect": "N-17",
-  "intent": "INTENDED behavior (defect N-17, setup hook). For a file that re-encodes to its own bytes (2 spaces, 4 spaces, a tab, compact, numbers such as `1.50`, non-ASCII text, a missing trailing newline), `setup hook --yes` followed by `setup hook --remove --yes` leaves the original bytes: the edit goes through an order-preserving JSON tree and the file's own indent, and `--remove` drops only what jitso added and any container that became empty. The oracle has no `setup` command: it answers `unknown command \"setup\"` on stderr with exit 2 and prints nothing on stdout, so every expectation that needs this output or file effect FAILS on it.",
+  "intent": "INTENDED behavior (defect N-17, setup hook). For a file that re-encodes to its own bytes (2 spaces, 4 spaces, a tab, compact, numbers such as `1.50`, non-ASCII text, a missing trailing newline), `setup hook --yes` followed by `setup hook --remove --yes` leaves the original bytes: the edit goes through an order-preserving JSON tree and the file's own indent, and `--remove` drops only what jitso added and any container that became empty.",
   "project": {
     "files": {
       ".claude/settings.json": "{{seed}}"

@@ -4,12 +4,8 @@
   "source": [
     "intended: docs/decisions.md A3 (defect N-24): the segment splitter reads text after ( , a backtick or a newline as a command, the way jitso build save has the same limit"
   ],
-  "status": {
-    "ts": "xfail",
-    "go": "pass"
-  },
   "defect": "N-24",
-  "intent": "INTENDED behavior (defect N-24, owner answer A3), a known limit pinned on purpose. The guard splits a command line at parentheses, backticks and newlines without reading quotes, so a commit message or a heredoc line that starts with claude after one of those is judged as a command and denied. The deny text tells the session to put such text in a file and pass the file. The TS binary prints nothing for these lines, so the decision FAILS on TS.",
+  "intent": "INTENDED behavior (defect N-24, owner answer A3), a known limit pinned on purpose. The guard splits a command line at parentheses, backticks and newlines without reading quotes, so a commit message or a heredoc line that starts with claude after one of those is judged as a command and denied. The deny text tells the session to put such text in a file and pass the file.",
   "for_each": {
     "var": "command",
     "values": [

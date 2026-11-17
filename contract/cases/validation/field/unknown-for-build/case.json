@@ -4,12 +4,8 @@
   "source": [
     "cli/jitso/profile.test.ts: 'a field no preset declares is rejected'"
   ],
-  "status": {
-    "ts": "xfail",
-    "go": "pass"
-  },
   "defect": "N-10",
-  "intent": "INTENDED behavior (defect N-10, build vocabulary; docs/decisions.md D6). The rejection of a field the build does not require reads `unknown field \"<f>\" for build \"<id>\"`. The oracle still prints `unknown field \"<f>\" for preset \"<id>\"`, so the stderr expectation FAILS on TS.",
+  "intent": "INTENDED behavior (defect N-10, build vocabulary; docs/decisions.md D6). The rejection of a field the build does not require reads `unknown field \"<f>\" for build \"<id>\"`.",
   "for_each": {
     "var": "v",
     "values": [

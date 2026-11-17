@@ -4,12 +4,8 @@
   "source": [
     "intended: docs/architecture.md section 6 (project root, the dispatcher handoff): JITSO_PROJECT is read first, validated as a git checkout"
   ],
-  "status": {
-    "ts": "xfail",
-    "go": "pass"
-  },
   "defect": "N-7",
-  "intent": "INTENDED behavior (defect N-7, dispatcher project handoff; docs/architecture.md section 6). The dispatched claude runs from a folder outside git, so the project reaches `jitso launch` through the environment variable JITSO_PROJECT. When it is set, every command uses the primary checkout of that folder and ignores the cwd. Step 1: with JITSO_PROJECT={{PROJECT}} and the cwd {{HOME}} (outside git) a dry run exits 0 and prints the card; the TS binary also passes this step, because it ignores the cwd and finds its project from its own script folder. Step 2: JITSO_PROJECT names a folder that is not a git checkout (an existing folder, with the cwd inside the project, so the variable wins over the cwd): exit 3, nothing on stdout, exactly one stderr line that names the folder and says it is not a git checkout, orca never called. The TS binary does not read the variable, so step 2 FAILS on TS (exit 0). Without JITSO_PROJECT a launch from {{HOME}} stays the N-1 case (project/outside-git/launch).",
+  "intent": "INTENDED behavior (defect N-7, dispatcher project handoff; docs/architecture.md section 6). The dispatched claude runs from a folder outside git, so the project reaches `jitso launch` through the environment variable JITSO_PROJECT. When it is set, every command uses the primary checkout of that folder and ignores the cwd. Step 1: with JITSO_PROJECT={{PROJECT}} and the cwd {{HOME}} (outside git) a dry run exits 0 and prints the card. Step 2: JITSO_PROJECT names a folder that is not a git checkout (an existing folder, with the cwd inside the project, so the variable wins over the cwd): exit 3, nothing on stdout, exactly one stderr line that names the folder and says it is not a git checkout, orca never called. Without JITSO_PROJECT a launch from {{HOME}} stays the N-1 case (project/outside-git/launch).",
   "for_each": {
     "var": "folder",
     "values": [

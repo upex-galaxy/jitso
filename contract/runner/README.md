@@ -1,6 +1,6 @@
 # JITSO contract runner
 
-Runs the cases under `contract/cases/` against one `jitso` implementation. The case format is `../SPEC.md`; that file wins when this README and the code disagree.
+Runs the cases under `contract/cases/` against one `jitso` binary. The case format is `../SPEC.md`; that file wins when this README and the code disagree.
 
 Go standard library only, no cgo. The same binary is also the fake `orca` and the fake `claude`: each sandbox gets a symlink (then a hard link, then a copy) of it under those names in `bin/`, and `main` dispatches on `os.Args[0]`.
 
@@ -10,20 +10,16 @@ Go standard library only, no cgo. The same binary is also the fake `orca` and th
 cd contract/runner
 go build -o jitso-contract-runner .
 
-# the frozen TypeScript oracle (needs bun and node on PATH)
-./jitso-contract-runner --impl ts --ts-src ../../../agentic-qa-boilerplate
-
-# any binary, judged by the `go` status of each case
+# the binary under test (built from the repo root: go build -o <scratch>/jitso ./cmd/jitso)
 ./jitso-contract-runner --impl bin --bin ./path/to/jitso
 ```
 
-`go run . --impl ts --ts-src <checkout>` works too, but `go run` reports every non-zero exit as `1`. Use the built binary where the exit code matters (CI): `0` green, `1` a `FAIL` or `XPASS`, `2` a load or usage error.
+`go run . --impl bin --bin <path>` works too, but `go run` reports every non-zero exit as `1`. Use the built binary where the exit code matters (CI): `0` green, `1` a `FAIL`, `2` a load or usage error (an unknown flag or a value of `--impl` other than `bin` included).
 
 | Flag | Meaning |
 |---|---|
-| `--impl ts\|bin` | implementation under test (required) |
-| `--ts-src <dir>` | boilerplate checkout holding `cli/jitso/` (with `--impl ts`) |
-| `--bin <path>` | the executable (with `--impl bin`) |
+| `--impl bin` | the implementation under test (required; `bin` is the only value) |
+| `--bin <path>` | the `jitso` executable |
 | `--cases <dir>` | cases folder; default `contract/cases`, found by walking up from the cwd, then from the executable |
 | `--fixtures <dir>` | fixtures folder; default the sibling `fixtures` of the cases folder |
 | `--filter <regex>` | run only cases whose expanded id (`area/slug[2]`) matches |
@@ -41,9 +37,9 @@ Self checks: `go vet ./... && gofmt -l . && go test ./...`.
 | `main.go` | flags, case discovery, the multicall switch |
 | `internal/spec` | loading and validating `case.json`, placeholders, `for_each`, file maps, step parsing |
 | `internal/expect` | the expectation keys and text matchers (SPEC 7), each a registered builder |
-| `internal/engine` | one case run: sandbox build, the `Step` kinds (`run`, `hook`, `exec`, `write`, `git_worktree`), captures, status logic |
+| `internal/engine` | one case run: sandbox build, the `Step` kinds (`run`, `hook`, `exec`, `write`, `git_worktree`), captures, the `PASS`/`FAIL` outcome |
 | `internal/sandbox` | the temp root, the from-scratch environment, file copies |
-| `internal/impl` | the `Implementation` interface and the `ts` and `bin` adapters |
+| `internal/impl` | the `Implementation` interface and the `bin` adapter |
 | `internal/fakes` | the fake `orca` (stateless, replays its own call log) and the fake `claude` |
 | `internal/report` | the text reporter |
 
@@ -87,17 +83,16 @@ func (m startsWith) Match(text string) *Mismatch {
 
 It is then valid everywhere a text matcher is (`stdout`, `stderr`, `reason`, `last_arg`, file `text` and `entries`, and as an argument pattern in `argv` and `arg_after`). Document it in SPEC 7.1 in the same change and add a row to `TestTextMatchers`. A new expectation key works the same way with `register(name, kinds, builder)`, the kinds being the step kinds it is valid on.
 
-## Adding an implementation adapter
+## The adapter
 
-Implement `impl.Implementation` in a new file of `internal/impl`:
+`internal/impl` holds the `Implementation` interface and its one adapter, `bin`:
 
 | Method | Does |
 |---|---|
 | `Name()` | the name the summary prints |
-| `StatusKey()` | which `status` key of a case judges it (`ts` or `go`; a new key also goes in `spec.StatusKeys` and SPEC 2) |
-| `Prepare(sb)` | installs what the implementation needs into a fresh sandbox: files under `sb.Project`, programs through `sb.LinkTool` (never a real folder on PATH), variables through `sb.SetEnv` |
+| `Prepare(sb)` | installs what the implementation needs into a fresh sandbox (nothing for `bin`) |
 | `Command(sb, args)` | the argv that runs the CLI |
 | `HookCommand(sb, hook)` | the argv that runs `guard` or `dispatch-guard` |
-| `AroundStep(sb)` | called before every `run` and `hook` step (not `exec`, `write` or the git steps); returns the function the engine calls right after the step's process ends, before captures and expectations, even when the process failed to run. `bin` returns a no-op. `ts` maps the registry file between the case's schema and the oracle's (`internal/impl/registrymap.go`, SPEC 9). Keep the state in the returned closure, never in the adapter value: sandboxes run in parallel |
+| `Launcher(sb)` | the value of `{{JITSO}}` |
 
-Then add its case to `newImplementation` in `main.go` and a row to SPEC 9. Return an error from the constructor when a prerequisite is missing, so the run stops before any case starts.
+A second adapter would be a new file there plus a case in `newImplementation` in `main.go` and a row in SPEC 9.

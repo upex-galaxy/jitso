@@ -4,12 +4,8 @@
   "source": [
     "intended: B4B5-DESIGN.md B4-22 and the doctor spec (defect N-20): a read-only health check"
   ],
-  "status": {
-    "ts": "xfail",
-    "go": "pass"
-  },
   "defect": "N-20",
-  "intent": "INTENDED behavior (defect N-20, B4.5). doctor prints one line per check, `ok  `, `warn` or `fail` padded to four characters, a space, the check id, a colon and a one-line detail, and then `doctor: <n> ok, <n> warn, <n> fail` as the last line. On a default project nothing fails, so the exit code is 0. The oracle has no `doctor` command: it answers `unknown command \"doctor\"` on stderr with exit 2 and prints nothing on stdout, so every pinned line FAILS on it.",
+  "intent": "INTENDED behavior (defect N-20, B4.5). doctor prints one line per check, `ok  `, `warn` or `fail` padded to four characters, a space, the check id, a colon and a one-line detail, and then `doctor: <n> ok, <n> warn, <n> fail` as the last line. On a default project nothing fails, so the exit code is 0.",
   "steps": [
     {
       "run": [

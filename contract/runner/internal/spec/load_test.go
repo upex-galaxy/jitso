@@ -82,8 +82,7 @@ func TestLoadErrors(t *testing.T) {
 	cases := []struct{ name, id, body, want string }{
 		{"unknown top key", "x", `{"id":"x","title":"t","stpes":[],"steps":[{"run":[]}]}`, `unknown key "stpes"`},
 		{"id mismatch", "x", `{"id":"y","title":"t","steps":[{"run":[]}]}`, "must equal the folder path"},
-		{"xfail without defect", "x", `{"id":"x","title":"t","status":{"ts":"xfail"},"intent":"i","steps":[{"run":[]}]}`, "needs both defect and intent"},
-		{"unknown status key", "x", `{"id":"x","title":"t","status":{"py":"pass"},"steps":[{"run":[]}]}`, "unknown implementation"},
+		{"status key is gone", "x", `{"id":"x","title":"t","status":{"go":"pass"},"steps":[{"run":[]}]}`, `unknown key "status"`},
 		{"unknown placeholder", "x", `{"id":"x","title":"t","steps":[{"run":["{{NOPE}}"]}]}`, "unknown placeholder {{NOPE}}"},
 		{"capture used in setup", "x", `{"id":"x","title":"t","project":{"files":{"a":"{{L}}"}},"steps":[{"run":[],"capture":{"L":{"from":"stdout","regex":"(.)"}}}]}`, "unknown placeholder {{L}}"},
 		{"bad regex", "x", `{"id":"x","title":"t","steps":[{"run":[],"expect":{"stdout":[{"regex":"(("}]}}]}`, "bad regex"},

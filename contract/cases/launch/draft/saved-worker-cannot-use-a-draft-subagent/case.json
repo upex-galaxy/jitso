@@ -4,12 +4,8 @@
   "source": [
     "intended: docs/decisions.md D7 and the drafts rows of the other decisions (a just-in-time build is a draft kept in .jitso/drafts/ and validated by code)"
   ],
-  "status": {
-    "ts": "xfail",
-    "go": "pass"
-  },
   "defect": "N-15",
-  "intent": "INTENDED behavior (defect N-15, drafts; docs/decisions.md D7). A subagent's prompt reaches `claude --agents`, so only reviewed text may. A saved (approved) worker whose listed subagent is a draft is `JITSO REJECTED: build \"<worker>\" lists subagent \"<subagent>\", which is draft, not approved`. A draft worker may list a draft subagent (the dry run prints the card), and a draft worker that lists a saved `candidate` subagent is rejected like any worker. The oracle has no drafts and no subagent status check (defect N-11): it ignores the draft helper and launches the saved worker, so the first step exits 0 instead of 2 and the case FAILS on it.",
+  "intent": "INTENDED behavior (defect N-15, drafts; docs/decisions.md D7). A subagent's prompt reaches `claude --agents`, so only reviewed text may. A saved (approved) worker whose listed subagent is a draft is `JITSO REJECTED: build \"<worker>\" lists subagent \"<subagent>\", which is draft, not approved`. A draft worker may list a draft subagent (the dry run prints the card), and a draft worker that lists a saved `candidate` subagent is rejected like any worker.",
   "project": {
     "files": {
       ".jitso/briefs/brief.md": "## Goal\n\nFind where the sync entry point of this project is defined and explain in a few sentences how it is wired to the rest of the code.\n\n## Scope\n\nRead only. Do not change any file and do not leave the repository.\n\n## Done when\n\nYou can name the file and the line that defines the entry point, and you have checked it by reading the file.\n\n## Report format\n\nOne short paragraph with the file path, the line number and a one line summary of what it does.\n",

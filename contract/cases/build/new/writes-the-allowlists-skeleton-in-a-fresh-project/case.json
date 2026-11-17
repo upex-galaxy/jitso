@@ -4,12 +4,8 @@
   "source": [
     "intended: docs/decisions.md D7 and the templates row of the other decisions (a new build starts as a draft from a template: invalid until every empty value is filled)"
   ],
-  "status": {
-    "ts": "xfail",
-    "go": "pass"
-  },
   "defect": "N-14",
-  "intent": "INTENDED behavior (defect N-14, shipped core and templates; docs/decisions.md D7). In a fresh project (no `jitso/jitso.yaml` and no `*.yaml` in `jitso/builds/`) `jitso build new <id>` first writes the commented `jitso/jitso.yaml` skeleton with empty allowlists, printing `wrote jitso/jitso.yaml (empty allowlists: fill them first)`, then the draft. It never overwrites the skeleton and does not create `jitso/builds/`. A second call finds `jitso/jitso.yaml` and writes only the draft line. The oracle has no `build new` (the runner maps only `build list`): it answers `unknown command` on stderr with exit 2, so every expectation that needs the written file or the printed line FAILS on it.",
+  "intent": "INTENDED behavior (defect N-14, shipped core and templates; docs/decisions.md D7). In a fresh project (no `jitso/jitso.yaml` and no `*.yaml` in `jitso/builds/`) `jitso build new <id>` first writes the commented `jitso/jitso.yaml` skeleton with empty allowlists, printing `wrote jitso/jitso.yaml (empty allowlists: fill them first)`, then the draft. It never overwrites the skeleton and does not create `jitso/builds/`. A second call finds `jitso/jitso.yaml` and writes only the draft line.",
   "project": {
     "files": {
       "jitso/jitso.yaml": null,

@@ -4,12 +4,8 @@
   "source": [
     "intended: docs/decisions.md D7 and the drafts rows of the other decisions (a just-in-time build is a draft kept in .jitso/drafts/ and validated by code)"
   ],
-  "status": {
-    "ts": "xfail",
-    "go": "pass"
-  },
   "defect": "N-15",
-  "intent": "INTENDED behavior (defect N-15, drafts; docs/decisions.md D7). `status: draft` is valid only in the draft layer and the draft layer accepts nothing else: any other status, or none, is `status must be draft in a draft`. The rest of the file is valid, so that is the only problem. The oracle has no `build draft` and no `build discard` (the runner maps only `build list`): both answer `unknown command` on stderr with exit 2, so every expectation that needs their output FAILS on it.",
+  "intent": "INTENDED behavior (defect N-15, drafts; docs/decisions.md D7). `status: draft` is valid only in the draft layer and the draft layer accepts nothing else: any other status, or none, is `status must be draft in a draft`. The rest of the file is valid, so that is the only problem.",
   "for_each": {
     "var": "status",
     "values": [

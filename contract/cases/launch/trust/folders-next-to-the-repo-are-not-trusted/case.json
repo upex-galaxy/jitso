@@ -3,14 +3,10 @@
   "title": "a prefix lookalike of the project folder or a subfolder of it is not a trusted folder: only the exact worktree folders are",
   "source": [
     "cli/jitso/trust.test.ts: 'any other folder is not trusted, nor is a subfolder prefix lookalike'",
-    "intended: TS-ODDITIES L4 (owner decision, defect N-22): the folder Orca reports is checked on every launch"
+    "intended: owner decision, defect N-22: the folder Orca reports is checked on every launch"
   ],
-  "status": {
-    "ts": "xfail",
-    "go": "pass"
-  },
   "defect": "N-22",
-  "intent": "INTENDED behavior (TS-ODDITIES L4, owner decision, defect N-22). The launch compares the folder Orca reports with the worktrees of the repo right after terminal create, before the idle wait, so a refused launch calls only terminal create and terminal close, sends no key and writes no registry line. The stderr text keeps its prefix and tail. The TS binary compares the folder only when the trust dialog shows, and only after the idle wait and a screen read, so it calls terminal wait and terminal read first.",
+  "intent": "INTENDED behavior (owner decision, defect N-22). The launch compares the folder Orca reports with the worktrees of the repo right after terminal create, before the idle wait, so a refused launch calls only terminal create and terminal close, sends no key and writes no registry line. The stderr text keeps its prefix and tail.",
   "project": {
     "files": {
       ".jitso/briefs/brief.md": {

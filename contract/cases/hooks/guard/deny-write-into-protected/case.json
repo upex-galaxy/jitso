@@ -4,12 +4,8 @@
   "source": [
     "intended: docs/decisions.md A5 (defect N-25): the guard denies writes into builds, jitso/jitso.yaml and the hard rules"
   ],
-  "status": {
-    "ts": "xfail",
-    "go": "pass"
-  },
   "defect": "N-25",
-  "intent": "INTENDED behavior (defect N-25, owner answer A5). The guard denies a Write, Edit or MultiEdit whose file_path is inside jitso/builds/, jitso/hard-rules/ or is jitso/jitso.yaml: an agent changes an approved build only through a draft the owner saves. The path is resolved against the payload cwd and cleaned, and folders are compared in any letter case. The reason names the tool and the area, and says to draft a build and ask the owner to save it. The TS binary judges only Bash and orca MCP tools, and its Bash rules do not know these writes, so it prints nothing and the decision FAILS on TS.",
+  "intent": "INTENDED behavior (defect N-25, owner answer A5). The guard denies a Write, Edit or MultiEdit whose file_path is inside jitso/builds/, jitso/hard-rules/ or is jitso/jitso.yaml: an agent changes an approved build only through a draft the owner saves. The path is resolved against the payload cwd and cleaned, and folders are compared in any letter case. The reason names the tool and the area, and says to draft a build and ask the owner to save it.",
   "for_each": {
     "vars": [
       "tool",

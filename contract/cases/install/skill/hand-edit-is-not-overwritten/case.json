@@ -4,12 +4,8 @@
   "source": [
     "intended: docs: B4B5-DESIGN.md B4-16, states table (modified)"
   ],
-  "status": {
-    "ts": "xfail",
-    "go": "pass"
-  },
   "defect": "N-16",
-  "intent": "INTENDED behavior (defect N-16, B4.3). After an edit by hand, install without `--force` shows what it would change, then exits 2 with `JITSO REJECTED: the jitso skill in .agents/skills/jitso was edited by hand (SKILL.md); nothing written; run again with --force to replace it (a backup is kept)` and leaves the edit. With `--force` it prints `backed up .agents/skills/jitso/SKILL.md to <backup>`, the backup copy holds the edited bytes, and the file is the shipped skill again. The oracle has no `install` command: it answers `unknown command \"install\"` on stderr with exit 2 and prints nothing on stdout, so the pinned output and file effects FAIL on it.",
+  "intent": "INTENDED behavior (defect N-16, B4.3). After an edit by hand, install without `--force` shows what it would change, then exits 2 with `JITSO REJECTED: the jitso skill in .agents/skills/jitso was edited by hand (SKILL.md); nothing written; run again with --force to replace it (a backup is kept)` and leaves the edit. With `--force` it prints `backed up .agents/skills/jitso/SKILL.md to <backup>`, the backup copy holds the edited bytes, and the file is the shipped skill again.",
   "steps": [
     {
       "run": [

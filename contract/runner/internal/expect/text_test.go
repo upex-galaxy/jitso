@@ -68,7 +68,7 @@ func TestRouteScopeParsing(t *testing.T) {
 		ids   []string
 		found bool
 	}{
-		// today's TS card: no colon, so the router does not see it (defect S1)
+		// a card with no colon, so the router does not see it (defect S1, history)
 		{"subagents unrestricted (harness default) | ROUTE-SCOPE none", nil, false},
 		{"subagents x | ROUTE-SCOPE code-quickref,ticket-work", nil, false},
 		{"ROUTE-SCOPE: none", []string{}, true},

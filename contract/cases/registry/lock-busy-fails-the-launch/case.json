@@ -3,14 +3,10 @@
   "title": "a lock held by someone else that never frees fails the launch with exit 3, writes no event, closes the terminal it opened and leaves no launch folder",
   "source": [
     "cli/jitso/log.test.ts: 'gives up with a clear error when a fresh lock never frees'",
-    "intended: TS-ODDITIES L2 (owner decision 2026-11-15): a failed launch leaves no launch folder; the TS binary leaves it on disk"
+    "intended: owner decision 2026-11-15: a failed launch leaves no launch folder"
   ],
-  "status": {
-    "ts": "xfail",
-    "go": "pass"
-  },
   "defect": "N-2",
-  "intent": "INTENDED behavior (TS-ODDITIES L2, owner decision 2026-11-15, defect N-2). A launch that fails before its registry line leaves no launch folder behind: the implementation removes .jitso/launches/<id>/ when the registry lock never frees. The exit code, the stderr text, the empty registry and the orca calls (the terminal it opened is closed) are unchanged. The TS binary leaves the folder on disk, so the launch-folder check is the only expectation that FAILS on TS.",
+  "intent": "INTENDED behavior (owner decision 2026-11-15, defect N-2). A launch that fails before its registry line leaves no launch folder behind: the implementation removes .jitso/launches/<id>/ when the registry lock never frees. The exit code, the stderr text, the empty registry and the orca calls (the terminal it opened is closed) are unchanged.",
   "project": {
     "files": {
       ".jitso/briefs/explore.md": {

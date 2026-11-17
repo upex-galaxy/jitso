@@ -4,12 +4,8 @@
   "source": [
     "intended: docs/decisions.md D7 and B3-18/B3-19 (a draft becomes a build only with the owner's OK: a terminal, or the token of the content he read; the guard denies the agent)"
   ],
-  "status": {
-    "ts": "xfail",
-    "go": "pass"
-  },
   "defect": "N-15",
-  "intent": "INTENDED behavior (defect N-15, drafts; docs/decisions.md D7). A draft whose id is the id of a saved build of the project is `JITSO REJECTED: jitso/builds/<id>.yaml already exists: save never overwrites a build`; so is a draft whose target file exists under another id. A draft whose id a build of another layer already has (here the user folder) is `JITSO REJECTED: build \"<id>\" already exists (<layer> <path>): a draft needs an id no build has`. The check comes before the token: the answer is the same with a bogus `--confirm`. The saved file and the draft are left as they were. The oracle has no `build save` (the runner maps only `build list`): it answers `unknown command` on stderr with exit 2 and prints nothing on stdout, so every expectation that needs the `+ ` lines, the token text or the written file FAILS on it.",
+  "intent": "INTENDED behavior (defect N-15, drafts; docs/decisions.md D7). A draft whose id is the id of a saved build of the project is `JITSO REJECTED: jitso/builds/<id>.yaml already exists: save never overwrites a build`; so is a draft whose target file exists under another id. A draft whose id a build of another layer already has (here the user folder) is `JITSO REJECTED: build \"<id>\" already exists (<layer> <path>): a draft needs an id no build has`. The check comes before the token: the answer is the same with a bogus `--confirm`. The saved file and the draft are left as they were.",
   "project": {
     "files": {
       ".jitso/drafts/haiku-explorer.yaml": "# Draft written by a drafts case.\nid: haiku-explorer\nversion: 1\nstatus: draft\nrole: operator\ntype: scanner\nwork_kind: repo-scan\ndescription: A draft with the id of a saved build.\nharness: claude\nmodel: claude-haiku-5-5\neffort: low\nmode_default: direct\nagents_md: exclude\nroute_scope: [none]\nskills_first: []\ntools: [Read, Glob, Grep]\nmcp: []\nrequires: []\nbudget: { tokens: 150000, usd_list_cap: 0.30 }\nsuccess:\n  - { check: answer_delivered }\n  - { check: no_rule_breaks }\n",

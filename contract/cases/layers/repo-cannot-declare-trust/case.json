@@ -4,12 +4,8 @@
   "source": [
     "intended: builds come from layers (repo, trusted parent folders, user folder), nearest wins (docs/decisions.md)"
   ],
-  "status": {
-    "ts": "xfail",
-    "go": "pass"
-  },
   "defect": "N-12",
-  "intent": "INTENDED behavior (defect N-12, build layers). Trust flows outside in: a project cannot widen its own catalog by naming a parent. Both the outer project and the nested checkout carry a .jitso/config.yaml that trusts the outer folder, and the user config does not exist, so from the nested project only its own build is listed, plus the user folder's builds (the positive control). The oracle has no user layer and no nested project, so the case FAILS on it. The oracle also resolves its project from its own script folder, so from a nested checkout it reads the outer fixture catalog (defect N-1) and fails here as well.",
+  "intent": "INTENDED behavior (defect N-12, build layers). Trust flows outside in: a project cannot widen its own catalog by naming a parent. Both the outer project and the nested checkout carry a .jitso/config.yaml that trusts the outer folder, and the user config does not exist, so from the nested project only its own build is listed, plus the user folder's builds (the positive control).",
   "project": {
     "files": {
       "nested/jitso/jitso.yaml": {

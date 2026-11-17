@@ -4,12 +4,8 @@
   "source": [
     "intended: builds come from layers (repo, trusted parent folders, user folder), nearest wins (docs/decisions.md)"
   ],
-  "status": {
-    "ts": "xfail",
-    "go": "pass"
-  },
   "defect": "N-12",
-  "intent": "INTENDED behavior (defect N-12, build layers). Builds come from layers, nearest first: the project's jitso/builds, each trusted parent folder, then the user folder ~/.jitso/builds. A user build that is valid for this project is listed by build list with ` (from user ~/.jitso/builds/<file>)` after its summary line, a build of the project itself has no suffix, and launch accepts it (the dry run card header ends `build <id> v<n> (user)`). The oracle reads only the project catalog and knows no layers, so it never lists shared-scan and the case FAILS on it: the shared-scan line is missing.",
+  "intent": "INTENDED behavior (defect N-12, build layers). Builds come from layers, nearest first: the project's jitso/builds, each trusted parent folder, then the user folder ~/.jitso/builds. A user build that is valid for this project is listed by build list with ` (from user ~/.jitso/builds/<file>)` after its summary line, a build of the project itself has no suffix, and launch accepts it (the dry run card header ends `build <id> v<n> (user)`).",
   "project": {
     "files": {
       ".jitso/briefs/brief.md": {

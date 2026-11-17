@@ -4,12 +4,8 @@
   "source": [
     "intended: docs/decisions.md D8 (setup instructions, defect N-18): a delimited, reversible JITSO block in the instruction files agents read"
   ],
-  "status": {
-    "ts": "xfail",
-    "go": "pass"
-  },
   "defect": "N-18",
-  "intent": "INTENDED behavior (defect N-18, setup instructions). Claude Code also reads `.claude/CLAUDE.md`. When the root has no `CLAUDE.md` and `.claude/CLAUDE.md` exists without the import, it gets the block next to the one in `AGENTS.md`. The oracle has no `setup` command: it answers `unknown command \"setup\"` on stderr with exit 2 and prints nothing on stdout, so every expectation that needs this output or file effect FAILS on it.",
+  "intent": "INTENDED behavior (defect N-18, setup instructions). Claude Code also reads `.claude/CLAUDE.md`. When the root has no `CLAUDE.md` and `.claude/CLAUDE.md` exists without the import, it gets the block next to the one in `AGENTS.md`.",
   "project": {
     "files": {
       ".claude/CLAUDE.md": "# Claude\n",

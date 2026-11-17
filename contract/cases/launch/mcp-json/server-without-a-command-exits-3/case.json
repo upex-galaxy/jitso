@@ -3,14 +3,10 @@
   "title": "a repo MCP server whose command is not a string stops the launch with exit 3; no launch folder is left behind",
   "source": [
     "cli/jitso/adapters/claude.ts: typeof server.command !== 'string'",
-    "intended: TS-ODDITIES L2 (owner decision 2026-11-15): a failed launch leaves no launch folder; the TS binary leaves it on disk"
+    "intended: owner decision 2026-11-15: a failed launch leaves no launch folder"
   ],
-  "status": {
-    "ts": "xfail",
-    "go": "pass"
-  },
   "defect": "N-2",
-  "intent": "INTENDED behavior (TS-ODDITIES L2, owner decision 2026-11-15, defect N-2). A launch that fails before its registry line leaves no launch folder behind: the implementation removes .jitso/launches/<id>/ when the launch fails. The exit code, the stderr text, the empty registry and the orca calls are unchanged. The case seeds one earlier launch folder, so .jitso/launches always exists and the check pins that only the failed launch's own folder is removed, never the whole directory (SPEC 7.2 has no 'absent or empty' check). The TS binary leaves the folder (brief.md, card.txt, core.md, mcp.json, run.sh) on disk with no registry line, so the launch-folder check is the only expectation that FAILS on TS.",
+  "intent": "INTENDED behavior (owner decision 2026-11-15, defect N-2). A launch that fails before its registry line leaves no launch folder behind: the implementation removes .jitso/launches/<id>/ when the launch fails. The exit code, the stderr text, the empty registry and the orca calls are unchanged. The case seeds one earlier launch folder, so .jitso/launches always exists and the check pins that only the failed launch's own folder is removed, never the whole directory (SPEC 7.2 has no 'absent or empty' check).",
   "project": {
     "files": {
       ".jitso/briefs/brief.md": {

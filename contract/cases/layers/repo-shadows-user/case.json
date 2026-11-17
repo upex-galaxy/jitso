@@ -4,12 +4,8 @@
   "source": [
     "intended: builds come from layers (repo, trusted parent folders, user folder), nearest wins (docs/decisions.md)"
   ],
-  "status": {
-    "ts": "xfail",
-    "go": "pass"
-  },
   "defect": "N-12",
-  "intent": "INTENDED behavior (defect N-12, build layers). The nearest layer that has an id decides: the project's haiku-explorer is the build of that id, so the user folder's haiku-explorer.yaml (another description, model and effort) is never listed, never launched and never merged into it. A positive control keeps the case meaningful: the user-only build next to it is listed with its origin. The oracle never reads the user folder, so it passes the shadowing half and FAILS on the user-only line.",
+  "intent": "INTENDED behavior (defect N-12, build layers). The nearest layer that has an id decides: the project's haiku-explorer is the build of that id, so the user folder's haiku-explorer.yaml (another description, model and effort) is never listed, never launched and never merged into it. A positive control keeps the case meaningful: the user-only build next to it is listed with its origin.",
   "project": {
     "files": {
       ".jitso/briefs/brief.md": {

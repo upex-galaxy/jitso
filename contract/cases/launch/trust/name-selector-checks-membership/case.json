@@ -2,14 +2,10 @@
   "id": "launch/trust/name-selector-checks-membership",
   "title": "a selector that names no path (a worktree name) still needs Orca's folder to be a worktree of the repo",
   "source": [
-    "intended: TS-ODDITIES L4 (owner decision, defect N-22): the folder Orca reports is checked on every launch"
+    "intended: owner decision, defect N-22: the folder Orca reports is checked on every launch"
   ],
-  "status": {
-    "ts": "xfail",
-    "go": "pass"
-  },
   "defect": "N-22",
-  "intent": "INTENDED behavior (TS-ODDITIES L4, owner decision, defect N-22). A selector with no path (wt-1, feature/x-1) has no pre-check, but the folder Orca reports must still be a worktree of the repo: another folder is refused with the plain 'untrusted folder' text, the terminal is closed and nothing is registered. The TS binary launches (exit 0).",
+  "intent": "INTENDED behavior (owner decision, defect N-22). A selector with no path (wt-1, feature/x-1) has no pre-check, but the folder Orca reports must still be a worktree of the repo: another folder is refused with the plain 'untrusted folder' text, the terminal is closed and nothing is registered.",
   "project": {
     "files": {
       ".jitso/briefs/brief.md": {

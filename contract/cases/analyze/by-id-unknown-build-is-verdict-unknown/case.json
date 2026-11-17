@@ -4,12 +4,8 @@
   "source": [
     "cli/jitso/analyze.ts: `preset?.success ?? []`"
   ],
-  "status": {
-    "ts": "xfail",
-    "go": "pass"
-  },
   "defect": "N-10",
-  "intent": "INTENDED behavior (defect N-10, build vocabulary; docs/decisions.md D6). The verdict_reason of the analyzed event reads `build success checks <a> of <b> evaluated here; the rest need the destination`. The oracle still prints `preset success checks ...`, so the verdict_reason expectation FAILS on TS and nothing else does.",
+  "intent": "INTENDED behavior (defect N-10, build vocabulary; docs/decisions.md D6). The verdict_reason of the analyzed event reads `build success checks <a> of <b> evaluated here; the rest need the destination`.",
   "project": {
     "files": {
       ".jitso/launches.jsonl": "{\"v\":2,\"event\":\"launch\",\"id\":\"L20261113T142233-a3f9\",\"parent\":null,\"root\":\"L20261113T142233-a3f9\",\"depth\":0,\"ts\":\"2026-11-13T14:22:33.000Z\",\"mode\":\"direct\",\"build\":\"ghost-preset\",\"orca\":{\"run\":null,\"task\":null,\"terminal\":\"term_fake\",\"title\":\"t [jitso:L20261113T142233-a3f9]\"},\"transcript_path\":\"{{PROJECT}}/.jitso/transcripts/11111111-2222-3333-4444-555555555555.jsonl\",\"budget\":{\"tokens\":250000,\"usd_list_cap\":3}}\n",

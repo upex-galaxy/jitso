@@ -4,12 +4,8 @@
   "source": [
     "intended: docs/decisions.md D8 (setup hook, defect N-17): jitso registers its guard in the project's .claude/settings.json without clobbering anything"
   ],
-  "status": {
-    "ts": "xfail",
-    "go": "pass"
-  },
   "defect": "N-17",
-  "intent": "INTENDED behavior (defect N-17, setup hook). After `setup hook --yes`, `--remove --dry-run` prints the diff (`--- a/.claude/settings.json`, `+++ /dev/null` since the file would go) and `dry run, nothing written`; the file is still there byte for byte. Since N-25 the guard also has a third PreToolUse group, `Write|Edit|MultiEdit|NotebookEdit`. The oracle has no `setup` command: it answers `unknown command \"setup\"` on stderr with exit 2 and prints nothing on stdout, so every expectation that needs this output or file effect FAILS on it.",
+  "intent": "INTENDED behavior (defect N-17, setup hook). After `setup hook --yes`, `--remove --dry-run` prints the diff (`--- a/.claude/settings.json`, `+++ /dev/null` since the file would go) and `dry run, nothing written`; the file is still there byte for byte. Since N-25 the guard also has a third PreToolUse group, `Write|Edit|MultiEdit|NotebookEdit`.",
   "steps": [
     {
       "run": [

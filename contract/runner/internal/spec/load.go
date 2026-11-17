@@ -16,9 +16,6 @@ import (
 // CaseFile is the file name of a case.
 const CaseFile = "case.json"
 
-// StatusKeys are the implementations a case may declare a status for.
-var StatusKeys = []string{"ts", "go"}
-
 var tagPattern = regexp.MustCompile(`^[a-z0-9][a-z0-9-]*$`)
 
 var (
@@ -63,10 +60,10 @@ func Load(casesRoot, dir, fixturesRoot string) (*Case, error) {
 	if err != nil {
 		return nil, err
 	}
-	if err := jsonx.Keys(obj, "case", "id", "title", "source", "tags", "status", "defect", "intent", "project", "home", "orca", "claude", "for_each", "steps"); err != nil {
+	if err := jsonx.Keys(obj, "case", "id", "title", "source", "tags", "defect", "intent", "project", "home", "orca", "claude", "for_each", "steps"); err != nil {
 		return nil, err
 	}
-	c := &Case{Dir: dir, Base: "default", Status: map[string]string{}, orca: obj["orca"], claude: obj["claude"]}
+	c := &Case{Dir: dir, Base: "default", orca: obj["orca"], claude: obj["claude"]}
 	if err := c.readMeta(obj, wantID); err != nil {
 		return nil, err
 	}
@@ -111,21 +108,6 @@ func (c *Case) readMeta(obj map[string]any, wantID string) error {
 			}
 		}
 	}
-	if v, ok := obj["status"]; ok {
-		if c.Status, err = jsonx.StringMap(v, "status"); err != nil {
-			return err
-		}
-	}
-	xfail := false
-	for key, s := range c.Status {
-		if !contains(StatusKeys, key) {
-			return fmt.Errorf("status: unknown implementation %q (known: %v)", key, StatusKeys)
-		}
-		if s != StatusPass && s != StatusXfail {
-			return fmt.Errorf("status.%s: want pass or xfail, got %q", key, s)
-		}
-		xfail = xfail || s == StatusXfail
-	}
 	for _, f := range []struct {
 		key string
 		dst *string
@@ -135,9 +117,6 @@ func (c *Case) readMeta(obj map[string]any, wantID string) error {
 				return err
 			}
 		}
-	}
-	if xfail && (c.Defect == "" || c.Intent == "") {
-		return errors.New("an xfail status needs both defect and intent")
 	}
 	return nil
 }

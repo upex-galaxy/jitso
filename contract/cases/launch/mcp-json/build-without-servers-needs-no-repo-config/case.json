@@ -2,14 +2,10 @@
   "id": "launch/mcp-json/build-without-servers-needs-no-repo-config",
   "title": "a launch that names no MCP server after --mcp-exclude reads no .mcp.json, so a missing or broken file does not stop it",
   "source": [
-    "intended: TS-ODDITIES L1 (defect N-26)"
+    "intended: defect N-26"
   ],
-  "status": {
-    "ts": "xfail",
-    "go": "pass"
-  },
   "defect": "N-26",
-  "intent": "INTENDED behavior (TS-ODDITIES L1, defect N-26). The repo .mcp.json is read only when the launch still names an MCP server after --mcp-exclude. A build without servers launches in a project that has no .mcp.json, and a build whose servers are all excluded launches with a .mcp.json that is not JSON. The launch's mcp.json is then {\"mcpServers\": {}}. The oracle reads the file for every launch, so it exits 3 at step 1 and the whole case FAILS on TS.",
+  "intent": "INTENDED behavior (defect N-26). The repo .mcp.json is read only when the launch still names an MCP server after --mcp-exclude. A build without servers launches in a project that has no .mcp.json, and a build whose servers are all excluded launches with a .mcp.json that is not JSON. The launch's mcp.json is then {\"mcpServers\": {}}.",
   "project": {
     "files": {
       ".jitso/briefs/brief.md": {

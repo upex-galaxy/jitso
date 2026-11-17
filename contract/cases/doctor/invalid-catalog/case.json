@@ -4,12 +4,8 @@
   "source": [
     "intended: B4B5-DESIGN.md B4-22 and the doctor spec (defect N-20): a read-only health check"
   ],
-  "status": {
-    "ts": "xfail",
-    "go": "pass"
-  },
   "defect": "N-20",
-  "intent": "INTENDED behavior (defect N-20, B4.5). With `jitso/jitso.yaml` holding `models: [` (not valid YAML) the catalog does not load: doctor prints a `fail catalog:` line naming the file and exits 3. The summary counts one failure. The oracle has no `doctor` command: it answers `unknown command \"doctor\"` on stderr with exit 2 and prints nothing on stdout, so every pinned line FAILS on it.",
+  "intent": "INTENDED behavior (defect N-20, B4.5). With `jitso/jitso.yaml` holding `models: [` (not valid YAML) the catalog does not load: doctor prints a `fail catalog:` line naming the file and exits 3. The summary counts one failure.",
   "project": {
     "files": {
       "jitso/jitso.yaml": "models: [\n"

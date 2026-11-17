@@ -2,14 +2,10 @@
   "id": "brief/length/headings-and-path-punctuation-are-not-words",
   "title": "headings add no words and a cited path is one word: a brief of 39 words with two cited paths is rejected as 39",
   "source": [
-    "intended: TS-ODDITIES B1 (defect N-27)"
+    "intended: defect N-27"
   ],
-  "status": {
-    "ts": "xfail",
-    "go": "pass"
-  },
   "defect": "N-27",
-  "intent": "INTENDED behavior (TS-ODDITIES B1, defect N-27). The length check counts words: whitespace-separated tokens that hold a letter, and the four heading lines of the brief add nothing. The brief has four headings and 39 words, two of them the cited paths `src/sync.ts` and `docs/guide.md` (both exist in the default fixture), so it is rejected with `39 words`. The oracle counts the heading words and splits each cited path on punctuation, so it counts more than 40 and accepts the brief: the exit code FAILS on TS.",
+  "intent": "INTENDED behavior (defect N-27). The length check counts words: whitespace-separated tokens that hold a letter, and the four heading lines of the brief add nothing. The brief has four headings and 39 words, two of them the cited paths `src/sync.ts` and `docs/guide.md` (both exist in the default fixture), so it is rejected with `39 words`.",
   "project": {
     "files": {
       ".jitso/briefs/brief.md": {

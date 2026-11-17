@@ -4,12 +4,8 @@
   "source": [
     "intended: docs/decisions.md registry v2 decision (defect N-31)"
   ],
-  "status": {
-    "ts": "xfail",
-    "go": "pass"
-  },
   "defect": "N-31",
-  "intent": "INTENDED behavior (defect N-31, owner answer A6). The registry log is schema v2 and a v1 line is skipped, so the registry check warns with the number of v1 lines it skipped, in its own clause, so the upgrade note can say `jitso doctor` counts them. A project whose only line is a v1 launch line has no launch and no running one. The oracle has no `doctor` command: it answers `unknown command \"doctor\"` on stderr with exit 2 and prints nothing on stdout, so the pinned line FAILS on it.",
+  "intent": "INTENDED behavior (defect N-31, owner answer A6). The registry log is schema v2 and a v1 line is skipped, so the registry check warns with the number of v1 lines it skipped, in its own clause, so the upgrade note can say `jitso doctor` counts them. A project whose only line is a v1 launch line has no launch and no running one.",
   "project": {
     "files": {
       ".jitso/launches.jsonl": "{\"event\":\"launch\",\"v\":1,\"id\":\"L20261113T142233-a3f9\",\"parent\":null,\"root\":\"L20261113T142233-a3f9\",\"depth\":0,\"ts\":\"2026-11-13T14:22:33.000Z\",\"mode\":\"direct\",\"preset\":\"haiku-explorer\",\"session_id\":\"sess-1\",\"orca\":{\"run\":null,\"task\":null,\"terminal\":\"term_fake\",\"title\":\"t [jitso:L20261113T142233-a3f9]\"},\"transcript_path\":\"{{PROJECT}}/.jitso/transcripts/11111111-2222-3333-4444-555555555555.jsonl\"}\n"

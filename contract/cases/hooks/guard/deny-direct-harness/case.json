@@ -4,12 +4,8 @@
   "source": [
     "intended: docs/decisions.md A3 (defect N-24): the guard denies a harness started directly"
   ],
-  "status": {
-    "ts": "xfail",
-    "go": "pass"
-  },
   "defect": "N-24",
-  "intent": "INTENDED behavior (defect N-24, owner answer A3). A worker starts only through the launcher, so a Bash segment whose program is claude, codex or opencode is denied: by name or path, in any letter case, with NAME=value words, quotes or a backslash in the word, behind a wrapper (env, command, exec, nohup, time, sudo, nice, timeout, xargs), behind a shell -c or eval, and in a command substitution, a backtick or a subshell. Every invocation is denied, claude --version included. The reason tells the session to start workers through the launcher and ends with (denied: <name>). The TS binary denies only the orca launch verbs and a terminal create --command, so it prints nothing for these lines and the decision FAILS on TS.",
+  "intent": "INTENDED behavior (defect N-24, owner answer A3). A worker starts only through the launcher, so a Bash segment whose program is claude, codex or opencode is denied: by name or path, in any letter case, with NAME=value words, quotes or a backslash in the word, behind a wrapper (env, command, exec, nohup, time, sudo, nice, timeout, xargs), behind a shell -c or eval, and in a command substitution, a backtick or a subshell. Every invocation is denied, claude --version included. The reason tells the session to start workers through the launcher and ends with (denied: <name>).",
   "for_each": {
     "var": "command",
     "values": [

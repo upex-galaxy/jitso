@@ -7,12 +7,8 @@
   "tags": [
     "posix"
   ],
-  "status": {
-    "ts": "xfail",
-    "go": "pass"
-  },
   "defect": "N-11",
-  "intent": "INTENDED behavior (defect N-11, tier fields; docs/decisions.md). A subagent-tier build never launches alone, so route_scope, success, budget, mode_default, agents_md and harness mean nothing to it: they are optional and unused. The overlay jitso/builds/lean.yaml has only id, version, status, tier, description, prompt, model, effort and tools, and jitso/builds/lean-team.yaml is a worker that lists it. The catalog is valid: `build list` exits 0 and lists lean-team and not lean (a subagent is never listed), a dry launch of lean-team exits 0, and a real launch hands claude an --agents entry whose description and prompt are the file's text as written. The TS binary validates every file as a worker preset and requires route_scope and success of lean.yaml, so the whole catalog is invalid there: every command exits 3.",
+  "intent": "INTENDED behavior (defect N-11, tier fields; docs/decisions.md). A subagent-tier build never launches alone, so route_scope, success, budget, mode_default, agents_md and harness mean nothing to it: they are optional and unused. The overlay jitso/builds/lean.yaml has only id, version, status, tier, description, prompt, model, effort and tools, and jitso/builds/lean-team.yaml is a worker that lists it. The catalog is valid: `build list` exits 0 and lists lean-team and not lean (a subagent is never listed), a dry launch of lean-team exits 0, and a real launch hands claude an --agents entry whose description and prompt are the file's text as written.",
   "project": {
     "files": {
       "jitso/builds/lean.yaml": "id: lean\nversion: 1\nstatus: approved\ntier: subagent\ndescription: Lean helper used by a contract case, it carries only what claude needs.\nprompt: You are the lean helper of this session. Answer in one line and never edit a file.\nmodel: claude-haiku-5-5\neffort: low\ntools: [Read, Glob, Grep]\n",

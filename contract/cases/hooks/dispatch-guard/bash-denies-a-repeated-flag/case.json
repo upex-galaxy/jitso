@@ -4,12 +4,8 @@
   "source": [
     "intended: docs/decisions.md A2 (defect N-29): the launch line has one reading"
   ],
-  "status": {
-    "ts": "xfail",
-    "go": "pass"
-  },
   "defect": "N-29",
-  "intent": "INTENDED behavior (defect N-29). --build, --brief, --mode and --worktree appear exactly once in the dispatcher's launch line, so a repeat is denied with `<flag> is given more than once`, which keeps the line to one reading. The TS binary denies these lines for another reason (it does not allow --build), so the reason text FAILS on TS.",
+  "intent": "INTENDED behavior (defect N-29). --build, --brief, --mode and --worktree appear exactly once in the dispatcher's launch line, so a repeat is denied with `<flag> is given more than once`, which keeps the line to one reading.",
   "home": {
     "files": {
       ".jitso/dispatch-cwd/briefs/.keep": "",

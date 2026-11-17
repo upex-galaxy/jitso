@@ -10,12 +10,6 @@ import (
 	"jitso-contract-runner/internal/jsonx"
 )
 
-// Status values per implementation (SPEC 2).
-const (
-	StatusPass  = "pass"
-	StatusXfail = "xfail"
-)
-
 // Case is one loaded and validated case.json. The sections that may hold placeholders are
 // kept as decoded JSON trees and resolved at run time, section by section.
 type Case struct {
@@ -23,7 +17,6 @@ type Case struct {
 	Title  string
 	Source []string
 	Tags   []string
-	Status map[string]string
 	Defect string
 	Intent string
 	// Dir is the folder holding case.json; `from` entries are read from here.
@@ -54,14 +47,6 @@ func (c *Case) Worktrees() []string { return c.worktrees }
 
 // WorktreeVar is the placeholder holding the real path of a linked worktree.
 func WorktreeVar(name string) string { return WorktreePrefix + name }
-
-// StatusFor is the declared status for an implementation's status key (default pass).
-func (c *Case) StatusFor(key string) string {
-	if s, ok := c.Status[key]; ok {
-		return s
-	}
-	return StatusPass
-}
 
 // HasTag reports whether the case carries tag.
 func (c *Case) HasTag(tag string) bool {

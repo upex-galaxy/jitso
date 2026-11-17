@@ -3,7 +3,7 @@
   "title": "launch --help or -h as the first word prints the launch usage on stdout and exits 0, in or outside a git checkout, touching nothing",
   "source": [
     "cli/jitso/launch.ts: parseLaunchArgs (`--help` is not in the value flags)",
-    "intended: TS-ODDITIES L10 (defect N-26)"
+    "intended: defect N-26"
   ],
   "steps": [
     {
@@ -57,12 +57,8 @@
       }
     }
   ],
-  "status": {
-    "ts": "xfail",
-    "go": "pass"
-  },
   "defect": "N-26",
-  "intent": "INTENDED behavior (TS-ODDITIES L10, defect N-26). When the first word after `launch` is --help or -h, jitso prints the launch usage on stdout and exits 0: nothing on stderr, no project, catalog or Orca needed, no launch folder. Anywhere else the word stays an unknown argument (validation/unknown-flag keeps its --help and -h rows). The oracle rejects both words as an unknown argument with exit 2, so the exit code and the stdout expectations FAIL on TS.",
+  "intent": "INTENDED behavior (defect N-26). When the first word after `launch` is --help or -h, jitso prints the launch usage on stdout and exits 0: nothing on stderr, no project, catalog or Orca needed, no launch folder. Anywhere else the word stays an unknown argument (validation/unknown-flag keeps its --help and -h rows).",
   "for_each": {
     "var": "flag",
     "values": [

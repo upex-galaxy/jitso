@@ -4,12 +4,8 @@
   "source": [
     "intended: docs/decisions.md D8 (setup instructions, defect N-18): a delimited, reversible JITSO block in the instruction files agents read"
   ],
-  "status": {
-    "ts": "xfail",
-    "go": "pass"
-  },
   "defect": "N-18",
-  "intent": "INTENDED behavior (defect N-18, setup instructions). For each original (empty, no final line break, a final line break, CRLF, a block quoted inside a fenced code block, a lone BEGIN inside a tilde fence, a final blank line, a single line break), the first run adds the block recording in `added=` how many line breaks it put before it, and `--remove --yes` deletes the block lines and exactly that many breaks, so the file equals its original again. Markers inside a fenced code block are not real markers. The oracle has no `setup` command: it answers `unknown command \"setup\"` on stderr with exit 2 and prints nothing on stdout, so every expectation that needs this output or file effect FAILS on it.",
+  "intent": "INTENDED behavior (defect N-18, setup instructions). For each original (empty, no final line break, a final line break, CRLF, a block quoted inside a fenced code block, a lone BEGIN inside a tilde fence, a final blank line, a single line break), the first run adds the block recording in `added=` how many line breaks it put before it, and `--remove --yes` deletes the block lines and exactly that many breaks, so the file equals its original again. Markers inside a fenced code block are not real markers.",
   "project": {
     "files": {
       "AGENTS.md": "{{seed}}"

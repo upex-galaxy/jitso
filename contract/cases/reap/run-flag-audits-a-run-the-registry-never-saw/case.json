@@ -3,14 +3,10 @@
   "title": "every --run is audited in the order given, before the runs the registry knows; a run named twice is listed once; a rogue worker seen in several runs is flagged once",
   "source": [
     "cli/jitso/reap.test.ts: '--run adds a run the registry has never seen; no run at all means no worker-list call'",
-    "intended: TS-ODDITIES R4 (defect N-28)"
+    "intended: defect N-28"
   ],
-  "status": {
-    "ts": "xfail",
-    "go": "pass"
-  },
   "defect": "N-28",
-  "intent": "INTENDED behavior (TS-ODDITIES R4, defect N-28). A worker with a terminal handle is flagged once across every run and every reap (the first run it was seen in names the evidence), and the summary counts the rule_break lines this reap wrote. The oracle flags it once per run and counts three, so the stdout and registry expectations FAIL on TS.",
+  "intent": "INTENDED behavior (defect N-28). A worker with a terminal handle is flagged once across every run and every reap (the first run it was seen in names the evidence), and the summary counts the rule_break lines this reap wrote.",
   "project": {
     "files": {
       ".jitso/launches.jsonl": "{\"v\":2,\"event\":\"launch\",\"id\":\"L20261113T142233-a3f9\",\"parent\":null,\"root\":\"L20261113T142233-a3f9\",\"depth\":0,\"ts\":\"2026-11-13T14:22:33.000Z\",\"mode\":\"direct\",\"build\":\"haiku-explorer\",\"orca\":{\"run\":\"run_1\",\"task\":\"t\",\"terminal\":\"term_logged\",\"title\":\"t [jitso:L20261113T142233-a3f9]\"}}\n"

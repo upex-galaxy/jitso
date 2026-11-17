@@ -2,14 +2,10 @@
   "id": "launch/trust/id-selector-compares-its-path",
   "title": "an id:<id>::<path> selector names a path like path: does, and the folder Orca reports must equal it",
   "source": [
-    "intended: TS-ODDITIES L4 (owner decision, defect N-22): the folder Orca reports is checked on every launch"
+    "intended: owner decision, defect N-22: the folder Orca reports is checked on every launch"
   ],
-  "status": {
-    "ts": "xfail",
-    "go": "pass"
-  },
   "defect": "N-22",
-  "intent": "INTENDED behavior (TS-ODDITIES L4, owner decision, defect N-22). The id:<id>::<path> form is Orca's own worktreeId, so the text after the first :: is the path the caller asked for. Orca reporting another worktree is refused with the 'asked for' text. The TS binary launches (exit 0).",
+  "intent": "INTENDED behavior (owner decision, defect N-22). The id:<id>::<path> form is Orca's own worktreeId, so the text after the first :: is the path the caller asked for. Orca reporting another worktree is refused with the 'asked for' text.",
   "project": {
     "files": {
       ".jitso/briefs/brief.md": {

@@ -2,14 +2,10 @@
   "id": "analyze/by-id-over-budget-is-a-rule-break",
   "title": "a launch over its token budget and over its list cap gets one budget_over rule break for each limit and the verdict fail; a second analysis repeats no rule break",
   "source": [
-    "intended: TS-ODDITIES R10 (defect N-28)"
+    "intended: defect N-28"
   ],
-  "status": {
-    "ts": "xfail",
-    "go": "pass"
-  },
   "defect": "N-28",
-  "intent": "INTENDED behavior (TS-ODDITIES R10, defect N-28). analyze checks the launch line's budget: a peak main context above budget.tokens and a list cost above budget.usd_list_cap each append one rule_break of kind budget_over (evidence is numbers only), the analyzed event lists them in rule_breaks, the verdict is fail with the reason `the launch went over its budget` and the summary ends ` (over budget)`; a rule break already in the log with the same evidence is not written again. The oracle never writes budget_over and keeps the verdict, so the stdout and the registry expectations FAIL on TS.",
+  "intent": "INTENDED behavior (defect N-28). analyze checks the launch line's budget: a peak main context above budget.tokens and a list cost above budget.usd_list_cap each append one rule_break of kind budget_over (evidence is numbers only), the analyzed event lists them in rule_breaks, the verdict is fail with the reason `the launch went over its budget` and the summary ends ` (over budget)`; a rule break already in the log with the same evidence is not written again.",
   "project": {
     "files": {
       ".jitso/launches.jsonl": "{\"v\":2,\"event\":\"launch\",\"id\":\"L20261113T142233-a3f9\",\"parent\":null,\"root\":\"L20261113T142233-a3f9\",\"depth\":0,\"ts\":\"2026-11-13T14:22:33.000Z\",\"mode\":\"direct\",\"build\":\"haiku-explorer\",\"orca\":{\"run\":null,\"task\":null,\"terminal\":\"term_fake\",\"title\":\"t [jitso:L20261113T142233-a3f9]\"},\"transcript_path\":\"{{PROJECT}}/.jitso/transcripts/11111111-2222-3333-4444-555555555555.jsonl\",\"budget\":{\"tokens\":5,\"usd_list_cap\":0.001}}\n",

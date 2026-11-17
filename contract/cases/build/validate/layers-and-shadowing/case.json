@@ -4,12 +4,8 @@
   "source": [
     "intended: docs/decisions.md (build validate: a tolerant check of every build of every layer, one line per file, problem lines, one summary line)"
   ],
-  "status": {
-    "ts": "xfail",
-    "go": "pass"
-  },
   "defect": "N-13",
-  "intent": "INTENDED behavior (defect N-13, build validate). Files are listed in layer order (the project, trusted parents, the user folder), by file name inside a layer. A file whose id a nearer file already has is still checked and listed, with ` (shadowed by <layer> <display path>)` after its line; it is not the build of that id. The user folder here holds a copy of haiku-explorer (shadowed by the project's) and a user-only build. With an id the command prints the winner first, then the files it shadows, and its summary counts the winner only. The oracle has no `build validate` (and the runner maps only `build list`): it answers `unknown command` on stderr with exit 2, so every expectation that needs the command's output FAILS on it.",
+  "intent": "INTENDED behavior (defect N-13, build validate). Files are listed in layer order (the project, trusted parents, the user folder), by file name inside a layer. A file whose id a nearer file already has is still checked and listed, with ` (shadowed by <layer> <display path>)` after its line; it is not the build of that id. The user folder here holds a copy of haiku-explorer (shadowed by the project's) and a user-only build. With an id the command prints the winner first, then the files it shadows, and its summary counts the winner only.",
   "home": {
     "files": {
       ".jitso/builds/haiku-explorer.yaml": {

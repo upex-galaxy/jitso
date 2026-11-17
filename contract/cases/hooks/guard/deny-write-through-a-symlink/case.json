@@ -4,12 +4,8 @@
   "source": [
     "intended: docs/decisions.md A5 (defect N-25): the guard denies writes into builds, jitso/jitso.yaml and the hard rules"
   ],
-  "status": {
-    "ts": "xfail",
-    "go": "pass"
-  },
   "defect": "N-25",
-  "intent": "INTENDED behavior (defect N-25, owner answer A5). A Write follows symlinks, so the guard resolves the path (the deepest existing ancestor, and a link at the end even when its target does not exist yet) before it judges it. A link that leads into jitso/builds/ or the hard rules cannot be used to write there. The TS binary judges only Bash and orca MCP tools, and its Bash rules do not know these writes, so it prints nothing and the decision FAILS on TS.",
+  "intent": "INTENDED behavior (defect N-25, owner answer A5). A Write follows symlinks, so the guard resolves the path (the deepest existing ancestor, and a link at the end even when its target does not exist yet) before it judges it. A link that leads into jitso/builds/ or the hard rules cannot be used to write there.",
   "project": {
     "files": {
       "notes/b": {

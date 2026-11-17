@@ -5,12 +5,8 @@
     "cli/jitso/root.test.ts: 'from a subfolder of the primary checkout it is still the checkout root'",
     "intended: docs/decisions.md (tiers): a subagent-tier build is not a launchable build, so it is not listed"
   ],
-  "status": {
-    "ts": "xfail",
-    "go": "pass"
-  },
   "defect": "N-5",
-  "intent": "INTENDED behavior (defect N-5, tiers; docs/decisions.md, owner 2026-11-15). Only launchable builds (tier worker or conductor) are listed and offered: the three subagent-tier builds of the default fixture (plan, code, verifier) never appear. The expectations below were written for the four launchable builds and still hold for the intended behavior. The TS binary lists every approved build, so it prints seven lines (code, haiku-explorer, plan, sonnet-automator, sonnet-conductor, sonnet-tester, verifier) and the case FAILS on TS on the line count.",
+  "intent": "INTENDED behavior (defect N-5, tiers; docs/decisions.md, owner 2026-11-15). Only launchable builds (tier worker or conductor) are listed and offered: the three subagent-tier builds of the default fixture (plan, code, verifier) never appear. The expectations below were written for the four launchable builds and still hold for the intended behavior.",
   "for_each": {
     "var": "dir",
     "values": [

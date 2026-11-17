@@ -2,14 +2,10 @@
   "id": "hooks/guard/blank-jitso-script-is-not-the-launcher",
   "title": "a project whose jitso script is blank gets the plain launcher word in the guard's deny reason",
   "source": [
-    "intended: TS-ODDITIES L7 (defect N-26)"
+    "intended: defect N-26"
   ],
-  "status": {
-    "ts": "xfail",
-    "go": "pass"
-  },
   "defect": "N-26",
-  "intent": "INTENDED behavior (TS-ODDITIES L7, defect N-26). The guard and the card share one rule for the jitso script: a blank value is not declared. The reason of a denied worker start names `jitso launch --build <id>`, never `bun run jitso`. The oracle's reason is always `Use: bun run jitso launch --preset <id> ...`, so both reason expectations FAIL on TS.",
+  "intent": "INTENDED behavior (defect N-26). The guard and the card share one rule for the jitso script: a blank value is not declared. The reason of a denied worker start names `jitso launch --build <id>`, never `bun run jitso`.",
   "project": {
     "files": {
       "package.json": "{\"scripts\": {\"jitso\": \"\"}}"

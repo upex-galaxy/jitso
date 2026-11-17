@@ -4,12 +4,8 @@
   "source": [
     "intended: a command with no options rejects any word after it"
   ],
-  "status": {
-    "ts": "xfail",
-    "go": "pass"
-  },
   "defect": "N-21",
-  "intent": "INTENDED behavior (defect N-21, version). The oracle has no `version` command, so `version x` is an unknown command (exit 2, but with the unknown-command text), and the `jitso version: takes no arguments` expectation FAILS on TS.",
+  "intent": "INTENDED behavior (defect N-21, version).",
   "steps": [
     {
       "run": [

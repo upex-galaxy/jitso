@@ -2,14 +2,10 @@
   "id": "tree/arguments",
   "title": "tree checks its arguments before the project, rejects an unknown launch id, and is exit 3 outside a git checkout",
   "source": [
-    "intended: TS-ODDITIES C1 (defect N-30); the rollups are the oracle's own (cli/jitso/tree.ts buildTree, tree.test.ts), which it never wired to a command"
+    "intended: defect N-30; the rollups come from cli/jitso/tree.ts buildTree and tree.test.ts"
   ],
-  "status": {
-    "ts": "xfail",
-    "go": "pass"
-  },
   "defect": "N-30",
-  "intent": "INTENDED behavior (TS-ODDITIES C1, tree half, defect N-30). `jitso tree [<launch_id>]` prints the launch tree, one line per launch in preorder, indented two spaces per depth: `<id> <build> <state>: verdict <verdict>, US$ <cost> list, <tokens> tokens, peak <peak>, budget <pct>%, <k> rule break(s), <a> of <n> analyzed`, with the rollups of the launch's branch (cost and tokens summed, peak context and budget percentage the maximum, rule breaks counted, the worst verdict of the analyzed launches or `pending`). At most one argument, of the exact launch id form, else `JITSO REJECTED: usage: jitso tree [<launch_id>]` (exit 2, before the project is looked up, so also outside git); an id that is not in the log is `JITSO REJECTED: unknown launch <id>` (exit 2); with no argument outside a git checkout it is exit 3 with `jitso: <folder> is not inside a git checkout`. The oracle answers `jitso tree: not implemented yet` with exit 0 for every argument, so every one of these exit codes FAILS on TS.",
+  "intent": "INTENDED behavior (defect N-30). `jitso tree [<launch_id>]` prints the launch tree, one line per launch in preorder, indented two spaces per depth: `<id> <build> <state>: verdict <verdict>, US$ <cost> list, <tokens> tokens, peak <peak>, budget <pct>%, <k> rule break(s), <a> of <n> analyzed`, with the rollups of the launch's branch (cost and tokens summed, peak context and budget percentage the maximum, rule breaks counted, the worst verdict of the analyzed launches or `pending`). At most one argument, of the exact launch id form, else `JITSO REJECTED: usage: jitso tree [<launch_id>]` (exit 2, before the project is looked up, so also outside git); an id that is not in the log is `JITSO REJECTED: unknown launch <id>` (exit 2); with no argument outside a git checkout it is exit 3 with `jitso: <folder> is not inside a git checkout`.",
   "steps": [
     {
       "run": [

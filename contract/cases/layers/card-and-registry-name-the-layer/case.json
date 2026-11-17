@@ -4,12 +4,8 @@
   "source": [
     "intended: builds come from layers (repo, trusted parent folders, user folder), nearest wins (docs/decisions.md)"
   ],
-  "status": {
-    "ts": "xfail",
-    "go": "pass"
-  },
   "defect": "N-12",
-  "intent": "INTENDED behavior (defect N-12, build layers). Every launch line of the registry gains build_layer (repo, parent or user), build_file (the real absolute path of the build file) and build_sha256 (the SHA-256 of the file's bytes, not of anything re-encoded), so a record names exactly which file a session was launched from. The card header of a parent or user build ends with ` (<layer>)`, and card.txt holds the same header; a project build has no suffix. The registry line carries build and build_version (v: 2, defect N-31). The oracle knows no layers: it rejects the user build as an unknown preset and the case FAILS on it.",
+  "intent": "INTENDED behavior (defect N-12, build layers). Every launch line of the registry gains build_layer (repo, parent or user), build_file (the real absolute path of the build file) and build_sha256 (the SHA-256 of the file's bytes, not of anything re-encoded), so a record names exactly which file a session was launched from. The card header of a parent or user build ends with ` (<layer>)`, and card.txt holds the same header; a project build has no suffix. The registry line carries build and build_version (v: 2, defect N-31).",
   "project": {
     "files": {
       ".jitso/briefs/brief.md": {

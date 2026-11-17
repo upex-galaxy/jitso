@@ -3,17 +3,13 @@
   "title": "the old Spanish alias flota is rejected like any other unknown mode, with or without --dry-run and even with --run and --task, and nothing is written",
   "source": [
     "cli/jitso/launch.test.ts: 'the old Spanish values stay accepted and normalize to the English ones'",
-    "intended: TS-ODDITIES L8 (owner decision 2026-11-15): directo and flota are not accepted; the TS binary accepts and normalizes them"
+    "intended: owner decision 2026-11-15: directo and flota are not accepted"
   ],
   "tags": [
     "legacy-alias"
   ],
-  "status": {
-    "ts": "xfail",
-    "go": "pass"
-  },
   "defect": "N-4",
-  "intent": "INTENDED behavior (TS-ODDITIES L8, owner decision 2026-11-15, defect N-4). The implementation knows only the modes direct and fleet, everywhere: the legacy Spanish aliases directo and flota are neither accepted on the command line nor read from registry lines. launch --mode flota exits 2 with JITSO REJECTED: and '--mode must be direct or fleet', writes nothing and never calls orca, with or without --dry-run, and even when --run and --task are given (so the mode is the only thing wrong). On the TS binary the alias is accepted and normalized to fleet, so the exit code is the first expectation that FAILS on TS.",
+  "intent": "INTENDED behavior (owner decision 2026-11-15, defect N-4). The implementation knows only the modes direct and fleet, everywhere: the legacy Spanish aliases directo and flota are neither accepted on the command line nor read from registry lines. launch --mode flota exits 2 with JITSO REJECTED: and '--mode must be direct or fleet', writes nothing and never calls orca, with or without --dry-run, and even when --run and --task are given (so the mode is the only thing wrong).",
   "project": {
     "files": {
       ".jitso/briefs/b.md": {

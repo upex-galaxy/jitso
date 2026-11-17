@@ -4,12 +4,8 @@
   "source": [
     "intended: docs/decisions.md (build validate: a tolerant check of every build of every layer, one line per file, problem lines, one summary line)"
   ],
-  "status": {
-    "ts": "xfail",
-    "go": "pass"
-  },
   "defect": "N-13",
-  "intent": "INTENDED behavior (defect N-13, build validate). Besides the load rules, the command reports the launch rules: a worker or conductor must have a `budget` mapping (`budget must be a mapping with tokens and usd_list_cap`), a harness with an adapter (`harness \"<h>\" has no adapter`), and every subagent it lists must be approved (`subagent \"<s>\" is <status>, not approved`). Each file below is otherwise valid, so it is the only problem of its file. The subagent-tier candidate has no budget and no harness and is still ok (those fields are unused in that tier), and a candidate subagent is not an error by itself, only a worker that lists it. Exit 2, the summary counts the four extra files. The oracle has no `build validate` (and the runner maps only `build list`): it answers `unknown command` on stderr with exit 2, so every expectation that needs the command's output FAILS on it.",
+  "intent": "INTENDED behavior (defect N-13, build validate). Besides the load rules, the command reports the launch rules: a worker or conductor must have a `budget` mapping (`budget must be a mapping with tokens and usd_list_cap`), a harness with an adapter (`harness \"<h>\" has no adapter`), and every subagent it lists must be approved (`subagent \"<s>\" is <status>, not approved`). Each file below is otherwise valid, so it is the only problem of its file. The subagent-tier candidate has no budget and no harness and is still ok (those fields are unused in that tier), and a candidate subagent is not an error by itself, only a worker that lists it. Exit 2, the summary counts the four extra files.",
   "project": {
     "files": {
       "jitso/builds/candidate-helper.yaml": {

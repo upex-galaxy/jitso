@@ -41,8 +41,6 @@ type StepResult struct {
 // Result is the outcome of one case expansion.
 type Result struct {
 	ID          string
-	Declared    string
-	Defect      string
 	Status      Status
 	SkipReason  string
 	Steps       []StepResult
@@ -92,7 +90,7 @@ func RunAll(xs []spec.Expansion, opts Options, jobs int, report func(Result)) []
 // RunCase runs one expansion in a fresh sandbox.
 func RunCase(x spec.Expansion, opts Options) Result {
 	start := time.Now()
-	res := Result{ID: x.ID, Declared: x.Case.StatusFor(opts.Impl.StatusKey()), Defect: x.Case.Defect, TotalSteps: x.StepCount()}
+	res := Result{ID: x.ID, TotalSteps: x.StepCount()}
 	for _, tag := range opts.SkipTags {
 		if x.Case.HasTag(tag) {
 			res.Status, res.SkipReason = Skip, "tag "+tag
@@ -103,7 +101,7 @@ func RunCase(x spec.Expansion, opts Options) Result {
 	if err != nil {
 		res.RunnerError = err.Error()
 	}
-	res.Status = Classify(res.Declared, held, err != nil)
+	res.Status = Classify(held, err != nil)
 	res.Elapsed = time.Since(start)
 	return res
 }
@@ -176,20 +174,7 @@ func runStepAt(x spec.Expansion, i int, sb *sandbox.Sandbox, vars spec.Vars, im 
 		return sr, vars, err
 	}
 	sr.Kind = a.Kind
-	// The adapter's hook around the process steps (SPEC 9): after runs even when Execute
-	// failed, and Execute's own error is reported first.
-	var after func() error
-	if a.Kind == expect.KindRun || a.Kind == expect.KindHook {
-		if after, err = im.AroundStep(sb); err != nil {
-			return sr, vars, err
-		}
-	}
 	obs, err := stepKinds[a.Kind](a).Execute(sb, im, &sr)
-	if after != nil {
-		if aerr := after(); err == nil && aerr != nil {
-			err = aerr
-		}
-	}
 	if err != nil {
 		return sr, vars, err
 	}

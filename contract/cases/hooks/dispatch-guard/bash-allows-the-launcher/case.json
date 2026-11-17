@@ -4,12 +4,8 @@
   "source": [
     ".agents/hooks/jitso-dispatch-guard.test.ts: 'lets the launcher through, alone', 'with a required field', 'lets a dry run through'"
   ],
-  "status": {
-    "ts": "xfail",
-    "go": "pass"
-  },
   "defect": "N-10",
-  "intent": "INTENDED behavior (defect N-10, build vocabulary; docs/decisions.md D6). The dispatch guard allows the launcher line with the flag `--build`, since that is the flag the launcher takes. The oracle guard still allows `--preset` only: it denies `--build` with `flag \"--build\" is not allowed`, so the allow decision FAILS on TS. The only --worktree value the guard allows is path:<primary>, the primary named by JITSO_PROJECT (defect N-23). Since N-29 the line must also carry --worktree, so every row does.",
+  "intent": "INTENDED behavior (defect N-10, build vocabulary; docs/decisions.md D6). The dispatch guard allows the launcher line with the flag `--build`, since that is the flag the launcher takes. The only --worktree value the guard allows is path:<primary>, the primary named by JITSO_PROJECT (defect N-23). Since N-29 the line must also carry --worktree, so every row does.",
   "home": {
     "files": {
       ".jitso/dispatch-cwd/briefs/.keep": "",

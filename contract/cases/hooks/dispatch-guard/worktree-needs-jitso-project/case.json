@@ -4,12 +4,8 @@
   "source": [
     "intended: docs/decisions.md A2 (defect N-23): the guard fails closed when the primary is unknown"
   ],
-  "status": {
-    "ts": "xfail",
-    "go": "pass"
-  },
   "defect": "N-23",
-  "intent": "INTENDED behavior (defect N-23, owner answer A2). The primary worktree comes from JITSO_PROJECT, which the dispatcher sets for its claude. A line that holds --worktree is denied with a reason of its own when the variable is empty or does not name a git checkout, instead of being compared with nothing. The TS binary denies the line for another reason (it does not allow --build), so the reason text FAILS on TS.",
+  "intent": "INTENDED behavior (defect N-23, owner answer A2). The primary worktree comes from JITSO_PROJECT, which the dispatcher sets for its claude. A line that holds --worktree is denied with a reason of its own when the variable is empty or does not name a git checkout, instead of being compared with nothing.",
   "home": {
     "files": {
       ".jitso/dispatch-cwd/briefs/.keep": "",

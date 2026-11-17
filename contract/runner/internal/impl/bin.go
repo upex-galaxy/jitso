@@ -9,7 +9,6 @@ import (
 )
 
 // Bin is any executable: `<bin> <args...>` for the CLI, `<bin> hook <name>` for a hook.
-// It is judged by the `go` status key, the binary this adapter exists for.
 type Bin struct{ path string }
 
 // NewBin checks that path is an executable file.
@@ -32,13 +31,7 @@ func NewBin(path string) (*Bin, error) {
 }
 
 func (b *Bin) Name() string                   { return "bin" }
-func (b *Bin) StatusKey() string              { return "go" }
 func (b *Bin) Prepare(*sandbox.Sandbox) error { return nil }
-
-// AroundStep is a no-op: the cases are written in the schema the binary speaks.
-func (b *Bin) AroundStep(*sandbox.Sandbox) (func() error, error) {
-	return func() error { return nil }, nil
-}
 
 func (b *Bin) Command(_ *sandbox.Sandbox, args []string) ([]string, error) {
 	return append([]string{b.path}, args...), nil

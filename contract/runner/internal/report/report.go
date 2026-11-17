@@ -42,7 +42,7 @@ func (t *Text) Case(r engine.Result) {
 	}
 	switch {
 	case r.Sandbox == "":
-	case r.Kept && (r.Status == engine.Fail || r.Status == engine.Xpass || t.Verbose):
+	case r.Kept && (r.Status == engine.Fail || t.Verbose):
 		fmt.Fprintf(t.W, "      sandbox: %s\n", r.Sandbox)
 	case t.Verbose:
 		fmt.Fprintf(t.W, "      sandbox: %s (removed; rerun with --keep)\n", r.Sandbox)
@@ -53,10 +53,6 @@ func (t *Text) suffix(r engine.Result) string {
 	switch r.Status {
 	case engine.Skip:
 		return "  (" + r.SkipReason + ")"
-	case engine.Xpass:
-		return fmt.Sprintf("  (declared xfail for %s, but every expectation held: promote it to pass) %s", r.Defect, ms(r.Elapsed))
-	case engine.Xfail:
-		return fmt.Sprintf("  (%s) %s", r.Defect, ms(r.Elapsed))
 	}
 	return "  " + ms(r.Elapsed)
 }
@@ -96,8 +92,8 @@ func (t *Text) Summary(impl string, results []engine.Result, loadErrors []string
 	for _, r := range results {
 		counts[r.Status]++
 	}
-	fmt.Fprintf(t.W, "\n%s: %d cases, %d PASS, %d FAIL, %d XFAIL, %d XPASS, %d SKIP, %d LOAD ERROR in %s\n",
-		impl, len(results), counts[engine.Pass], counts[engine.Fail], counts[engine.Xfail], counts[engine.Xpass], counts[engine.Skip], len(loadErrors), elapsed.Round(10*time.Millisecond))
+	fmt.Fprintf(t.W, "\n%s: %d cases, %d PASS, %d FAIL, %d SKIP, %d LOAD ERROR in %s\n",
+		impl, len(results), counts[engine.Pass], counts[engine.Fail], counts[engine.Skip], len(loadErrors), elapsed.Round(10*time.Millisecond))
 	for _, path := range loadErrors {
 		fmt.Fprintf(t.W, "  load error: %s\n", path)
 	}

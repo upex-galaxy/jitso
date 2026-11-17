@@ -4,12 +4,8 @@
   "source": [
     "cli/jitso/launch.test.ts: 'preset, brief and a valid mode are required; unknown flags are rejected'"
   ],
-  "status": {
-    "ts": "xfail",
-    "go": "pass"
-  },
   "defect": "N-10",
-  "intent": "INTENDED behavior (defect N-10, build vocabulary; docs/decisions.md D6). The launch flag that names the build is required, and its rejection reads `--build is required`. The oracle still prints `--preset is required`, so the stderr expectation FAILS on TS.",
+  "intent": "INTENDED behavior (defect N-10, build vocabulary; docs/decisions.md D6). The launch flag that names the build is required, and its rejection reads `--build is required`.",
   "steps": [
     {
       "run": [

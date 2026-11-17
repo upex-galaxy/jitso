@@ -4,12 +4,8 @@
   "source": [
     "cli/jitso/profile.test.ts: '1. an unknown preset'"
   ],
-  "status": {
-    "ts": "xfail",
-    "go": "pass"
-  },
   "defect": "N-10",
-  "intent": "INTENDED behavior (defect N-10, build vocabulary; docs/decisions.md D6). The rejection of an id that is not in the catalog reads `unknown build \"<id>\"`. The oracle still prints `unknown preset \"<id>\"`, so the stderr expectation FAILS on TS.",
+  "intent": "INTENDED behavior (defect N-10, build vocabulary; docs/decisions.md D6). The rejection of an id that is not in the catalog reads `unknown build \"<id>\"`.",
   "for_each": {
     "var": "p",
     "values": [

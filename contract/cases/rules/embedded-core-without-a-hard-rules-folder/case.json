@@ -4,12 +4,8 @@
   "source": [
     "intended: docs/architecture.md section 2 (hard-rules row) and docs/decisions.md (defect N-14): the embedded core is the default when a project has no jitso/hard-rules/"
   ],
-  "status": {
-    "ts": "xfail",
-    "go": "pass"
-  },
   "defect": "N-14",
-  "intent": "INTENDED behavior (defect N-14, shipped hard-rules core and templates). When the project has no jitso/hard-rules/ folder, core.md of the launch folder is the core and the style that ship inside the binary, joined by one newline, and core_sha256 is the hash of that text. The oracle requires the two project files and fails without them, so the launch exits non-zero and writes nothing.",
+  "intent": "INTENDED behavior (defect N-14, shipped hard-rules core and templates). When the project has no jitso/hard-rules/ folder, core.md of the launch folder is the core and the style that ship inside the binary, joined by one newline, and core_sha256 is the hash of that text.",
   "project": {
     "files": {
       ".jitso/briefs/brief.md": {

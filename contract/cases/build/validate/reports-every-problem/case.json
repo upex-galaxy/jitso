@@ -4,12 +4,8 @@
   "source": [
     "intended: docs/decisions.md (build validate: a tolerant check of every build of every layer, one line per file, problem lines, one summary line)"
   ],
-  "status": {
-    "ts": "xfail",
-    "go": "pass"
-  },
   "defect": "N-13",
-  "intent": "INTENDED behavior (defect N-13, build validate). Unlike every other catalog command, a repo-layer invalid file is a finding here, not an environment error (exit 3): the command scans every file, prints each invalid file's problems on their own lines indented by two spaces, and ends with the summary; any invalid file makes the exit code 2. The broken file has a model and an effort that the allowlists do not know, so both problem lines follow its invalid line, in the order of the load rules, and the seven fixture builds stay ok. The oracle has no `build validate` (and the runner maps only `build list`): it answers `unknown command` on stderr with exit 2, so every expectation that needs the command's output FAILS on it.",
+  "intent": "INTENDED behavior (defect N-13, build validate). Unlike every other catalog command, a repo-layer invalid file is a finding here, not an environment error (exit 3): the command scans every file, prints each invalid file's problems on their own lines indented by two spaces, and ends with the summary; any invalid file makes the exit code 2. The broken file has a model and an effort that the allowlists do not know, so both problem lines follow its invalid line, in the order of the load rules, and the seven fixture builds stay ok.",
   "project": {
     "files": {
       "jitso/builds/broken.yaml": {

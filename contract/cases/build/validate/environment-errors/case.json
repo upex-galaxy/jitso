@@ -4,12 +4,8 @@
   "source": [
     "intended: docs/decisions.md (build validate: a tolerant check of every build of every layer, one line per file, problem lines, one summary line)"
   ],
-  "status": {
-    "ts": "xfail",
-    "go": "pass"
-  },
   "defect": "N-13",
-  "intent": "INTENDED behavior (defect N-13, build validate). Exit 3 is for what no build file can explain: a project without `jitso/jitso.yaml` has no allowlists (`jitso: jitso/jitso.yaml is missing: this project has no JITSO allowlists (create it with jitso build new <id>)`), and a working folder outside any git checkout has no project (`jitso: <cwd> is not inside a git checkout`). Nothing is printed on stdout, orca is never called. The oracle has no `build validate` (and the runner maps only `build list`): it answers `unknown command` on stderr with exit 2, so every expectation that needs the command's output FAILS on it.",
+  "intent": "INTENDED behavior (defect N-13, build validate). Exit 3 is for what no build file can explain: a project without `jitso/jitso.yaml` has no allowlists (`jitso: jitso/jitso.yaml is missing: this project has no JITSO allowlists (create it with jitso build new <id>)`), and a working folder outside any git checkout has no project (`jitso: <cwd> is not inside a git checkout`). Nothing is printed on stdout, orca is never called.",
   "project": {
     "files": {
       "jitso/jitso.yaml": null

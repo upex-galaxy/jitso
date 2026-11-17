@@ -2,14 +2,10 @@
   "id": "analyze/by-id-over-the-token-budget-only",
   "title": "a launch over its token budget but under its list cap gets one budget_over rule break, for the tokens",
   "source": [
-    "intended: TS-ODDITIES R10 (defect N-28)"
+    "intended: defect N-28"
   ],
-  "status": {
-    "ts": "xfail",
-    "go": "pass"
-  },
   "defect": "N-28",
-  "intent": "INTENDED behavior (TS-ODDITIES R10, defect N-28). Only the limit that is exceeded writes a rule break: here the peak context is over budget.tokens and the list cost is under budget.usd_list_cap, so one budget_over line is written and the count in rule_breaks is 1. The oracle never writes budget_over, so the stdout and the registry expectations FAIL on TS.",
+  "intent": "INTENDED behavior (defect N-28). Only the limit that is exceeded writes a rule break: here the peak context is over budget.tokens and the list cost is under budget.usd_list_cap, so one budget_over line is written and the count in rule_breaks is 1.",
   "project": {
     "files": {
       ".jitso/launches.jsonl": "{\"v\":2,\"event\":\"launch\",\"id\":\"L20261113T142233-a3f9\",\"parent\":null,\"root\":\"L20261113T142233-a3f9\",\"depth\":0,\"ts\":\"2026-11-13T14:22:33.000Z\",\"mode\":\"direct\",\"build\":\"haiku-explorer\",\"orca\":{\"run\":null,\"task\":null,\"terminal\":\"term_fake\",\"title\":\"t [jitso:L20261113T142233-a3f9]\"},\"transcript_path\":\"{{PROJECT}}/.jitso/transcripts/11111111-2222-3333-4444-555555555555.jsonl\",\"budget\":{\"tokens\":5,\"usd_list_cap\":3}}\n",

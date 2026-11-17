@@ -2,14 +2,10 @@
   "id": "launch/trust/relative-path-selector-is-refused",
   "title": "a path: selector with a relative path is rejected before any Orca call: a relative path cannot be compared",
   "source": [
-    "intended: TS-ODDITIES L4 (owner decision, defect N-22): the folder Orca reports is checked on every launch"
+    "intended: owner decision, defect N-22: the folder Orca reports is checked on every launch"
   ],
-  "status": {
-    "ts": "xfail",
-    "go": "pass"
-  },
   "defect": "N-22",
-  "intent": "INTENDED behavior (TS-ODDITIES L4, owner decision, defect N-22). A path-naming selector must be absolute, because its path is compared with the real paths of the worktrees. A relative one exits 2 before any Orca call and writes nothing. The TS binary forwards it and launches (exit 0).",
+  "intent": "INTENDED behavior (owner decision, defect N-22). A path-naming selector must be absolute, because its path is compared with the real paths of the worktrees. A relative one exits 2 before any Orca call and writes nothing.",
   "project": {
     "files": {
       ".jitso/briefs/brief.md": {

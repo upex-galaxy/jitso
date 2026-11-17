@@ -4,12 +4,8 @@
   "source": [
     "intended: every command is listed in the usage with a summary"
   ],
-  "status": {
-    "ts": "xfail",
-    "go": "pass"
-  },
   "defect": "N-21",
-  "intent": "INTENDED behavior (defect N-21, version). The oracle usage has no `version` row, so the row expectation FAILS on TS. Each later command adds its own word to the for_each list (install, defect N-16, setup, defect N-17, and doctor, defect N-20: those usage rows appear only in the Go CLI). The second step pins the final summary of the `build` row, `list, validate, create, draft, save and discard builds` (defects N-13, N-14, N-15); the oracle has no `build` row.",
+  "intent": "INTENDED behavior (defect N-21, version). Each later command adds its own word to the for_each list (install, defect N-16, setup, defect N-17, and doctor, defect N-20: those usage rows appear only in the Go CLI). The second step pins the final summary of the `build` row, `list, validate, create, draft, save and discard builds` (defects N-13, N-14, N-15).",
   "for_each": {
     "var": "word",
     "values": [

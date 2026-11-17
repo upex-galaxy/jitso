@@ -2,14 +2,10 @@
   "id": "hooks/dispatch-guard/bash-denies-missing-required-flags",
   "title": "a launch line without --build, --brief, --mode or --worktree is denied, naming the flag that is missing",
   "source": [
-    "intended: TS-ODDITIES H3 and docs/decisions.md A2 (defect N-29): the dispatcher's launch line is complete"
+    "intended: docs/decisions.md A2 (defect N-29): the dispatcher's launch line is complete"
   ],
-  "status": {
-    "ts": "xfail",
-    "go": "pass"
-  },
   "defect": "N-29",
-  "intent": "INTENDED behavior (TS-ODDITIES H3, owner decision, defect N-29, with --worktree required by the owner's answer on A2). The dispatch guard requires --build, --brief, --mode and --worktree, and denies a line that lacks one with `<flag> is required`, checking them in that order. The TS binary allows a bare launch (an empty flag list passes) and denies the other rows for another reason, so the reason text FAILS on TS.",
+  "intent": "INTENDED behavior (owner decision, defect N-29, with --worktree required by the owner's answer on A2). The dispatch guard requires --build, --brief, --mode and --worktree, and denies a line that lacks one with `<flag> is required`, checking them in that order.",
   "home": {
     "files": {
       ".jitso/dispatch-cwd/briefs/.keep": "",

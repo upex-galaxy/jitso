@@ -4,12 +4,8 @@
   "source": [
     "intended: docs/decisions.md D8 and B4-12 (the agent boundary of the adoption commands is the launch guard)"
   ],
-  "status": {
-    "ts": "xfail",
-    "go": "pass"
-  },
   "defect": "N-19",
-  "intent": "INTENDED behavior (defect N-19, adoption guard; docs/decisions.md D8, B4-12). `jitso setup` and `jitso install` change the project's hooks, instruction files and skill files, so only the owner runs them: an agent can type `--yes`, and `setup hook --remove` would switch the guard off while the session runs. The launch guard denies every Bash segment that runs either command, in each form it already recognizes the launcher in: the word `jitso`, `bun run jitso`, this binary's own path, with `NAME=value` words before it, after `&&`, `;` or a newline, and inside a quoted `sh -c`. The reason is `JITSO: only the owner changes the JITSO setup; ask the owner to run it in a terminal (denied: jitso <verb>)` with the verb `setup` or `install`. The oracle guard knows no such verb: it stays silent (`none`), so the decision FAILS on it.",
+  "intent": "INTENDED behavior (defect N-19, adoption guard; docs/decisions.md D8, B4-12). `jitso setup` and `jitso install` change the project's hooks, instruction files and skill files, so only the owner runs them: an agent can type `--yes`, and `setup hook --remove` would switch the guard off while the session runs. The launch guard denies every Bash segment that runs either command, in each form it already recognizes the launcher in: the word `jitso`, `bun run jitso`, this binary's own path, with `NAME=value` words before it, after `&&`, `;` or a newline, and inside a quoted `sh -c`. The reason is `JITSO: only the owner changes the JITSO setup; ask the owner to run it in a terminal (denied: jitso <verb>)` with the verb `setup` or `install`.",
   "for_each": {
     "var": "command",
     "values": [

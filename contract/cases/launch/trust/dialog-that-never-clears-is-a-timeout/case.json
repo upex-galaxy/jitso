@@ -4,14 +4,10 @@
   "source": [
     "cli/jitso/trust.test.ts: 'a dialog that never goes away leaves \"timeout\" after 10 s and does not block'",
     "cli/jitso/launch.test.ts: 'a dialog that never clears records timeout and still launches'",
-    "intended: TS-ODDITIES L3 (owner decision 2026-11-15): the launch is kept but a warning is printed; the TS binary is silent"
+    "intended: owner decision 2026-11-15: the launch is kept but a warning is printed"
   ],
-  "status": {
-    "ts": "xfail",
-    "go": "pass"
-  },
   "defect": "N-3",
-  "intent": "INTENDED behavior (TS-ODDITIES L3, owner decision 2026-11-15, defect N-3). A trust dialog that never clears still exits 0 and writes the registry line with trust_dialog timeout, but the launcher also prints a warning on stderr. Required on ONE stderr line, case-insensitive: the words 'trust dialog' followed later on that line by 'did not clear' or 'not cleared' (for example 'jitso: warning: trust dialog did not clear after 10 s, continuing'). The word 'warning' is not required; 'trust' and 'dialog' are, and so is one of the two closing phrases. The TS binary prints nothing on stderr in this case, so the stderr expectation is the only one that FAILS on TS.",
+  "intent": "INTENDED behavior (owner decision 2026-11-15, defect N-3). A trust dialog that never clears still exits 0 and writes the registry line with trust_dialog timeout, but the launcher also prints a warning on stderr. Required on ONE stderr line, case-insensitive: the words 'trust dialog' followed later on that line by 'did not clear' or 'not cleared' (for example 'jitso: warning: trust dialog did not clear after 10 s, continuing'). The word 'warning' is not required; 'trust' and 'dialog' are, and so is one of the two closing phrases.",
   "project": {
     "files": {
       ".jitso/briefs/brief.md": {

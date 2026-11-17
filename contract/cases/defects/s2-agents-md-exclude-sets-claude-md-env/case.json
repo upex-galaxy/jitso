@@ -6,12 +6,8 @@
   "tags": [
     "posix"
   ],
-  "status": {
-    "ts": "xfail",
-    "go": "pass"
-  },
   "defect": "S2",
-  "intent": "INTENDED behavior (defect S2, agents_md). The variable is documented at code.claude.com/docs/en/env-vars as preventing the load of any CLAUDE.md memory files (user, project, auto). A headless canary test on Claude Code 2.1.325 measured that it also stops the native AGENTS.md read and the @AGENTS.md import; this case pins only that the variable is in claude's environment. On TS the field is only logged (registry agents_md) and the variable is never set, so the env check FAILS on TS.",
+  "intent": "INTENDED behavior (defect S2, agents_md). The variable is documented at code.claude.com/docs/en/env-vars as preventing the load of any CLAUDE.md memory files (user, project, auto). A headless canary test on Claude Code 2.1.325 measured that it also stops the native AGENTS.md read and the @AGENTS.md import; this case pins only that the variable is in claude's environment.",
   "project": {
     "files": {
       ".jitso/briefs/brief.md": {

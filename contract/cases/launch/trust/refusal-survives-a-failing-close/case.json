@@ -2,14 +2,10 @@
   "id": "launch/trust/refusal-survives-a-failing-close",
   "title": "a terminal close that fails does not change the refusal: still exit 2, no registry line, no launch folder",
   "source": [
-    "intended: TS-ODDITIES L4 (owner decision, defect N-22): the folder Orca reports is checked on every launch"
+    "intended: owner decision, defect N-22: the folder Orca reports is checked on every launch"
   ],
-  "status": {
-    "ts": "xfail",
-    "go": "pass"
-  },
   "defect": "N-22",
-  "intent": "INTENDED behavior (TS-ODDITIES L4, owner decision, defect N-22). The refusal closes the terminal and ignores a failing close, the way the other abandon paths do: the launch still exits 2 with the refusal text, writes no registry line and leaves no launch folder. The TS binary does not refuse without a dialog (exit 0).",
+  "intent": "INTENDED behavior (owner decision, defect N-22). The refusal closes the terminal and ignores a failing close, the way the other abandon paths do: the launch still exits 2 with the refusal text, writes no registry line and leaves no launch folder.",
   "project": {
     "files": {
       ".jitso/briefs/brief.md": {

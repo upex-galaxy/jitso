@@ -4,20 +4,17 @@ import "testing"
 
 func TestClassify(t *testing.T) {
 	cases := []struct {
-		declared          string
 		held, runnerError bool
 		want              Status
 	}{
-		{"pass", true, false, Pass},
-		{"pass", false, false, Fail},
-		{"xfail", false, false, Xfail},
-		{"xfail", true, false, Xpass},
-		{"xfail", false, true, Fail}, // a runner error never hides behind xfail
-		{"pass", false, true, Fail},
+		{true, false, Pass},
+		{false, false, Fail},
+		{true, true, Fail},
+		{false, true, Fail},
 	}
 	for _, c := range cases {
-		if got := Classify(c.declared, c.held, c.runnerError); got != c.want {
-			t.Errorf("Classify(%s, held=%v, runnerError=%v) = %s, want %s", c.declared, c.held, c.runnerError, got, c.want)
+		if got := Classify(c.held, c.runnerError); got != c.want {
+			t.Errorf("Classify(held=%v, runnerError=%v) = %s, want %s", c.held, c.runnerError, got, c.want)
 		}
 	}
 }
@@ -28,8 +25,7 @@ func TestExitCode(t *testing.T) {
 		loadErrors int
 		want       int
 	}{
-		{[]Status{Pass, Xfail, Skip}, 0, 0},
-		{[]Status{Pass, Xpass}, 0, 1},
+		{[]Status{Pass, Skip}, 0, 0},
 		{[]Status{Fail}, 0, 1},
 		{[]Status{Pass}, 1, 2},
 		{[]Status{Fail}, 1, 2}, // a load error wins

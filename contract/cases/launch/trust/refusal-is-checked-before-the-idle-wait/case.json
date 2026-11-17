@@ -2,14 +2,10 @@
   "id": "launch/trust/refusal-is-checked-before-the-idle-wait",
   "title": "the folder check runs before terminal wait: a worker that never idles is still refused at once, exit 2 and not 3",
   "source": [
-    "intended: TS-ODDITIES L4 (owner decision, defect N-22): the folder Orca reports is checked on every launch"
+    "intended: owner decision, defect N-22: the folder Orca reports is checked on every launch"
   ],
-  "status": {
-    "ts": "xfail",
-    "go": "pass"
-  },
   "defect": "N-22",
-  "intent": "INTENDED behavior (TS-ODDITIES L4, owner decision, defect N-22). The folder check runs right after terminal create, before the idle wait, so the window in which a worker runs in the wrong folder is as short as the code can make it. With a terminal that never idles the launch is refused (exit 2), not reported as an idle timeout (exit 3). The TS binary waits first and exits 3.",
+  "intent": "INTENDED behavior (owner decision, defect N-22). The folder check runs right after terminal create, before the idle wait, so the window in which a worker runs in the wrong folder is as short as the code can make it. With a terminal that never idles the launch is refused (exit 2), not reported as an idle timeout (exit 3).",
   "project": {
     "files": {
       ".jitso/briefs/brief.md": {

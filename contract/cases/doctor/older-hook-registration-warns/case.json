@@ -4,12 +4,8 @@
   "source": [
     "intended: docs/decisions.md A5 (defect N-25) and the doctor spec (defect N-20)"
   ],
-  "status": {
-    "ts": "xfail",
-    "go": "pass"
-  },
   "defect": "N-25",
-  "intent": "INTENDED behavior (defect N-25, owner answer A5). A settings file written before the write boundary registers the guard on PreToolUse Bash, PreToolUse orca MCP and SessionEnd. doctor prints `warn hooks: registered on PreToolUse Bash, PreToolUse orca MCP, SessionEnd only (missing PreToolUse file writes): run jitso setup hook` and exits 0, so a pipeline that runs doctor does not break. The oracle has no `doctor` command: it answers `unknown command \"doctor\"` on stderr with exit 2 and prints nothing on stdout, so every pinned line FAILS on it.",
+  "intent": "INTENDED behavior (defect N-25, owner answer A5). A settings file written before the write boundary registers the guard on PreToolUse Bash, PreToolUse orca MCP and SessionEnd. doctor prints `warn hooks: registered on PreToolUse Bash, PreToolUse orca MCP, SessionEnd only (missing PreToolUse file writes): run jitso setup hook` and exits 0, so a pipeline that runs doctor does not break.",
   "project": {
     "files": {
       ".claude/settings.json": "{\n  \"hooks\": {\n    \"PreToolUse\": [\n      {\n        \"matcher\": \"Bash\",\n        \"hooks\": [\n          {\n            \"type\": \"command\",\n            \"command\": \"jitso hook guard\"\n          }\n        ]\n      },\n      {\n        \"matcher\": \"mcp__.*orca.*__.*\",\n        \"hooks\": [\n          {\n            \"type\": \"command\",\n            \"command\": \"jitso hook guard\"\n          }\n        ]\n      }\n    ],\n    \"SessionEnd\": [\n      {\n        \"hooks\": [\n          {\n            \"type\": \"command\",\n            \"command\": \"jitso hook guard\"\n          }\n        ]\n      }\n    ]\n  }\n}\n"

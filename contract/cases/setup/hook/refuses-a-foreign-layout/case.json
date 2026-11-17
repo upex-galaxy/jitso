@@ -4,12 +4,8 @@
   "source": [
     "intended: docs/decisions.md D8 (setup hook, defect N-17): jitso registers its guard in the project's .claude/settings.json without clobbering anything"
   ],
-  "status": {
-    "ts": "xfail",
-    "go": "pass"
-  },
   "defect": "N-17",
-  "intent": "INTENDED behavior (defect N-17, setup hook). The edit re-encodes the JSON tree in the file's own indent. When the unchanged tree does not give the file's own bytes (several keys on one line, an indent that jumps, CRLF, a `\\\\u` escape, extra blank lines at the end, a space before a colon), jitso will not reformat the file: `jitso: .claude/settings.json is not laid out the way jitso writes JSON (one value per line, a consistent indent); nothing written. Add these entries by hand, or re-save the file with a 2-space indent and run again:` and then the hooks to add, as JSON, on stderr. Exit 3, the file unchanged. Since N-25 the guard also has a third PreToolUse group, `Write|Edit|MultiEdit|NotebookEdit`. The oracle has no `setup` command: it answers `unknown command \"setup\"` on stderr with exit 2 and prints nothing on stdout, so every expectation that needs this output or file effect FAILS on it.",
+  "intent": "INTENDED behavior (defect N-17, setup hook). The edit re-encodes the JSON tree in the file's own indent. When the unchanged tree does not give the file's own bytes (several keys on one line, an indent that jumps, CRLF, a `\\\\u` escape, extra blank lines at the end, a space before a colon), jitso will not reformat the file: `jitso: .claude/settings.json is not laid out the way jitso writes JSON (one value per line, a consistent indent); nothing written. Add these entries by hand, or re-save the file with a 2-space indent and run again:` and then the hooks to add, as JSON, on stderr. Exit 3, the file unchanged. Since N-25 the guard also has a third PreToolUse group, `Write|Edit|MultiEdit|NotebookEdit`.",
   "project": {
     "files": {
       ".claude/settings.json": "{{seed}}"

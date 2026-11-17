@@ -2,14 +2,10 @@
   "id": "launch/trust/dispatcher-folder-is-refused",
   "title": "the dispatcher folder is not the project, so a worker the terminal puts there is refused even when the dialog shows",
   "source": [
-    "intended: TS-ODDITIES L4 (owner decision, defect N-22): the dispatcher folder leaves the allowed set once the dispatcher names the primary worktree (defect N-23)"
+    "intended: owner decision, defect N-22: the dispatcher folder leaves the allowed set once the dispatcher names the primary worktree (defect N-23)"
   ],
-  "status": {
-    "ts": "xfail",
-    "go": "pass"
-  },
   "defect": "N-22",
-  "intent": "INTENDED behavior (TS-ODDITIES L4, owner decision, defect N-22, with defect N-23). The dispatcher's launch line passes --worktree path:<primary>, so a launch has no reason to run in the dispatcher folder, and ~/.jitso/dispatch-cwd is no longer an allowed folder: Orca reporting it exits 2 with 'untrusted folder', closes the terminal, sends no key and writes no registry line. The TS binary trusts that folder, confirms the dialog and launches (exit 0).",
+  "intent": "INTENDED behavior (owner decision, defect N-22, with defect N-23). The dispatcher's launch line passes --worktree path:<primary>, so a launch has no reason to run in the dispatcher folder, and ~/.jitso/dispatch-cwd is no longer an allowed folder: Orca reporting it exits 2 with 'untrusted folder', closes the terminal, sends no key and writes no registry line.",
   "project": {
     "files": {
       ".jitso/briefs/brief.md": {

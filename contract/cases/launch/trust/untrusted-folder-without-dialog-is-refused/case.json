@@ -2,14 +2,10 @@
   "id": "launch/trust/untrusted-folder-without-dialog-is-refused",
   "title": "an untrusted folder is refused even when no trust dialog shows: no dialog is no pass",
   "source": [
-    "intended: TS-ODDITIES L4 (owner decision, defect N-22): the folder Orca reports is checked on every launch"
+    "intended: owner decision, defect N-22: the folder Orca reports is checked on every launch"
   ],
-  "status": {
-    "ts": "xfail",
-    "go": "pass"
-  },
   "defect": "N-22",
-  "intent": "INTENDED behavior (TS-ODDITIES L4, owner decision, defect N-22). The folder Orca reports is compared with the worktrees of the repo on every launch, whether or not the trust dialog shows. A folder outside the repo exits 2, closes the terminal, writes no registry line and leaves no launch folder. The TS binary launches (exit 0, trust_dialog absent) because it compares only when the dialog shows.",
+  "intent": "INTENDED behavior (owner decision, defect N-22). The folder Orca reports is compared with the worktrees of the repo on every launch, whether or not the trust dialog shows. A folder outside the repo exits 2, closes the terminal, writes no registry line and leaves no launch folder.",
   "project": {
     "files": {
       ".jitso/briefs/brief.md": {

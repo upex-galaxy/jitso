@@ -4,12 +4,8 @@
   "source": [
     "intended: docs/decisions.md (a worker may launch only with approved subagents)"
   ],
-  "status": {
-    "ts": "xfail",
-    "go": "pass"
-  },
   "defect": "N-11",
-  "intent": "INTENDED behavior (defect N-11, approved subagents; docs/decisions.md). A subagent's prompt reaches `claude --agents`, so it is reviewed text: a worker may launch only with approved subagents. The overlay is a copy of the fixture's plan with its status set to candidate or retired (valid for the catalog). `launch --build sonnet-automator`, which lists plan, is rejected at launch, not at catalog load: exit 2, one stderr line `JITSO REJECTED: build \"sonnet-automator\" lists subagent \"plan\", which is <status>, not approved`, nothing on stdout, no registry line, orca never called. A worker that lists no subagent (haiku-explorer) still launches, so the catalog stays usable while one subagent is edited. The TS binary ignores a subagent's status, and also passes no --agents, so the first launch exits 0 and prints a card.",
+  "intent": "INTENDED behavior (defect N-11, approved subagents; docs/decisions.md). A subagent's prompt reaches `claude --agents`, so it is reviewed text: a worker may launch only with approved subagents. The overlay is a copy of the fixture's plan with its status set to candidate or retired (valid for the catalog). `launch --build sonnet-automator`, which lists plan, is rejected at launch, not at catalog load: exit 2, one stderr line `JITSO REJECTED: build \"sonnet-automator\" lists subagent \"plan\", which is <status>, not approved`, nothing on stdout, no registry line, orca never called. A worker that lists no subagent (haiku-explorer) still launches, so the catalog stays usable while one subagent is edited.",
   "for_each": {
     "var": "status",
     "values": [

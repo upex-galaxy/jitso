@@ -4,12 +4,8 @@
   "source": [
     "cli/jitso/shell.ts: FIELD_PATTERNS.preset"
   ],
-  "status": {
-    "ts": "xfail",
-    "go": "pass"
-  },
   "defect": "N-10",
-  "intent": "INTENDED behavior (defect N-10, build vocabulary; docs/decisions.md D6). A launch id that is not a lowercase kebab id is rejected with `invalid value for --build`. The oracle still prints `invalid value for --preset`, so the stderr expectation FAILS on TS.",
+  "intent": "INTENDED behavior (defect N-10, build vocabulary; docs/decisions.md D6). A launch id that is not a lowercase kebab id is rejected with `invalid value for --build`.",
   "for_each": {
     "var": "v",
     "values": [

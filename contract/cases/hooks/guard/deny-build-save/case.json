@@ -4,12 +4,8 @@
   "source": [
     "intended: docs/decisions.md D7 and B3-19 (the agent boundary of build save is the launch guard)"
   ],
-  "status": {
-    "ts": "xfail",
-    "go": "pass"
-  },
   "defect": "N-15",
-  "intent": "INTENDED behavior (defect N-15, drafts; docs/decisions.md D7, B3-19). A session that could run `jitso build save` could approve its own draft, so the launch guard denies every Bash segment that runs it, in each form the guard already recognizes the launcher in: the word `jitso`, `bun run jitso`, this binary's own path, with `NAME=value` words before it, after `;` `&&` or a newline, and inside a quoted `sh -c`. The reason is `JITSO: only the owner saves a draft as a build; ask the owner to run: <launcher> build save <id> (denied: jitso build save)`. The oracle guard knows no such verb: it stays silent (`none`), so the decision FAILS on it.",
+  "intent": "INTENDED behavior (defect N-15, drafts; docs/decisions.md D7, B3-19). A session that could run `jitso build save` could approve its own draft, so the launch guard denies every Bash segment that runs it, in each form the guard already recognizes the launcher in: the word `jitso`, `bun run jitso`, this binary's own path, with `NAME=value` words before it, after `;` `&&` or a newline, and inside a quoted `sh -c`. The reason is `JITSO: only the owner saves a draft as a build; ask the owner to run: <launcher> build save <id> (denied: jitso build save)`.",
   "for_each": {
     "var": "command",
     "values": [

@@ -4,12 +4,8 @@
   "source": [
     "intended: docs/decisions.md D7 and the templates row of the other decisions (a new build starts as a draft from a template: invalid until every empty value is filled)"
   ],
-  "status": {
-    "ts": "xfail",
-    "go": "pass"
-  },
   "defect": "N-14",
-  "intent": "INTENDED behavior (defect N-14, shipped core and templates; docs/decisions.md D7). The id is the launcher's pattern (a lower-case letter, then lower-case letters, digits and hyphens, at most 64 characters): anything else is `JITSO REJECTED: build id must be kebab-case`. The tier is `worker`, `conductor` or `subagent`: anything else is `JITSO REJECTED: --tier must be worker, conductor or subagent`. No id is `JITSO REJECTED: build new needs a build id`, `--tier` with no value is `JITSO REJECTED: --tier needs a value`, any other word or flag is an unknown argument. All exit 2, are checked before the project is read, and leave no folder behind. The oracle has no `build new` (the runner maps only `build list`): it answers `unknown command` on stderr with exit 2, so every expectation that needs the written file or the printed line FAILS on it.",
+  "intent": "INTENDED behavior (defect N-14, shipped core and templates; docs/decisions.md D7). The id is the launcher's pattern (a lower-case letter, then lower-case letters, digits and hyphens, at most 64 characters): anything else is `JITSO REJECTED: build id must be kebab-case`. The tier is `worker`, `conductor` or `subagent`: anything else is `JITSO REJECTED: --tier must be worker, conductor or subagent`. No id is `JITSO REJECTED: build new needs a build id`, `--tier` with no value is `JITSO REJECTED: --tier needs a value`, any other word or flag is an unknown argument. All exit 2, are checked before the project is read, and leave no folder behind.",
   "steps": [
     {
       "run": [

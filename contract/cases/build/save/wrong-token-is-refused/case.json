@@ -4,12 +4,8 @@
   "source": [
     "intended: docs/decisions.md D7 and B3-18/B3-19 (a draft becomes a build only with the owner's OK: a terminal, or the token of the content he read; the guard denies the agent)"
   ],
-  "status": {
-    "ts": "xfail",
-    "go": "pass"
-  },
   "defect": "N-15",
-  "intent": "INTENDED behavior (defect N-15, drafts; docs/decisions.md D7). `--confirm <x>` must equal the first 12 hex characters of the SHA-256 of the bytes that would be written, so it binds the OK to the content that was read. A token that never matched, a malformed one, and a token of a draft that was edited afterwards are all `JITSO REJECTED: --confirm <x> does not match the draft (it changed, or the token is wrong); nothing saved`, exit 2: the file is shown first, nothing is written and the draft is kept. The oracle has no `build save` (the runner maps only `build list`): it answers `unknown command` on stderr with exit 2 and prints nothing on stdout, so every expectation that needs the `+ ` lines, the token text or the written file FAILS on it.",
+  "intent": "INTENDED behavior (defect N-15, drafts; docs/decisions.md D7). `--confirm <x>` must equal the first 12 hex characters of the SHA-256 of the bytes that would be written, so it binds the OK to the content that was read. A token that never matched, a malformed one, and a token of a draft that was edited afterwards are all `JITSO REJECTED: --confirm <x> does not match the draft (it changed, or the token is wrong); nothing saved`, exit 2: the file is shown first, nothing is written and the draft is kept.",
   "project": {
     "files": {
       ".jitso/drafts/scout.yaml": "# Draft written by a drafts case.\nid: scout\nversion: 1\nstatus: draft\nrole: operator\ntype: scanner\nwork_kind: repo-scan\ndescription: Scan the repo for TODO comments and report them.\nharness: claude\nmodel: claude-haiku-5-5\neffort: low\nmode_default: direct\nagents_md: exclude\nroute_scope: [none]\nskills_first: []\ntools: [Read, Glob, Grep]\nmcp: []\nrequires: []\nbudget: { tokens: 150000, usd_list_cap: 0.30 }\nsuccess:\n  - { check: answer_delivered }\n  - { check: no_rule_breaks }\n"

@@ -4,12 +4,8 @@
   "source": [
     "intended: docs/decisions.md A5 (defect N-25): the guard denies writes into builds, jitso/jitso.yaml and the hard rules"
   ],
-  "status": {
-    "ts": "xfail",
-    "go": "pass"
-  },
   "defect": "N-25",
-  "intent": "INTENDED behavior (defect N-25, owner answer A5). The rule is on path components, so it covers the primary checkout, every linked worktree and the session's own checkout. A Write into jitso/builds/ of a linked worktree is denied. The TS binary judges only Bash and orca MCP tools, and its Bash rules do not know these writes, so it prints nothing and the decision FAILS on TS.",
+  "intent": "INTENDED behavior (defect N-25, owner answer A5). The rule is on path components, so it covers the primary checkout, every linked worktree and the session's own checkout. A Write into jitso/builds/ of a linked worktree is denied.",
   "steps": [
     {
       "git_worktree": {

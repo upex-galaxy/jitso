@@ -4,12 +4,8 @@
   "source": [
     "intended: docs: B4B5-DESIGN.md `install skill` input table"
   ],
-  "status": {
-    "ts": "xfail",
-    "go": "pass"
-  },
   "defect": "N-16",
-  "intent": "INTENDED behavior (defect N-16, B4.3). `install` alone is `jitso install: missing what to install (skill)` and the usage; `install plugin` is `jitso install: unknown subcommand \"plugin\"` and the usage; no `--scope` is `JITSO REJECTED: install skill needs --scope user or --scope project`; a bad value, a missing value, an unknown flag and a stray word are the launch messages. All exit 2, stdout empty, nothing written. The oracle has no `install` command: it answers `unknown command \"install\"` on stderr with exit 2 and prints nothing on stdout, so the pinned output and file effects FAIL on it.",
+  "intent": "INTENDED behavior (defect N-16, B4.3). `install` alone is `jitso install: missing what to install (skill)` and the usage; `install plugin` is `jitso install: unknown subcommand \"plugin\"` and the usage; no `--scope` is `JITSO REJECTED: install skill needs --scope user or --scope project`; a bad value, a missing value, an unknown flag and a stray word are the launch messages. All exit 2, stdout empty, nothing written.",
   "steps": [
     {
       "run": [

@@ -4,12 +4,8 @@
   "source": [
     "cli/jitso/root.test.ts: 'from a subfolder of the primary checkout it is still the checkout root'"
   ],
-  "status": {
-    "ts": "xfail",
-    "go": "pass"
-  },
   "defect": "N-10",
-  "intent": "INTENDED behavior (defect N-10, build vocabulary; docs/decisions.md D6). The launch card header ends `| build <id> v<n>`. The oracle still prints `| preset <id> v<n>`, so the stdout expectation that names the header FAILS on TS.",
+  "intent": "INTENDED behavior (defect N-10, build vocabulary; docs/decisions.md D6). The launch card header ends `| build <id> v<n>`.",
   "project": {
     "files": {
       ".jitso/briefs/b.md": {

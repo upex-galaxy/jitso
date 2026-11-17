@@ -4,12 +4,8 @@
   "source": [
     "intended: docs: B4B5-DESIGN.md B4-13 to B4-15, c.2"
   ],
-  "status": {
-    "ts": "xfail",
-    "go": "pass"
-  },
   "defect": "N-16",
-  "intent": "INTENDED behavior (defect N-16, B4.3). `--yes` creates `.agents/skills/jitso/SKILL.md` (frontmatter starts `name: jitso` then `description: `), `references/README.md` and the manifest `.jitso-skill.json` (`v`, `skill`, `jitso_version`, a 64 hex `content_sha256`, one SHA-256 per file), and the link `.claude/skills/jitso` so the skill is also reachable through `.claude/skills/jitso/SKILL.md`. It prints one line per action and `jitso install skill: done`, and a note to commit both paths (the paths are untracked). A fresh install needs no backup. That the link is a symbolic link with the relative target is pinned by a Go unit test, because a file check follows links. The oracle has no `install` command: it answers `unknown command \"install\"` on stderr with exit 2 and prints nothing on stdout, so the pinned output and file effects FAIL on it.",
+  "intent": "INTENDED behavior (defect N-16, B4.3). `--yes` creates `.agents/skills/jitso/SKILL.md` (frontmatter starts `name: jitso` then `description: `), `references/README.md` and the manifest `.jitso-skill.json` (`v`, `skill`, `jitso_version`, a 64 hex `content_sha256`, one SHA-256 per file), and the link `.claude/skills/jitso` so the skill is also reachable through `.claude/skills/jitso/SKILL.md`. It prints one line per action and `jitso install skill: done`, and a note to commit both paths (the paths are untracked). A fresh install needs no backup. That the link is a symbolic link with the relative target is pinned by a Go unit test, because a file check follows links.",
   "steps": [
     {
       "run": [

@@ -4,12 +4,8 @@
   "source": [
     "intended: docs: B4B5-DESIGN.md B4-1, states table (current, --remove)"
   ],
-  "status": {
-    "ts": "xfail",
-    "go": "pass"
-  },
   "defect": "N-16",
-  "intent": "INTENDED behavior (defect N-16, B4.3). `--remove --yes` after an install removes the skill files, the manifest and the link (`removed <path>`, `unlinked .claude/skills/jitso`), then prunes `.agents/skills/jitso`, `.agents/skills`, `.claude/skills` and `.claude` when they are empty, and never `.agents` while it holds something else (the fixture has `.agents/instructions`). A second `--remove` says `nothing to do (the jitso skill is not installed at project scope)`, and installing again works. The oracle has no `install` command: it answers `unknown command \"install\"` on stderr with exit 2 and prints nothing on stdout, so the pinned output and file effects FAIL on it.",
+  "intent": "INTENDED behavior (defect N-16, B4.3). `--remove --yes` after an install removes the skill files, the manifest and the link (`removed <path>`, `unlinked .claude/skills/jitso`), then prunes `.agents/skills/jitso`, `.agents/skills`, `.claude/skills` and `.claude` when they are empty, and never `.agents` while it holds something else (the fixture has `.agents/instructions`). A second `--remove` says `nothing to do (the jitso skill is not installed at project scope)`, and installing again works.",
   "steps": [
     {
       "run": [

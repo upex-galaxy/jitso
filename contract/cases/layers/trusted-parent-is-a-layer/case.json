@@ -4,12 +4,8 @@
   "source": [
     "intended: builds come from layers (repo, trusted parent folders, user folder), nearest wins (docs/decisions.md)"
   ],
-  "status": {
-    "ts": "xfail",
-    "go": "pass"
-  },
   "defect": "N-12",
-  "intent": "INTENDED behavior (defect N-12, build layers). The user config ~/.jitso/config.yaml lists trusted parent folders. A trusted folder that strictly contains the project (here the outer fixture project contains the nested checkout the commands run in) is a layer after the project's own builds: its jitso/builds files are listed with ` (from parent <path>)`, validated against the nested project's allowlists, and launch marks the card header `(parent)`. The nested project's own build comes first (nearest wins). The oracle also resolves its project from its own script folder, so from a nested checkout it reads the outer fixture catalog (defect N-1) and fails here as well.",
+  "intent": "INTENDED behavior (defect N-12, build layers). The user config ~/.jitso/config.yaml lists trusted parent folders. A trusted folder that strictly contains the project (here the outer fixture project contains the nested checkout the commands run in) is a layer after the project's own builds: its jitso/builds files are listed with ` (from parent <path>)`, validated against the nested project's allowlists, and launch marks the card header `(parent)`. The nested project's own build comes first (nearest wins).",
   "project": {
     "files": {
       "nested/jitso/jitso.yaml": {

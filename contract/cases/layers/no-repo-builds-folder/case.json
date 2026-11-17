@@ -4,12 +4,8 @@
   "source": [
     "intended: builds come from layers (repo, trusted parent folders, user folder), nearest wins (docs/decisions.md)"
   ],
-  "status": {
-    "ts": "xfail",
-    "go": "pass"
-  },
   "defect": "N-12",
-  "intent": "INTENDED behavior (defect N-12, build layers). A missing jitso/builds folder is an empty project layer, not an error: the user folder's builds are still listed and launchable. The oracle reads the project catalog folder and fails when it is missing, so the case FAILS on it (no list, no exit 0).",
+  "intent": "INTENDED behavior (defect N-12, build layers). A missing jitso/builds folder is an empty project layer, not an error: the user folder's builds are still listed and launchable.",
   "project": {
     "files": {
       ".jitso/briefs/brief.md": {

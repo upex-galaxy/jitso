@@ -4,12 +4,8 @@
   "source": [
     "intended: builds come from layers (repo, trusted parent folders, user folder), nearest wins (docs/decisions.md)"
   ],
-  "status": {
-    "ts": "xfail",
-    "go": "pass"
-  },
   "defect": "N-12",
-  "intent": "INTENDED behavior (defect N-12, build layers). Several trusted parents may contain the project; they are layers from the nearest (the longest path) to the farthest, not in the order of the config file. The config lists the far parent first; the nearer folder's haiku-explorer (description `MID COPY`) is the build of that id, and the far parent's own haiku-explorer is not listed, while its far-only build is, after the nearer parent's lines. The oracle knows no layers and no nested project, so the case FAILS on it. The oracle also resolves its project from its own script folder, so from a nested checkout it reads the outer fixture catalog (defect N-1) and fails here as well.",
+  "intent": "INTENDED behavior (defect N-12, build layers). Several trusted parents may contain the project; they are layers from the nearest (the longest path) to the farthest, not in the order of the config file. The config lists the far parent first; the nearer folder's haiku-explorer (description `MID COPY`) is the build of that id, and the far parent's own haiku-explorer is not listed, while its far-only build is, after the nearer parent's lines.",
   "project": {
     "files": {
       "mid/nested/jitso/jitso.yaml": {

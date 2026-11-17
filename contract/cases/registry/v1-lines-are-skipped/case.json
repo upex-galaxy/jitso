@@ -2,14 +2,10 @@
   "id": "registry/v1-lines-are-skipped",
   "title": "a registry line written at schema v1 (preset keys) is an invalid line for every reader: close, analyze, launch --parent, reap, tree and the SessionEnd hook see no launch, and nothing is written",
   "source": [
-    "intended: docs/decisions.md registry v2 decision (defect N-31); the oracle reads and writes v: 1 lines"
+    "intended: docs/decisions.md registry v2 decision (defect N-31)"
   ],
-  "status": {
-    "ts": "xfail",
-    "go": "pass"
-  },
   "defect": "N-31",
-  "intent": "INTENDED behavior (defect N-31, owner answer A6). The registry log is schema v2: a line with `v: 1` is an invalid line like any other, skipped by every reader. The one line of the project is a complete v1 launch line, so `close <id>`, `analyze <id>` and `launch --parent <id>` answer that the id is unknown (exit 2, no orca call), `reap` ends nothing and counts zero, `tree` prints `jitso tree: no launches`, the SessionEnd hook of the line's session appends nothing, and the file keeps its one line. The oracle reads the v1 line as a valid launch, so its first step closes the launch (exit 0) and the case FAILS on TS.",
+  "intent": "INTENDED behavior (defect N-31, owner answer A6). The registry log is schema v2: a line with `v: 1` is an invalid line like any other, skipped by every reader. The one line of the project is a complete v1 launch line, so `close <id>`, `analyze <id>` and `launch --parent <id>` answer that the id is unknown (exit 2, no orca call), `reap` ends nothing and counts zero, `tree` prints `jitso tree: no launches`, the SessionEnd hook of the line's session appends nothing, and the file keeps its one line.",
   "project": {
     "files": {
       ".jitso/launches.jsonl": "{\"event\":\"launch\",\"v\":1,\"id\":\"L20261113T142233-a3f9\",\"parent\":null,\"root\":\"L20261113T142233-a3f9\",\"depth\":0,\"ts\":\"2026-11-13T14:22:33.000Z\",\"mode\":\"direct\",\"preset\":\"haiku-explorer\",\"session_id\":\"sess-1\",\"orca\":{\"run\":null,\"task\":null,\"terminal\":\"term_fake\",\"title\":\"t [jitso:L20261113T142233-a3f9]\"},\"transcript_path\":\"{{PROJECT}}/.jitso/transcripts/11111111-2222-3333-4444-555555555555.jsonl\"}\n",

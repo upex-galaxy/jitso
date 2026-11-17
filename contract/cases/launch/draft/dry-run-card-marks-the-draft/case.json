@@ -4,12 +4,8 @@
   "source": [
     "intended: docs/decisions.md D7 and the drafts rows of the other decisions (a just-in-time build is a draft kept in .jitso/drafts/ and validated by code)"
   ],
-  "status": {
-    "ts": "xfail",
-    "go": "pass"
-  },
   "defect": "N-15",
-  "intent": "INTENDED behavior (defect N-15, drafts; docs/decisions.md D7). `jitso launch --build <id>` finds a draft through the same lookup as every build: the draft layer is the last one, so a saved build with the same id wins. A draft is checked with the allowlists like any build and is the one place `status: draft` launches (every other layer needs approved). The card header of a draft ends with ` (draft)` and the dry run prints the card. An invalid draft is `JITSO REJECTED: build \"<id>\" from draft <path> is invalid here: <problems>`. The oracle has no drafts: it answers `unknown preset \"scout\"` with exit 2, so the first step FAILS on it.",
+  "intent": "INTENDED behavior (defect N-15, drafts; docs/decisions.md D7). `jitso launch --build <id>` finds a draft through the same lookup as every build: the draft layer is the last one, so a saved build with the same id wins. A draft is checked with the allowlists like any build and is the one place `status: draft` launches (every other layer needs approved). The card header of a draft ends with ` (draft)` and the dry run prints the card. An invalid draft is `JITSO REJECTED: build \"<id>\" from draft <path> is invalid here: <problems>`.",
   "project": {
     "files": {
       ".jitso/briefs/brief.md": "## Goal\n\nFind where the sync entry point of this project is defined and explain in a few sentences how it is wired to the rest of the code.\n\n## Scope\n\nRead only. Do not change any file and do not leave the repository.\n\n## Done when\n\nYou can name the file and the line that defines the entry point, and you have checked it by reading the file.\n\n## Report format\n\nOne short paragraph with the file path, the line number and a one line summary of what it does.\n",

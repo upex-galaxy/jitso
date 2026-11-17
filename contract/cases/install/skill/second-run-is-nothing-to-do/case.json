@@ -4,12 +4,8 @@
   "source": [
     "intended: docs: B4B5-DESIGN.md states table (current)"
   ],
-  "status": {
-    "ts": "xfail",
-    "go": "pass"
-  },
   "defect": "N-16",
-  "intent": "INTENDED behavior (defect N-16, B4.3). When the installed copy is current (every file matches the manifest, the manifest matches the shipped skill, the link is right) the run prints `jitso install skill: nothing to do (the jitso skill <version> is installed and up to date)`, exit 0, no preview, no backup folder, and the manifest bytes stay the same. The oracle has no `install` command: it answers `unknown command \"install\"` on stderr with exit 2 and prints nothing on stdout, so the pinned output and file effects FAIL on it.",
+  "intent": "INTENDED behavior (defect N-16, B4.3). When the installed copy is current (every file matches the manifest, the manifest matches the shipped skill, the link is right) the run prints `jitso install skill: nothing to do (the jitso skill <version> is installed and up to date)`, exit 0, no preview, no backup folder, and the manifest bytes stay the same.",
   "steps": [
     {
       "run": [

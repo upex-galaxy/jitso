@@ -7,12 +7,8 @@
   "tags": [
     "posix"
   ],
-  "status": {
-    "ts": "xfail",
-    "go": "pass"
-  },
   "defect": "N-12",
-  "intent": "INTENDED behavior (defect N-12, build layers). A worker's subagent names are resolved with the layered lookup from the launching project, so a user worker that lists plan gets the project's plan (its description, prompt, model and tools), not the user folder's plan.yaml, which the project's build shadows. The oracle has no user layer: it rejects the user worker as an unknown preset and the case FAILS on it.",
+  "intent": "INTENDED behavior (defect N-12, build layers). A worker's subagent names are resolved with the layered lookup from the launching project, so a user worker that lists plan gets the project's plan (its description, prompt, model and tools), not the user folder's plan.yaml, which the project's build shadows.",
   "project": {
     "files": {
       ".jitso/briefs/brief.md": {

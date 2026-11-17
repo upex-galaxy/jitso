@@ -2,14 +2,10 @@
   "id": "launch/trust/path-selector-must-match-the-folder",
   "title": "Orca putting the terminal in another worktree than the one a path: selector names is refused",
   "source": [
-    "intended: TS-ODDITIES L4 (owner decision, defect N-22): the folder Orca reports is checked on every launch"
+    "intended: owner decision, defect N-22: the folder Orca reports is checked on every launch"
   ],
-  "status": {
-    "ts": "xfail",
-    "go": "pass"
-  },
   "defect": "N-22",
-  "intent": "INTENDED behavior (TS-ODDITIES L4, owner decision, defect N-22). When --worktree names a path, the folder Orca reports must be that same worktree: the primary is a worktree of the repo but not the one asked for, so the launch exits 2 with the 'asked for' text, closes the terminal and writes no registry line. The TS binary compares nothing without a dialog and launches (exit 0).",
+  "intent": "INTENDED behavior (owner decision, defect N-22). When --worktree names a path, the folder Orca reports must be that same worktree: the primary is a worktree of the repo but not the one asked for, so the launch exits 2 with the 'asked for' text, closes the terminal and writes no registry line.",
   "project": {
     "files": {
       ".jitso/briefs/brief.md": {

@@ -4,12 +4,8 @@
   "source": [
     "intended: builds come from layers (repo, trusted parent folders, user folder), nearest wins (docs/decisions.md)"
   ],
-  "status": {
-    "ts": "xfail",
-    "go": "pass"
-  },
   "defect": "N-12",
-  "intent": "INTENDED behavior (defect N-12, build layers). The user config decides which folders are layers, so an invalid one is an environment error for every command that loads the catalog (build list, launch): exit 3 and `jitso: ~/.jitso/config.yaml is invalid: <problem>`. The rows cover a relative path, `~`, `~/`, `/` and HOME (too broad), an unknown key, a value that is not a list, a version other than 1 and a top level that is not a mapping. The oracle never reads the file, so build list exits 0 and the case FAILS on it.",
+  "intent": "INTENDED behavior (defect N-12, build layers). The user config decides which folders are layers, so an invalid one is an environment error for every command that loads the catalog (build list, launch): exit 3 and `jitso: ~/.jitso/config.yaml is invalid: <problem>`. The rows cover a relative path, `~`, `~/`, `/` and HOME (too broad), an unknown key, a value that is not a list, a version other than 1 and a top level that is not a mapping.",
   "for_each": {
     "vars": [
       "config",

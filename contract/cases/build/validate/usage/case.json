@@ -4,12 +4,8 @@
   "source": [
     "intended: docs/decisions.md (build validate: a tolerant check of every build of every layer, one line per file, problem lines, one summary line)"
   ],
-  "status": {
-    "ts": "xfail",
-    "go": "pass"
-  },
   "defect": "N-13",
-  "intent": "INTENDED behavior (defect N-13, build validate). The command has one optional positional, the build id, and no flag: no argument already means every build, and there is no machine-readable output yet. A word that starts with a dash, or a second positional, is `JITSO REJECTED: unknown argument \"<x>\"` on stderr, exit 2, nothing on stdout, with the same text the launch command gives. The oracle has no `build validate` (and the runner maps only `build list`): it answers `unknown command` on stderr with exit 2, so every expectation that needs the command's output FAILS on it.",
+  "intent": "INTENDED behavior (defect N-13, build validate). The command has one optional positional, the build id, and no flag: no argument already means every build, and there is no machine-readable output yet. A word that starts with a dash, or a second positional, is `JITSO REJECTED: unknown argument \"<x>\"` on stderr, exit 2, nothing on stdout, with the same text the launch command gives.",
   "steps": [
     {
       "run": [

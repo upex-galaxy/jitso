@@ -8,12 +8,8 @@
   "tags": [
     "ts-location"
   ],
-  "status": {
-    "ts": "xfail",
-    "go": "pass"
-  },
   "defect": "N-1",
-  "intent": "The project is the git primary checkout of the cwd. A cwd outside any git checkout is an environment error: exit 3, one stderr line `jitso: <cwd> is not inside a git checkout` that names the folder, nothing written, orca never called. The TypeScript binary finds its project from its own script folder (REPO = the folder of index.ts), so it ignores the cwd and succeeds. The exit code 3 is the harvester's choice: it is the code index.ts gives to an environment error in `launch`.",
+  "intent": "The project is the git primary checkout of the cwd. A cwd outside any git checkout is an environment error: exit 3, one stderr line `jitso: <cwd> is not inside a git checkout` that names the folder, nothing written, orca never called. The exit code 3 is the harvester's choice: it is the code the launcher gives to an environment error in `launch`.",
   "steps": [
     {
       "run": [

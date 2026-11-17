@@ -4,12 +4,8 @@
   "source": [
     "intended: builds come from layers (repo, trusted parent folders, user folder), nearest wins (docs/decisions.md)"
   ],
-  "status": {
-    "ts": "xfail",
-    "go": "pass"
-  },
   "defect": "N-12",
-  "intent": "INTENDED behavior (defect N-12, build layers). Every build of every layer is validated against the project that launches it (its jitso/jitso.yaml and its instruction route ids), not against the folder the build lives in. A user build whose model is not in this project's allowlist is skipped by build list with one stderr warning (`jitso: warning: skipped build user <path>: <problems>`), `launch --build <id>` is rejected (exit 2) with the same problems, and the project's own builds keep working with a clean stderr. The oracle has no user layer, so build list prints no warning and the case FAILS on it: the warning line is missing.",
+  "intent": "INTENDED behavior (defect N-12, build layers). Every build of every layer is validated against the project that launches it (its jitso/jitso.yaml and its instruction route ids), not against the folder the build lives in. A user build whose model is not in this project's allowlist is skipped by build list with one stderr warning (`jitso: warning: skipped build user <path>: <problems>`), `launch --build <id>` is rejected (exit 2) with the same problems, and the project's own builds keep working with a clean stderr.",
   "project": {
     "files": {
       ".jitso/briefs/brief.md": {

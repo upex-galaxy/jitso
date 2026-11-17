@@ -4,12 +4,8 @@
   "source": [
     "intended: docs/decisions.md D7 and the drafts rows of the other decisions (a just-in-time build is a draft kept in .jitso/drafts/ and validated by code)"
   ],
-  "status": {
-    "ts": "xfail",
-    "go": "pass"
-  },
   "defect": "N-15",
-  "intent": "INTENDED behavior (defect N-15, drafts; docs/decisions.md D7). The registry launch line of a draft names the layer (`build_layer: draft`), the real path of the draft file and the SHA-256 of its bytes, so the record still says exactly what ran after the draft is discarded or replaced. card.txt holds the same header as stdout, ending ` (draft)`. The registry line carries build and build_version (v: 2, defect N-31). The oracle has no drafts: it rejects the id as an unknown preset and the case FAILS on it.",
+  "intent": "INTENDED behavior (defect N-15, drafts; docs/decisions.md D7). The registry launch line of a draft names the layer (`build_layer: draft`), the real path of the draft file and the SHA-256 of its bytes, so the record still says exactly what ran after the draft is discarded or replaced. card.txt holds the same header as stdout, ending ` (draft)`. The registry line carries build and build_version (v: 2, defect N-31).",
   "project": {
     "files": {
       ".jitso/briefs/brief.md": "## Goal\n\nFind where the sync entry point of this project is defined and explain in a few sentences how it is wired to the rest of the code.\n\n## Scope\n\nRead only. Do not change any file and do not leave the repository.\n\n## Done when\n\nYou can name the file and the line that defines the entry point, and you have checked it by reading the file.\n\n## Report format\n\nOne short paragraph with the file path, the line number and a one line summary of what it does.\n",

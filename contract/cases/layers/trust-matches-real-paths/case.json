@@ -4,12 +4,8 @@
   "source": [
     "intended: builds come from layers (repo, trusted parent folders, user folder), nearest wins (docs/decisions.md)"
   ],
-  "status": {
-    "ts": "xfail",
-    "go": "pass"
-  },
   "defect": "N-12",
-  "intent": "INTENDED behavior (defect N-12, build layers). Each trusted_parents entry is expanded (~/ is HOME), cleaned (a/b/.. is a) and resolved through symlinks before it is compared with the project's real path. The three spellings below all lead to the outer fixture project, so its builds are a parent layer of the nested checkout, listed under the real path. The oracle knows no layers and no nested project, so the case FAILS on it. The oracle also resolves its project from its own script folder, so from a nested checkout it reads the outer fixture catalog (defect N-1) and fails here as well.",
+  "intent": "INTENDED behavior (defect N-12, build layers). Each trusted_parents entry is expanded (~/ is HOME), cleaned (a/b/.. is a) and resolved through symlinks before it is compared with the project's real path. The three spellings below all lead to the outer fixture project, so its builds are a parent layer of the nested checkout, listed under the real path.",
   "for_each": {
     "var": "entry",
     "values": [

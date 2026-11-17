@@ -4,12 +4,8 @@
   "source": [
     "intended: one answer for both spellings"
   ],
-  "status": {
-    "ts": "xfail",
-    "go": "pass"
-  },
   "defect": "N-21",
-  "intent": "INTENDED behavior (defect N-21, version). The oracle has neither spelling: both are an unknown command, so the first step fails on TS.",
+  "intent": "INTENDED behavior (defect N-21, version).",
   "steps": [
     {
       "run": [

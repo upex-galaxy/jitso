@@ -4,12 +4,8 @@
   "source": [
     "intended: docs/architecture.md section 6 (project root, the dispatcher handoff)"
   ],
-  "status": {
-    "ts": "xfail",
-    "go": "pass"
-  },
   "defect": "N-7",
-  "intent": "INTENDED behavior (defect N-7, dispatcher project handoff; docs/architecture.md section 6). Before it starts the dispatcher, jitso resolves the project (the git primary checkout of its cwd) and puts it in the environment of the claude it starts as JITSO_PROJECT, because that claude runs from a folder outside git and its one `jitso launch` could not find the project otherwise. The TS binary sets no such variable (it finds its project from its script folder), so the env expectation FAILS on TS. That Claude Code passes its own environment on to the processes its Bash tool starts is a prediction no case can prove: the fake claude runs no tool.",
+  "intent": "INTENDED behavior (defect N-7, dispatcher project handoff; docs/architecture.md section 6). Before it starts the dispatcher, jitso resolves the project (the git primary checkout of its cwd) and puts it in the environment of the claude it starts as JITSO_PROJECT, because that claude runs from a folder outside git and its one `jitso launch` could not find the project otherwise. That Claude Code passes its own environment on to the processes its Bash tool starts is a prediction no case can prove: the fake claude runs no tool.",
   "for_each": {
     "var": "dir",
     "values": [

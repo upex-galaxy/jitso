@@ -2,14 +2,10 @@
   "id": "hooks/dispatch-guard/bash-denies-a-bare-launch",
   "title": "the launcher with no flag at all is denied by the guard: --build, --brief, --mode and --worktree are required",
   "source": [
-    "intended: TS-ODDITIES H3 (owner decision, defect N-29): the oracle pinned a bare launch as allowed (measured on the TypeScript hook: an empty flag list passes)"
+    "intended: owner decision, defect N-29: a bare launch is not allowed"
   ],
-  "status": {
-    "ts": "xfail",
-    "go": "pass"
-  },
   "defect": "N-29",
-  "intent": "INTENDED behavior (TS-ODDITIES H3, owner decision, defect N-29). The dispatcher's one launch line must carry --build, --brief, --mode direct and --worktree path:<primary>, so a bare `<launcher> launch` is denied with `--build is required` instead of being left for the launcher to reject. This case was `bash-allows-bare-launch` and pinned the oracle's behavior; it is converted in place. The TS binary allows the bare line (its flag loop is empty), so the decision FAILS on TS.",
+  "intent": "INTENDED behavior (owner decision, defect N-29). The dispatcher's one launch line must carry --build, --brief, --mode direct and --worktree path:<primary>, so a bare `<launcher> launch` is denied with `--build is required` instead of being left for the launcher to reject. This case was `bash-allows-bare-launch`; it is converted in place.",
   "home": {
     "files": {
       ".jitso/dispatch-cwd/briefs/.keep": "",

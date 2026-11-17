@@ -4,12 +4,8 @@
   "source": [
     "intended: docs/decisions.md A2 (defect N-23): the guard allows exactly the primary worktree"
   ],
-  "status": {
-    "ts": "xfail",
-    "go": "pass"
-  },
   "defect": "N-23",
-  "intent": "INTENDED behavior (defect N-23, owner answer A2). The dispatch guard allows --worktree only with the exact value path:<primary>, the primary checkout named by JITSO_PROJECT. A name, another folder, a subfolder of the project and the id:<id>::<path> form are denied with the reason '--worktree must be path:<primary>'. The TS binary denies the line for another reason (it does not allow --build), so the reason text FAILS on TS.",
+  "intent": "INTENDED behavior (defect N-23, owner answer A2). The dispatch guard allows --worktree only with the exact value path:<primary>, the primary checkout named by JITSO_PROJECT. A name, another folder, a subfolder of the project and the id:<id>::<path> form are denied with the reason '--worktree must be path:<primary>'.",
   "home": {
     "files": {
       ".jitso/dispatch-cwd/briefs/.keep": "",

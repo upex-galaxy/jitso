@@ -4,12 +4,8 @@
   "source": [
     "intended: docs: B4B5-DESIGN.md `install skill` states (the link: anything else is unmanaged for that path)"
   ],
-  "status": {
-    "ts": "xfail",
-    "go": "pass"
-  },
   "defect": "N-16",
-  "intent": "INTENDED behavior (defect N-16, B4.3). A plain folder (no manifest) at `.claude/skills/jitso` is `JITSO REJECTED: the jitso skill in .claude/skills/jitso is not a copy jitso installed (no .jitso-skill.json); ...`, and a symbolic link to somewhere else is `... is not a copy jitso installed (it is a link to <target>); ...`. Nothing is written, not even the real folder. The oracle has no `install` command: it answers `unknown command \"install\"` on stderr with exit 2 and prints nothing on stdout, so the pinned output and file effects FAIL on it.",
+  "intent": "INTENDED behavior (defect N-16, B4.3). A plain folder (no manifest) at `.claude/skills/jitso` is `JITSO REJECTED: the jitso skill in .claude/skills/jitso is not a copy jitso installed (no .jitso-skill.json); ...`, and a symbolic link to somewhere else is `... is not a copy jitso installed (it is a link to <target>); ...`. Nothing is written, not even the real folder.",
   "project": {
     "files": {
       ".claude/skills/jitso/SKILL.md": "theirs\n"

@@ -4,12 +4,8 @@
   "source": [
     "intended: docs: B4B5-DESIGN.md `install skill` input table"
   ],
-  "status": {
-    "ts": "xfail",
-    "go": "pass"
-  },
   "defect": "N-16",
-  "intent": "INTENDED behavior (defect N-16, B4.3). From a folder that is not inside a git checkout, project scope is exit 3 with `jitso: <folder> is not inside a git checkout`, and nothing is written; user scope from the same folder works (the user-scope case). The oracle has no `install` command: it answers `unknown command \"install\"` on stderr with exit 2 and prints nothing on stdout, so the pinned output and file effects FAIL on it.",
+  "intent": "INTENDED behavior (defect N-16, B4.3). From a folder that is not inside a git checkout, project scope is exit 3 with `jitso: <folder> is not inside a git checkout`, and nothing is written; user scope from the same folder works (the user-scope case).",
   "steps": [
     {
       "run": [

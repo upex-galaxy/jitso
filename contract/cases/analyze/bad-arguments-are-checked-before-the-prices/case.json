@@ -2,14 +2,10 @@
   "id": "analyze/bad-arguments-are-checked-before-the-prices",
   "title": "analyze checks the shape of its arguments before it looks for jitso/prices.json, so a bad argument is exit 2 even without a price table",
   "source": [
-    "intended: TS-ODDITIES R6 (defect N-28)"
+    "intended: defect N-28"
   ],
-  "status": {
-    "ts": "xfail",
-    "go": "pass"
-  },
   "defect": "N-28",
-  "intent": "INTENDED behavior (TS-ODDITIES R6, defect N-28). analyze checks its argument shape (one launch id of the exact form, or --transcript with one path ending .jsonl) first, then the project, then jitso/prices.json, like close and reap. This project has no prices file and the last step runs outside a git checkout, and every step is still exit 2 with the usage line. The oracle loads the prices first and exits 3, so the exit code FAILS on TS.",
+  "intent": "INTENDED behavior (defect N-28). analyze checks its argument shape (one launch id of the exact form, or --transcript with one path ending .jsonl) first, then the project, then jitso/prices.json, like close and reap. This project has no prices file and the last step runs outside a git checkout, and every step is still exit 2 with the usage line.",
   "steps": [
     {
       "run": [

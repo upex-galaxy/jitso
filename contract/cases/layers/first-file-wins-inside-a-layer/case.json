@@ -4,12 +4,8 @@
   "source": [
     "intended: builds come from layers (repo, trusted parent folders, user folder), nearest wins (docs/decisions.md)"
   ],
-  "status": {
-    "ts": "xfail",
-    "go": "pass"
-  },
   "defect": "N-12",
-  "intent": "INTENDED behavior (defect N-12, build layers). Shadowing is by id, also inside one layer: when two files of the project's jitso/builds/ carry the same id, the first by file name is the build of that id and the second is never listed or launched. The oracle lists every valid file, so it prints both dup lines and the case FAILS on it: the second description is present.",
+  "intent": "INTENDED behavior (defect N-12, build layers). Shadowing is by id, also inside one layer: when two files of the project's jitso/builds/ carry the same id, the first by file name is the build of that id and the second is never listed or launched.",
   "project": {
     "files": {
       "jitso/builds/a-dup.yaml": {

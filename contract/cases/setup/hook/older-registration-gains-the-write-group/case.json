@@ -4,12 +4,8 @@
   "source": [
     "intended: docs/decisions.md D8 (setup hook, defect N-17) and A5 (defect N-25): a file with the older three groups is upgraded in one run"
   ],
-  "status": {
-    "ts": "xfail",
-    "go": "pass"
-  },
   "defect": "N-25",
-  "intent": "INTENDED behavior (defect N-25, owner answer A5). A file written before the write boundary holds the Bash, orca MCP and SessionEnd groups. `jitso setup hook --yes` strips every JITSO handler and writes the four canonical groups (the new one is `Write|Edit|MultiEdit|NotebookEdit` on PreToolUse), with a backup and a diff that shows the new matcher line. A second run is `nothing to do`, and `--remove` deletes the file that held only JITSO groups. The oracle has no `setup` command: it answers `unknown command \"setup\"` on stderr with exit 2 and prints nothing on stdout, so every expectation that needs this output or file effect FAILS on it.",
+  "intent": "INTENDED behavior (defect N-25, owner answer A5). A file written before the write boundary holds the Bash, orca MCP and SessionEnd groups. `jitso setup hook --yes` strips every JITSO handler and writes the four canonical groups (the new one is `Write|Edit|MultiEdit|NotebookEdit` on PreToolUse), with a backup and a diff that shows the new matcher line. A second run is `nothing to do`, and `--remove` deletes the file that held only JITSO groups.",
   "project": {
     "files": {
       ".claude/settings.json": "{\n  \"hooks\": {\n    \"PreToolUse\": [\n      {\n        \"matcher\": \"Bash\",\n        \"hooks\": [\n          {\n            \"type\": \"command\",\n            \"command\": \"jitso hook guard\"\n          }\n        ]\n      },\n      {\n        \"matcher\": \"mcp__.*orca.*__.*\",\n        \"hooks\": [\n          {\n            \"type\": \"command\",\n            \"command\": \"jitso hook guard\"\n          }\n        ]\n      }\n    ],\n    \"SessionEnd\": [\n      {\n        \"hooks\": [\n          {\n            \"type\": \"command\",\n            \"command\": \"jitso hook guard\"\n          }\n        ]\n      }\n    ]\n  }\n}\n"

@@ -4,12 +4,8 @@
   "source": [
     "intended: docs/decisions.md (tier matrix: skills_first, mcp and requires must be empty in a subagent-tier build)"
   ],
-  "status": {
-    "ts": "xfail",
-    "go": "pass"
-  },
   "defect": "N-11",
-  "intent": "INTENDED behavior (defect N-11, tier fields; docs/decisions.md). A subagent runs inside its worker's session, so it cannot start its own skills or MCP servers and takes no launch fields: skills_first, mcp and requires must be empty. The overlay jitso/builds/plan.yaml is a copy of the fixture's plan, which is a valid worker preset for the oracle too, with one of them set to a value the allowlists accept. That is an invalid catalog entry: exit 3, nothing on stdout, a stderr that names jitso/builds/plan.yaml and says `<field> must be empty in a subagent-tier build`. The TS binary has no tiers, so it accepts the file and `build list` exits 0.",
+  "intent": "INTENDED behavior (defect N-11, tier fields; docs/decisions.md). A subagent runs inside its worker's session, so it cannot start its own skills or MCP servers and takes no launch fields: skills_first, mcp and requires must be empty. The overlay jitso/builds/plan.yaml is a copy of the fixture's plan, with one of its fields set to a value the allowlists accept. That is an invalid catalog entry: exit 3, nothing on stdout, a stderr that names jitso/builds/plan.yaml and says `<field> must be empty in a subagent-tier build`.",
   "for_each": {
     "vars": [
       "field",

@@ -4,12 +4,8 @@
   "source": [
     "intended: docs/decisions.md D7 and the drafts rows of the other decisions (a just-in-time build is a draft kept in .jitso/drafts/ and validated by code)"
   ],
-  "status": {
-    "ts": "xfail",
-    "go": "pass"
-  },
   "defect": "N-15",
-  "intent": "INTENDED behavior (defect N-15, drafts; docs/decisions.md D7). With `-` the command reads the build from stdin, at most 64 KiB, and keeps the bytes unchanged: the input below ends without a newline and the draft file ends without one too. The oracle has no `build draft` and no `build discard` (the runner maps only `build list`): both answer `unknown command` on stderr with exit 2, so every expectation that needs their output FAILS on it.",
+  "intent": "INTENDED behavior (defect N-15, drafts; docs/decisions.md D7). With `-` the command reads the build from stdin, at most 64 KiB, and keeps the bytes unchanged: the input below ends without a newline and the draft file ends without one too.",
   "steps": [
     {
       "run": [

@@ -1,5 +1,5 @@
 // Command jitso-contract-runner executes the JITSO contract cases (contract/SPEC.md) against
-// one implementation. The same binary is also the fake `orca` and the fake `claude`: the
+// one `jitso` binary. The same binary is also the fake `orca` and the fake `claude`: the
 // runner links itself into each sandbox under those names and dispatches on os.Args[0].
 package main
 
@@ -32,20 +32,19 @@ func main() {
 }
 
 type config struct {
-	impl, tsSrc, bin string
-	cases, fixtures  string
-	filter           string
-	skipTags         []string
-	verbose, keep    bool
-	jobs             int
+	impl, bin       string
+	cases, fixtures string
+	filter          string
+	skipTags        []string
+	verbose, keep   bool
+	jobs            int
 }
 
 func parseFlags(args []string, stderr io.Writer) (config, error) {
 	var c config
 	fs := flag.NewFlagSet("jitso-contract-runner", flag.ContinueOnError)
 	fs.SetOutput(stderr)
-	fs.StringVar(&c.impl, "impl", "", "implementation under test: ts or bin")
-	fs.StringVar(&c.tsSrc, "ts-src", "", "boilerplate checkout holding the TS oracle (--impl ts)")
+	fs.StringVar(&c.impl, "impl", "", "implementation under test: bin")
 	fs.StringVar(&c.bin, "bin", "", "path of the jitso executable (--impl bin)")
 	fs.StringVar(&c.cases, "cases", "", "cases folder (default: contract/cases found above the cwd or the executable)")
 	fs.StringVar(&c.fixtures, "fixtures", "", "fixtures folder (default: the sibling `fixtures` of the cases folder)")
@@ -121,14 +120,12 @@ func run(args []string, stdout, stderr io.Writer) int {
 
 func newImplementation(cfg config) (impl.Implementation, error) {
 	switch cfg.impl {
-	case "ts":
-		return impl.NewTS(cfg.tsSrc)
 	case "bin":
 		return impl.NewBin(cfg.bin)
 	case "":
-		return nil, errors.New("--impl is required: ts or bin")
+		return nil, errors.New("--impl is required: bin")
 	}
-	return nil, fmt.Errorf("--impl: want ts or bin, got %q", cfg.impl)
+	return nil, fmt.Errorf("--impl: want bin, got %q", cfg.impl)
 }
 
 // loadCases loads every case, reports load errors, and expands and filters the rest.

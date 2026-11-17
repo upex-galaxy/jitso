@@ -4,12 +4,8 @@
   "source": [
     "intended: docs/decisions.md (build validate: a tolerant check of every build of every layer, one line per file, problem lines, one summary line)"
   ],
-  "status": {
-    "ts": "xfail",
-    "go": "pass"
-  },
   "defect": "N-13",
-  "intent": "INTENDED behavior (defect N-13, build validate). With an id the command prints the winner of that id (its line, its problem lines) and the summary line counting that winner only. A valid id exits 0 even when another file of the project is invalid; an invalid winner exits 2 with its problem lines; an id no file has is a rejection, exit 2, one stderr line `JITSO REJECTED: unknown build \"<id>\"`, nothing on stdout. The oracle has no `build validate` (and the runner maps only `build list`): it answers `unknown command` on stderr with exit 2, so every expectation that needs the command's output FAILS on it.",
+  "intent": "INTENDED behavior (defect N-13, build validate). With an id the command prints the winner of that id (its line, its problem lines) and the summary line counting that winner only. A valid id exits 0 even when another file of the project is invalid; an invalid winner exits 2 with its problem lines; an id no file has is a rejection, exit 2, one stderr line `JITSO REJECTED: unknown build \"<id>\"`, nothing on stdout.",
   "project": {
     "files": {
       "jitso/builds/broken.yaml": {
