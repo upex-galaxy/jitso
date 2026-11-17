@@ -7,47 +7,47 @@ The design of the `jitso` Go binary: how it is split into packages, where the se
 | Principle | What it means here |
 |---|---|
 | The contract is the acceptance test | every milestone ends with a runner result against the built binary (`--impl bin`), never with "it compiles" |
-| Port the TypeScript behavior, change only what is decided | behavior changes from the TypeScript implementation are the decided rows of `docs/decisions.md` and its defect ids, each a contract case first, then Go. Everything else keeps the TypeScript behavior until its own contract change |
+| Change only what is decided | a behavior change is a decided row of `docs/decisions.md` (with a defect id when it has one), each a contract case first, then Go |
 | Functional core, imperative shell | validation, resolution, card, brief checks, argv and `run.sh` text, hook decisions and transcript math are pure functions; I/O sits in a thin layer around them |
 | Standard library first | one dependency (YAML, section 8), behind a single file |
 | One binary | the CLI and the hook are subcommands of the same executable; no Node or Bun at run time |
 
 ## 2. Domain map
 
-What the CLI does, split by responsibility. "Pure" means no file, process, clock or random access; the Go package names are the layout of section 3. Rows with no TypeScript source are behavior the TypeScript implementation never had (defects N-10 and later in `docs/decisions.md`). TypeScript paths (`cli/jitso/...`, `.agents/hooks/...`) are relative to the original QA boilerplate repo at the tag `jitso-oracle-1`, and the short file names in the TypeScript source column are under `cli/jitso/`; case ids are relative to `contract/cases/`; catalog paths (`jitso/...`) are relative to a consuming project, and in this repo exist only under `contract/fixtures/default/`.
+What the CLI does, split by responsibility. "Pure" means no file, process, clock or random access; the Go package names are the layout of section 3. Case ids are relative to `contract/cases/`; catalog paths (`jitso/...`) are relative to a consuming project, and in this repo exist only under `contract/fixtures/default/`.
 
-| Responsibility | TypeScript source | Pure logic | I/O | Go package |
-|---|---|---|---|---|
-| Command table, usage, exit codes | `index.ts` | command table, usage text | stdout, stderr | `internal/cli` |
-| Project root | `root.ts`, `cli/lib/worktree.ts` | choosing the primary from `--git-dir` vs `--git-common-dir` | `git rev-parse` | `internal/project` |
-| Catalog loading and validation | `profile.ts` (`loadConfig`, `validatePreset`, `routeIds`) | every validation rule, route ids from front matter, tiers and the subagent names of a worker (section 7) | reads `jitso/`, `.agents/instructions/` | `internal/catalog` |
-| Build layers | none (D6) | the order repo, draft; shadowing by id | reads the two layer folders | `internal/catalog` (`layers.go`) |
-| Build validation report | none (N-13) | a tolerant scan that reports every problem of every file, and the launch-only rules | none | `internal/catalog` (`scan.go`), `internal/cli` |
-| Request resolution | `profile.ts` (`resolveRequest`) | allowlists, required fields, the field patterns of the `fields` key of `jitso/jitso.yaml`, the refusal of a subagent-tier build (new) | none | `internal/profile` |
-| Launch arguments and field allowlist | `launch.ts` (`parseLaunchArgs`), `shell.ts` (`checkLaunchField`) | all | none | `internal/launch` (arguments), `internal/shell` (the field allowlists) |
-| Brief checks | `brief.ts` (`checkBrief`) | sections, length, language, cited paths | one existence probe per cited path | `internal/brief` |
-| Brief path guard | `brief.ts` (`resolveBriefPath`) | the "inside" test | `EvalSymlinks`, `Stat` | `internal/brief` |
-| Card | `card.ts` | all | none | `internal/card` |
-| Launch command on the card | `launch.ts` (`resolveLaunchCommand`) | the rule | reads `package.json` | `internal/card` |
-| Shell and `run.sh` text | `shell.ts` | quoting, script text, terminal title | none | `internal/shell` |
-| Harness adapter | `adapters/claude.ts`, `adapters/types.ts` | argv, env, MCP file, transcript path, trust dialog detection | session id (random) | `internal/harness`, `internal/harness/claude` |
-| Orca client | `orca.ts` | response parsing, `worktreeId` path | runs `orca ... --json` | `internal/orca` |
-| Trust dialog and folder check | `trust.ts` | the dialog state machine, exact real-path match, and the folder check on every launch (N-22): `SelectorPath`, `Precheck` (before any Orca call) and `Place` (right after `terminal create`) | `git worktree list`, screen reads, key sends, clock | `internal/trust` |
-| Registry | `log.ts` | event validation (schema `v: 2` with `build` keys, N-31), folding events into launches | append under a `mkdir` lock, read the file | `internal/registry` |
-| Launch execution | `launch.ts` (`launchForReal`) | the plan: files, argv, event | files, Orca, registry | `internal/launch` |
-| Close | `close.ts` | none worth isolating | Orca, registry, footer file | `internal/closeout` |
-| Reap | `reap.ts` | worker matching (handle or `[jitso:<id>]` mark), evidence text | Orca, registry | `internal/reap` |
-| Guard hook | `.agents/hooks/jitso-guard.mjs` | Bash segment splitting, launch-verb detection, orca-bridge tool rules, the program of a segment (N-24) | `jitso/jitso.yaml` probe; SessionEnd appends to the registry | `internal/hook` |
-| Rules text | none | the short JITSO rules a launch appends to the end of `brief.md`, by mode and budget, and the join of the brief file | writes `brief.md` | `internal/card` (`Rules`), `internal/launch` (`BriefFile`) |
-| Templates | none (N-14) | one embedded template per tier and the `jitso/jitso.yaml` skeleton | none | `internal/templates` |
-| Drafts | none (N-15) | the draft checks, the status rewrite (`catalog.StatusSpan`) | the drafts folder, atomic writes, the save | `internal/drafts` |
-| Adoption core | none (N-16 to N-19) | a change plan as a value, the unified diff with its masks, the confirmation rule | backups, atomic writes, links | `internal/adopt` |
-| Settings file edit | none (N-17) | an order-preserving JSON tree, hook registration and removal | none | `internal/settingsjson` |
-| Instruction block | none (N-18) | marker scanning, insert, replace, remove | reads which instruction files exist | `internal/instructions` |
-| Usage skill | none (N-16) | the embedded tree, the manifest, the state of an installed copy, the install plan | reads the install folders | `internal/skill` |
-| Doctor | none (N-20) | one check per environment fact, each answering ok, warn or fail | PATH lookups, version probes, `git check-ignore`, the files it inspects; it changes nothing | `internal/doctor` |
-| Version | none (N-21) | the one-line text | build info | `internal/version` |
-| Terminal test | none | none | the termios ioctl on standard input | `internal/tty` |
+| Responsibility | Pure logic | I/O | Go package |
+|---|---|---|---|
+| Command table, usage, exit codes | command table, usage text | stdout, stderr | `internal/cli` |
+| Project root | choosing the primary from `--git-dir` vs `--git-common-dir` | `git rev-parse` | `internal/project` |
+| Catalog loading and validation | every validation rule, route ids from front matter, tiers and the subagent names of a worker (section 7) | reads `jitso/`, `.agents/instructions/` | `internal/catalog` |
+| Build layers | the order repo, draft; shadowing by id | reads the two layer folders | `internal/catalog` (`layers.go`) |
+| Build validation report | a tolerant scan that reports every problem of every file, and the launch-only rules | none | `internal/catalog` (`scan.go`), `internal/cli` |
+| Request resolution | allowlists, required fields, the field patterns of the `fields` key of `jitso/jitso.yaml`, the refusal of a subagent-tier build (new) | none | `internal/profile` |
+| Launch arguments and field allowlist | all | none | `internal/launch` (arguments), `internal/shell` (the field allowlists) |
+| Brief checks | sections, length, language, cited paths | one existence probe per cited path | `internal/brief` |
+| Brief path guard | the "inside" test | `EvalSymlinks`, `Stat` | `internal/brief` |
+| Card | all | none | `internal/card` |
+| Launch command on the card | the rule | reads `package.json` | `internal/card` |
+| Shell and `run.sh` text | quoting, script text, terminal title | none | `internal/shell` |
+| Harness adapter | argv, env, MCP file, transcript path, trust dialog detection | session id (random) | `internal/harness`, `internal/harness/claude` |
+| Orca client | response parsing, `worktreeId` path | runs `orca ... --json` | `internal/orca` |
+| Trust dialog and folder check | the dialog state machine, exact real-path match, and the folder check on every launch (N-22): `SelectorPath`, `Precheck` (before any Orca call) and `Place` (right after `terminal create`) | `git worktree list`, screen reads, key sends, clock | `internal/trust` |
+| Registry | event validation (schema `v: 2` with `build` keys, N-31), folding events into launches | append under a `mkdir` lock, read the file | `internal/registry` |
+| Launch execution | the plan: files, argv, event | files, Orca, registry | `internal/launch` |
+| Close | none worth isolating | Orca, registry, footer file | `internal/closeout` |
+| Reap | worker matching (handle or `[jitso:<id>]` mark), evidence text | Orca, registry | `internal/reap` |
+| Guard hook | Bash segment splitting, launch-verb detection, orca-bridge tool rules, the program of a segment (N-24) | `jitso/jitso.yaml` probe; SessionEnd appends to the registry | `internal/hook` |
+| Rules text | the short JITSO rules a launch appends to the end of `brief.md`, by mode and budget, and the join of the brief file | writes `brief.md` | `internal/card` (`Rules`), `internal/launch` (`BriefFile`) |
+| Templates | one embedded template per tier and the `jitso/jitso.yaml` skeleton | none | `internal/templates` |
+| Drafts | the draft checks, the status rewrite (`catalog.StatusSpan`) | the drafts folder, atomic writes, the save | `internal/drafts` |
+| Adoption core | a change plan as a value, the unified diff with its masks, the confirmation rule | backups, atomic writes, links | `internal/adopt` |
+| Settings file edit | an order-preserving JSON tree, hook registration and removal | none | `internal/settingsjson` |
+| Instruction block | marker scanning, insert, replace, remove | reads which instruction files exist | `internal/instructions` |
+| Usage skill | the embedded tree, the manifest, the state of an installed copy, the install plan | reads the install folders | `internal/skill` |
+| Doctor | one check per environment fact, each answering ok, warn or fail | PATH lookups, version probes, `git check-ignore`, the files it inspects; it changes nothing | `internal/doctor` |
+| Version | the one-line text | build info | `internal/version` |
+| Terminal test | none | the termios ioctl on standard input | `internal/tty` |
 
 The rules text is `card.Rules(mode, hasBudget)`, called with the build's budget presence, pure: a heading and three lines, the direct or the fleet wording, with or without the sentence that names the card's budget as the ceiling. `launch.BriefFile` appends it to the end of `brief.md` after one blank line (`docs/decisions.md`, the v0.1.0 cut).
 
@@ -189,7 +189,7 @@ The default fixture has `sonnet-automator` with `subagents: [plan, code, verifie
 
 Rows in `docs/decisions.md`; the shape of each, for a reader of the code:
 
-- Vocabulary (N-10). The word is `build` everywhere a user sees it: the flag `--build`, the folder `jitso/builds/`, the command group `jitso build <subcommand>`, every message and the card header. There is no alias: `--preset`, `presets` and `jitso/presets/` are unknown. The registry log was the one survivor (`v: 1` with the keys `preset` and `preset_version`, a storage schema) until N-31 moved it to `v: 2` with `build` and `build_version`; a v1 line is an invalid line. The TypeScript implementation kept the old spelling and the old log schema.
+- Vocabulary (N-10). The word is `build` everywhere a user sees it: the flag `--build`, the folder `jitso/builds/`, the command group `jitso build <subcommand>`, every message and the card header. There is no alias: `--preset`, `presets` and `jitso/presets/` are unknown. The registry log was the one survivor (`v: 1` with the keys `preset` and `preset_version`, a storage schema) until N-31 moved it to `v: 2` with `build` and `build_version`; a v1 line is an invalid line.
 - Layers (N-12, narrowed by the v0.1.0 cut). The lookup order is the repo's `jitso/builds/`, then the drafts; nothing outside the project is read. The nearest file of an id is the build, every file is validated against the launching repo, and the registry line names the layer (`build_layer`, `build_file`, `build_sha256`) and the card names a draft. Code: `internal/catalog`.
 - Validation report (N-13). `jitso build validate` scans every file tolerantly and reports every problem; an invalid repo file is a finding there (exit 2), not the exit 3 of the other commands. Code: `internal/catalog` (`scan.go`).
 - Templates (N-14). `internal/templates` is embedded; `jitso build new` writes a draft from a template and, in a fresh project, the allowlists skeleton.
@@ -222,7 +222,7 @@ What the real catalog files use, read from the boilerplate's `jitso/` folder and
 
 Decision: option 1, `go.yaml.in/yaml/v3`. Tradeoff: about 0.2 MB and one reviewed dependency buy full YAML for the format every adopting project writes by hand; option 2 keeps the binary stdlib-only but makes this repo own a parser and a subset rule its users will hit.
 
-`internal/catalog/decode.go` is the only file that names the decoder: it walks the YAML nodes into an ordered generic map (a plain Go map randomizes the order of the "success placeholder" messages, which follow document order), and validation runs on those values. Two leaf packages, listed in section 3, serve it: `internal/fail` (error kinds and the exit-code mapping, so `launch` need not import `cli`) and `internal/jsconv` (JavaScript `String()` coercion shared by `catalog`, `orca` and `harness/claude`). Decoding into typed structs is avoided because the TypeScript code coerced values with `String(...)` and ignores unknown keys, so `model: 123` must produce `model "123" is not in the allowlist`, not a type error. Swapping the decoder later is a one-file change.
+`internal/catalog/decode.go` is the only file that names the decoder: it walks the YAML nodes into an ordered generic map (a plain Go map randomizes the order of the "success placeholder" messages, which follow document order), and validation runs on those values. Two leaf packages, listed in section 3, serve it: `internal/fail` (error kinds and the exit-code mapping, so `launch` need not import `cli`) and `internal/jsconv` (JavaScript `String()` coercion shared by `catalog`, `orca` and `harness/claude`). Decoding into typed structs is avoided because values are coerced with `String(...)` and unknown keys are ignored, so `model: 123` must produce `model "123" is not in the allowlist`, not a type error. Swapping the decoder later is a one-file change.
 
 How the size was measured: stripped probes (`CGO_ENABLED=0`, `-trimpath -ldflags='-s -w'`) built with Go 1.27.4, each linking `encoding/json`, `regexp`, `os/exec`, `crypto/sha256` and `crypto/rand`, one with and one without the YAML module, on darwin/arm64, linux/amd64 and windows/amd64. The numbers are history, not a live value: measure again before a release (`.agents/skills/go-development/references/builds.md`).
 
@@ -306,7 +306,7 @@ Track C needs `shell.Quote` for the `--settings` command, so `shell` starts in m
 |---|---|---|
 | 1 | YAML: dependency, own subset parser, or another format (section 8) | DECIDED: `go.yaml.in/yaml/v3`, behind the one file `internal/catalog/decode.go` |
 | 2 | S3: where each helper's `description` and `prompt` come from | DECIDED: a subagent is a build with `tier: subagent`; the worker lists it by name, and the build supplies `description`, `prompt`, `model`, `effort` and `tools` (section 7) |
-| 3 | S1 makes the card six lines, which changes the card goldens of the TypeScript implementation | DECIDED: accept; the goldens changed in milestone 0 under defect S1, with `ROUTE-SCOPE: <ids>` on its own line after the subagents line |
+| 3 | S1 makes the card six lines, which changes the card goldens | DECIDED: accept; the goldens changed in milestone 0 under defect S1, with `ROUTE-SCOPE: <ids>` on its own line after the subagents line |
 | 4 | (withdrawn: the question belonged to a piece cut from v0.1.0, see `docs/decisions.md`) | none |
 | 5 | Does the variable stop Claude Code's native `AGENTS.md` read and the `@AGENTS.md` import? | MEASURED, no decision needed: it stops both (headless canary test, Claude Code 2.1.325). Re-measure on upgrades; user-level and nested instruction files were not covered |
 | 6 | Which launcher forms the guard accepts once the boilerplate stops using `bun run jitso` (H2, D9) | DECIDED: the guard keeps its three forms (own path, bare `jitso`, `bun run jitso`); dropping `bun run jitso` after D9 is a contract change |
