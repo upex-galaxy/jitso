@@ -44,7 +44,7 @@ Every build is validated against the launching project: its `jitso/jitso.yaml`, 
 
 `jitso build save <id>` turns a draft into `jitso/builds/<id>.yaml` with the `status` scalar changed from `draft` to `approved` and every other byte kept. Only the owner saves a build, and the draft is removed.
 
-## `jitso/jitso.yaml`: the allowlists
+## `jitso/jitso.yaml`: the allowlists and the field patterns
 
 One top-level mapping. A build may name only what it lists. Each list is read as text; a value that is not a list is an empty list.
 
@@ -56,8 +56,20 @@ One top-level mapping. A build may name only what it lists. Each list is read as
 | `mcp` | list of MCP server names, as in `.mcp.json` | `mcp` of a build |
 | `skills` | list of skill folder names under `.agents/skills/` | `skills_first` of a build |
 | `tools` | list of harness tool names | `tools` of a build |
+| `fields` | optional mapping of field name to pattern (see below) | the `--field` values of a launch |
 
-A project without this file has no allowlists: every catalog command exits 3 with `jitso: jitso/jitso.yaml is missing: this project has no JITSO allowlists (create it with jitso build new <id>)`. `jitso build new` writes an empty skeleton in a fresh project. Route-scope ids are not in this file: they are the `id:` line of each `.agents/instructions/agent-*.md` file.
+A project without this file has no allowlists: every catalog command exits 3 with `jitso: jitso/jitso.yaml is missing: this project has no JITSO allowlists (create it with jitso build new <id>)`. `jitso build new` writes an empty skeleton in a fresh project. The `fields` key is optional: absent or null means no patterns. Each key is a field name (`^[a-z][a-z_]*$`) and each value a non-empty Go `regexp` (RE2) pattern, which must match the whole value: the loader compiles `^(?:<pattern>)$`. A field a launch supplies is checked against its pattern; a field with no entry accepts any non-empty value with no control character (U+0000 to U+001F, U+007F). A build may require any well-formed field name, with or without an entry, and an entry no build requires is accepted. A problem in the key is reported with all the others, in key order, as `jitso/jitso.yaml is invalid: <problems joined by "; ">` (exit 3, and `fail catalog:` in `jitso doctor`):
+
+| Input | Problem text |
+|---|---|
+| `fields` is not a mapping | `fields must be a mapping of field name to pattern` |
+| a key that is not a field name | `field name "<n>" must be lowercase letters and _` |
+| a value that is not a string, or is empty | `field "<n>" pattern must be a non-empty string` |
+| a pattern that does not compile | `field "<n>" pattern does not compile: <regexp error text>` |
+
+A launch that gives a bad value is `JITSO REJECTED: field <name> has an invalid value`.
+
+Route-scope ids are not in this file: they are the `id:` line of each `.agents/instructions/agent-*.md` file.
 
 ## The build file
 
@@ -73,13 +85,13 @@ Key: R required, O optional (validated when present), U optional and unused by t
 | `description` | text; it is the summary a launching session reads | O | R, non-empty | `description must be a non-empty string in a subagent-tier build` |
 | `prompt` | text; the subagent's instructions | U | R, non-empty | `prompt must be a non-empty string in a subagent-tier build` |
 | `tools` | list, each in `tools`; absent means the harness default (a subagent inherits its parent's) | O | O | `tool "<t>" is not in the allowlist` |
-| `route_scope` | non-empty list of instruction-section ids, or `[none]` | R | U | `route_scope is empty (use [none])`; `route_scope id "<id>" is not an instruction section` |
-| `success` | list of mappings, each with a `check` | R | U | `success must list at least one check`; `success check "<c>" is unknown`; `success placeholder {<p>} is not a required field` |
+| `route_scope` | list of instruction-section ids, or `[none]`; absent or empty means none (the card prints `ROUTE-SCOPE: none`) | O | U | `route_scope id "<id>" is not an instruction section` |
+| `success` | list of mappings, each with a `check` name that is text of the project's own choosing; jitso checks the shape and evaluates nothing | O | U | `success must list at least one check`; `success entry must have a check name`; `success placeholder {<p>} is not a required field` |
 | `budget` | mapping with `tokens` and `usd_list_cap` | O | U | none: a build without a budget validates and launches |
 | `harness` | a harness with an adapter (`Adapters` in `internal/launch`) | L | U | validate: `harness "<h>" has no adapter`; launch: `no adapter for harness "<h>"` (exit 2) |
 | `skills_first` | list, each in `skills` | O | E | `skill "<s>" is not in the allowlist`; `skills_first must be empty in a subagent-tier build` |
 | `mcp` | list, each in `mcp`; a launch reads the project's `.mcp.json` only when it still names a server after `--mcp-exclude` | O | E | `mcp "<m>" is not in the allowlist`; `mcp must be empty in a subagent-tier build` |
-| `requires` | list of field names the launch must supply | O | E | `required field "<f>" has no pattern`; `requires must be empty in a subagent-tier build` |
+| `requires` | list of field names the launch must supply; each matches `^[a-z][a-z_]*$` | O | E | `required field "<f>" is not a field name`; `requires must be empty in a subagent-tier build` |
 | `subagents` | list of kebab-case names, each a subagent-tier build | O | E | `subagents must be a list of kebab-case names`; `subagent "<s>" is not a subagent-tier build`; `a subagent-tier build cannot list subagents` |
 | listed subagent status | each listed subagent is `approved`; a draft worker may also list drafts | L | n/a | launch: `JITSO REJECTED: build "<w>" lists subagent "<s>", which is <status>, not approved`; validate: `subagent "<s>" is <status>, not approved` |
 | `version`, `role`, `type`, `work_kind`, `mode_default`, `agents_md` | free text, printed on the card and in the summary; `agents_md: exclude` launches `claude` with `CLAUDE_CODE_DISABLE_CLAUDE_MDS=1` | O | U | none |
@@ -90,8 +102,8 @@ Value types the rules above refer to:
 
 | Name | Values |
 |---|---|
-| success checks | `answer_delivered`, `jira_comment_on`, `xray_execution_with_env`, `no_rule_breaks` |
-| required fields | `ticket_key` (`^[A-Z][A-Z0-9]*-[0-9]+$`), `env` (`^[a-z][a-z0-9_-]*$`); a field with no pattern cannot be required |
+| success checks | any text in `check`: no list of names is built in |
+| required fields | any name that matches `^[a-z][a-z_]*$`; its value is checked against the pattern in the `fields` key of `jitso/jitso.yaml`, or generically when it has none |
 | placeholders | a `{name}` inside a success entry must name a field the build lists in `requires` |
 | `budget.tokens`, `budget.usd_list_cap` | numbers: the token ceiling and the list-price cap in US dollars of one launch. The budget is optional. With one, the card's sixth line starts `budget <n>k tokens (100%), list cap US$ <x.xx> | ` and the rules text names the card's budget as the ceiling; without one the card's sixth line is `reports to: <whom> | log .jitso/launches.jsonl`, the rules text leaves that sentence out and the `launch` event of the log has no `budget` key. The budget is a ceiling the session is told about, not enforced by jitso |
 

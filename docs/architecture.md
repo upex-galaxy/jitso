@@ -23,7 +23,7 @@ What the CLI does, split by responsibility. "Pure" means no file, process, clock
 | Catalog loading and validation | `profile.ts` (`loadConfig`, `validatePreset`, `routeIds`) | every validation rule, route ids from front matter, tiers and the subagent names of a worker (section 7) | reads `jitso/`, `.agents/instructions/` | `internal/catalog` |
 | Build layers | none (D6) | the order repo, draft; shadowing by id | reads the two layer folders | `internal/catalog` (`layers.go`) |
 | Build validation report | none (N-13) | a tolerant scan that reports every problem of every file, and the launch-only rules | none | `internal/catalog` (`scan.go`), `internal/cli` |
-| Request resolution | `profile.ts` (`resolveRequest`) | allowlists, required fields, field patterns, the refusal of a subagent-tier build (new) | none | `internal/profile` |
+| Request resolution | `profile.ts` (`resolveRequest`) | allowlists, required fields, the field patterns of the `fields` key of `jitso/jitso.yaml`, the refusal of a subagent-tier build (new) | none | `internal/profile` |
 | Launch arguments and field allowlist | `launch.ts` (`parseLaunchArgs`), `shell.ts` (`checkLaunchField`) | all | none | `internal/launch` (arguments), `internal/shell` (the field allowlists) |
 | Brief checks | `brief.ts` (`checkBrief`) | sections, length, language, cited paths | one existence probe per cited path | `internal/brief` |
 | Brief path guard | `brief.ts` (`resolveBriefPath`) | the "inside" test | `EvalSymlinks`, `Stat` | `internal/brief` |
