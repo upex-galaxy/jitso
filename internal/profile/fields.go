@@ -7,7 +7,7 @@ import (
 
 // Fields are the --field name=value pairs of a request. A later value of a
 // name replaces the earlier one. Keys come back in the order a JavaScript
-// object gives its own keys (the oracle collects the fields in one): names
+// object gives its own keys (the fields are collected in one): names
 // that are array indices first, ascending, then the others in the order they
 // were first set. That order decides which bad field a rejection names.
 type Fields struct {

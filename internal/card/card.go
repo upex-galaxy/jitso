@@ -100,7 +100,7 @@ func LaunchCommand(packageJSON []byte) string {
 }
 
 // DeclaresJitsoScript is true when the package.json declares a `jitso` script:
-// a JSON string with a value that is not blank (TS-ODDITIES L7, defect N-26).
+// a JSON string with a value that is not blank (defect N-26).
 // The card and the guard hook share it. A missing or unusable file declares
 // nothing.
 func DeclaresJitsoScript(packageJSON []byte) bool {

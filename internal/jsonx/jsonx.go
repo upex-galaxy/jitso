@@ -1,8 +1,8 @@
 // Package jsonx is the one JSON encoder setup every jitso writer uses: no HTML
 // escaping (reasons and briefs carry "<id>" and "&"), compact lines for the
 // registry, an indented form for files such as mcp.json, UTC timestamps with
-// milliseconds, and an ordered object type for maps whose key order the oracle
-// keeps (insertion order) where a Go map would sort the keys.
+// milliseconds, and an ordered object type for maps whose key order is
+// kept (insertion order) where a Go map would sort the keys.
 //
 // Floats use encoding/json's shortest round-trip form, which matches
 // JSON.stringify for finite numbers. Two known differences from JSON.stringify:
@@ -16,7 +16,7 @@ import (
 	"time"
 )
 
-// TimeLayout is the oracle's Date.prototype.toISOString form.
+// TimeLayout is the form of JavaScript's Date.prototype.toISOString.
 const TimeLayout = "2006-01-02T15:04:05.000Z"
 
 // Time formats t like Date.prototype.toISOString: UTC with milliseconds.

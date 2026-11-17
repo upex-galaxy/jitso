@@ -19,7 +19,7 @@ A build without a `budget` prints the sixth line without its first segment: `rep
 
 | Line | Fields | What it limits or tells |
 |---|---|---|
-| 1 header | launch id, `role/type`, mode and who it asks, build id and version | The id is what `close` and the registry use. `mode direct (asks you)` means the worker may ask its human. `mode fleet (asks your conductor)` means it never does. A build from another layer ends with its layer in parentheses, `(parent)` or `(user)`. A draft ends with `(draft)`: it is not approved. |
+| 1 header | launch id, `role/type`, mode and who it asks, build id and version | The id is what `close` and the registry use. `mode direct (asks you)` means the worker may ask its human. `mode fleet (asks your conductor)` means it never does. A draft ends with `(draft)`: it is not approved. |
 | 2 model | model, effort, `bypass`, MCP servers, skills | `bypass` means the session runs with permission prompts skipped, so JITSO's rules at the end of `brief.md` and the hook are the only guard rails. `MCP` lists the only servers the session has (others are stripped). `skill` is what it must load before any other work (`none` when empty). |
 | 3 subagents | helper names, or `unrestricted (harness default)` | A listed set is a suggestion: `(suggested; others allowed)`. The names are the builds the worker was given as `--agents`. |
 | 4 `ROUTE-SCOPE:` | instruction-section ids, or `none` (also what a build with no `route_scope` prints) | The sections of the project's `.agents/instructions/` the session is routed to. It starts its own line so the instruction router can read it. Work outside this scope is outside the brief. |

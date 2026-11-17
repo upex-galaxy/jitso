@@ -31,7 +31,7 @@ const (
 const Version = 2
 
 // Allowed values (schema v2). Modes are only direct and fleet: the Spanish
-// aliases are invalid everywhere, registry lines included (TS-ODDITIES L8).
+// aliases are invalid everywhere, registry lines included.
 var (
 	Modes      = []string{"direct", "fleet"}
 	EndSources = []string{"worker_done", "session_end_hook", "jitso_close", "reap"}

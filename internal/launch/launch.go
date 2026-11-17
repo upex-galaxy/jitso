@@ -111,7 +111,7 @@ func Run(a Args, d Deps) error {
 }
 
 // lineageOf finds the parent launch: its root and its depth plus one. An
-// unknown parent is a rejection, also on a dry run (TS-ODDITIES L5).
+// unknown parent is a rejection, also on a dry run.
 func lineageOf(parent *string, store registry.Store) (Lineage, error) {
 	if parent == nil {
 		return Lineage{}, nil
@@ -144,7 +144,7 @@ type prepared struct {
 // execute writes the launch folder and starts the session. It creates
 // .jitso/launches/<id>/ with os.Mkdir, so the folder is new, and removes
 // exactly that folder when anything fails before the registry line is
-// appended (TS-ODDITIES L2): a file, the terminal, the idle wait, a refused
+// appended: a file, the terminal, the idle wait, a refused
 // trust dialog, worker-start, the registry lock. A terminal it opened is
 // closed first. Once the line is written nothing is removed.
 //
@@ -239,7 +239,7 @@ func deref(s *string) string {
 	return *s
 }
 
-// jsString is the String() of a build key as the oracle prints it
+// jsString is the String() of a build key as a launch prints it
 // ("undefined" when the key is missing).
 func jsString(b *catalog.Build, key string) string {
 	return jsconv.String(b.Raw.Value(key))

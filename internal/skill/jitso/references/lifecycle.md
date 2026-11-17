@@ -25,7 +25,7 @@ Close a worker when its report is in and you have read it. Do not close a launch
 
 ## `jitso reap [--run <run>]...`
 
-An audit, in two phases, each reading the log again so the second sees what the first wrote:
+An audit in two parts:
 
 1. A launch with no end event whose terminal is no longer listed gets an `end` event with source `reap`. So does a launch that has no terminal handle at all (a line written by hand or by another tool; `jitso launch` always records one), with outcome `none`.
 2. Every worker of the runs the log knows (plus any `--run` you name) that no launch explains is printed as a line `unlogged worker: worker <handle> in run <run> has no launch event`. A worker is explained by its terminal handle, or by the `[jitso:<id>]` mark in its entry. This is how a worker started outside `jitso launch` gets caught. The lines are output only: nothing is written to the log, so every reap prints them again. A worker with a terminal handle is printed once however many runs it shows up in; a worker with no handle (`(no terminal handle)`) is printed once per run.

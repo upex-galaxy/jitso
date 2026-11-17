@@ -3,7 +3,7 @@
   "title": "build list prints one line per approved build: id, model, effort, description",
   "source": [
     "cli/jitso/index.test.ts: 'prints every approved preset with what it requires and exits 0'",
-    "the oracle's catalog summary: summarizeCatalog"
+    "the TypeScript CLI's catalog summary (tag jitso-oracle-1): summarizeCatalog"
   ],
   "for_each": {
     "var": "id",

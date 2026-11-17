@@ -31,11 +31,11 @@ type folder struct {
 }
 
 // writeFolder writes brief.md, mcp.json, card.txt and run.sh into dir, in
-// the oracle's order of failure: the repo MCP table (when a server is named)
+// this order of failure: the repo MCP table (when a server is named)
 // and the named servers first, then the files.
 func writeFolder(p prepared, d Deps, dir string) (folder, error) {
 	// The repo table is read only when the launch names a server after
-	// --mcp-exclude (TS-ODDITIES L1, defect N-26).
+	// --mcp-exclude (defect N-26).
 	var servers map[string]any
 	var err error
 	if len(p.mcp) > 0 {
@@ -134,7 +134,7 @@ func trustPolicy(d Deps) trust.Policy {
 
 // answerTrust handles the trust dialog of the new terminal. The folder Orca
 // reports was already checked by trust.Policy.Place, so the dialog is
-// confirmed for a trusted folder (TS-ODDITIES L4, defect N-22).
+// confirmed for a trusted folder (defect N-22).
 func answerTrust(adapter harness.Adapter, d Deps, policy trust.Policy, term orca.Terminal) (trust.Outcome, error) {
 	screen := terminalScreen{orca: d.Orca, handle: term.Handle}
 	return trust.Handle(adapter.TrustDialog(), screen, trust.Clock{Now: d.Now, Sleep: d.Sleep}, policy.Trusted(term.WorktreePath))

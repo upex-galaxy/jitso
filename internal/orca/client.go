@@ -32,7 +32,7 @@ func NewClient(run Runner) *Client { return &Client{run: run} }
 
 // Call runs one verb and returns the result object of the envelope
 // ({"ok": true, "result": {...}}). A reply that is not JSON, ok not true, or a
-// non-zero exit is an *Error, with the oracle's messages:
+// non-zero exit is an *Error, with these messages:
 // `orca <verb> gave no JSON (exit <n>): <stderr>`, `orca <verb> failed:
 // <message>`, `orca <verb> exited <n>`.
 func (c *Client) Call(args []string) (map[string]any, error) {

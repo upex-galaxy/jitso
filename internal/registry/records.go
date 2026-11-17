@@ -6,10 +6,10 @@ type Record interface {
 	stamp()
 }
 
-// Field rules shared by the records, matching what the oracle writes:
-// a field the oracle writes as null is a pointer without omitempty (nil is
+// Field rules shared by the records, matching what a launch writes:
+// a field written as null is a pointer without omitempty (nil is
 // null); a list is never null (stamp turns a nil slice into []); only fields
-// the oracle leaves out when unset carry omitempty.
+// left out when unset carry omitempty.
 
 // LaunchEvent is the event a launch writes once its terminal is up.
 type LaunchEvent struct {

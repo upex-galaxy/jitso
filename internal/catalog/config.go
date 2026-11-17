@@ -57,10 +57,10 @@ func ValidFieldValue(v string) bool {
 	return true
 }
 
-// configFrom reads the allowlists from a decoded jitso.yaml the way the
-// oracle's loadConfig does: each list through String(), anything that is not
-// a list is an empty list. A top level that is not a mapping is an error (the
-// oracle crashes on it). The second result lists every problem of the fields
+// configFrom reads the allowlists from a decoded jitso.yaml the way
+// JavaScript's String() reads them: each list through String(), anything that
+// is not a list is an empty list. A top level that is not a mapping is an
+// error. The second result lists every problem of the fields
 // key, in key order.
 func configFrom(raw any) (Config, []string, bool) {
 	m, ok := raw.(*Map)

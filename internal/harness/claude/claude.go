@@ -1,9 +1,9 @@
-// Package claude is the Claude Code adapter. It builds the oracle's argv as a
+// Package claude is the Claude Code adapter. It builds the argv as a
 // list: bypass, project-only settings, the two dialog suppression keys, a
 // strict MCP file, explicit model and effort, a fixed session id and the rules
 // file, then the tool list and the first prompt.
 //
-// Two decided changes over the oracle: agents_md: exclude adds
+// Two decided calls: agents_md: exclude adds
 // CLAUDE_CODE_DISABLE_CLAUDE_MDS=1 to the environment (S2), and a build's
 // subagents reach claude as --agents <json> (S3).
 package claude
@@ -21,7 +21,7 @@ import (
 )
 
 // settings are the --settings JSON: skipDangerousModePermissionPrompt and
-// promptSuggestionEnabled, in the oracle's key order.
+// promptSuggestionEnabled, in that key order.
 const settings = `{"skipDangerousModePermissionPrompt":true,"promptSuggestionEnabled":false}`
 
 // Adapter is the Claude Code adapter.
@@ -90,7 +90,7 @@ func AgentsJSON(subagents []harness.Subagent) (string, error) {
 	return string(data), err
 }
 
-// Argv is the oracle's argv for in, program first. --agents, when the build
+// Argv is the argv for in, program first. --agents, when the build
 // has subagents, goes right after the session id; --tools and the initial
 // prompt, when there are any, follow it.
 func Argv(in harness.SpecInput) ([]string, error) {

@@ -5,8 +5,8 @@
 //
 // The patterns spell out JavaScript's \s and case-insensitive letters instead
 // of using Go's \s and (?i): Go's \s lacks \v and the Unicode spaces, and (?i)
-// folds U+017F to s and U+212A to k, which the oracle's patterns (no u flag)
-// do not.
+// folds U+017F to s and U+212A to k, which JavaScript patterns without the u
+// flag do not.
 package brief
 
 import (
@@ -84,7 +84,7 @@ func Check(text, language string, exists func(path string) bool) []Failure {
 		failures = append(failures, Failure{CheckSections, "missing section: " + strings.Join(missing, ", ")})
 	}
 
-	// The length check counts words (TS-ODDITIES B1, defect N-27); the
+	// The length check counts words (defect N-27); the
 	// language check keeps its letter runs of the whole lowered text.
 	if n := countWords(text); n < MinWords || n > MaxWords {
 		failures = append(failures, Failure{CheckLength, strconv.Itoa(n) + " words, expected " + strconv.Itoa(MinWords) + " to " + strconv.Itoa(MaxWords)})
@@ -180,8 +180,8 @@ func declaredOutputs(text string) map[string]bool {
 	return out
 }
 
-// sectionPatterns are, per required section, the oracle's
-// /^#{1,6}\s*<name>\s*:?\s*$/im. \s may cross a line break, as in the oracle.
+// sectionPatterns are, per required section, the pattern
+// /^#{1,6}\s*<name>\s*:?\s*$/im. \s may cross a line break.
 func sectionPatterns() []*regexp.Regexp {
 	out := make([]*regexp.Regexp, len(RequiredSections))
 	for i, name := range RequiredSections {

@@ -9,8 +9,7 @@
 //	Env       exit 3  "jitso: <message>"
 //	Status    the given code, nothing printed
 //
-// Any other error maps to exit 3 with "jitso: <message>", the oracle's
-// handling of an uncaught error in a command.
+// Any other error maps to exit 3 with "jitso: <message>".
 package fail
 
 import (
@@ -72,8 +71,8 @@ func Rejected(reason string) *Error {
 	return &Error{Kind: KindRejected, Msg: reason, code: CodeRejected}
 }
 
-// Rejectedf is Rejected with a format. Do not use %q for values: the oracle
-// quotes with plain double quotes and escapes nothing.
+// Rejectedf is Rejected with a format. Do not use %q for values: messages
+// quote with plain double quotes and escape nothing.
 func Rejectedf(format string, args ...any) *Error {
 	return Rejected(fmt.Sprintf(format, args...))
 }

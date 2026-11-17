@@ -13,7 +13,7 @@ import (
 
 // EndedBy is the end event a SessionEnd hook owes for sessionID, nil when it
 // owes none: the registry text names no launch of that session, or that launch
-// already has an end event. Lines are read raw, as the oracle's hook does: a
+// already has an end event. Lines are read raw, as the earlier hook did: a
 // line that is not JSON is skipped, and a line a strict reader would call
 // invalid (an `end` with a source this version never writes) still counts as
 // the launch's end. A line whose `v` is not the current schema version is

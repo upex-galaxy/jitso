@@ -1,6 +1,5 @@
-// Package jsconv reproduces the JavaScript String() coercion the oracle applies
-// to catalog and JSON values, so the port prints the same text for the same
-// input (for example `model "123" is not in the allowlist`, or a missing field
+// Package jsconv reproduces the JavaScript String() coercion applied
+// to catalog and JSON values, so a value prints the same text as before (for example `model "123" is not in the allowlist`, or a missing field
 // printed as "undefined").
 //
 // Values are the generic shapes a decoder produces: nil (null), bool, the Go
@@ -128,7 +127,7 @@ func Number(f float64) string {
 	return strconv.FormatFloat(f, 'f', -1, 64)
 }
 
-// Strings is the oracle's `strings(value)`: a list maps every element through
+// Strings is the list form of String: a list maps every element through
 // String, anything else is an empty list.
 func Strings(v any) []string {
 	list, ok := v.([]any)

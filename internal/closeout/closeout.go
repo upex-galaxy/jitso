@@ -60,7 +60,7 @@ func ParseArgs(args []string) (string, error) {
 //
 // For a launch that is still running the order is: read the footer, close the
 // terminal, list the terminals, and only then write footer.txt and the end
-// event (TS-ODDITIES R1, defect N-28). A failure at any step writes nothing, so
+// event (defect N-28). A failure at any step writes nothing, so
 // the launch stays running: a later close retries cleanly, and reap ends it
 // once the terminal is gone.
 func Run(id string, d Deps) (string, error) {

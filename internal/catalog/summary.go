@@ -9,7 +9,7 @@ import (
 // SummaryLine is one build as `build list` shows it:
 // `- <id>: <model> <effort>. <description> requires: <fields or nothing>`.
 // Values are rendered with String(), so a missing description reads
-// "undefined", as in the oracle.
+// "undefined".
 func SummaryLine(b *Build) string {
 	return summaryOf(b.Raw, jsconv.String(b.Raw.Value("id")))
 }

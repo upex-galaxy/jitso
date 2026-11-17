@@ -12,21 +12,21 @@ import (
 // This is the only file that names the YAML decoder (docs/architecture.md
 // section 8). It decodes into generic values, never typed structs: nil, bool,
 // int, int64, uint64, float64, string, []any and *Map. Validation runs on
-// those values, so `model: 123` gives the oracle's coercion message instead of
+// those values, so `model: 123` gives the String() coercion message instead of
 // a type error.
 //
-// Mappings keep their key order (*Map), because the oracle iterates them in
-// document order (Object.values on a success entry). Scalars are resolved by
+// Mappings keep their key order (*Map), because validation walks them in
+// document order. Scalars are resolved by
 // the decoder itself, except timestamps and binary scalars, which stay strings
-// as in the YAML 1.2 core schema the oracle's parser uses. A merge key `<<` is
+// as in the YAML 1.2 core schema. A merge key `<<` is
 // an ordinary key, as it is in that schema.
 
-// errMultipleDocuments matches the oracle's parser, which refuses a source
-// with more than one document.
+// errMultipleDocuments is the refusal of a source with more
+// than one document.
 var errMultipleDocuments = errors.New("source contains multiple documents")
 
 // decodeYAML parses one YAML document into a generic value. An empty source
-// (or one with only comments) is nil, like the oracle's parse of an empty string.
+// (or one with only comments) is nil, like the parse of an empty string.
 func decodeYAML(data []byte) (any, error) {
 	dec := yaml.NewDecoder(bytes.NewReader(data))
 	var doc yaml.Node

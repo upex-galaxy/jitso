@@ -280,7 +280,7 @@ func TestRunFailuresRemoveOnlyTheirFolder(t *testing.T) {
 	}
 }
 
-// TestRunReadsRepoMCPOnlyWhenAServerIsNamed pins TS-ODDITIES L1 (defect N-26):
+// TestRunReadsRepoMCPOnlyWhenAServerIsNamed pins defect N-26:
 // .mcp.json is read when the launch names a server after --mcp-exclude, and
 // only then.
 func TestRunReadsRepoMCPOnlyWhenAServerIsNamed(t *testing.T) {
@@ -355,7 +355,7 @@ func TestUnknownExcludes(t *testing.T) {
 	}
 }
 
-// TestRunWarnsOnUnknownExclusions pins TS-ODDITIES L6 (defect N-26): one
+// TestRunWarnsOnUnknownExclusions pins defect N-26: one
 // stderr line per distinct name that is not a server of the build; the card
 // and the exit code do not change.
 func TestRunWarnsOnUnknownExclusions(t *testing.T) {

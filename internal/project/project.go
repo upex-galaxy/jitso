@@ -41,8 +41,7 @@ func Resolve(cwd string) (Root, error) {
 	return root, nil
 }
 
-// checkout runs one git rev-parse in dir. git's stderr is discarded, as the
-// oracle does, so a failure prints nothing of its own.
+// checkout runs one git rev-parse in dir. git's stderr is discarded, so a failure prints nothing of its own.
 func checkout(dir string) (Root, bool) {
 	cmd := exec.Command("git", "-C", dir, "rev-parse", "--path-format=absolute", "--show-toplevel", "--git-dir", "--git-common-dir")
 	out, err := cmd.Output()

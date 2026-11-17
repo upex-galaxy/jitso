@@ -187,7 +187,7 @@ func Load(fsys fs.FS) (*Catalog, error) {
 // Sources). An empty primary loads the project layer only.
 //
 // The project's own files keep the whole-catalog rule: it fails on the first
-// invalid build file in file name order (the oracle's rule), then on the first
+// invalid build file in file name order (a rule kept from the first implementation), then on the first
 // build whose subagents do not all name a subagent-tier build, so one invalid
 // file fails every command that loads it. An invalid draft file is skipped
 // instead (Catalog.Skipped): a draft in progress must not break every command.

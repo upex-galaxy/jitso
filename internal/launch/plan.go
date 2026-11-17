@@ -116,8 +116,8 @@ type Unknown struct {
 }
 
 // UnknownExcludes are the distinct --mcp-exclude values that are not exactly
-// one of the build's MCP servers, in the order first given (TS-ODDITIES L6,
-// defect N-26). The match is against the build's list, not .mcp.json.
+// one of the build's MCP servers, in the order first given (defect
+// N-26). The match is against the build's list, not .mcp.json.
 func UnknownExcludes(mcp, exclude []string) []Unknown {
 	var out []Unknown
 	seen := map[string]bool{}

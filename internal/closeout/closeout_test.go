@@ -220,7 +220,7 @@ func TestRun(t *testing.T) {
 	}
 }
 
-// TestRunWritesNothingUntilTheTerminalIsGone pins TS-ODDITIES R1 (defect N-28):
+// TestRunWritesNothingUntilTheTerminalIsGone pins defect N-28:
 // a failure at the close or the list leaves no footer.txt and no end event, and
 // a second close, once Orca answers, ends the launch.
 func TestRunWritesNothingUntilTheTerminalIsGone(t *testing.T) {

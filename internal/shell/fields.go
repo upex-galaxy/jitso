@@ -6,15 +6,15 @@ import (
 )
 
 // The character classes are spelled out instead of using (?i): Go folds case
-// with Unicode rules, so (?i)[A-Z] would also match U+017F and U+212A, which the
-// oracle's JavaScript patterns (no u flag) reject.
+// with Unicode rules, so (?i)[A-Z] would also match U+017F and U+212A, which JavaScript
+// patterns without the u flag reject.
 var (
 	launchID = regexp.MustCompile(`^L[0-9]{8}T[0-9]{6}-[0-9a-f]{4}$`)
 	orcaID   = regexp.MustCompile(`^[A-Za-z0-9][A-Za-z0-9_.:-]{0,63}$`)
 )
 
-// launchFields is the allowlist per launcher field (the oracle's
-// checkLaunchField table): plain characters only, never starting with "-".
+// launchFields is the allowlist per launcher field (a launcher
+// field table): plain characters only, never starting with "-".
 var launchFields = map[string]*regexp.Regexp{
 	"build":       regexp.MustCompile(`^[a-z][a-z0-9-]{0,63}$`),
 	"run":         orcaID,

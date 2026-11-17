@@ -20,7 +20,7 @@ const (
 	LockName = "launches.lock"
 )
 
-// Default lock timings (the oracle's).
+// Default lock timings (5 seconds to acquire).
 const (
 	DefaultLockTimeout = 5 * time.Second
 	DefaultStaleAge    = 10 * time.Second

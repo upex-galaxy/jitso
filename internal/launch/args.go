@@ -5,7 +5,7 @@
 //
 // Exit codes come from the errors it returns (package fail): 2 for a
 // rejection, 3 for an Orca or environment error. A launch that fails before
-// its registry line removes its own launch folder (TS-ODDITIES L2).
+// its registry line removes its own launch folder.
 package launch
 
 import (
@@ -19,7 +19,7 @@ import (
 )
 
 // The launch modes. No other value exists, on the command line or in the
-// registry (TS-ODDITIES L8).
+// registry.
 const (
 	ModeDirect = "direct"
 	ModeFleet  = "fleet"
@@ -47,7 +47,7 @@ type Args struct {
 
 // valueFlags are the flags that take the next word as their value. A word
 // that starts with -- is never a value: the flag is missing its value
-// (TS-ODDITIES L11, defect N-26).
+// (defect N-26).
 var valueFlags = []string{"build", "brief", "mode", "run", "task", "parent", "worktree", "mcp-exclude", "field", "brief-language"}
 
 // Parse reads the words after `launch`. It rejects an unknown word, a flag

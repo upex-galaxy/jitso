@@ -101,7 +101,7 @@ func TestCountWords(t *testing.T) {
 	}
 }
 
-// TestCheckCountsWordsNotTokens pins TS-ODDITIES B1 (defect N-27): the length
+// TestCheckCountsWordsNotTokens pins defect N-27: the length
 // check reads words, while the language check keeps its letter runs.
 func TestCheckCountsWordsNotTokens(t *testing.T) {
 	all := existing("src/sync.ts", "docs/guide.md")

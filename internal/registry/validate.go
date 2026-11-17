@@ -9,12 +9,12 @@ import (
 	"time"
 )
 
-// safeID is the oracle's id pattern: 1 to 64 letters, digits, dot, dash or
+// safeID is the id pattern: 1 to 64 letters, digits, dot, dash or
 // underscore, starting with a letter or digit. The classes are spelled out
 // (no (?i)) so that Unicode case folding cannot widen them.
 var safeID = regexp.MustCompile(`^[A-Za-z0-9][A-Za-z0-9_.-]{0,63}$`)
 
-// Validate checks one decoded line (the oracle's validateEvent). It returns
+// Validate checks one decoded line (a line of any event kind). It returns
 // one short message per problem, each naming the field; empty means valid.
 func Validate(v any) []string {
 	e, ok := v.(map[string]any)
@@ -75,9 +75,8 @@ func isOneOf(list []string, v any) bool {
 	return ok && slices.Contains(list, s)
 }
 
-// timestampLayouts are the ISO 8601 forms accepted where the oracle accepts
-// anything Date.parse understands. Date.parse also takes non-ISO text such as
-// "Nov 15 2026"; the port does not.
+// timestampLayouts are the ISO 8601 forms accepted. Only ISO text is valid; free text such as
+// "Nov 15 2026" is not.
 var timestampLayouts = []string{
 	time.RFC3339Nano,
 	"2006-01-02T15:04:05.999999999",

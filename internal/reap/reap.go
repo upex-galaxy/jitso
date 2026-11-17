@@ -97,7 +97,7 @@ func Run(extraRuns []string, d Deps) (string, error) {
 // endGone is phase 1. A launch whose terminal handle is not in the list is
 // ended, and so is one with no string handle at all (absent, null, a number):
 // it can never be matched against the list, so leaving it running would be
-// forever (TS-ODDITIES R3, defect N-28). Such a line is never written by
+// forever (defect N-28). Such a line is never written by
 // `jitso launch`; it comes from hand-made or foreign lines.
 func endGone(d Deps, live []string) (int, error) {
 	launches, err := registry.ReadLaunches(d.Store)
@@ -191,8 +191,7 @@ func auditWorkers(d Deps, extraRuns []string) ([]string, error) {
 
 // workersOf is the list of worker objects in a worker-list result: the
 // property named workers when it is a list, else the first list-valued
-// property in key order. (The oracle takes the first list-valued property in
-// the object's own order; the client's result is an unordered map, so the
+// property in key order. (The client's result is an unordered map, so the
 // order is made explicit.) Entries that are not objects are dropped.
 func workersOf(result map[string]any) []map[string]any {
 	list, ok := result["workers"].([]any)

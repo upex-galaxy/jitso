@@ -38,7 +38,7 @@ type Profile struct {
 	Fields    Fields
 }
 
-// Resolve validates req against cat, in the oracle's order: the build exists
+// Resolve validates req against cat, in this order: the build exists
 // (the nearest layer that has the id; invalid for this project is a rejection
 // that names the file and its problems, defect N-12), is approved (a draft of the draft layer launches too, and only that layer:
 // defect N-15), is not subagent tier (a subagent-tier build is never launched

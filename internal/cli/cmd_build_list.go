@@ -10,8 +10,7 @@ import (
 // build list prints one line per launchable build of the project's catalog
 // (approved and not subagent tier), by file name. A draft file that is invalid
 // for this project is skipped with one warning line on stderr. A catalog that fails to load is exit 3 with the
-// file named, the same handled error launch gives (TS-ODDITIES C3: the oracle
-// crashes here). A draft is never launchable, so it is never listed here.
+// file named, the same handled error launch gives. A draft is never launchable, so it is never listed here.
 //
 // With --drafts it prints the drafts instead (defect N-15): one line per draft
 // file, by file name, so a person sees what is in .jitso/drafts/ and why a

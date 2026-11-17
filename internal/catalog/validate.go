@@ -44,9 +44,9 @@ func ValidateBuild(raw any, cfg Config, routeIDs []string) []string {
 }
 
 // ValidateBuildIn checks one decoded build file of the given layer against the
-// allowlists and the route ids. It returns every problem, in the oracle's order
-// (its validatePreset), followed by the tier rules; an empty list means valid.
-// The messages and the String() coercion of values are the oracle's.
+// allowlists and the route ids. It returns every problem, in rule order,
+// followed by the tier rules; an empty list means valid.
+// The messages use the String() coercion of values.
 //
 // The layer decides one rule, the status: a saved layer takes candidate,
 // approved or retired, the draft layer takes exactly draft (defect N-15), so a
@@ -141,8 +141,7 @@ func tierOf(p *Map) string {
 	return TierWorker
 }
 
-// tierProblems are the rules of the tier field, which the oracle does not
-// know: the value, what a subagent-tier build must carry to reach claude as an
+// tierProblems are the rules of the tier field, the value, what a subagent-tier build must carry to reach claude as an
 // --agents entry (a description and a prompt, defect S3), and what it must not
 // carry (skills_first, mcp, requires and subagents must be empty, defect N-11).
 func tierProblems(p *Map) []string {
@@ -186,7 +185,7 @@ func kebabList(v any) bool {
 }
 
 // propertyOf is `entry.check` for any decoded value: a mapping's value, else
-// undefined (the oracle crashes on a null entry; here it is undefined too).
+// undefined (a null entry is undefined too).
 func propertyOf(entry any, key string) any {
 	if m, ok := entry.(*Map); ok {
 		return m.Value(key)
