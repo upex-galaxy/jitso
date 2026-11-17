@@ -10,7 +10,7 @@ The design of the `jitso` Go binary: how it is split into packages, where the se
 | Port the TypeScript behavior, change only what is decided | behavior changes from the TypeScript implementation are the decided rows of `docs/decisions.md` and its defect ids, each a contract case first, then Go. Everything else keeps the TypeScript behavior until its own contract change |
 | Functional core, imperative shell | validation, resolution, card, brief checks, argv and `run.sh` text, hook decisions and transcript math are pure functions; I/O sits in a thin layer around them |
 | Standard library first | one dependency (YAML, section 8), behind a single file |
-| One binary | the CLI, both hooks and the dispatcher entry are subcommands of the same executable; no Node or Bun at run time |
+| One binary | the CLI and the hook are subcommands of the same executable; no Node or Bun at run time |
 
 ## 2. Domain map
 
@@ -18,7 +18,7 @@ What the CLI does, split by responsibility. "Pure" means no file, process, clock
 
 | Responsibility | TypeScript source | Pure logic | I/O | Go package |
 |---|---|---|---|---|
-| Command dispatch, usage, exit codes | `index.ts` | command table, usage text, "a first word with whitespace is a request" | stdout, stderr | `internal/cli` |
+| Command table, usage, exit codes | `index.ts` | command table, usage text | stdout, stderr | `internal/cli` |
 | Project root | `root.ts`, `cli/lib/worktree.ts` | choosing the primary from `--git-dir` vs `--git-common-dir` | `git rev-parse` | `internal/project` |
 | Catalog loading and validation | `profile.ts` (`loadConfig`, `validatePreset`, `routeIds`) | every validation rule, route ids from front matter, tiers and the subagent names of a worker (section 7) | reads `jitso/`, `.agents/instructions/` | `internal/catalog` |
 | Build layers, user config | none (D6, N-12) | the order repo, trusted parents, user, draft; shadowing by id; trust matched on real paths | reads the layer folders and `~/.jitso/config.yaml` | `internal/catalog` (`layers.go`, `userconfig.go`) |
@@ -39,9 +39,7 @@ What the CLI does, split by responsibility. "Pure" means no file, process, clock
 | Reap | `reap.ts` | worker matching (handle or `[jitso:<id>]` mark), evidence de-duplication | Orca, registry | `internal/reap` |
 | Analyze | `analyze.ts` | transcript scan, prices, verdict, budget percentage | streamed transcript read, `prices.json`, registry | `internal/analyze` |
 | Tree | `tree.ts` (`buildTree`) | the nesting by parent, the branch rollups and the line text (N-30); the TypeScript code wired none of it to a command | none (the command reads the registry) | `internal/tree`, `internal/cli` |
-| Dispatcher | `dispatch.ts`, `jitso/dispatcher/prompt.md` | prompt rendering, catalog summary, the `claude` argv | spawns `claude` with the terminal inherited | `internal/dispatch` |
 | Guard hook | `.agents/hooks/jitso-guard.mjs` | Bash segment splitting, launch-verb detection, orca-bridge tool rules, the program of a segment (N-24) | `jitso/jitso.yaml` probe; SessionEnd appends to the registry | `internal/hook` |
-| Dispatch guard hook | `.agents/hooks/jitso-dispatch-guard.mjs` | the one allowed launcher line as a grammar of required flags (N-23, N-29), the brief write rule (a brief is written once) | `lstat`, real paths, own executable path, `JITSO_PROJECT` | `internal/hook` |
 | Rules text | none | the short JITSO rules a launch appends to the end of `brief.md`, by mode and budget, and the join of the brief file | writes `brief.md` | `internal/card` (`Rules`), `internal/launch` (`BriefFile`) |
 | Templates | none (N-14) | one embedded template per tier and the `jitso/jitso.yaml` skeleton | none | `internal/templates` |
 | Drafts | none (N-15) | the draft checks, the status rewrite (`catalog.StatusSpan`), the save token | the drafts folder, atomic writes, the save | `internal/drafts` |
@@ -69,10 +67,10 @@ internal/<package>/        everything else
 | Responsibility | Packages |
 |---|---|
 | Command layer | `cli`: command table, usage, error kinds and exit codes, one `cmd_<name>.go` per command (and per subcommand of the groups `build`, `install` and `setup`), the shared flag parser (`flags.go`) and the sub-command group helper (`group.go`) |
-| Project and catalog | `project` (primary checkout, state and dispatcher folders, own executable identity), `catalog` (load, validate and scan builds in layers, the user config; `decode.go` is the only file that names the YAML decoder, section 8), `profile` (request plus catalog to profile or rejection, pure), `drafts` (the drafts folder and the save of a draft as a build) |
+| Project and catalog | `project` (primary checkout, state and user folders, own executable identity), `catalog` (load, validate and scan builds in layers, the user config; `decode.go` is the only file that names the YAML decoder, section 8), `profile` (request plus catalog to profile or rejection, pure), `drafts` (the drafts folder and the save of a draft as a build) |
 | Launch | `launch` (argument parsing, plan, execute), `brief` (brief checks and the path guard), `card` (card text and the `ROUTE-SCOPE` line), `shell` (quoting, `run.sh` text, launcher field patterns), `harness` (the `Adapter` interface and launch spec types) with `harness/claude` (the Claude Code adapter), `trust` (trusted-folder check and dialog state machine) |
 | Lifecycle | `orca` (client over an injectable runner), `registry` (events, validation, fold, file store with a `mkdir` lock), `closeout` (`jitso close`), `reap`, `analyze`, `tree` (`jitso tree`, pure) |
-| Dispatcher and hooks | `dispatch` (the interactive dispatcher), `hook` (guard, dispatch guard, SessionEnd) |
+| Hooks | `hook` (guard, SessionEnd) |
 | Authoring | `templates` (the embedded build templates and the `jitso/jitso.yaml` skeleton) |
 | Adoption | `adopt` (the shared core: plan, diff, confirmation, backups, apply), `settingsjson` (the order-preserving settings edit), `instructions` (the delimited block), `skill` (the embedded usage skill, its manifest and install plan), `tty` (is a file a terminal; `tty_darwin.go`, `tty_linux.go`, `tty_other.go`) |
 | Diagnosis and identity | `doctor` (the environment checks of `jitso doctor`), `version` (the stamped version line) |
@@ -92,7 +90,6 @@ Interfaces exist only where I/O meets logic and a test needs a stand-in. Followi
 | Catalog reads | `io/fs.FS` | `os.DirFS(root)` | `testing/fstest.MapFS` |
 | Clock and wait | `Now func() time.Time`, `Sleep func(time.Duration)` | `time.Now`, `time.Sleep` | a fake clock that advances on `Sleep` |
 | Randomness | `io.Reader` | `crypto/rand.Reader` | a fixed reader |
-| Process spawn (dispatcher) | `Spawn func(argv []string, dir string, env []string) (int, error)` | `os/exec` with inherited stdio | a recorder |
 | Terminal test | `System.StdinIsTerminal func() bool` | `tty.IsTerminal(os.Stdin)`, the termios ioctl | a function that answers true or false |
 | Adoption run | `adopt.Ports{Stdin, Stdout, Terminal, Now, Rand}` and `adopt.Options` (command, scope, root, backups folder, `--dry-run`, `--yes`) | the command file fills it from `System` | a buffer for stdout, a reader for the answer, a fixed clock and reader |
 
@@ -109,7 +106,7 @@ Deliberately not abstracted:
 | Pattern | Where | Why |
 |---|---|---|
 | Ports and adapters at the I/O seams | section 4 | the fakes of the contract and the stand-ins of unit tests plug in at the same points |
-| Command registry | `internal/cli` | one table drives dispatch and the usage text, and each command lives in its own file |
+| Command registry | `internal/cli` | one table drives the commands and the usage text, and each command lives in its own file |
 | Data-driven validation | `catalog`, `profile`, `shell` | rules are a table of (field, check, message) evaluated in a fixed order, so the order the contract pins (for example B4) is visible in one place |
 | Plan, then execute | `launch` | the plan (paths, file contents, argv, env, card, event) is a pure value; execution writes it and is the only place with cleanup (L2) |
 | Plan, preview, confirm, apply | `adopt`, the adoption commands | a change is a pure value (paths, old and new bytes, kind), so the dry run, the diff, the backup and the write all read the same plan, and `--remove` is the plan that undoes the add |
@@ -124,13 +121,11 @@ JSON fidelity, in `internal/jsonx`: one encoder with `SetEscapeHTML(false)` (the
 
 ### Exit codes
 
-`0` done, `2` usage or rejected by validation, `3` environment or Orca error. One exception the contract pins: the dispatcher returns the exit code of the `claude` it ran (`dispatch/claude-exit-status-is-propagated`), and `3` when `claude` cannot start. `jitso doctor` answers `0` when no check fails and `3` when one does (a failed check is an environment problem), and `2` for an argument.
+`0` done, `2` usage or rejected by validation, `3` environment or Orca error. `jitso doctor` answers `0` when no check fails and `3` when one does (a failed check is an environment problem), and `2` for an argument.
 
 ### Project root (N-1)
 
 The project is the git primary checkout of the working directory: `git rev-parse --show-toplevel`, `--git-dir` and `--git-common-dir` (absolute paths), primary = parent of the common dir when the checkout is linked. Outside a checkout every command that needs a project exits 3 with `jitso: <cwd> is not inside a git checkout`. `.jitso/` always lives in the primary, and so do the layers of builds: they are computed from the real path of the primary, so a linked worktree gets the layers of its primary, and drafts are `<primary>/.jitso/drafts/` (section 7). The adoption commands split the two on purpose: `setup` and `install` at project scope write into the checkout of the working folder (a linked worktree has its own `.claude/settings.json`, which Claude Code reads from the session's folder), and keep their backups in the primary's `.jitso/backups/`.
-
-The dispatcher breaks the plain rule: the dispatched `claude` runs from `~/.jitso/dispatch-cwd`, which is not in any checkout, so its one `jitso launch` would exit 3. The TypeScript code avoided this by resolving its root from its own script folder. Design: before spawning the dispatcher, `jitso` resolves the root and passes it in the child's environment as `JITSO_PROJECT`. Every command reads `JITSO_PROJECT` first when it is set, requires it to be inside a git checkout (exit 3 otherwise) and uses that checkout's primary; without it, the cwd rule applies. The model cannot forge the variable: the dispatch guard already denies an environment prefix and any flag outside its list. DECIDED. The cases are `project/dispatcher-handoff/launch-from-outside-git` (a dry run from outside git succeeds with `JITSO_PROJECT` set; a `JITSO_PROJECT` that is not a git checkout exits 3 with one stderr line naming the folder) and `dispatch/hands-the-project-to-claude` (the dispatcher starts `claude` with the variable set), all defect N-7. The design rests on one step the contract cannot prove, because the fake `claude` runs no tool: that Claude Code passes its own environment to the processes its Bash tool starts. It was measured on Claude Code 2.1.325 in a headless run: a command run by the Bash tool saw `JITSO_PROJECT`, and the control run without the variable did not. The interactive TUI path was not measured. A `--project <path>` launch flag is the fallback if the step stops holding; it is not part of the contract and no case mentions it.
 
 Hooks resolve the project from `CLAUDE_PROJECT_DIR`, else the git primary of the cwd (H7), never from the location of a file.
 
@@ -140,17 +135,11 @@ A command that asks a person a question asks only when standard input is a termi
 
 ### Hooks are subcommands
 
-`jitso hook guard` and `jitso hook dispatch-guard` read the hook JSON on stdin and print the hook JSON on stdout, the names `contract/runner/internal/impl/bin.go` already uses. The guard fails open (exit 0, empty stdout) on input it cannot read; the dispatch guard fails closed (H1).
+`jitso hook guard` reads the hook JSON on stdin and prints the hook JSON on stdout, the name `contract/runner/internal/impl/bin.go` already uses. The guard fails open (exit 0, empty stdout) on input it cannot read.
 
-What the guard denies to a session that has it installed: the launch verbs (`worker-start` and the like), the orca-bridge tools that start workers or open terminals with a harness, a Bash segment whose program is `claude`, `codex` or `opencode` (N-24), and the owner-only verbs `jitso build save`, `jitso setup` and `jitso install`. The guard is two branches of one entry point, picked by `tool_name`: a Bash line is judged segment by segment, and a tool of an orca MCP server by name and arguments; every other tool passes. `jitso setup hook` registers three groups, each with the handler `jitso hook guard`: under `PreToolUse` the matchers `Bash` and `mcp__.*orca.*__.*` (`settingsjson.MatcherBash`, `MatcherMCP`, in that order), then the one without matcher under `SessionEnd`. `doctor` checks the same three slots and warns (`warn hooks`) about a file that lacks one. The program of a segment is found by `hook.Program` (pure, in `internal/hook/program.go`: it skips `NAME=value` words, shell keywords and a table of wrappers, and hands the words after a shell `-c`, `eval` or `env -S` back to itself, up to 8 levels), and `hook.HarnessProgram` asks it whether the program is one of the three harnesses, after the verb checks of each segment. The launcher's own `run.sh` needs no exemption, because Orca starts it and a session's Bash call that runs it has the program `sh`. The splitter is the one the verbs use, so text after `(`, a backtick or a newline is read as a command; the deny text says to put such text in a file. An owner-only verb is matched on text in every launcher form (bare word, `bun run jitso`, a path ending in `jitso`, this binary's own path, after `NAME=value` words or a separator, inside `sh -c '...'`), and `setup` and `install` are allowed with a standalone `--dry-run`, because a dry run only reads. `build draft`, `build discard`, `build list`, `build validate`, `build new`, `doctor` and `version` stay allowed. The dispatch guard still allows one Write (a brief) and one Bash line (the launch), so the dispatcher cannot draft or save. The rows and their limits are in `docs/decisions.md` (defects N-15 and N-19). `jitso setup hook` registers the guard only, never the dispatch guard, which only the dispatcher registers through its own `--settings`. Go's RE2 is linear by construction, which settles the guard's linear-time cases.
+What the guard denies to a session that has it installed: the launch verbs (`worker-start` and the like), the orca-bridge tools that start workers or open terminals with a harness, a Bash segment whose program is `claude`, `codex` or `opencode` (N-24), and the owner-only verbs `jitso build save`, `jitso setup` and `jitso install`. The guard is two branches of one entry point, picked by `tool_name`: a Bash line is judged segment by segment, and a tool of an orca MCP server by name and arguments; every other tool passes. `jitso setup hook` registers three groups, each with the handler `jitso hook guard`: under `PreToolUse` the matchers `Bash` and `mcp__.*orca.*__.*` (`settingsjson.MatcherBash`, `MatcherMCP`, in that order), then the one without matcher under `SessionEnd`. `doctor` checks the same three slots and warns (`warn hooks`) about a file that lacks one. The program of a segment is found by `hook.Program` (pure, in `internal/hook/program.go`: it skips `NAME=value` words, shell keywords and a table of wrappers, and hands the words after a shell `-c`, `eval` or `env -S` back to itself, up to 8 levels), and `hook.HarnessProgram` asks it whether the program is one of the three harnesses, after the verb checks of each segment. The launcher's own `run.sh` needs no exemption, because Orca starts it and a session's Bash call that runs it has the program `sh`. The splitter is the one the verbs use, so text after `(`, a backtick or a newline is read as a command; the deny text says to put such text in a file. An owner-only verb is matched on text in every launcher form (bare word, `bun run jitso`, a path ending in `jitso`, this binary's own path, after `NAME=value` words or a separator, inside `sh -c '...'`), and `setup` and `install` are allowed with a standalone `--dry-run`, because a dry run only reads. `build draft`, `build discard`, `build list`, `build validate`, `build new`, `doctor` and `version` stay allowed. The rows and their limits are in `docs/decisions.md` (defects N-15 and N-19). Go's RE2 is linear by construction, which settles the guard's linear-time cases.
 
-Launcher identity. Under `--impl bin`, `{{JITSO}}` is whatever path was passed to `--bin`; its basename need not be `jitso`. Both hooks recognize the launcher by comparing the real path of the command's first word with the real path of `os.Executable()` (symlinks resolved on both sides; `/tmp` and `/private/tmp` differ on darwin). The guard also accepts a bare `jitso` and `bun run jitso`, each optionally after `NAME=value` prefixes; `hooks/guard/allow-bash` and `allow-env-prefix` pin those forms (the boilerplate consumes the CLI as `bun run jitso` until D9 completes). DECIDED: the guard keeps all three forms; dropping `bun run jitso` after D9 is a later contract change. The dispatch guard accepts only its own real path followed by `launch`.
-
-The dispatcher registers the dispatch guard in `--settings` as the command `'<own real path>' hook dispatch-guard`, and renders `{{LAUNCHER}}` in the prompt as the same real path. The prompt template writes the launch command as `{{LAUNCHER}} launch ...` with no `bun` in front, because the Go launcher is an executable; the case `dispatch/prompt-launch-line-is-the-guarded-launcher` (defect N-8) pins that the rendered line starts with the launcher and is the line the dispatch guard allows. The TypeScript guard allowed only `bun <index.ts> launch`. The boilerplate's own prompt keeps `bun` until it consumes the Go CLI (D9).
-
-The dispatch guard reads the launch line as a grammar (N-29): after the launcher and `launch`, `--build`, `--brief`, `--mode direct` and `--worktree path:<primary>` each exactly once in any order, then `--field`, `--mcp-exclude` and `--dry-run` as often as needed. `commandProblem` counts the four required flags while it reads the flags (a repeat is denied as it is met), then names the first missing one in the order `--build`, `--brief`, `--mode`, `--worktree`. `writeProblem` also denies any entry that already exists at the brief's name, through an injected `Exists` (`Lstat`), so the dispatcher cannot overwrite a brief; the prompt template says to use a new slug for every brief. A project's own `jitso/dispatcher/prompt.md` is its own file: one written before N-23 has no `--worktree` and its launch line is denied until the flag is added after `--mode direct`. No template shipped in the binary holds the dispatcher prompt (the embedded templates are the build and `jitso.yaml` skeletons), so there is nothing else to keep in step.
-
-The launch line also ends with `--worktree {{WORKTREE}}` (N-23): `dispatch.BuildPlan` renders it as `path:<primary>` (`PlanInput.Primary`, the root the dispatcher already holds) and exits 3 when the launch allowlist for `--worktree` rejects that value, the way it refuses a launcher path the guard could not allow. The dispatch guard learns the primary from `JITSO_PROJECT`, the variable the dispatcher already sets for the handoff: `RunDispatchGuard` resolves it to the real path of its primary checkout and passes it to the pure `DispatchGuard` (`Primary`, `PrimaryProblem`), which allows `--worktree` only as exactly `path:<primary>`. The hook inherits the variable the way it inherits `CLAUDE_PROJECT_DIR`; that is predicted for an extra variable, and the contract pins it through the `env` of the hook step. A launch is therefore never expected in `~/.jitso/dispatch-cwd`, and `trust.Policy` no longer allows it.
+Launcher identity. Under `--impl bin`, `{{JITSO}}` is whatever path was passed to `--bin`; its basename need not be `jitso`. The hook recognizes the launcher by comparing the real path of the command's first word with the real path of `os.Executable()` (symlinks resolved on both sides; `/tmp` and `/private/tmp` differ on darwin). The guard also accepts a bare `jitso` and `bun run jitso`, each optionally after `NAME=value` prefixes; `hooks/guard/allow-bash` and `allow-env-prefix` pin those forms (the boilerplate consumes the CLI as `bun run jitso` until D9 completes). DECIDED: the guard keeps all three forms; dropping `bun run jitso` after D9 is a later contract change.
 
 ## 7. How the decided rows and the defects land
 
@@ -161,7 +150,7 @@ The launch line also ends with `--worktree {{WORKTREE}}` (N-23): `dispatch.Build
 | L1 (N-26) | `writeFolder` reads the repo `.mcp.json` only when the launch's MCP list, after `--mcp-exclude`, is not empty; otherwise the harness spec gets no repo table and `mcp.json` is `{"mcpServers": {}}`. A missing or broken file still fails a launch that names a server, with exit 3 | `internal/launch` (`folder.go`) |
 | L2 (N-2) | the execute step creates `.jitso/launches/<id>/` with `os.Mkdir` (so the folder is new) and removes exactly that folder when anything fails before the registry line is appended: a file write, terminal create, idle timeout, a refused trust dialog, `worker-start`, a stuck lock. A terminal it opened is closed first, as today. After the line is written, nothing is removed | `internal/launch` (execute) |
 | L3 (N-3) | trust outcome `timeout` keeps exit 0 and the registry line with `trust_dialog: timeout`, and prints one stderr line, for example `jitso: the trust dialog of terminal <handle> did not clear in 10 s; the launch is registered` | `internal/launch`, outcome from `internal/trust` |
-| L4 (N-22) | `execute` builds one `trust.Policy` and checks the folder on every launch: `Precheck` of the `--worktree` selector before the launch folder is made, `Place` of the folder Orca reports right after `terminal create` and before the idle wait. A failure closes the terminal and rejects with exit 2, so the deferred removal of L2 leaves no folder and no registry line. The trust dialog is answered after that, for a folder that already passed. The dispatcher folder is not allowed (N-23) | `internal/trust` (pure), `internal/launch` (execute, `answerTrust`) |
+| L4 (N-22) | `execute` builds one `trust.Policy` and checks the folder on every launch: `Precheck` of the `--worktree` selector before the launch folder is made, `Place` of the folder Orca reports right after `terminal create` and before the idle wait. A failure closes the terminal and rejects with exit 2, so the deferred removal of L2 leaves no folder and no registry line. The trust dialog is answered after that, for a folder that already passed. | `internal/trust` (pure), `internal/launch` (execute, `answerTrust`) |
 | L6 (N-26) | after the build, the brief, the parent and the budget have passed and before the card is printed, `Run` calls the pure `UnknownExcludes(mcp, exclude)` and prints one stderr line per distinct `--mcp-exclude` value that is not exactly a name of the build's `mcp` list, with a `did you mean` hint for a case-only match. Dry run and real launch alike; nothing is excluded and the exit code is unchanged | `internal/launch` (`plan.go`, `launch.go`) |
 | L7 (N-26) | one predicate, `card.DeclaresJitsoScript(packageJSON)`: `scripts.jitso` is a JSON string that is not blank. `card.LaunchCommand` and the guard's `hook.LauncherWord` both call it, so the card and the deny reason name the same launcher | `internal/card`, `internal/hook` |
 | L8 (N-4) | `direct` and `fleet` are the only mode values: `launch --mode` rejects anything else (exit 2, `--mode must be direct or fleet`) and the registry validator treats a line with another mode as invalid, so readers skip it. No alias table exists anywhere | `internal/launch`, `internal/registry` |
@@ -197,7 +186,7 @@ DECIDED. A subagent is a build with `tier: subagent`. Conductor, Worker and Suba
 - A worker may launch only with approved subagents: a listed subagent that is `candidate` or `retired` is rejected at launch (exit 2), where the text is used, not at catalog load (N-11).
 - JITSO passes the resolved builds to `claude` as `--agents <json>`: an object with exactly the listed names as keys. The cases pin `description`, `prompt`, `model` and `tools` of each entry, byte for byte as the build writes them (S3). `effort` is part of what the build supplies, and nothing in the cases forbids emitting it.
 - Only those validated fields reach the JSON. Claude Code's `--agents` definition also accepts `mcpServers`, `hooks` and `permissionMode`; a pass-through of the whole build would let one add MCP servers that `--strict-mcp-config` does not strip, or run hooks.
-- A subagent-tier build is not launchable alone: `launch --build plan` is rejected by validation (exit 2, `JITSO REJECTED:` naming the build and the tier), `build list` does not show it and the dispatcher prompt does not offer it (N-5).
+- A subagent-tier build is not launchable alone: `launch --build plan` is rejected by validation (exit 2, `JITSO REJECTED:` naming the build and the tier) and `build list` does not show it (N-5).
 - The adapter emits `--agents` right after the `--session-id` value, so a fleet argv of a build with subagents ends with the `--agents` JSON (pinned by `argv/sonnet-automator-fleet`). There is no system-prompt flag: the rules travel in `brief.md`.
 
 The default fixture has `sonnet-automator` with `subagents: [plan, code, verifier]`, a `sonnet-conductor` that declares `tier: conductor`, and the three subagent-tier builds `jitso/builds/plan.yaml`, `code.yaml` and `verifier.yaml`. Lives in `internal/catalog` (tiers and name resolution), `internal/profile` (the refusal of a subagent-tier build) and `internal/harness/claude` (the JSON).
@@ -234,7 +223,7 @@ What the real catalog files use, read from the boilerplate's `jitso/` folder and
 | Option | Binary size | Cost | Risk |
 |---|---|---|---|
 | 1. `go.yaml.in/yaml/v3` (the maintained fork of the archived `gopkg.in/yaml.v3`) | measured: about 0.2 MB more than a stdlib-only probe of about 3 MB, about 7 percent on darwin/arm64 and linux/amd64; `go.yaml.in/yaml/v4` adds about 0.5 MB | one dependency with no further dependencies, the owner's OK, one review | supply chain of one well-known module |
-| 2. a YAML-subset parser in this repo | near zero (predicted: it uses packages already linked) | a few hundred lines plus tests (predicted), and a documented subset | builds that projects write by hand (D5, D6) or that a dispatcher drafts (D7) in ordinary YAML fail on the first feature outside the subset; the subset must reject, never guess |
+| 2. a YAML-subset parser in this repo | near zero (predicted: it uses packages already linked) | a few hundred lines plus tests (predicted), and a documented subset | builds that projects write by hand (D5, D6) or that a session drafts (D7) in ordinary YAML fail on the first feature outside the subset; the subset must reject, never guess |
 | 3. change the format to JSON or TOML | JSON zero; TOML also needs a dependency | migrate the catalog, the fixture and the cases | JSON has no comments, which builds rely on; it changes a format users author |
 
 Decision: option 1, `go.yaml.in/yaml/v3`. Tradeoff: about 0.2 MB and one reviewed dependency buy full YAML for the format every adopting project writes by hand; option 2 keeps the binary stdlib-only but makes this repo own a parser and a subset rule its users will hit.
@@ -255,7 +244,7 @@ Every milestone ended with the runner against the built binary: `<runner> --impl
 | 3 | Launch up to the dry run: arguments, field allowlist, profile, brief checks and path guard, card, launch line | `launch` (parse and plan), `profile`, `brief`, `card`, `shell` | done: filter 3 |
 | 4 | Real launch: files, `run.sh`, Claude adapter, trust dialog, fleet adoption, registry append, L2 and L3, S1 to S3 | `launch` (execute), `harness/claude`, `trust` | done: filter 4 |
 | 5 | Lifecycle: close, reap, analyze | `closeout`, `reap`, `analyze` | done: filter 5 |
-| 6 | Dispatcher | `dispatch` | done: filter 6 |
+| 6 | (empty: its piece was cut from v0.1.0, see `docs/decisions.md`) | none | none |
 | 7 | Hooks | `hook` | done: filter 7 |
 | 8 | Full suite, then cross-compile for the three targets | all | done: the whole suite passes on `--impl bin`; the cross-compile is `scripts/package.sh` |
 | 9 | Optional, after green: the owner-decided behavior fixes, one at a time, each a contract change first | as the fix needs | done: the blocks are in "After the port" below |
@@ -265,21 +254,19 @@ The `--filter` value that proves each milestone (milestone 8 runs with no filter
 ```
 1  ^(smoke/help|cli/(help-flags|no-arguments|unknown-command|unknown-command-empty-word|presets-is-unknown))
 2  ^(build/list|project/(linked-worktree|outside-git)/build-list)
-3  ^(validation/|brief/|card/|cli/reject-wiring/|smoke/launch-dry-run|project/subfolder-launch-dry-run|project/outside-git/launch|project/dispatcher-handoff/|defects/s1[ab])
+3  ^(validation/|brief/|card/|cli/reject-wiring/|smoke/launch-dry-run|project/subfolder-launch-dry-run|project/outside-git/launch|defects/s1[ab])
 4  ^(launch|argv|escape|registry|defects|project)/
 5  ^(close|reap|analyze)/
-6  ^dispatch/
+6  (no cases)
 7  ^(hooks/|smoke/guard)
 ```
 
-In milestone 3, `card/dry-run/adds-nothing-after-a-real-launch` matches the filter but needs a real launch, so it passes only with milestone 4. In milestone 6, `dispatch/prompt-launch-line-is-the-guarded-launcher` passes only with milestone 7, because its second step runs the dispatch guard.
+In milestone 3, `card/dry-run/adds-nothing-after-a-real-launch` matches the filter but needs a real launch, so it passes only with milestone 4.
 
 L2, L3 and L8 were already in the contract as defects N-2 to N-4 (`docs/decisions.md`). Milestone 0 held the remaining contract edits the port depended on, each with its defect id:
 
 - S1: the card goldens under `card/build/` and the `line_count` pin in `launch/direct/` follow the six-line card.
-- S3, N-5, N-6 (tiers): the default fixture has the three subagent-tier builds; the `defects/s3-*` cases pin `--agents` from them; `validation/tier/` pins the refusal of a subagent-tier build; the `build/list/` cases and the dispatcher catalog case pin the launchable builds only; `validation/subagents/` pins the catalog error for a bad subagent name.
-- N-7 (dispatcher handoff): `project/dispatcher-handoff/` and `dispatch/hands-the-project-to-claude`, section 6.
-- N-8 (launcher word): the fixture prompt template says `{{LAUNCHER}} launch` and `dispatch/prompt-launch-line-is-the-guarded-launcher` pins the line, section 6.
+- S3, N-5, N-6 (tiers): the default fixture has the three subagent-tier builds; the `defects/s3-*` cases pin `--agents` from them; `validation/tier/` pins the refusal of a subagent-tier build; the `build/list/` cases pin the launchable builds only; `validation/subagents/` pins the catalog error for a bad subagent name.
 - N-2: the registry lock case also pins that no launch folder is left behind.
 
 ### After the port
@@ -294,18 +281,16 @@ Each block after milestone 8 is its own contract change, cases first, run agains
 | `build validate` | N-13 | `catalog`, `cli` | `^build/validate/` |
 | Shipped templates, `build new` | N-14 | `templates`, `launch`, `cli` | `^build/new/` |
 | Drafts: `draft`, `discard`, `save`, the save guard | N-15 | `drafts`, `catalog`, `launch`, `tty`, `hook`, `cli` | `^(build/(draft\|discard\|save)/\|build/list/drafts\|launch/draft/\|hooks/guard/deny-build-save)` |
-| Adoption: `install skill`, `setup hook`, `setup instructions`, the adoption guard | N-16 to N-19 | `adopt`, `settingsjson`, `instructions`, `skill`, `hook`, `cli` | `^(install/\|setup/\|hooks/guard/(deny-adoption-commands\|allows-read-only-jitso)\|hooks/dispatch-guard/bash-denies-adoption-commands\|cli/usage/)` |
+| Adoption: `install skill`, `setup hook`, `setup instructions`, the adoption guard | N-16 to N-19 | `adopt`, `settingsjson`, `instructions`, `skill`, `hook`, `cli` | `^(install/\|setup/\|hooks/guard/(deny-adoption-commands\|allows-read-only-jitso)\|cli/usage/)` |
 | `doctor` | N-20 | `doctor`, `cli` | `^(doctor/\|cli/usage/)` |
 | `version` | N-21 | `version`, `cli` | `^cli/(version/\|usage/)` |
 | Folder check on every launch | N-22 | `trust`, `launch` | `^launch/(trust/\|direct/worktree-is-forwarded\|fleet/worktree-is-forwarded)` |
-| Dispatcher worktree and the dispatch guard grammar | N-23, N-29 | `dispatch`, `hook` | `^(dispatch/\|hooks/dispatch-guard/)` |
 | A harness started directly is denied | N-24 | `hook` | `^hooks/guard/(deny-direct-harness\|harness-word-after-a-separator-is-denied\|allows-commands-that-only-name-a-harness)` |
 | Launch arguments: `.mcp.json` only when needed, exclusion warning, blank script, `launch --help`, `--` values | N-26 | `launch`, `card`, `hook`, `cli` | `^(launch/mcp-json/\|card/(mcp-exclude\|launch-line)/\|validation/\|hooks/guard/blank-jitso-script)` |
 | Brief word count | N-27 | `brief` | `^brief/` |
 | Close, reap and analyze rows: close order, reap without a handle, unlogged workers once, analyze arguments first, secret writes, `budget_over` | N-28 | `closeout`, `reap`, `analyze`, `cli` | `^(close\|reap\|analyze)/` |
 | `jitso tree` | N-30 | `tree`, `cli` | `^(tree/\|cli/\|smoke/help)` |
 | Registry v2: `v: 2` with `build` keys, v1 lines skipped, `doctor` counts them | N-31 | `registry`, `analyze`, `tree`, `hook`, `doctor` | `^(registry\|close\|reap\|analyze\|launch\|layers\|project\|hooks/guard/session-end\|tree\|doctor)/`, then the whole suite |
-| `doctor` on Windows warns about the dispatcher launcher path | N-32 | `doctor` | none (no case can make the host report another OS): `go test ./internal/doctor/` (`TestCheckDispatcherOnWindows`, `TestRunOnWindowsDispatcherIsAWarning`) |
 | Release files: packaging, install script, workflow, formula template | none (no case) | `scripts/`, `.github/`, `packaging/` | `scripts/test-install.sh` (offline), and the steps of `docs/release.md` section 3 |
 
 The pipes inside the table are escaped for Markdown; the filter is the text without the backslashes.
@@ -318,7 +303,7 @@ Kept as the record of how the port was split; the port is finished. Milestones 1
 |---|---|---|---|
 | A, launch | 3 then 4 | `launch`, `profile`, `brief`, `card`, `shell`, `trust`, `harness/claude`, `cmd_launch.go` | `catalog`, `registry`, `orca`, `project` |
 | B, lifecycle | 5 | `closeout`, `reap`, `analyze`, `cmd_close.go`, `cmd_reap.go`, `cmd_analyze.go` | `registry`, `orca`, `catalog` |
-| C, dispatcher and hooks | 6 and 7 | `dispatch`, `hook`, `cmd_dispatch.go`, `cmd_hook.go` | `catalog`, `registry`, `project`, `shell` (quoting only) |
+| C, hooks | 7 | `hook`, `cmd_hook.go` | `catalog`, `registry`, `project`, `shell` (quoting only) |
 
 Track C needs `shell.Quote` for the `--settings` command, so `shell` starts in milestone 2 with only that function; from then on track A owns `shell`, and track C uses `Quote` alone and gets no new symbol from it during the tracks. A few lifecycle cases (for example `reap/unlogged-worker-after-a-real-fleet-launch`) start with a real launch and pass only once track A lands; track B reports them as pending, not as failures of its own. The package boundaries make this safe because no two tracks own the same file, and the only shared registration point is a file per command.
 
@@ -329,8 +314,8 @@ Track C needs `shell.Quote` for the `--settings` command, so `shell` starts in m
 | 1 | YAML: dependency, own subset parser, or another format (section 8) | DECIDED: `go.yaml.in/yaml/v3`, behind the one file `internal/catalog/decode.go` |
 | 2 | S3: where each helper's `description` and `prompt` come from | DECIDED: a subagent is a build with `tier: subagent`; the worker lists it by name, and the build supplies `description`, `prompt`, `model`, `effort` and `tools` (section 7) |
 | 3 | S1 makes the card six lines, which changes the card goldens of the TypeScript implementation | DECIDED: accept; the goldens changed in milestone 0 under defect S1, with `ROUTE-SCOPE: <ids>` on its own line after the subagents line |
-| 4 | The dispatcher runs outside git, so N-1 alone breaks every dispatched launch | DECIDED: the `JITSO_PROJECT` handoff, validated as a git checkout, with its cases (N-7). MEASURED, no further decision: Claude Code 2.1.325 passes its environment to the processes its Bash tool starts, in a headless run (the interactive TUI path was not measured). The `--project` flag is not part of the contract; it stays the fallback if that stops holding |
+| 4 | (withdrawn: the question belonged to a piece cut from v0.1.0, see `docs/decisions.md`) | none |
 | 5 | Does the variable stop Claude Code's native `AGENTS.md` read and the `@AGENTS.md` import? | MEASURED, no decision needed: it stops both (headless canary test, Claude Code 2.1.325). Re-measure on upgrades; user-level and nested instruction files were not covered |
 | 6 | Which launcher forms the guard accepts once the boilerplate stops using `bun run jitso` (H2, D9) | DECIDED: the guard keeps its three forms (own path, bare `jitso`, `bun run jitso`); dropping `bun run jitso` after D9 is a contract change |
 | 7 | When the `preset` to `build` rename (D6) happens | DONE: after milestone 8, as its own contract change (defect N-10), so the port and the rename were never in the same diff |
-| 8 | Windows: `run.sh` needs `/bin/sh`, so `launch` is POSIX only | DECIDED: release 1 builds for Windows with `launch` and the dispatcher unsupported there; read-only commands and hooks are expected to work, still "not tested" |
+| 8 | Windows: `run.sh` needs `/bin/sh`, so `launch` is POSIX only | DECIDED: release 1 builds for Windows with `launch` unsupported there; read-only commands and hooks are expected to work, still "not tested" |

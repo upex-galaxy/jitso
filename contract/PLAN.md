@@ -46,7 +46,7 @@ contract/
 | Fake `orca` and fake `claude` are the runner binary itself, copied into the sandbox under those names (multicall) | `sh` stub scripts | no dependency on a shell for the fakes, JSON handling in Go, same code on every OS |
 | The project root is the git primary checkout of the cwd | the script location (what the TypeScript code did) | a compiled binary has no script folder |
 | The binary under test is chosen by `--impl bin --bin <path>` | a hardcoded target | the suite runs any binary built anywhere |
-| Hooks are invoked through the adapter: the Go binary answers `jitso hook guard` and `jitso hook dispatch-guard` (stdin JSON, stdout JSON) | keeping `.mjs` in the Go repo | owner wants hooks without Node or Bun; the subcommand names can be renamed in one file |
+| Hooks are invoked through the adapter: the Go binary answers `jitso hook guard` (stdin JSON, stdout JSON) | keeping `.mjs` in the Go repo | owner wants hooks without Node or Bun; the subcommand names can be renamed in one file |
 
 ## Status model
 
@@ -68,8 +68,7 @@ Source counts are test cases found by `grep` in the original TypeScript repo, no
 | Real launch with fake `orca`: files, call order, trust dialog, fleet adoption, orca failure closes the terminal, untrusted folder refuses | `launch.test.ts`, `trust.test.ts`, `orca.test.ts` | 25 |
 | Shell-escape gate: 18 hostile briefs as content and as filename, run through `run.sh` | `escape.test.ts`, `shell.test.ts` | 36 |
 | Registry log, `close`, `reap`, `analyze` | `log.test.ts`, `close.test.ts`, `reap.test.ts`, `analyze.test.ts` | 25 |
-| Dispatcher: `jitso "<request>"` opens the fixed folder, `--tools=Bash,Write`, request last | `dispatch.test.ts`, `dispatcher-prompt.test.ts` | 10 |
-| Hooks: `jitso-guard` (deny table, allow table, linear-time prefix, segment splitting), `jitso-dispatch-guard` | `.agents/hooks/jitso-*.test.ts` | 30 |
+| Hooks: `jitso-guard` (deny table, allow table, linear-time prefix, segment splitting) | `.agents/hooks/jitso-*.test.ts` | 30 |
 
 Not in the contract: Orca's own behavior, the real Claude Code TUI, pricing numbers in `prices.json`.
 

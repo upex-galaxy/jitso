@@ -186,7 +186,7 @@ The runner executes the implementation with those arguments (an empty `run` arra
   "env": {}, "expect": { "exit": 0, "decision": "none" } }
 ```
 
-`hook` is `guard` or `dispatch-guard`. `input` is a JSON value (serialised to stdin) or a string (sent raw). The hook runs with `CLAUDE_PROJECT_DIR={{PROJECT}}` and the cwd `{{PROJECT}}`. The implementation adapter maps the name to a command (section 9).
+`hook` is `guard`. `input` is a JSON value (serialised to stdin) or a string (sent raw). The hook runs with `CLAUDE_PROJECT_DIR={{PROJECT}}` and the cwd `{{PROJECT}}`. The implementation adapter maps the name to a command (section 9).
 
 Hook output convention: the hook prints nothing and exits `0` to allow, or prints one JSON object `{"hookSpecificOutput":{"permissionDecision":"deny","permissionDecisionReason":"..."}}`. The runner exposes it as `decision` (`allow`, `deny`, `ask` or `none` when stdout is empty or only whitespace) and `reason`. Stdout that is not one JSON object, or has no `permissionDecision`, matches no `decision` value.
 
@@ -306,7 +306,7 @@ Reads `.jitso/launches.jsonl` (one JSON event per line). A missing file is zero 
 
 ```json
 { "ran": true, "argv": ["--dangerously-skip-permissions", "--model", "claude-sonnet-5-5"], "argv_contains": ["--agents"],
-  "argv_not_contains": ["--evil"], "last_arg": [{"regex": "ROUTE-SCOPE:"}], "cwd": "{{HOME}}/.jitso/dispatch-cwd",
+  "argv_not_contains": ["--evil"], "last_arg": [{"regex": "ROUTE-SCOPE:"}], "cwd": "{{HOME}}/work",
   "env": { "CLAUDE_CODE_DISABLE_CLAUDE_MDS": "1", "JITSO_X": {"absent": true} },
   "arg_after": { "--model": "claude-haiku-5-5", "--session-id": { "regex": "^[0-9a-f]{8}-[0-9a-f]{4}-" } },
   "argv_count": { "--dangerously-skip-permissions": 1 },

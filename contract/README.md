@@ -31,7 +31,7 @@ then:
 /tmp/jitso-contract --impl bin --bin /path/to/jitso --jobs 4
 ```
 
-The binary has to answer `jitso hook guard` and `jitso hook dispatch-guard` (stdin JSON,
+The binary has to answer `jitso hook guard` (stdin JSON,
 stdout JSON), the names `runner/internal/impl/bin.go` uses.
 
 Useful flags: `--filter '<regex on id>'`, `--skip-tag posix` (cases that need `/bin/sh`),
@@ -68,7 +68,7 @@ nested or parent folders, or other versions; re-measure when Claude Code is upgr
 
 Orca's own behavior, the real Claude Code TUI, the price numbers in `prices.json`, and
 white-box details of the Go code (function names, types). Cases that execute a
-generated `run.sh` need `/bin/sh` and carry the tag `posix`. A case also cannot run as another OS: the host binary always reports the host's `GOOS`, so the Windows branches of `doctor` (N-20 `shell`, N-32 `dispatcher`) are Go unit tests.
+generated `run.sh` need `/bin/sh` and carry the tag `posix`. A case also cannot run as another OS: the host binary always reports the host's `GOOS`, so the Windows branch of `doctor` (N-20 `shell`) is a Go unit test.
 
 ## Adding a case
 
