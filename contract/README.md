@@ -9,7 +9,7 @@ code is kept at the tag `jitso-oracle-1` of the original QA boilerplate repo.
 |---|---|
 | `SPEC.md` | the case format and the matchers (normative) |
 | `PLAN.md` | why it is built this way and the decisions of the first design; a dated record |
-| `fixtures/default/` | the base project every case copies (`jitso/jitso.yaml`, the builds under `jitso/builds/`, hard rules, instruction stubs) |
+| `fixtures/default/` | the base project every case copies (`jitso/jitso.yaml`, the builds under `jitso/builds/`, instruction stubs) |
 | `cases/<area>/<slug>/case.json` | one case per folder |
 | `runner/` | the Go runner, standard library only |
 

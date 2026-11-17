@@ -268,7 +268,7 @@ A matcher object has exactly one key. A plain string in a matcher list is shorth
   "json": [ { "path": "mcpServers.dbhub.command", "equals": "fixture-dbhub" }, { "path": "mcpServers.dbhub.env", "absent": true },
             { "path": "", "keys_exact": ["mcpServers"] } ] }
 { "path": ".jitso/launches", "entries": { "count": 1 } }
-{ "path": ".jitso/launches/{{LAUNCH_ID}}", "entries": [ { "equals": "brief.md\ncard.txt\ncore.md\nmcp.json\nrun.sh" } ] }
+{ "path": ".jitso/launches/{{LAUNCH_ID}}", "entries": [ { "equals": "brief.md\ncard.txt\nmcp.json\nrun.sh" } ] }
 ```
 
 `path` is relative to the project dir, or starts with `{{HOME}}`/`{{PROJECT}}`. `exists` defaults to `true` (a dangling symlink exists); `exists: false` takes no other check. `executable` checks the owner execute bit (POSIX). `contains`, `not_contains` and `regex` are lists of strings; `equals` is one string, the whole content. `text` is a list of text matchers (section 7.1) on the whole content, so `route_scope`, `line_count` and the rest work on a file. `json` paths are dot paths (`a.b.0.c`, a numeric segment indexes a list; the empty path `""` is the document root); each entry holds `path` and exactly one of:

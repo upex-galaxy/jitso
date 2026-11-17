@@ -42,7 +42,7 @@ What the CLI does, split by responsibility. "Pure" means no file, process, clock
 | Dispatcher | `dispatch.ts`, `jitso/dispatcher/prompt.md` | prompt rendering, catalog summary, the `claude` argv | spawns `claude` with the terminal inherited | `internal/dispatch` |
 | Guard hook | `.agents/hooks/jitso-guard.mjs` | Bash segment splitting, launch-verb detection, orca-bridge tool rules, the program of a segment (N-24), the write boundary over the file tools and the Bash writers (N-25) | `jitso/jitso.yaml` probe, path resolution and symbolic links for the boundary; SessionEnd appends to the registry | `internal/hook` |
 | Dispatch guard hook | `.agents/hooks/jitso-dispatch-guard.mjs` | the one allowed launcher line as a grammar of required flags (N-23, N-29), the brief write rule (a brief is written once) | `lstat`, real paths, own executable path, `JITSO_PROJECT` | `internal/hook` |
-| Hard-rules core | `jitso/hard-rules/core.md`, `style.md` | joining the two files | reads them from the project; the embedded default when the folder is missing | `internal/rules` (the shipped text), `internal/launch` (the join) |
+| Rules text | none | the short JITSO rules a launch appends to the end of `brief.md`, by mode and budget, and the join of the brief file | writes `brief.md` | `internal/card` (`Rules`), `internal/launch` (`BriefFile`) |
 | Templates | none (N-14) | one embedded template per tier and the `jitso/jitso.yaml` skeleton | none | `internal/templates` |
 | Drafts | none (N-15) | the draft checks, the status rewrite (`catalog.StatusSpan`), the save token | the drafts folder, atomic writes, the save | `internal/drafts` |
 | Adoption core | none (N-16 to N-19) | a change plan as a value, the unified diff with its masks, the confirmation rule | backups, atomic writes, links | `internal/adopt` |
@@ -53,7 +53,7 @@ What the CLI does, split by responsibility. "Pure" means no file, process, clock
 | Version | none (N-21) | the one-line text | build info | `internal/version` |
 | Terminal test | none | none | the termios ioctl on standard input | `internal/tty` |
 
-The hard-rules core is the text in `internal/rules` (`go:embed`), and it is the default only when a project has no `jitso/hard-rules/` folder: a project that has the folder owns both files and nothing is prepended (`docs/decisions.md`, defect N-14).
+The rules text is `card.Rules(mode, hasBudget)`, pure: a heading and three lines, the direct or the fleet wording, with or without the sentence that names the card's budget as the ceiling. `launch.BriefFile` appends it to the end of `brief.md` after one blank line (`docs/decisions.md`, the v0.1.0 cut).
 
 ## 3. Module and layout
 
@@ -70,7 +70,7 @@ internal/<package>/        everything else
 |---|---|
 | Command layer | `cli`: command table, usage, error kinds and exit codes, one `cmd_<name>.go` per command (and per subcommand of the groups `build`, `install` and `setup`), the shared flag parser (`flags.go`) and the sub-command group helper (`group.go`) |
 | Project and catalog | `project` (primary checkout, state and dispatcher folders, own executable identity), `catalog` (load, validate and scan builds in layers, the user config; `decode.go` is the only file that names the YAML decoder, section 8), `profile` (request plus catalog to profile or rejection, pure), `drafts` (the drafts folder and the save of a draft as a build) |
-| Launch | `launch` (argument parsing, plan, execute), `brief` (brief checks and the path guard), `card` (card text and the `ROUTE-SCOPE` line), `shell` (quoting, `run.sh` text, launcher field patterns), `harness` (the `Adapter` interface and launch spec types) with `harness/claude` (the Claude Code adapter), `trust` (trusted-folder check and dialog state machine), `rules` (the shipped hard-rules core and style) |
+| Launch | `launch` (argument parsing, plan, execute), `brief` (brief checks and the path guard), `card` (card text and the `ROUTE-SCOPE` line), `shell` (quoting, `run.sh` text, launcher field patterns), `harness` (the `Adapter` interface and launch spec types) with `harness/claude` (the Claude Code adapter), `trust` (trusted-folder check and dialog state machine) |
 | Lifecycle | `orca` (client over an injectable runner), `registry` (events, validation, fold, file store with a `mkdir` lock), `closeout` (`jitso close`), `reap`, `analyze`, `tree` (`jitso tree`, pure) |
 | Dispatcher and hooks | `dispatch` (the interactive dispatcher), `hook` (guard, dispatch guard, SessionEnd) |
 | Authoring | `templates` (the embedded build templates and the `jitso/jitso.yaml` skeleton) |
@@ -198,7 +198,7 @@ DECIDED. A subagent is a build with `tier: subagent`. Conductor, Worker and Suba
 - JITSO passes the resolved builds to `claude` as `--agents <json>`: an object with exactly the listed names as keys. The cases pin `description`, `prompt`, `model` and `tools` of each entry, byte for byte as the build writes them (S3). `effort` is part of what the build supplies, and nothing in the cases forbids emitting it.
 - Only those validated fields reach the JSON. Claude Code's `--agents` definition also accepts `mcpServers`, `hooks` and `permissionMode`; a pass-through of the whole build would let one add MCP servers that `--strict-mcp-config` does not strip, or run hooks.
 - A subagent-tier build is not launchable alone: `launch --build plan` is rejected by validation (exit 2, `JITSO REJECTED:` naming the build and the tier), `build list` does not show it and the dispatcher prompt does not offer it (N-5).
-- The adapter emits `--agents` right after the `--session-id` value and before `--append-system-prompt-file`, so the fleet argv still ends with the rules file path (pinned by `argv/sonnet-automator-fleet`).
+- The adapter emits `--agents` right after the `--session-id` value, so a fleet argv of a build with subagents ends with the `--agents` JSON (pinned by `argv/sonnet-automator-fleet`). There is no system-prompt flag: the rules travel in `brief.md`.
 
 The default fixture has `sonnet-automator` with `subagents: [plan, code, verifier]`, a `sonnet-conductor` that declares `tier: conductor`, and the three subagent-tier builds `jitso/builds/plan.yaml`, `code.yaml` and `verifier.yaml`. Lives in `internal/catalog` (tiers and name resolution), `internal/profile` (the refusal of a subagent-tier build) and `internal/harness/claude` (the JSON).
 
@@ -209,7 +209,7 @@ Rows in `docs/decisions.md`; the shape of each, for a reader of the code:
 - Vocabulary (N-10). The word is `build` everywhere a user sees it: the flag `--build`, the folder `jitso/builds/`, the command group `jitso build <subcommand>`, every message and the card header. There is no alias: `--preset`, `presets` and `jitso/presets/` are unknown. The registry log was the one survivor (`v: 1` with the keys `preset` and `preset_version`, a storage schema) until N-31 moved it to `v: 2` with `build` and `build_version`; a v1 line is an invalid line. The TypeScript implementation kept the old spelling and the old log schema.
 - Layers (N-12). The lookup order is the repo's `jitso/builds/`, the trusted parent folders (named only by `~/.jitso/config.yaml`), the user's `~/.jitso/builds/`, then the drafts. The nearest file of an id is the build, every layer is validated against the launching repo, and the card and the registry line name the layer (`build_layer`, `build_file`, `build_sha256`). Code: `internal/catalog`.
 - Validation report (N-13). `jitso build validate` scans every layer tolerantly and reports every problem; an invalid repo file is a finding there (exit 2), not the exit 3 of the other commands. Code: `internal/catalog` (`scan.go`).
-- Core and templates (N-14). `internal/rules` and `internal/templates` are embedded; `jitso build new` writes a draft from a template and, in a fresh project, the allowlists skeleton.
+- Templates (N-14). `internal/templates` is embedded; `jitso build new` writes a draft from a template and, in a fresh project, the allowlists skeleton.
 - Drafts (N-15). `.jitso/drafts/<id>.yaml` in the primary, a last layer that never shadows a saved build; `build draft`, `build discard` and `build save` fill, empty and promote it. `build save` is the one way a build becomes approved and needs the owner: a terminal answer, or `--confirm <token>` bound to the bytes he read. Code: `internal/drafts`.
 - Adoption (N-16 to N-19). `install skill`, `setup hook` and `setup instructions` share the flow of `internal/adopt`: preview, `--dry-run`, `--yes` or a terminal answer, a backup of every file changed under `.jitso/backups/`, and `--remove` as the exact undo. `setup hook` registers only `jitso hook guard`, in JITSO's own four groups of `.claude/settings.json` (section 6); `setup instructions` keeps one marked block in the instruction files; `install skill` writes the shipped usage skill as real files in `.agents/skills/jitso/` plus the relative link `.claude/skills/jitso`, with a manifest that tells a hand edit from an old version. The agent boundary of all of them is the launch guard (section 6).
 - Doctor (N-20). `jitso doctor` takes no argument and changes nothing: it prints one line per check, `ok`, `warn` or `fail`, with a stable check id (for example `binary`, `path`, `catalog`, `hooks`, `skill-project`, `instructions`), and ends with a summary line. Exit 0 when nothing fails, 3 when a check fails. It is defect N-20 in `docs/decisions.md`, with its cases under `doctor/`.
@@ -292,7 +292,7 @@ Each block after milestone 8 is its own contract change, cases first, run agains
 | Tiers: the field matrix and approved subagents | N-11 | `catalog`, `launch` | `^validation/(tier\|subagents)/` |
 | Layers and the user config | N-12 | `catalog`, `launch`, `card` | `^layers/` |
 | `build validate` | N-13 | `catalog`, `cli` | `^build/validate/` |
-| Shipped core and templates, `build new` | N-14 | `rules`, `templates`, `launch`, `cli` | `^(rules/\|build/new/)` |
+| Shipped templates, `build new` | N-14 | `templates`, `launch`, `cli` | `^build/new/` |
 | Drafts: `draft`, `discard`, `save`, the save guard | N-15 | `drafts`, `catalog`, `launch`, `tty`, `hook`, `cli` | `^(build/(draft\|discard\|save)/\|build/list/drafts\|launch/draft/\|hooks/guard/deny-build-save)` |
 | Adoption: `install skill`, `setup hook`, `setup instructions`, the adoption guard | N-16 to N-19 | `adopt`, `settingsjson`, `instructions`, `skill`, `hook`, `cli` | `^(install/\|setup/\|hooks/guard/(deny-adoption-commands\|allows-read-only-jitso)\|hooks/dispatch-guard/bash-denies-adoption-commands\|cli/usage/)` |
 | `doctor` | N-20 | `doctor`, `cli` | `^(doctor/\|cli/usage/)` |

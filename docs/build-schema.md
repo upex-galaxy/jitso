@@ -122,9 +122,9 @@ trusted_parents:
 
 An entry is expanded (`~/` is HOME), cleaned and resolved through symlinks. A trusted folder counts only when the primary's real path is strictly inside it; siblings never match. An entry that does not exist is skipped.
 
-## Hard rules
+## Rules text
 
-`jitso/hard-rules/core.md` and `jitso/hard-rules/style.md` are the rules every launched session carries. They are joined by one newline into the `core.md` of the launch folder. When a project has the `jitso/hard-rules/` folder, both files are required and a missing one is exit 3 naming the file. When it has no such folder, the core and the style shipped inside the binary are used instead. A project that has the folder owns its rules completely: the shipped text is never added to them.
+A project has no rules files. Every launch appends JITSO's short rules text to the end of the session's `brief.md`, after one blank line; the text is `card.Rules` in `internal/card`, and the contract case `launch/direct/brief-md-ends-with-the-direct-rules` pins the direct wording (`launch/fleet/brief-md-ends-with-the-fleet-rules` the fleet one).
 
 ## Starting a build
 

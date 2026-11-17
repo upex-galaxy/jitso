@@ -17,7 +17,7 @@ A black-box suite. A case is a sandbox (project tree, HOME, scripted fake `orca`
 |---|---|
 | exit code | `2` for `JITSO REJECTED:` |
 | stdout / stderr | the launch card, the reject reason |
-| files written | `.jitso/launches/<id>/run.sh`, `brief.md`, `core.md`, `mcp.json`, `card.txt` |
+| files written | `.jitso/launches/<id>/run.sh`, `brief.md`, `mcp.json`, `card.txt` |
 | registry events | the `launch` and `end` lines of `.jitso/launches.jsonl` |
 | `orca` calls | the ordered argv the fake recorded (`terminal create`, `terminal wait`, `worker-start`...) |
 | what `run.sh` does | executed against a fake `claude`: exact argv, selected env, no canary file |
@@ -32,7 +32,7 @@ contract/
   PLAN.md        this file
   README.md      how to run it
   SPEC.md        the case format and the matchers (the only normative file for the format)
-  fixtures/      base project(s): jitso.yaml, presets, hard-rules, .mcp.json, instruction stubs
+  fixtures/      base project(s): jitso.yaml, presets, .mcp.json, instruction stubs
   cases/<area>/  one folder per case: case.json (+ files the case needs)
   runner/        Go module, standard library only
 ```
