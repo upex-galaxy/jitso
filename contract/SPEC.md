@@ -1,7 +1,7 @@
 # JITSO contract: case format (SPEC)
 
 Normative for `cases/**/case.json`, the fixtures and the runner. If the runner and this file
-disagree, fix one of them in the same change. Draft 3, 2026-11-14 (format gaps G1 to G10 closed after the harvest).
+disagree, fix one of them in the same change. Draft 3, 2026-11-14 (format gaps G1 to G10 closed after the harvest); the `status` key and the oracle were removed with the v0.1.0 cut.
 
 A case describes a sandbox, a list of steps and what must be observable afterwards. It never
 looks inside an implementation: only argv, stdin, environment, exit code, stdout, stderr, files
@@ -27,9 +27,8 @@ contract/
   "title": "one line, what behavior this pins",
   "source": ["cli/jitso/launch.test.ts: 'dry run prints the card'"],
   "tags": ["posix"],
-  "status": { "ts": "pass", "go": "pass" },
   "defect": "S1",
-  "intent": "prose, required when any status is xfail",
+  "intent": "optional prose: why the case exists",
   "project": { "base": "default", "files": { "docs/extra.md": "text" } },
   "home": { "files": {} },
   "orca": { "screens": ["..."] },
@@ -42,16 +41,16 @@ contract/
 | Field | Rule |
 |---|---|
 | `id`, `title`, `steps` | required; `title` is not empty, `steps` has at least one step |
-| `source` | where the behavior was harvested from (file and test name in the TS repo) or `intended: <note>` for behavior that does not exist yet |
+| `source` | where the behavior was harvested from (file and test name in the original TypeScript repo) or `intended: <note>` for behavior that does not exist yet |
 | `tags` | lowercase words (`[a-z0-9-]`). `posix` = needs `/bin/sh` (cases that execute `run.sh`); the runner skips tagged cases with `--skip-tag` |
-| `status` | per implementation `ts`, `go` (no other key); each `pass` (default) or `xfail`. An `xfail` needs `defect` and `intent`. Which key a run reads is fixed by the adapter, section 9 |
+| `defect`, `intent` | optional history: a defect id of the port (`docs/decisions.md`, "Defect ids (history)") and prose saying why the case exists. Nothing requires them and no status depends on them |
 | `project.base` | fixture folder name, default `default`. The runner copies it to a fresh temp dir, runs `git init -q` there, and that dir is the cwd of every step unless a step says otherwise |
 | `project.files`, `home.files` | overlay applied after the base and after `git init`, see section 3 |
 | `orca` | the fake `orca` scenario, section 5.1 |
 | `claude` | the fake `claude` knobs, section 5.2 |
 | `for_each` | expands the case once per row, in one of two forms. Single var: `{"var": "<name>", "values": ["<string>", ...]}`. Several vars: `{"vars": ["<name>", ...], "rows": [["<string>", ...], ...]}`, each row holding one string per var. Optional `ids: ["<name>", ...]`, one per row, unique, `[A-Za-z0-9][A-Za-z0-9._-]*`. Every string in the case may use each var and `{{index}}`; the expanded id is `<id>[<ids entry>]`, or `<id>[<index>]` without `ids`. A var is a placeholder name that is not a built-in (section 4) and not `index` |
 
-Any key not listed in this SPEC, at any depth of `case.json`, is a load error (it catches typos). The metadata fields (`id`, `title`, `source`, `tags`, `status`, `defect`, `intent`) are never resolved; placeholders live in `project`, `home`, `orca` and `steps`.
+Any key not listed in this SPEC, at any depth of `case.json`, is a load error (it catches typos). The metadata fields (`id`, `title`, `source`, `tags`, `defect`, `intent`) are never resolved; placeholders live in `project`, `home`, `orca` and `steps`.
 
 ## 3. File maps
 
@@ -102,13 +101,13 @@ The runner builds, per case, a temp root with `home/`, `project/`, `bin/`. Every
 | Variable | Value |
 |---|---|
 | `HOME` | `{{HOME}}` |
-| `PATH` | `{{BIN}}` then a minimal system path (`/usr/bin:/bin`), then a sandbox `tools/` folder holding symlinks to exactly the programs the implementation adapter needs to start (for example `bun`). The adapter never adds a program's real folder, which may hold a real `claude` or `orca` |
+| `PATH` | `{{BIN}}` then a minimal system path (`/usr/bin:/bin`), then a sandbox `tools/` folder holding symlinks to exactly the programs the implementation adapter needs to start (none for a `bin` binary). The adapter never adds a program's real folder, which may hold a real `claude` or `orca` |
 | `ORCA_CLI_COMMAND` | `{{BIN}}/orca` |
 | `JITSO_CONTRACT_SCENARIO` | path of the scenario JSON written from the case `orca` field |
 | `JITSO_CONTRACT_ORCA_LOG` | path of the file the fake `orca` appends its calls to |
 | `JITSO_CONTRACT_CLAUDE_DUMP` | path of the file the fake `claude` writes |
 
-No other variable of the runner leaks in, except the few an adapter declares to start its implementation (section 9). In particular the real `orca`, the real `claude` and the real HOME are unreachable. `git init -q` runs with this same environment. A step's `cwd` must lie inside the sandbox root (runner error otherwise).
+No other variable of the runner leaks in, except the few an adapter declares to start its implementation (none for `bin`, section 9). In particular the real `orca`, the real `claude` and the real HOME are unreachable. `git init -q` runs with this same environment. A step's `cwd` must lie inside the sandbox root (runner error otherwise).
 
 ### 5.1 Fake `orca`
 
@@ -318,36 +317,20 @@ Reads `.jitso/launches.jsonl` (one JSON event per line). A missing file is zero 
 
 ## 8. Reporting
 
-Per case (per expansion) one line: `PASS`, `FAIL`, `XFAIL` (declared `xfail` and failed), `XPASS` (declared `xfail` but passed), `SKIP`. The process exits `0` only when there is no `FAIL` and no `XPASS` for the selected implementation. A `FAIL` prints the step number, the expectation that broke, the expected and the actual value; `-v` also prints argv, stdout, stderr and the sandbox path.
+Per case (per expansion) one line: `PASS`, `FAIL` or `SKIP`. The process exits `0` only when there is no `FAIL`. A `FAIL` prints the step number, the expectation that broke, the expected and the actual value; `-v` also prints argv, stdout, stderr and the sandbox path.
 
-A runner error (the sandbox could not be built, a step could not start, a placeholder had no value at run time) is a `FAIL` with the error printed, even for an `xfail` case: it says nothing about the defect. A case that fails to load is printed as `LOAD` with the reason; the cases that did load still run, and the process exits `2`, which wins over `1`. Exit codes: `0` green, `1` a `FAIL` or `XPASS`, `2` a load error or a usage error.
+A runner error (the sandbox could not be built, a step could not start, a placeholder had no value at run time) is a `FAIL` with the error printed. A case that fails to load, including one that still has a `status` key, is printed as `LOAD` with the reason; the cases that did load still run, and the process exits `2`, which wins over `1`. Exit codes: `0` green, `1` a `FAIL`, `2` a load error or a usage error. The summary line is `bin: <n> cases, <n> PASS, <n> FAIL, <n> SKIP, <n> LOAD ERROR in <t>`.
 
-## 9. Implementations
+## 9. Implementation
 
 | Flag | Meaning |
 |---|---|
-| `--impl bin --bin <path>` | any executable; steps run `<path> <argv...>` with the project dir as cwd. Judged by `status.go`. `{{JITSO}}` is the absolute path given in `--bin` |
-| `--impl ts --ts-src <boilerplate checkout>` | the frozen TypeScript oracle, judged by `status.ts`. Per case the runner copies `cli/jitso/` (without `*.test.ts`, at any depth), `cli/lib/worktree.ts` and the two hooks `.agents/hooks/jitso-guard.mjs` and `.agents/hooks/jitso-dispatch-guard.mjs` from `--ts-src` into the sandbox project at the same relative paths, symlinks `node_modules` to the checkout's, and runs `bun <project>/cli/jitso/index.ts <argv...>`. The TS binary resolves its project from the script folder, so the copy is what makes it work on the case's project. Hooks run `node <project>/.agents/hooks/jitso-<hook>.mjs`: the dispatch guard derives the one launcher it allows from its own location, and `dispatch.ts` names `<project>/cli/jitso/index.ts` and `<project>/.agents/hooks/jitso-dispatch-guard.mjs`, so only the project copy is consistent with them. The tools folder holds `bun` and `node`; the adapter adds `BUN_RUNTIME_TRANSPILER_CACHE_PATH` (a cache outside the sandbox, shared between cases) so bun writes nothing under HOME. The runner refuses to run a TS script or hook that resolves outside the sandbox: run from the checkout, the oracle would write into the real repo. `{{JITSO}}` is `bun {{PROJECT}}/cli/jitso/index.ts`: a bare `bun`, the word the dispatcher prompt and the dispatch guard require, and the project copy, the one launcher that guard allows |
+| `--impl bin --bin <path>` | the `jitso` executable; steps run `<path> <argv...>` with the project dir as cwd. `{{JITSO}}` is the absolute path given in `--bin`. `--impl` has no other value |
 
-The `ts` adapter also translates the build vocabulary, in one direction only: new spelling to old. In the argv it passes to the oracle, every word equal to `--build` becomes `--preset` when the first word is `launch`, and a leading `build list` becomes `presets list` (further words are kept). No other word is touched, and the old spellings (`--preset`, `presets`) reach the oracle unchanged, so a case that pins the old name being rejected still discriminates. When the project has a `jitso/builds` folder and no `jitso/presets`, the adapter's prepare step, which runs after the project and home overlays, creates the relative symlink `jitso/presets` to `builds`, so the oracle finds the catalog under its old folder name and a `write` step that adds a build mid-case is seen. This covers the `--build` flag of `launch`, `build list` and the `jitso/presets` symlink, nothing else: output that names a renamed token still differs from the oracle's and is an `xfail` case. The mapping is removed together with the oracle.
+Hooks run `<bin> hook <hook>` (stdin and stdout as in 6.2). Changing that subcommand name is a one-line edit in the runner adapter, not in the cases.
 
-The `ts` adapter also maps the registry schema (defect N-31). The oracle reads and writes `v: 1` lines whose build keys are `preset` and `preset_version`; the cases and the Go port use `v: 2` with `build` and `build_version`. Around every `run` and `hook` step the adapter rewrites `<project>/.jitso/launches.jsonl`. Before the step, every line that is one JSON object whose top-level `v` is the number 2 becomes a `v: 1` line: the top-level keys `build` and `build_version` become `preset` and `preset_version`, and each top-level `v` value 2 becomes 1. After the step the file gets the case's own bytes back, and every line the step appended that is one JSON object whose top-level `v` is 1 becomes a `v: 2` line by the reverse renames. The rewrite changes only those key and value tokens: spacing, key order, number spelling and nested keys stay. A line that is not one JSON object, a blank line and a line of any other version pass unchanged, so a case can still seed a `v: 1` line, which the oracle reads and the Go port skips. Whenever the runner reads the file (registry checks, file checks, captures), it holds the case's lines and the step's lines in `v: 2`. The oracle only appends to the file; a step that changes the case's lines is a runner error. The mapping is removed together with the oracle.
+Cases cite only paths their own `project` provides (the default fixture has `docs/guide.md`, `src/sync.ts`, `api/openapi.json`), never a file outside the sandbox.
 
-Hooks for `--impl bin` run `<bin> hook <hook>` (stdin and stdout as in 6.2). That subcommand name is a proposal of the Go design; changing it is a one-line edit in the runner adapter, not in the cases.
+## 10. Defects and intent (optional history)
 
-Where the TS oracle takes its paths from:
-
-| Piece | Takes its paths from | What a case must know |
-|---|---|---|
-| CLI (`cli/jitso/index.ts`) | its own folder (`import.meta.dir/../..`), then the git primary checkout of that folder: catalog, `.mcp.json`, hard rules, `.jitso/`, the launch command on the card (`package.json` of that root) | it ignores the step's `cwd` for all of these; the copy in the project is what points it at the case |
-| `dispatch.ts` (`jitso "<request>"`) | the same root: `jitso/dispatcher/prompt.md`, the launcher and the guard named in `--settings`; the dispatcher folder is `$HOME/.jitso/dispatch-cwd` | the names in the `claude` argv are `{{PROJECT}}/...` paths |
-| `jitso-dispatch-guard.mjs` | its own file location for the one allowed launcher (`bun <that repo>/cli/jitso/index.ts launch ...`); `$HOME` for the dispatcher folder; it ignores `CLAUDE_PROJECT_DIR`. Its input must carry `cwd: "{{HOME}}/.jitso/dispatch-cwd"`, otherwise it denies before looking at the tool | write the allowed line as `{{JITSO}} launch ...`. It answers `allow` for that line (never `none`) and `deny` for everything else |
-| `jitso-guard.mjs` | `CLAUDE_PROJECT_DIR`, which the runner always sets; its own location only when that variable is missing | does not depend on its location: measured, its checkout copy and its project copy give the same answers, and SessionEnd writes into `{{PROJECT}}/.jitso/launches.jsonl`. Cases cannot reach the fallback. Its deny reason text names `bun run jitso launch` literally, so a portable case matches the `(denied: <verb>)` tail, not the whole reason |
-
-The copied TS files, the hooks and `node_modules` are inside the project dir, so cases never assert the project dir is otherwise empty and never list it.
-
-Cases must be portable between implementations: they cite only paths their own `project` provides (the default fixture has `docs/guide.md`, `src/sync.ts`, `api/openapi.json`), never a file of the TS repo.
-
-## 10. Defects and intended behavior
-
-A case for behavior the current TS binary does not have is written to describe the INTENDED behavior, with `status: {"ts": "xfail", "go": "pass"}`, a `defect` id and an `intent` paragraph. The runner is strict: an `xfail` that passes is an `XPASS` and fails the run, so a fixed oracle forces the case to be promoted to `pass`.
+`defect` and `intent` are optional metadata. A `defect` id names the row of `docs/decisions.md` ("Defect ids (history)") that explains why the case exists; an `intent` says in prose what behavior the case pins and why. A case that describes behavior a change introduces is written first, run against the built binary to see it `FAIL`, and then implemented (`AGENTS.md`, rule 3).

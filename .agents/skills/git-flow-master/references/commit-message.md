@@ -9,7 +9,7 @@ Conventional commit subject, English, imperative, at most about 72 characters, n
 | Type | Use |
 |---|---|
 | `feat` | new behavior of the CLI or a hook |
-| `fix` | behavior that was wrong; usually a case moved from `xfail` to `pass` or a new case |
+| `fix` | behavior that was wrong; usually a new case |
 | `test` | contract cases or Go tests only |
 | `refactor` | same behavior, different code |
 | `docs` | docs, skills, `AGENTS.md` |

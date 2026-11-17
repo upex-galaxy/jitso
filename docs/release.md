@@ -43,7 +43,7 @@ These steps run on this machine and change nothing outside the repository and yo
 
 1. Clean tree on `main`: `git status --porcelain` prints nothing. The scripts keep their executable bit: `git ls-files -s scripts` shows mode `100755`.
 2. The verify gates in both modules, as AGENTS.md section 6 gives them: `go test ./...`, `go vet ./...`, `test -z "$(gofmt -l .)"`, from the repo root and from `contract/runner`.
-3. The full contract suite against the built binary (`contract/README.md`, "Run it", prints the expected summary line), and against the oracle while its checkout exists.
+3. The full contract suite against the built binary (`contract/README.md`, "Run it", prints the expected summary line).
 4. Package every target: `scripts/package.sh v<x> <scratch>/dist`. Check the archives against `checksums.txt` with `shasum -a 256 -c checksums.txt` (or `sha256sum -c`) inside that folder.
 5. Measure each stripped binary with `ls -l` and compare with the previous release's numbers. Those numbers live in `.session/`, not in a committed file. A noticeable growth goes to the owner with before and after labelled `measured`, as `.agents/skills/go-development/references/builds.md` asks.
 6. `scripts/test-install.sh <scratch>/dist v<x>` (the archives just built) or `scripts/test-install.sh` (it builds the host target itself). Every check prints `ok`. It runs in throwaway folders and never touches your HOME.

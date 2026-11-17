@@ -24,7 +24,7 @@ They are separate modules. A `go test ./...` at one module's root never runs the
 
 - `gofmt` formatting, always. Idiomatic names, short packages under `internal/`, no exported API without a caller.
 - Errors carry context (`fmt.Errorf("...: %w", err)`); the CLI maps them to the contract's exit codes, never `os.Exit` deep in a package.
-- Nothing a model wrote reaches a shell as text: argv is built as a slice, and any generated script quotes every word (the oracle's rule, pinned by the shell-escape cases).
+- Nothing a model wrote reaches a shell as text: argv is built as a slice, and any generated script quotes every word (pinned by the shell-escape cases).
 - OS differences go in files with build constraints, the way the runner does it (`internal/engine/proc_unix.go` with `//go:build unix`, `proc_other.go` with `//go:build !unix`). Use `path/filepath` for file paths. Only code behind cases tagged `posix` may assume `/bin/sh`.
 
 ## Testing

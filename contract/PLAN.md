@@ -1,11 +1,12 @@
 # JITSO contract: plan
 
-Status: design record, written 2026-11-14 before the build. The state of the suite is described by `README.md` and `SPEC.md`.
+Status: design record, written 2026-11-14 before the build. The state of the suite is described by `README.md` and `SPEC.md`. The v0.1.0 cut removed the TypeScript oracle, the `ts` adapter and the `xfail` status model from the suite (`docs/decisions.md`, "The v0.1.0 cut"); this record keeps the original design where it still holds and says so where it was cut.
 
 ## Goal
 
-A language-independent behavioral contract for the `jitso` CLI and its two hooks. The
-current TypeScript binary is the frozen oracle; the Go binary must pass every case.
+A language-independent behavioral contract for the `jitso` CLI and its two hooks. The Go
+binary must pass every case. (When this plan was written the frozen TypeScript binary was
+the oracle; its code is kept at the tag `jitso-oracle-1` of the original QA boilerplate repo.)
 
 ## What the contract is
 
@@ -22,7 +23,7 @@ A black-box suite. A case is a sandbox (project tree, HOME, scripted fake `orca`
 | what `run.sh` does | executed against a fake `claude`: exact argv, selected env, no canary file |
 | hook decision | `permissionDecision` for a Bash command or an `orca-bridge` tool call |
 
-Nothing inspects internals, so the same cases run against any implementation.
+Nothing inspects internals, so the same cases run against any binary that speaks the contract.
 
 ## Layout
 
@@ -43,21 +44,20 @@ contract/
 | Runner in Go, stdlib only | a Bun/TS runner; a shell script | same toolchain as the product, no runtime needed to test a Go binary, no YAML dependency, runs `go vet`/`go test` on itself |
 | Cases are JSON, fixtures are plain files | YAML cases | stdlib parses JSON; multi-line briefs live as real files, not escaped strings |
 | Fake `orca` and fake `claude` are the runner binary itself, copied into the sandbox under those names (multicall) | `sh` stub scripts | no dependency on a shell for the fakes, JSON handling in Go, same code on every OS |
-| The project root is the git primary checkout of the cwd | the script location (what TS does today) | a compiled binary has no script folder; TS is adapted by copying `cli/jitso` into the sandbox project, so both behave the same under the same cases |
-| Implementation under test is chosen by `--impl ts --ts-src <boilerplate>` or `--impl bin --bin <path>` | one hardcoded target | the same suite serves both binaries |
-| Hooks are invoked through an adapter map: TS runs `node .agents/hooks/jitso-*.mjs`; the Go binary is expected to answer `jitso hook guard` and `jitso hook dispatch-guard` (stdin JSON, stdout JSON) | keeping `.mjs` in the Go repo | owner wants hooks without Node or Bun; the subcommand names are a proposal the Go design may rename in one file |
+| The project root is the git primary checkout of the cwd | the script location (what the TypeScript code did) | a compiled binary has no script folder |
+| The binary under test is chosen by `--impl bin --bin <path>` | a hardcoded target | the suite runs any binary built anywhere |
+| Hooks are invoked through the adapter: the Go binary answers `jitso hook guard` and `jitso hook dispatch-guard` (stdin JSON, stdout JSON) | keeping `.mjs` in the Go repo | owner wants hooks without Node or Bun; the subcommand names can be renamed in one file |
 
-## Status model: expected failures are strict
+## Status model
 
-Each case declares a status per implementation: `pass` or `xfail`.
-
-- `pass` and it fails: the run is red (a regression).
-- `xfail` and it passes: the run is red too (`UNEXPECTED PASS`), so the oracle cannot drift silently and a fixed defect forces the case to be promoted.
-- Go must run with every case `pass`, including the three defects.
+Every case must `PASS`. There is no declared status: a case that fails is a regression, and
+the runner prints `PASS`, `FAIL`, `SKIP` or `LOAD` (`SPEC.md` section 8). The earlier model
+(`xfail` per implementation, strict `XPASS`) existed only to track the TypeScript oracle and
+was cut with it.
 
 ## Coverage, in harvest order
 
-Source counts are test cases found by `grep` in the TS repo, not yet de-duplicated.
+Source counts are test cases found by `grep` in the original TypeScript repo, not yet de-duplicated.
 
 | Area | Source | Cases (approx) |
 |---|---|---|
@@ -73,11 +73,11 @@ Source counts are test cases found by `grep` in the TS repo, not yet de-duplicat
 
 Not in the contract: Orca's own behavior, the real Claude Code TUI, pricing numbers in `prices.json`.
 
-## The three defects (intended behavior, `xfail` on `ts`)
+## The three defects (intended behavior)
 
-All three were measured on 2026-11-14 (launch `L20261115T005309-e8f8`).
+All three were measured on the TypeScript code on 2026-11-14 (launch `L20261115T005309-e8f8`); the Go binary implements the intended behavior.
 
-| Id | Intended behavior the case asserts | Today (TS) |
+| Id | Intended behavior the case asserts | The TypeScript code did |
 |---|---|---|
 | S1 `route_scope` | The card carries `ROUTE-SCOPE: <ids>` (with the colon) and, in `direct` mode, the first prompt passed to `claude` carries the same line. Both must match the router's own regex `(?:^\|[.!?])[ \t>*-]*ROUTE-SCOPE:([^\n]*)`, and the ids must parse back to the preset's list | the card writes `ROUTE-SCOPE` with no colon; the first prompt is only `Read <brief> and follow it exactly.` |
 | S2 `agents_md` | A preset with `agents_md: exclude` launches `claude` with `CLAUDE_CODE_DISABLE_CLAUDE_MDS=1` in its environment; `full` does not | the field is only logged |
@@ -88,17 +88,16 @@ Two things I am NOT claiming:
 - S2: the variable is in the official docs (`code.claude.com/docs/en/env-vars`: "prevent loading any CLAUDE.md memory files into context, including user, project, and auto memory files"). That it also stops the `@AGENTS.md` import and the native `AGENTS.md` read was inferred when this plan was written and measured afterwards (see `docs/decisions.md`, S2).
 - S3: when the contract was first written, where each helper's `description` and `prompt` come from was left open and only the shape was fixed. The owner has since decided it (a subagent is a build with `tier: subagent`, `docs/decisions.md`) and the S3 cases pin the values.
 
-## Validation against the truth
+## Validation
 
-1. Run the suite against the TS binary: every `pass` case passes, the three defects fail as declared.
-2. Each failing `pass` case is triaged by hand: either the case misreads the TS behavior (fix the case) or the TS behavior is itself wrong (move it to the defect list and tell the owner). TS wins on disagreement unless the audit already marks the behavior as a defect.
-3. The same suite is the acceptance test of the Go port.
+1. The suite is the acceptance test of the Go binary: every case `PASS`es.
+2. A failing case is triaged by hand: either the case misreads the intended behavior (fix the case) or the binary is wrong (fix the binary and record the call in `docs/decisions.md`).
 
 ## Build order
 
 1. `SPEC.md` (the case format), then the runner skeleton with the fakes.
 2. Harvest by area, in parallel (Sonnet subagents, 7-component briefs, one area each).
-3. Run against TS, triage, fix.
+3. Run against the binary, triage, fix.
 4. `README.md`, diary line, Engram.
 
 Spend: no cap (lifted by the owner); design and runner by Opus subagents, case harvest by Sonnet subagents.
