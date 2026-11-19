@@ -1,9 +1,8 @@
 # Release workflow. Written, not yet run: nothing is published from this repo
 # until the owner decides (docs/release.md, every outward step is OWNER-GATED).
 #
-# Every `uses:` line below carries a PLACEHOLDER commit SHA (forty zeros). Before
-# the first tag, resolve each action to the full commit SHA of a release tag and
-# review it (docs/release.md, pre-flight). Only GitHub-owned actions are used.
+# Every `uses:` line below is pinned to a full commit SHA with its release tag as
+# the comment (docs/release.md, pre-flight). Only GitHub-owned actions are used.
 name: release
 
 on:
@@ -29,11 +28,11 @@ jobs:
     permissions:
       contents: read
     steps:
-      - uses: actions/checkout@0000000000000000000000000000000000000000 # PLACEHOLDER: resolve actions/checkout
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
 
-      - uses: actions/setup-go@0000000000000000000000000000000000000000 # PLACEHOLDER: resolve actions/setup-go
+      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
         with:
           go-version: ${{ env.GO_VERSION }}
           cache: false
@@ -70,7 +69,7 @@ jobs:
       - name: Install script against the built archives
         run: sh scripts/test-install.sh dist "$GITHUB_REF_NAME"
 
-      - uses: actions/upload-artifact@0000000000000000000000000000000000000000 # PLACEHOLDER: resolve actions/upload-artifact
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: dist
           path: dist/
@@ -85,7 +84,7 @@ jobs:
     permissions:
       contents: write
     steps:
-      - uses: actions/download-artifact@0000000000000000000000000000000000000000 # PLACEHOLDER: resolve actions/download-artifact
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         with:
           name: dist
           path: dist
