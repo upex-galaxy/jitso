@@ -15,7 +15,8 @@
       "expect": {
         "exit": 0,
         "stdout": [
-          "Usage: jitso setup hook [--absolute] [--remove] [--dry-run] [--yes]",
+          "Usage: jitso setup hook [--scope project|user] [--absolute] [--remove] [--dry-run] [--yes]",
+          "--scope     project (default): this checkout; user: your own sessions, in every folder",
           "--absolute  write this binary's absolute path instead of the word jitso",
           "--remove    remove the hook entries jitso added"
         ],
@@ -35,7 +36,7 @@
       "expect": {
         "exit": 0,
         "stdout": [
-          "Usage: jitso setup hook [--absolute] [--remove] [--dry-run] [--yes]"
+          "Usage: jitso setup hook [--scope project|user] [--absolute] [--remove] [--dry-run] [--yes]"
         ],
         "stderr": [
           {
@@ -53,7 +54,7 @@
       "expect": {
         "exit": 0,
         "stdout": [
-          "Usage: jitso setup hook [--absolute] [--remove] [--dry-run] [--yes]",
+          "Usage: jitso setup hook [--scope project|user] [--absolute] [--remove] [--dry-run] [--yes]",
           "--dry-run   show the changes, write nothing",
           "--yes       apply without asking (needed when stdin is not a terminal)"
         ],

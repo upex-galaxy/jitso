@@ -202,7 +202,7 @@ func TestRunOutsideGitLeavesProjectChecksOut(t *testing.T) {
 		checks = append(checks, l.Check)
 	}
 	got := strings.Join(checks, " ")
-	const wantChecks = "binary path git shell orca claude project skill-user instructions-user"
+	const wantChecks = "binary path git shell orca claude project skill-user hooks-user instructions-user"
 	if got != wantChecks {
 		t.Errorf("checks = %s\nwant     %s", got, wantChecks)
 	}

@@ -1,0 +1,67 @@
+{
+  "id": "setup/hook/user-scope-remove-round-trip-absent",
+  "title": "setup hook --scope user then --remove from no file leaves no file and no .claude folder",
+  "source": [
+    "intended: docs/decisions.md v0.2 row (setup hook --scope user, plan 2.4): the guard registered in ~/.claude/settings.json for the owner's own session, same rules as project scope"
+  ],
+  "defect": "N-17",
+  "intent": "INTENDED behavior (plan 2.4). Starting with no `~/.claude`, add then remove: `~/.claude/settings.json` and `~/.claude` are gone, and the second `--remove` says `nothing to do`.",
+  "steps": [
+    {
+      "run": [
+        "setup",
+        "hook",
+        "--scope",
+        "user",
+        "--yes"
+      ],
+      "expect": {
+        "exit": 0,
+        "files": [
+          {
+            "path": "{{HOME}}/.claude/settings.json",
+            "equals": "{\n  \"hooks\": {\n    \"PreToolUse\": [\n      {\n        \"matcher\": \"Bash\",\n        \"hooks\": [\n          {\n            \"type\": \"command\",\n            \"command\": \"jitso hook guard\"\n          }\n        ]\n      },\n      {\n        \"matcher\": \"mcp__.*orca.*__.*\",\n        \"hooks\": [\n          {\n            \"type\": \"command\",\n            \"command\": \"jitso hook guard\"\n          }\n        ]\n      }\n    ],\n    \"SessionEnd\": [\n      {\n        \"hooks\": [\n          {\n            \"type\": \"command\",\n            \"command\": \"jitso hook guard\"\n          }\n        ]\n      }\n    ]\n  }\n}\n"
+          }
+        ]
+      }
+    },
+    {
+      "run": [
+        "setup",
+        "hook",
+        "--scope",
+        "user",
+        "--remove",
+        "--yes"
+      ],
+      "expect": {
+        "exit": 0,
+        "stdout": [
+          "removed ~/.claude/settings.json"
+        ],
+        "files": [
+          {
+            "path": "{{HOME}}/.claude",
+            "exists": false
+          }
+        ]
+      }
+    },
+    {
+      "run": [
+        "setup",
+        "hook",
+        "--scope",
+        "user",
+        "--remove",
+        "--yes"
+      ],
+      "expect": {
+        "exit": 0,
+        "stdout": [
+          "jitso setup hook: nothing to do (no jitso hook entries in ~/.claude/settings.json)"
+        ]
+      }
+    }
+  ]
+}

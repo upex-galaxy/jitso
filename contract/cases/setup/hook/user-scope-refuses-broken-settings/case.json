@@ -1,0 +1,39 @@
+{
+  "id": "setup/hook/user-scope-refuses-broken-settings",
+  "title": "setup hook --scope user on a user file that is not JSON fails (exit 3) naming ~/.claude/settings.json and writes nothing",
+  "source": [
+    "intended: docs/decisions.md v0.2 row (setup hook --scope user, plan 2.4): the guard registered in ~/.claude/settings.json for the owner's own session, same rules as project scope"
+  ],
+  "defect": "N-17",
+  "intent": "INTENDED behavior (plan 2.4, same refusal as project scope). A `~/.claude/settings.json` that is not valid JSON is never edited: exit 3, the message names `~/.claude/settings.json`, the file keeps its bytes.",
+  "home": {
+    "files": {
+      ".claude/settings.json": "not json {\n"
+    }
+  },
+  "steps": [
+    {
+      "run": [
+        "setup",
+        "hook",
+        "--scope",
+        "user",
+        "--yes"
+      ],
+      "expect": {
+        "exit": 3,
+        "stderr": [
+          {
+            "regex": "~/\\.claude/settings\\.json"
+          }
+        ],
+        "files": [
+          {
+            "path": "{{HOME}}/.claude/settings.json",
+            "equals": "not json {\n"
+          }
+        ]
+      }
+    }
+  ]
+}

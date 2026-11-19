@@ -1,0 +1,56 @@
+{
+  "id": "setup/hook/user-scope-remove-round-trip",
+  "title": "setup hook --scope user then --remove gives the user's original bytes back, and removes the file and folder jitso created",
+  "source": [
+    "intended: docs/decisions.md v0.2 row (setup hook --scope user, plan 2.4): the guard registered in ~/.claude/settings.json for the owner's own session, same rules as project scope"
+  ],
+  "defect": "N-17",
+  "intent": "INTENDED behavior (plan 2.4, same byte-exact rule as project scope). With a `~/.claude/settings.json` that has other settings and a hook of the user's own, `--scope user --yes` then `--scope user --remove --yes` leaves the original bytes. When the file did not exist, `--remove` deletes it and prunes `~/.claude` again. A backup of the changed file is kept under `~/.jitso/backups`.",
+  "home": {
+    "files": {
+      ".claude/settings.json": "{\n  \"model\": \"opus\",\n  \"permissions\": {\n    \"allow\": [\n      \"Bash(git status)\"\n    ]\n  },\n  \"hooks\": {\n    \"Stop\": [\n      {\n        \"hooks\": [\n          {\n            \"type\": \"command\",\n            \"command\": \"./notify.sh\"\n          }\n        ]\n      }\n    ]\n  },\n  \"env\": {\n    \"FOO\": \"bar\"\n  }\n}\n"
+    }
+  },
+  "steps": [
+    {
+      "run": [
+        "setup",
+        "hook",
+        "--scope",
+        "user",
+        "--yes"
+      ],
+      "expect": {
+        "exit": 0,
+        "stdout": [
+          "wrote ~/.claude/settings.json"
+        ]
+      }
+    },
+    {
+      "run": [
+        "setup",
+        "hook",
+        "--scope",
+        "user",
+        "--remove",
+        "--yes"
+      ],
+      "expect": {
+        "exit": 0,
+        "stdout": [
+          "wrote ~/.claude/settings.json",
+          {
+            "regex": "jitso setup hook: done\\n$"
+          }
+        ],
+        "files": [
+          {
+            "path": "{{HOME}}/.claude/settings.json",
+            "equals": "{\n  \"model\": \"opus\",\n  \"permissions\": {\n    \"allow\": [\n      \"Bash(git status)\"\n    ]\n  },\n  \"hooks\": {\n    \"Stop\": [\n      {\n        \"hooks\": [\n          {\n            \"type\": \"command\",\n            \"command\": \"./notify.sh\"\n          }\n        ]\n      }\n    ]\n  },\n  \"env\": {\n    \"FOO\": \"bar\"\n  }\n}\n"
+          }
+        ]
+      }
+    }
+  ]
+}

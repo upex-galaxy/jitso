@@ -1,0 +1,52 @@
+{
+  "id": "doctor/user-guard-registered",
+  "title": "after setup hook --scope user, doctor reports hooks-user ok and does not warn about the project's missing registration",
+  "source": [
+    "intended: plan 2.4 doctor half (owner question 8): doctor reports the user-scope guard"
+  ],
+  "defect": "N-20",
+  "intent": "INTENDED behavior (plan 2.4). With the guard in `~/.claude/settings.json` and none in the project, `ok   hooks-user: jitso hook guard is registered on PreToolUse (Bash, orca MCP) and SessionEnd in ~/.claude/settings.json`, and the project line is `ok   hooks: not registered in this project; your own session is guarded by ...`, never a warn or a fail. A launched session carries its own guard, so the project registration is optional.",
+  "home": {
+    "files": {
+      "bin/jitso": {
+        "symlink": "{{JITSO}}"
+      }
+    }
+  },
+  "steps": [
+    {
+      "run": [
+        "setup",
+        "hook",
+        "--scope",
+        "user",
+        "--yes"
+      ],
+      "expect": {
+        "exit": 0
+      }
+    },
+    {
+      "run": [
+        "doctor"
+      ],
+      "env": {
+        "PATH": "{{HOME}}/bin:{{BIN}}:/usr/bin:/bin"
+      },
+      "expect": {
+        "exit": 0,
+        "stdout": [
+          {
+            "regex": "(?m)^ok   hooks-user: jitso hook guard is registered on PreToolUse \\(Bash, orca MCP\\) and SessionEnd in ~/\\.claude/settings\\.json$"
+          },
+          {
+            "regex": "(?m)^ok   hooks: not registered in this project; your own session is guarded by jitso hook guard in ~/\\.claude/settings\\.json$"
+          },
+          {
+            "not_regex": "(?m)^fail "
+          }
+        ]
+      }
+    }
+  ]
+}

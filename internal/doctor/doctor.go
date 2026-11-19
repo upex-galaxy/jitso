@@ -199,18 +199,19 @@ func Run(p Ports) []Line {
 	binary, self := checkBinary(p)
 	add(binary, checkPath(p, self), checkGit(p), checkShell(p), checkOrca(p), checkClaude(p))
 
+	userHooks, userGuard := checkHooksUser(p)
 	proj, root, ok := checkProject(p)
 	add(proj)
 	var projectSkill skillFound
 	if ok {
-		c := &projectChecks{p: p, root: root}
+		c := &projectChecks{p: p, root: root, userGuard: userGuard}
 		add(c.catalog(), c.mcp(), c.state(), c.registry(), c.drafts(), c.backups(), c.hooks())
 		var line Line
 		line, projectSkill = checkSkill(p, "project", root.Checkout, nil)
 		add(line)
 	}
 	userSkill, _ := checkSkill(p, "user", p.Home, &projectSkill)
-	add(userSkill)
+	add(userSkill, userHooks)
 	if ok {
 		add(checkInstructions(p, root))
 	}

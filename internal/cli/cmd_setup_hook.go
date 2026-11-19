@@ -18,16 +18,19 @@ import (
 )
 
 // setup hook registers `jitso hook guard` in the settings file of the
-// checkout of the working folder (defect N-17): on PreToolUse for Bash and for
+// checkout of the working folder, or with --scope user in ~/.claude/settings.json
+// for the owner's own session (defect N-17): on PreToolUse for Bash and for
 // the orca MCP tools, and on SessionEnd. It edits the file through an
 // order-preserving JSON tree (internal/settingsjson), never touches a group
 // the user wrote, shows the diff first (no unchanged line, so a token in the
 // file is never printed), saves a backup of an existing file and asks before
 // it writes (internal/adopt). `--remove` takes out exactly what jitso added.
 //
-// The file belongs to the checkout the command runs in (a linked worktree
-// has its own); backups and state go to the primary's .jitso/. The file
-// .claude/settings.local.json is never opened.
+// The project file belongs to the checkout the command runs in (a linked
+// worktree has its own); backups and state go to the primary's .jitso/. The
+// user file needs no project and its backups go to ~/.jitso/. It is safe
+// outside JITSO projects: the guard prints nothing without jitso/jitso.yaml.
+// The file .claude/settings.local.json is never opened.
 //
 // Exit codes: 0 done, nothing to do or dry run; 2 a bad argument, no --yes
 // without a terminal, a declined prompt; 3 no git checkout, a settings file
@@ -37,10 +40,12 @@ func init() {
 	registerSetupSub(setupSub{
 		Name:      "hook",
 		Order:     10,
-		UsageLine: "[--absolute] [--remove] [--dry-run] [--yes]",
-		Help: "setup hook registers `jitso hook guard` in this checkout's .claude/settings.json:\n" +
+		UsageLine: "[--scope project|user] [--absolute] [--remove] [--dry-run] [--yes]",
+		Help: "setup hook registers `jitso hook guard` in this checkout's .claude/settings.json\n" +
+			"(or in ~/.claude/settings.json with --scope user):\n" +
 			"on PreToolUse for Bash and the orca MCP tools, and on SessionEnd.\n" +
 			"\n" +
+			"  --scope     project (default): this checkout; user: your own sessions, in every folder\n" +
 			"  --absolute  write this binary's absolute path instead of the word jitso\n" +
 			"  --remove    remove the hook entries jitso added\n" +
 			"  --dry-run   show the changes, write nothing\n" +
@@ -49,8 +54,12 @@ func init() {
 	})
 }
 
-// setupSettingsRel is the settings file, relative to the checkout.
+// setupSettingsRel is the settings file, relative to the checkout (project
+// scope) or to HOME (user scope).
 const setupSettingsRel = ".claude/settings.json"
+
+// setupUserDisplay is the user settings file as printed.
+const setupUserDisplay = "~/" + setupSettingsRel
 
 // setupLookPath and setupGitTracked are the two questions about the machine
 // and the repository that tests answer on their own.
@@ -63,29 +72,46 @@ var (
 )
 
 func runSetupHook(ctx *Context, args []string) error {
-	// --help, -h and --scope are answered before the flags are parsed: the
-	// parser would call them unknown arguments.
 	for _, a := range args {
 		if a == "--help" || a == "-h" {
 			ctx.Println(setupUsage())
 			return nil
 		}
 	}
-	for _, a := range args {
-		if a == "--scope" || strings.HasPrefix(a, "--scope=") {
-			return fail.Rejected("setup hook writes this checkout's .claude/settings.json only; --scope is not supported")
-		}
-	}
-	flags, rest, err := ParseFlags(args, FlagRemove|FlagAbsolute|FlagDryRun|FlagYes)
+	flags, rest, err := ParseFlags(args, FlagScope|FlagRemove|FlagAbsolute|FlagDryRun|FlagYes)
 	if err != nil {
 		return err
 	}
 	if err := RejectExtra(rest); err != nil {
 		return err
 	}
-	root, err := ctx.Project()
-	if err != nil {
-		return err
+
+	var root, stateDir, display string
+	var shown func(string) string
+	if flags.Scope == "user" {
+		home := ctx.Home()
+		if home == "" {
+			return fail.Env("HOME is not set")
+		}
+		root, stateDir, display = home, project.UserDir(home), setupUserDisplay
+		shown = func(p string) string {
+			if rel, ok := setupRel(root, p); ok {
+				return "~/" + rel
+			}
+			return p
+		}
+	} else {
+		r, err := ctx.Project()
+		if err != nil {
+			return err
+		}
+		root, stateDir, display = r.Checkout, r.StateDir(), setupSettingsRel
+		shown = func(p string) string {
+			if rel, ok := setupRel(root, p); ok {
+				return rel
+			}
+			return p
+		}
 	}
 
 	command := settingsjson.Command
@@ -101,34 +127,33 @@ func runSetupHook(ctx *Context, args []string) error {
 		command = quoted + " hook guard"
 	}
 
-	file := filepath.Join(root.Checkout, filepath.FromSlash(setupSettingsRel))
+	file := filepath.Join(root, filepath.FromSlash(setupSettingsRel))
 	old, err := os.ReadFile(file)
 	switch {
 	case errors.Is(err, fs.ErrNotExist):
 		old = nil
 	case err != nil:
-		return fail.Envf("could not read %s: %v", setupSettingsRel, setupUnwrap(err))
+		return fail.Envf("could not read %s: %v", display, setupUnwrap(err))
 	}
 
-	plan, err := setupHookPlan(root, file, old, command, flags.Remove)
+	plan, err := setupHookPlan(root, file, display, flags.Scope == "user", old, command, flags.Remove)
 	if err != nil {
 		return err
 	}
 
+	scope := flags.Scope
+	if scope == "" {
+		scope = "project"
+	}
 	opts := adopt.Options{
 		Command:    "setup hook",
-		Scope:      "project",
+		Scope:      scope,
 		Version:    setupVersionWord(),
-		Root:       root.Checkout,
-		BackupsDir: filepath.Join(root.StateDir(), "backups"),
+		Root:       root,
+		BackupsDir: filepath.Join(stateDir, "backups"),
 		DryRun:     flags.DryRun,
 		Yes:        flags.Yes,
-		Display: func(p string) string {
-			if rel, ok := setupRel(root.Checkout, p); ok {
-				return rel
-			}
-			return p
-		},
+		Display:    shown,
 	}
 	ports := adopt.Ports{
 		Stdin:    ctx.Sys.Stdin,
@@ -152,7 +177,8 @@ func runSetupHook(ctx *Context, args []string) error {
 
 // setupHookPlan is the change the command would make: the settings file
 // rewritten, created or removed (and the .claude folder it leaves empty).
-func setupHookPlan(root project.Root, file string, old []byte, command string, remove bool) (adopt.Plan, error) {
+// display is the file as printed; user is true for the file in HOME.
+func setupHookPlan(root, file, display string, user bool, old []byte, command string, remove bool) (adopt.Plan, error) {
 	var plan adopt.Plan
 	var out []byte
 	var err error
@@ -162,10 +188,10 @@ func setupHookPlan(root project.Root, file string, old []byte, command string, r
 		out, err = settingsjson.Register(old, command)
 	}
 	if err != nil {
-		return plan, setupProblem(err, command)
+		return plan, setupProblem(err, display, command)
 	}
 
-	change := adopt.Change{Path: file, Display: setupSettingsRel, Old: old, Kind: adopt.KindFile, Sensitive: true, Written: settingsjson.WrittenLine(command)}
+	change := adopt.Change{Path: file, Display: display, Old: old, Kind: adopt.KindFile, Sensitive: true, Written: settingsjson.WrittenLine(command)}
 	switch {
 	case remove && old == nil, old != nil && out != nil && bytes.Equal(out, old):
 		// No change: a missing file, or one that already has the answer.
@@ -174,7 +200,7 @@ func setupHookPlan(root project.Root, file string, old []byte, command string, r
 		plan.Add(change)
 		plan.Add(adopt.Change{
 			Path:    filepath.Dir(file),
-			Display: filepath.ToSlash(filepath.Dir(setupSettingsRel)),
+			Display: strings.TrimSuffix(display, "/"+filepath.Base(setupSettingsRel)),
 			Kind:    adopt.KindDelete,
 			Prune:   true,
 		})
@@ -184,11 +210,11 @@ func setupHookPlan(root project.Root, file string, old []byte, command string, r
 	}
 
 	if remove {
-		plan.Why = "no jitso hook entries in " + setupSettingsRel
+		plan.Why = "no jitso hook entries in " + display
 		return plan, nil
 	}
-	plan.Why = "the guard is already registered in " + setupSettingsRel
-	if !plan.Empty() && !setupGitTracked(root.Checkout, setupSettingsRel) {
+	plan.Why = "the guard is already registered in " + display
+	if !user && !plan.Empty() && !setupGitTracked(root, setupSettingsRel) {
 		plan.Notes = append(plan.Notes, "note: commit "+setupSettingsRel+" so linked worktrees and other clones get the guard")
 	}
 	return plan, nil
@@ -196,12 +222,12 @@ func setupHookPlan(root project.Root, file string, old []byte, command string, r
 
 // setupProblem turns a settingsjson error into the environment error (exit 3)
 // that names the file. A layout refusal also prints the fragment to add by hand.
-func setupProblem(err error, command string) error {
+func setupProblem(err error, display, command string) error {
 	var p *settingsjson.Problem
 	if !errors.As(err, &p) {
 		return fail.Envf("%v", err)
 	}
-	msg := p.Message(setupSettingsRel)
+	msg := p.Message(display)
 	if p.Kind == settingsjson.KindLayout {
 		msg += "\n" + strings.TrimRight(string(settingsjson.Fragment(command)), "\n")
 	}

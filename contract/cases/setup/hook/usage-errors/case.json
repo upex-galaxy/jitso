@@ -1,11 +1,11 @@
 {
   "id": "setup/hook/usage-errors",
-  "title": "setup with no or a wrong subcommand, setup hook --scope, a stray word or an unknown flag are usage errors (exit 2) and write nothing",
+  "title": "setup with no or a wrong subcommand, a bad --scope, a stray word or an unknown flag are usage errors (exit 2) and write nothing",
   "source": [
     "intended: docs/decisions.md D8 (setup hook, defect N-17): jitso registers its guard in the project's .claude/settings.json without clobbering anything"
   ],
   "defect": "N-17",
-  "intent": "INTENDED behavior (defect N-17, setup hook). `jitso setup` names what is missing and prints the usage; `setup hooks` is an unknown subcommand; `setup hook --scope user` (and `--scope=user`) says the command writes this checkout's `.claude/settings.json` only; a positional word or a flag the command does not declare is `unknown argument`. The `--scope` message wins before any flag parsing, and `.claude` is never created.",
+  "intent": "INTENDED behavior (defect N-17, setup hook). `jitso setup` names what is missing and prints the usage; `setup hooks` is an unknown subcommand; `--scope` without a value is `--scope needs a value`, any value but user or project is `--scope must be user or project`, and `--scope=user` is an unknown argument (the flag takes its value as the next word, as in `install skill`); a positional word or a flag the command does not declare is `unknown argument`. `.claude` is never created. (`--scope user` itself is a valid scope since v0.2: see `setup/hook/user-scope-*`.)",
   "steps": [
     {
       "run": [
@@ -20,7 +20,7 @@
         ],
         "stderr": [
           {
-            "regex": "^jitso setup: missing what to set up \\(hook[^)]*\\)\\n\\nUsage: jitso setup hook \\[--absolute\\] \\[--remove\\] \\[--dry-run\\] \\[--yes\\]\\n"
+            "regex": "^jitso setup: missing what to set up \\(hook[^)]*\\)\\n\\nUsage: jitso setup hook \\[--scope project\\|user\\] \\[--absolute\\] \\[--remove\\] \\[--dry-run\\] \\[--yes\\]\\n"
           },
           {
             "not_contains": "unknown command"
@@ -49,14 +49,30 @@
       "run": [
         "setup",
         "hook",
-        "--scope",
-        "user"
+        "--scope"
       ],
       "expect": {
         "exit": 2,
         "stderr": [
           {
-            "equals": "JITSO REJECTED: setup hook writes this checkout's .claude/settings.json only; --scope is not supported\n"
+            "equals": "JITSO REJECTED: --scope needs a value\n"
+          }
+        ]
+      }
+    },
+    {
+      "run": [
+        "setup",
+        "hook",
+        "--scope",
+        "elsewhere",
+        "--yes"
+      ],
+      "expect": {
+        "exit": 2,
+        "stderr": [
+          {
+            "equals": "JITSO REJECTED: --scope must be user or project\n"
           }
         ]
       }
@@ -72,7 +88,7 @@
         "exit": 2,
         "stderr": [
           {
-            "equals": "JITSO REJECTED: setup hook writes this checkout's .claude/settings.json only; --scope is not supported\n"
+            "equals": "JITSO REJECTED: unknown argument \"--scope=user\"\n"
           }
         ]
       }

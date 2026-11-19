@@ -1,0 +1,47 @@
+{
+  "id": "setup/hook/user-scope-second-run-is-nothing-to-do",
+  "title": "a second setup hook --scope user finds the guard registered and writes nothing",
+  "source": [
+    "intended: docs/decisions.md v0.2 row (setup hook --scope user, plan 2.4): the guard registered in ~/.claude/settings.json for the owner's own session, same rules as project scope"
+  ],
+  "defect": "N-17",
+  "intent": "INTENDED behavior (plan 2.4). After `--scope user --yes`, the same command again prints `nothing to do (the guard is already registered in ~/.claude/settings.json)` and leaves the file byte for byte.",
+  "steps": [
+    {
+      "run": [
+        "setup",
+        "hook",
+        "--scope",
+        "user",
+        "--yes"
+      ],
+      "expect": {
+        "exit": 0,
+        "stdout": [
+          "created ~/.claude/settings.json"
+        ]
+      }
+    },
+    {
+      "run": [
+        "setup",
+        "hook",
+        "--scope",
+        "user",
+        "--yes"
+      ],
+      "expect": {
+        "exit": 0,
+        "stdout": [
+          "jitso setup hook: nothing to do (the guard is already registered in ~/.claude/settings.json)"
+        ],
+        "files": [
+          {
+            "path": "{{HOME}}/.claude/settings.json",
+            "equals": "{\n  \"hooks\": {\n    \"PreToolUse\": [\n      {\n        \"matcher\": \"Bash\",\n        \"hooks\": [\n          {\n            \"type\": \"command\",\n            \"command\": \"jitso hook guard\"\n          }\n        ]\n      },\n      {\n        \"matcher\": \"mcp__.*orca.*__.*\",\n        \"hooks\": [\n          {\n            \"type\": \"command\",\n            \"command\": \"jitso hook guard\"\n          }\n        ]\n      }\n    ],\n    \"SessionEnd\": [\n      {\n        \"hooks\": [\n          {\n            \"type\": \"command\",\n            \"command\": \"jitso hook guard\"\n          }\n        ]\n      }\n    ]\n  }\n}\n"
+          }
+        ]
+      }
+    }
+  ]
+}

@@ -122,6 +122,12 @@ var setupBinaries = map[string]string{}
 // onPath is set through setupOnPath.
 func setupRun(t *testing.T, dir, stdin string, terminal bool, args ...string) (int, string, string) {
 	t.Helper()
+	return setupRunHome(t, dir, "", stdin, terminal, args...)
+}
+
+// setupRunHome is setupRun with $HOME set to home ("" leaves it unset).
+func setupRunHome(t *testing.T, dir, home, stdin string, terminal bool, args ...string) (int, string, string) {
+	t.Helper()
 	var out, errOut bytes.Buffer
 	exe := setupBinary(t)
 	var seed byte
@@ -129,7 +135,7 @@ func setupRun(t *testing.T, dir, stdin string, terminal bool, args ...string) (i
 		Stdin:     strings.NewReader(stdin),
 		Stdout:    &out,
 		Stderr:    &errOut,
-		LookupEnv: func(k string) (string, bool) { return "", false },
+		LookupEnv: func(k string) (string, bool) { return home, k == "HOME" && home != "" },
 		Getwd:     func() (string, error) { return dir, nil },
 		Executable: func() (string, error) {
 			return exe, nil
@@ -177,8 +183,9 @@ func setupRead(root, rel string) (string, bool) {
 
 func TestSetupUsageAnswers(t *testing.T) {
 	root := setupRepo(t)
-	const head = "Usage: jitso setup hook [--absolute] [--remove] [--dry-run] [--yes]"
-	scope := "JITSO REJECTED: setup hook writes this checkout's .claude/settings.json only; --scope is not supported\n"
+	const head = "Usage: jitso setup hook [--scope project|user] [--absolute] [--remove] [--dry-run] [--yes]"
+	noValue := "JITSO REJECTED: --scope needs a value\n"
+	badValue := "JITSO REJECTED: --scope must be user or project\n"
 	tests := []struct {
 		name   string
 		args   []string
@@ -192,10 +199,9 @@ func TestSetupUsageAnswers(t *testing.T) {
 		{"hook help", []string{"setup", "hook", "--help"}, 0, head, ""},
 		{"hook short help", []string{"setup", "hook", "-h"}, 0, head, ""},
 		{"unknown subcommand", []string{"setup", "hooks"}, 2, "", "jitso setup: unknown subcommand \"hooks\"\n\n" + head},
-		{"scope", []string{"setup", "hook", "--scope", "user"}, 2, "", scope},
-		{"scope equals", []string{"setup", "hook", "--scope=user"}, 2, "", scope},
-		{"scope without a value", []string{"setup", "hook", "--scope"}, 2, "", scope},
-		{"scope wins over another bad flag", []string{"setup", "hook", "--bogus", "--scope", "user"}, 2, "", scope},
+		{"scope without a value", []string{"setup", "hook", "--scope"}, 2, "", noValue},
+		{"scope with a bad value", []string{"setup", "hook", "--scope", "elsewhere"}, 2, "", badValue},
+		{"scope equals", []string{"setup", "hook", "--scope=user"}, 2, "", "JITSO REJECTED: unknown argument \"--scope=user\"\n"},
 		{"a stray word", []string{"setup", "hook", "extra"}, 2, "", "JITSO REJECTED: unknown argument \"extra\"\n"},
 		{"an unknown flag", []string{"setup", "hook", "--bogus"}, 2, "", "JITSO REJECTED: unknown argument \"--bogus\"\n"},
 		{"a flag of another command", []string{"setup", "hook", "--force"}, 2, "", "JITSO REJECTED: unknown argument \"--force\"\n"},
@@ -501,5 +507,70 @@ func TestSetupHookLinkedWorktree(t *testing.T) {
 	entries, _ := os.ReadDir(filepath.Join(primary, ".jitso", "backups"))
 	if len(entries) != 2 {
 		t.Errorf("primary backups has %d entries", len(entries))
+	}
+}
+
+func TestSetupHookUserScope(t *testing.T) {
+	setupPatch(t, true, false)
+	root := setupRepo(t)
+	home := t.TempDir()
+
+	code, out, errOut := setupRunHome(t, root, home, "", false, "setup", "hook", "--scope", "user", "--yes")
+	if code != 0 || errOut != "" {
+		t.Fatalf("exit %d\nstdout %q\nstderr %q", code, out, errOut)
+	}
+	if got, _ := setupRead(home, ".claude/settings.json"); got != setupCanonical {
+		t.Errorf("user file:\n%s", got)
+	}
+	if _, ok := setupRead(root, ".claude/settings.json"); ok {
+		t.Error("user scope wrote the project file")
+	}
+	if !strings.Contains(out, "created ~/.claude/settings.json\n") || strings.Contains(out, "note:") {
+		t.Errorf("stdout:\n%s", out)
+	}
+
+	code, out, _ = setupRunHome(t, root, home, "", false, "setup", "hook", "--scope", "user", "--yes")
+	if code != 0 || !strings.Contains(out, "nothing to do (the guard is already registered in ~/.claude/settings.json)") {
+		t.Errorf("second run: exit %d\n%s", code, out)
+	}
+
+	code, out, _ = setupRunHome(t, root, home, "", false, "setup", "hook", "--scope", "user", "--remove", "--yes")
+	if code != 0 || !strings.Contains(out, "removed ~/.claude/settings.json") {
+		t.Errorf("remove: exit %d\n%s", code, out)
+	}
+	if _, err := os.Stat(filepath.Join(home, ".claude")); !os.IsNotExist(err) {
+		t.Errorf("~/.claude is left behind: %v", err)
+	}
+}
+
+func TestSetupHookUserScopeKeepsTheUsersFileAndBacksItUp(t *testing.T) {
+	setupPatch(t, true, false)
+	root := setupRepo(t)
+	home := t.TempDir()
+	setupWrite(t, home, ".claude/settings.json", setupUserSeed)
+
+	code, out, errOut := setupRunHome(t, root, home, "", false, "setup", "hook", "--scope", "user", "--yes")
+	if code != 0 {
+		t.Fatalf("exit %d\nstdout %q\nstderr %q", code, out, errOut)
+	}
+	if strings.Contains(out, "ENV-CANARY-9") {
+		t.Errorf("the preview printed a value of the user's file:\n%s", out)
+	}
+	if _, ok := setupRead(home, ".jitso/backups/.gitignore"); !ok {
+		t.Error("no backup folder under ~/.jitso")
+	}
+	if code, _, _ = setupRunHome(t, root, home, "", false, "setup", "hook", "--scope", "user", "--remove", "--yes"); code != 0 {
+		t.Fatalf("remove exit %d", code)
+	}
+	if got, _ := setupRead(home, ".claude/settings.json"); got != setupUserSeed {
+		t.Errorf("round trip:\n%s", got)
+	}
+}
+
+func TestSetupHookUserScopeNeedsHome(t *testing.T) {
+	root := setupRepo(t)
+	code, _, errOut := setupRunHome(t, root, "", "", false, "setup", "hook", "--scope", "user", "--yes")
+	if code != 3 || errOut != "jitso: HOME is not set\n" {
+		t.Errorf("exit %d, stderr %q", code, errOut)
 	}
 }

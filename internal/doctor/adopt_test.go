@@ -24,9 +24,9 @@ func TestHooksStates(t *testing.T) {
 	}
 
 	// No file, no JITSO handler: not registered.
-	want(t, check(nil, onPath), Warn, "hooks", "not registered: run jitso setup hook")
+	want(t, check(nil, onPath), Warn, "hooks", "not registered: the owner's own session in this project is not guarded (run jitso setup hook --scope user)")
 	put(t, dir, ".claude/settings.json", `{"hooks": {"Stop": [{"hooks": [{"type": "command", "command": "./notify.sh"}]}]}}`)
-	want(t, check(nil, onPath), Warn, "hooks", "not registered: run jitso setup hook")
+	want(t, check(nil, onPath), Warn, "hooks", "not registered: the owner's own session in this project is not guarded (run jitso setup hook --scope user)")
 
 	// Registered, resolves and tracked: ok.
 	put(t, dir, ".claude/settings.json", string(settingsjson.Fragment(settingsjson.Command)))
@@ -329,4 +329,66 @@ func TestInstructionsUser(t *testing.T) {
 	want(t, checkInstructionsUser(p), Fail, "instructions-user", "~/.claude/CLAUDE.md has a broken JITSO block (an END without a BEGIN at line 1)")
 
 	want(t, checkInstructionsUser(Ports{}.withDefaults()), Warn, "instructions-user", "HOME is not set")
+}
+
+func TestHooksUnregisteredIsOkWhenTheUserFileGuards(t *testing.T) {
+	dir := fixture(t)
+	c, _ := checksFor(t, dir, nil)
+	c.userGuard = true
+	want(t, c.hooks(), OK, "hooks", "not registered in this project; your own session is guarded by jitso hook guard in ~/.claude/settings.json")
+}
+
+func TestHooksUser(t *testing.T) {
+	onPath := lookup(map[string]string{"jitso": "/usr/local/bin/jitso"})
+	ports := func(home string, look func(string) (string, error)) Ports {
+		return Ports{GOOS: "linux", Home: home, LookPath: look}.withDefaults()
+	}
+	home := t.TempDir()
+
+	got, guarded := checkHooksUser(ports(home, onPath))
+	want(t, got, OK, "hooks-user", "not registered in ~/.claude/settings.json (optional: run jitso setup hook --scope user")
+	if guarded {
+		t.Error("an absent file guards")
+	}
+	if got, _ := checkHooksUser(ports("", onPath)); got.Status != OK {
+		t.Errorf("no HOME: %s", got)
+	}
+
+	put(t, home, ".claude/settings.json", `{"hooks": {"Stop": [{"hooks": [{"type": "command", "command": "./notify.sh"}]}]}}`)
+	got, guarded = checkHooksUser(ports(home, onPath))
+	want(t, got, OK, "hooks-user", "not registered in ~/.claude/settings.json")
+	if guarded {
+		t.Error("a file with no JITSO handler guards")
+	}
+
+	put(t, home, ".claude/settings.json", string(settingsjson.Fragment(settingsjson.Command)))
+	got, guarded = checkHooksUser(ports(home, onPath))
+	want(t, got, OK, "hooks-user", "jitso hook guard is registered on PreToolUse (Bash, orca MCP) and SessionEnd in ~/.claude/settings.json")
+	if !guarded {
+		t.Error("the whole guard does not count as guarded")
+	}
+
+	got, guarded = checkHooksUser(ports(home, lookup(nil)))
+	want(t, got, Fail, "hooks-user", "jitso is not on PATH")
+	if guarded {
+		t.Error("a guard that cannot start counts as guarded")
+	}
+
+	put(t, home, ".claude/settings.json", `{"disableAllHooks": true, "hooks": {"PreToolUse": [{"matcher": "Bash", "hooks": [{"type": "command", "command": "jitso hook guard"}]}]}}`)
+	got, guarded = checkHooksUser(ports(home, onPath))
+	want(t, got, Warn, "hooks-user", "registered on PreToolUse Bash only (missing PreToolUse orca MCP, SessionEnd): run jitso setup hook --scope user")
+	if guarded {
+		t.Error("a partial guard counts as guarded")
+	}
+
+	put(t, home, ".claude/settings.json", strings.Replace(string(settingsjson.Fragment(settingsjson.Command)), "{\n", "{\n  \"disableAllHooks\": true,\n", 1))
+	got, guarded = checkHooksUser(ports(home, onPath))
+	want(t, got, Warn, "hooks-user", "disableAllHooks is true in ~/.claude/settings.json")
+	if guarded {
+		t.Error("disableAllHooks counts as guarded")
+	}
+
+	put(t, home, ".claude/settings.json", "{")
+	got, _ = checkHooksUser(ports(home, onPath))
+	want(t, got, Fail, "hooks-user", "~/.claude/settings.json is not valid JSON")
 }

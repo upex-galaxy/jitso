@@ -1,0 +1,36 @@
+{
+  "id": "doctor/user-hook-not-on-path",
+  "title": "doctor fails hooks-user when the registered command cannot start",
+  "source": [
+    "intended: plan 2.4 doctor half (owner question 8): doctor reports the user-scope guard"
+  ],
+  "defect": "N-20",
+  "intent": "INTENDED behavior (plan 2.4). After `setup hook --scope user --yes` the command is the bare word `jitso`; with no `jitso` on the sandbox PATH the line is `fail hooks-user: jitso is not on PATH` and doctor exits 3, the same rule as the project line.",
+  "steps": [
+    {
+      "run": [
+        "setup",
+        "hook",
+        "--scope",
+        "user",
+        "--yes"
+      ],
+      "expect": {
+        "exit": 0
+      }
+    },
+    {
+      "run": [
+        "doctor"
+      ],
+      "expect": {
+        "exit": 3,
+        "stdout": [
+          {
+            "regex": "(?m)^fail hooks-user: jitso is not on PATH$"
+          }
+        ]
+      }
+    }
+  ]
+}

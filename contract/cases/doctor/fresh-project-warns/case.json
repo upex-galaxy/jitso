@@ -5,7 +5,7 @@
     "intended: B4B5-DESIGN.md B4-22 and the doctor spec (defect N-20): a read-only health check"
   ],
   "defect": "N-20",
-  "intent": "INTENDED behavior (defect N-20, B4.5). On the default project (a catalog, no hook, no skill, no instruction block) doctor exits 0: `warn hooks: not registered`, `warn skill-project: not installed`, `warn instructions: ...`, `ok   catalog: ...`, and not one `fail` line. A warning never breaks a script.",
+  "intent": "INTENDED behavior (defect N-20, B4.5). On the default project (a catalog, no hook, no skill, no instruction block) doctor exits 0: `warn hooks: not registered: the owner's own session in this project is not guarded (run jitso setup hook --scope user)`, `ok   hooks-user: not registered ... (optional ...)`, `warn skill-project: not installed`, `warn instructions: ...`, `ok   catalog: ...`, and not one `fail` line. A warning never breaks a script.",
   "steps": [
     {
       "run": [
@@ -15,7 +15,10 @@
         "exit": 0,
         "stdout": [
           {
-            "regex": "(?m)^warn hooks: not registered"
+            "regex": "(?m)^warn hooks: not registered: the owner's own session in this project is not guarded \\(run jitso setup hook --scope user\\)$"
+          },
+          {
+            "regex": "(?m)^ok   hooks-user: not registered in ~/\\.claude/settings\\.json \\(optional: run jitso setup hook --scope user to guard your own session\\)$"
           },
           {
             "regex": "(?m)^warn skill-project: not installed"

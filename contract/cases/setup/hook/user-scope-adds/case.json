@@ -1,0 +1,48 @@
+{
+  "id": "setup/hook/user-scope-adds",
+  "title": "setup hook --scope user --yes creates ~/.claude/settings.json with the guard, from any folder, and leaves the project alone",
+  "source": [
+    "intended: docs/decisions.md v0.2 row (setup hook --scope user, plan 2.4): the guard registered in ~/.claude/settings.json for the owner's own session, same rules as project scope"
+  ],
+  "defect": "N-17",
+  "intent": "INTENDED behavior (plan 2.4, owner question 8). `--scope user` needs no project: from the home folder it writes the same canonical file as the project scope to `~/.claude/settings.json`, printing the path as `~/.claude/settings.json`, with no `commit` note (the file is not in a repository). Nothing is written in the project.",
+  "steps": [
+    {
+      "run": [
+        "setup",
+        "hook",
+        "--scope",
+        "user",
+        "--yes"
+      ],
+      "cwd": "{{HOME}}",
+      "expect": {
+        "exit": 0,
+        "stdout": [
+          "--- /dev/null",
+          "+++ b/~/.claude/settings.json",
+          "created ~/.claude/settings.json",
+          {
+            "not_contains": "note: commit"
+          },
+          {
+            "regex": "jitso setup hook: done\\n$"
+          }
+        ],
+        "stderr": [
+          "jitso: warning: jitso is not on PATH, so the hook cannot start until it is (the guard then lets every call through)"
+        ],
+        "files": [
+          {
+            "path": "{{HOME}}/.claude/settings.json",
+            "equals": "{\n  \"hooks\": {\n    \"PreToolUse\": [\n      {\n        \"matcher\": \"Bash\",\n        \"hooks\": [\n          {\n            \"type\": \"command\",\n            \"command\": \"jitso hook guard\"\n          }\n        ]\n      },\n      {\n        \"matcher\": \"mcp__.*orca.*__.*\",\n        \"hooks\": [\n          {\n            \"type\": \"command\",\n            \"command\": \"jitso hook guard\"\n          }\n        ]\n      }\n    ],\n    \"SessionEnd\": [\n      {\n        \"hooks\": [\n          {\n            \"type\": \"command\",\n            \"command\": \"jitso hook guard\"\n          }\n        ]\n      }\n    ]\n  }\n}\n"
+          },
+          {
+            "path": "{{PROJECT}}/.claude",
+            "exists": false
+          }
+        ]
+      }
+    }
+  ]
+}

@@ -28,6 +28,8 @@ const DraftWarnAge = 7 * 24 * time.Hour
 type projectChecks struct {
 	p    Ports
 	root project.Root
+	// userGuard is true when ~/.claude/settings.json holds the whole guard.
+	userGuard bool
 
 	cat    *catalog.Catalog
 	catErr bool

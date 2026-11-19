@@ -1,0 +1,90 @@
+{
+  "id": "setup/hook/user-scope-dry-run",
+  "title": "setup hook --scope user --dry-run shows the diff and writes nothing; without --yes and a terminal it is refused",
+  "source": [
+    "intended: docs/decisions.md v0.2 row (setup hook --scope user, plan 2.4): the guard registered in ~/.claude/settings.json for the owner's own session, same rules as project scope"
+  ],
+  "defect": "N-17",
+  "intent": "INTENDED behavior (plan 2.4). `--dry-run` prints the preview and `dry run, nothing written`, and the home folder stays without `.claude`. With no `--yes` and no terminal the command is `JITSO REJECTED` (exit 2) and also writes nothing. A project-scope `--remove --dry-run` is covered by `setup/hook/remove-dry-run`; here the user file is added, then `--remove --dry-run` keeps it.",
+  "steps": [
+    {
+      "run": [
+        "setup",
+        "hook",
+        "--scope",
+        "user",
+        "--dry-run"
+      ],
+      "expect": {
+        "exit": 0,
+        "stdout": [
+          "+++ b/~/.claude/settings.json",
+          {
+            "regex": "jitso setup hook: dry run, nothing written\\n$"
+          }
+        ],
+        "files": [
+          {
+            "path": "{{HOME}}/.claude",
+            "exists": false
+          }
+        ]
+      }
+    },
+    {
+      "run": [
+        "setup",
+        "hook",
+        "--scope",
+        "user"
+      ],
+      "expect": {
+        "exit": 2,
+        "files": [
+          {
+            "path": "{{HOME}}/.claude",
+            "exists": false
+          }
+        ]
+      }
+    },
+    {
+      "run": [
+        "setup",
+        "hook",
+        "--scope",
+        "user",
+        "--yes"
+      ],
+      "expect": {
+        "exit": 0
+      }
+    },
+    {
+      "run": [
+        "setup",
+        "hook",
+        "--scope",
+        "user",
+        "--remove",
+        "--dry-run"
+      ],
+      "expect": {
+        "exit": 0,
+        "stdout": [
+          "--- a/~/.claude/settings.json",
+          "+++ /dev/null",
+          {
+            "regex": "jitso setup hook: dry run, nothing written\\n$"
+          }
+        ],
+        "files": [
+          {
+            "path": "{{HOME}}/.claude/settings.json",
+            "equals": "{\n  \"hooks\": {\n    \"PreToolUse\": [\n      {\n        \"matcher\": \"Bash\",\n        \"hooks\": [\n          {\n            \"type\": \"command\",\n            \"command\": \"jitso hook guard\"\n          }\n        ]\n      },\n      {\n        \"matcher\": \"mcp__.*orca.*__.*\",\n        \"hooks\": [\n          {\n            \"type\": \"command\",\n            \"command\": \"jitso hook guard\"\n          }\n        ]\n      }\n    ],\n    \"SessionEnd\": [\n      {\n        \"hooks\": [\n          {\n            \"type\": \"command\",\n            \"command\": \"jitso hook guard\"\n          }\n        ]\n      }\n    ]\n  }\n}\n"
+          }
+        ]
+      }
+    }
+  ]
+}
