@@ -46,15 +46,20 @@ func (c Config) FieldPattern(name string) (*regexp.Regexp, bool) {
 // ValidFieldValue is the value check of a field with no pattern: not empty and
 // no control character (U+0000 to U+001F, U+007F).
 func ValidFieldValue(v string) bool {
-	if v == "" {
-		return false
-	}
+	return v != "" && !HasControl(v)
+}
+
+// HasControl reports whether v holds a control character (U+0000 to U+001F,
+// U+007F). No field value may: a launch writes each value on one line of
+// brief.md, so a value with a line break could start a heading or a list
+// there.
+func HasControl(v string) bool {
 	for _, r := range v {
 		if unicode.IsControl(r) && (r < 0x20 || r == 0x7f) {
-			return false
+			return true
 		}
 	}
-	return true
+	return false
 }
 
 // configFrom reads the allowlists from a decoded jitso.yaml the way

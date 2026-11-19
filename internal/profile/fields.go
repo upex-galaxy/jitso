@@ -56,6 +56,14 @@ func (f Fields) Keys() []string {
 	return append(indices, names...)
 }
 
+// Sorted are the names in byte order, the stable order the launch writes them
+// in.
+func (f Fields) Sorted() []string {
+	names := append([]string{}, f.keys...)
+	sort.Strings(names)
+	return names
+}
+
 // isArrayIndex is the JavaScript array index test: the canonical decimal form
 // of an integer from 0 to 2^32 - 2.
 func isArrayIndex(k string) bool {

@@ -15,7 +15,7 @@ Two prefixes tell you whose problem it is. `JITSO REJECTED: <reason>` (exit 2) m
 | `jitso: warning: --mcp-exclude "<name>" is not an MCP server of build <id>; nothing excluded` | a warning, exit 0: the build does not list that name, so nothing was left out. A `(did you mean "<server>"?)` hint means the name differs only by case. Fix the name if you meant to drop a server |
 | `--field must look like name=value` | write `--field ticket_key=PROJ-12` |
 | `missing ticket_key` (any field the build `requires`) | pass `--field ticket_key=<value>` |
-| `field ticket_key has an invalid value` | the value does not match the pattern the project gave that field in the `fields` key of `jitso/jitso.yaml`, or, for a field with no pattern, it is empty or has a line break. Read the build's description for the shape |
+| `field ticket_key has an invalid value` | the value does not match the pattern the project gave that field in the `fields` key of `jitso/jitso.yaml`, or, for a field with no pattern, it is empty; a line break or any other control character is refused for every field. Read the build's description for the shape |
 | `unknown field "foo" for build "<id>"` | the build does not require that field. Drop the flag |
 | `unknown build "<id>"` | no build has that id for this project. Check `jitso build list`, `jitso build list --drafts` and `jitso build validate` |
 | `build "<id>" has tier subagent: it is not launched alone, a worker lists it in its subagents` | launch the worker that lists it |

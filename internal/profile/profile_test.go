@@ -207,3 +207,24 @@ func TestResolveFieldWithoutPattern(t *testing.T) {
 		}
 	}
 }
+
+// TestResolveFieldPatternKeepsTheControlCharacterBan: a pattern that would
+// match a line break does not let one through, because a launch writes each
+// value on one line of brief.md.
+func TestResolveFieldPatternKeepsTheControlCharacterBan(t *testing.T) {
+	fsys := fstest.MapFS{
+		"jitso/jitso.yaml":           {Data: []byte("version: 1\nmodels: [claude-haiku-5-5]\nefforts: [low]\nfields:\n  color: '(?s).+'\n")},
+		".agents/instructions/x.txt": {Data: []byte("")},
+		"jitso/builds/painter.yaml":  {Data: []byte(build("painter", "requires: [color]", "route_scope: null"))},
+	}
+	cat, err := catalog.Load(fsys)
+	if err != nil {
+		t.Fatal(err)
+	}
+	for value, reason := range map[string]string{"red": "", "a\nb": "field color has an invalid value", "a\rb": "field color has an invalid value", "a\x7fb": "field color has an invalid value"} {
+		_, err := Resolve(Request{Build: "painter", Fields: fields("color", value)}, cat)
+		if reason == "" && err != nil || reason != "" && (err == nil || !strings.Contains(err.Error(), reason)) {
+			t.Errorf("value %q: got %v, want %q", value, err, reason)
+		}
+	}
+}

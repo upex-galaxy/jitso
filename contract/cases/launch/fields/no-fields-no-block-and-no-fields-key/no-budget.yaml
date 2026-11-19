@@ -1,0 +1,18 @@
+# Worker without a budget.
+id: no-budget
+version: 1
+status: approved
+role: operator
+type: scanner
+work_kind: repo-scan
+description: A worker with no budget.
+harness: claude
+model: claude-haiku-5-5
+effort: low
+mode_default: direct
+agents_md: exclude
+route_scope: [none]
+skills_first: []
+tools: [Read, Glob, Grep]
+mcp: []
+requires: []

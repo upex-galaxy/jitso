@@ -63,12 +63,30 @@ func Card(id, mode string, p profile.Profile, mcp []string, launchCommand string
 	}
 }
 
+// FieldsBlock is the block of brief.md that lists the launch's field values:
+// the heading `## Fields`, then one `- <key>: <value>` line per field in byte
+// order of the key. It is empty when the launch has no field. A value cannot
+// hold a line break (profile.Resolve refuses every control character), so each
+// stays on its own line.
+func FieldsBlock(f profile.Fields) string {
+	if f.Len() == 0 {
+		return ""
+	}
+	var b strings.Builder
+	b.WriteString("## Fields\n")
+	for _, k := range f.Sorted() {
+		b.WriteString("- " + k + ": " + f.Get(k) + "\n")
+	}
+	return b.String()
+}
+
 // BriefFile is the brief.md the session reads: the card, a blank line, the
-// skills to load first (when the build lists any), the brief as written and
-// the JITSO rules after one blank line. The brief bytes are never trimmed: a
+// skills to load first (when the build lists any), the brief as written, the
+// fields block (when the launch has fields) and the JITSO rules, each after
+// one blank line. The brief bytes are never trimmed: a
 // brief without a final newline gets one, and the file ends with exactly one
 // newline.
-func BriefFile(cardText string, skillsFirst []string, briefText, rulesText string) string {
+func BriefFile(cardText string, skillsFirst []string, briefText, fieldsBlock, rulesText string) string {
 	skills := ""
 	if len(skillsFirst) > 0 {
 		skills = "Load first: " + strings.Join(skillsFirst, ", ") + "\n\n"
@@ -77,7 +95,10 @@ func BriefFile(cardText string, skillsFirst []string, briefText, rulesText strin
 	if !strings.HasSuffix(briefText, "\n") {
 		sep = "\n"
 	}
-	return cardText + "\n\n" + skills + briefText + sep + "\n" + rulesText + "\n"
+	if fieldsBlock != "" {
+		fieldsBlock += "\n"
+	}
+	return cardText + "\n\n" + skills + briefText + sep + "\n" + fieldsBlock + rulesText + "\n"
 }
 
 // FirstPrompt is the first prompt of a direct launch: the pointer to the
@@ -232,6 +253,12 @@ func Event(in EventInput) *registry.LaunchEvent {
 	}
 	if b.Budget.Set {
 		e.Budget = &registry.Budget{Tokens: b.Budget.Tokens, USDListCap: b.Budget.USDListCap}
+	}
+	if f := in.Profile.Fields; f.Len() > 0 {
+		e.Fields = make(map[string]string, f.Len())
+		for _, k := range f.Keys() {
+			e.Fields[k] = f.Get(k)
+		}
 	}
 	return e
 }

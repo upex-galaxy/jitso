@@ -1,0 +1,57 @@
+{
+  "id": "launch/fields/pointer-brief-block-follows-the-target-text",
+  "title": "with a pointer brief the ## Fields block comes after the target text and before the JITSO rules",
+  "source": [
+    "intended: docs/decisions.md, Pre-release fixes (the fields reach brief.md)"
+  ],
+  "intent": "The brief file is a pointer, so the text of the target takes the place of the brief. The `## Fields` block follows that target text and the rules stay last; the `Brief:` line is nowhere in the file.",
+  "project": {
+    "files": {
+      ".jitso/briefs/pointer.md": "Brief: docs/cards/w.md\n",
+      "docs/cards/w.md": {
+        "from": "card.md"
+      },
+      "jitso/builds/with-fields.yaml": {
+        "from": "with-fields.yaml"
+      }
+    }
+  },
+  "steps": [
+    {
+      "run": [
+        "launch",
+        "--build",
+        "with-fields",
+        "--brief",
+        "{{PROJECT}}/.jitso/briefs/pointer.md",
+        "--mode",
+        "direct",
+        "--field",
+        "ticket_key=BK-7",
+        "--field",
+        "env=qa"
+      ],
+      "capture": {
+        "LAUNCH_ID": {
+          "from": "stdout",
+          "regex": "JITSO (L\\d{8}T\\d{6}-[0-9a-f]{4})",
+          "group": 1
+        }
+      },
+      "expect": {
+        "exit": 0,
+        "files": [
+          {
+            "path": ".jitso/launches/{{LAUNCH_ID}}/brief.md",
+            "not_contains": [
+              "Brief: docs/cards/w.md"
+            ],
+            "regex": [
+              "Read the sync entry point of this project(?s:.*)\\n\\n## Fields\\n- env: qa\\n- ticket_key: BK-7\\n\\n## JITSO rules\\nStart other agent sessions only with the card's `launch:` line\\.\\nLoad the card's skills before any other work\\. You may ask the human\\.\\nLeave `jitso/` and `\\.jitso/` alone except your own draft in `\\.jitso/drafts/`, and never run `jitso build save`\\.\\n$"
+            ]
+          }
+        ]
+      }
+    }
+  ]
+}

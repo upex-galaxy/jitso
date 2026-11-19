@@ -54,6 +54,9 @@ type LaunchEvent struct {
 	TrustDialog    string   `json:"trust_dialog"`
 	Orca           OrcaRef  `json:"orca"`
 	Budget         *Budget  `json:"budget,omitempty"`
+	// Fields are the --field values of the launch, key to value, in key
+	// order; the key is left out when the launch has none.
+	Fields map[string]string `json:"fields,omitempty"`
 }
 
 // OrcaRef is the orca field of a launch event.

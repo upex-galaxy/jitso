@@ -81,7 +81,7 @@ func writeFolder(p prepared, d Deps, dir string) (folder, error) {
 	writes := []struct {
 		path, text string
 	}{
-		{f.brief, BriefFile(p.card, b.SkillsFirst, p.briefText, card.Rules(string(p.args.Mode), b.Budget.Set))},
+		{f.brief, BriefFile(p.card, b.SkillsFirst, p.briefText, FieldsBlock(p.profile.Fields), card.Rules(string(p.args.Mode), b.Budget.Set))},
 		{in.MCPConfigPath, string(mcpJSON) + "\n"},
 		{filepath.Join(dir, FileCard), p.card + "\n"},
 		{runSh, script},

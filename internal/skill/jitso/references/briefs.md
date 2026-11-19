@@ -57,7 +57,7 @@ The keyword may be in any case and the path may sit in backticks. A second non-b
 
 - resolves the path from the project's primary checkout (not from your working folder), follows every symlink, and requires a regular file inside the primary checkout whose real path ends in `.md`. A link that leads to `.env` or any other file that is not `.md` is refused, and so is any target (as written or after links) with a path segment `.auth`, `.jitso` or one starting with `.env`, in any case: `brief target is a protected path: <path>`;
 - checks the card's text for the language (`--brief-language`) and for at least the minimum words. It asks for no sections, no maximum and no existing cited paths;
-- copies the card's text into `brief.md` where a brief goes, with the JITSO rules last. The registry hash `brief_sha256` is the hash of that card text.
+- copies the card's text into `brief.md` where a brief goes, then a `## Fields` block with the launch's `--field` values (one `- <key>: <value>` line per field, sorted; none without fields), with the JITSO rules last. The registry hash `brief_sha256` is the hash of that card text.
 
 The pointer line carries no extra text: put any instruction the worker needs in the card itself. The target must be a file the worker may read, so keep secrets out of the card.
 

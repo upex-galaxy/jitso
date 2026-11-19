@@ -49,7 +49,7 @@ What the CLI does, split by responsibility. "Pure" means no file, process, clock
 | Version | the one-line text | build info | `internal/version` |
 | Terminal test | none | the termios ioctl on standard input | `internal/tty` |
 
-The rules text is `card.Rules(mode, hasBudget)`, called with the build's budget presence, pure: a heading and three lines, the direct or the fleet wording, with or without the sentence that names the card's budget as the ceiling. `launch.BriefFile` appends it to the end of `brief.md` after one blank line (`docs/decisions.md`, the v0.1.0 cut).
+The rules text is `card.Rules(mode, hasBudget)`, called with the build's budget presence, pure: a heading and three lines, the direct or the fleet wording, with or without the sentence that names the card's budget as the ceiling. `launch.BriefFile` appends it to the end of `brief.md` after one blank line (`docs/decisions.md`, the v0.1.0 cut). The block of the launch's field values, `launch.FieldsBlock`, goes between the brief text and the rules, so the rules stay last; `launch.Event` copies the same values into the `fields` object of the launch event, and `catalog.HasControl` keeps a line break out of every value (`docs/decisions.md`, Pre-release fixes).
 
 ## 3. Module and layout
 
@@ -288,6 +288,7 @@ Each block after milestone 8 is its own contract change, cases first, run agains
 | Pre-release fixes: the `Output:` hint in the ghost path rejection | none | `brief` | `^brief/` |
 | Pre-release fixes: pointer briefs | none | `brief`, `launch` | `^brief/pointer/` |
 | Pre-release fixes: every terminal listed, a truncated list refused | none | `orca` | `^(reap\|close)/` |
+| Pre-release fixes: the field values reach `brief.md` and the launch event | none | `profile`, `launch`, `registry` | `^(launch/\|validation/field)`, then the whole suite |
 | Pre-release fixes: fleet creates the Task from `brief.md` | none | `launch`, `hook`, `cli` | `^(launch/fleet/\|validation/fleet/\|hooks/guard/deny-reason)`, then the whole suite |
 | Release files: packaging, install script, workflow | none (no case) | `scripts/`, `.github/` | `scripts/test-install.sh` (offline), and the steps of `docs/release.md` section 3 |
 

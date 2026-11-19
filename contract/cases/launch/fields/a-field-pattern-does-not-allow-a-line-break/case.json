@@ -1,0 +1,53 @@
+{
+  "id": "launch/fields/a-field-pattern-does-not-allow-a-line-break",
+  "title": "a field whose project pattern would match a line break is still refused: the control character ban holds for every field",
+  "source": [
+    "intended: docs/decisions.md, Pre-release fixes (the fields reach brief.md)"
+  ],
+  "intent": "The field values are written one per line into brief.md, so no value may hold a line break. The ban on control characters is part of the value check of every field, not only of a field without a pattern: a project pattern that would match a newline (`(?s).+`) does not lift it. The launch is rejected and writes nothing.",
+  "project": {
+    "files": {
+      "jitso/jitso.yaml": {
+        "from": "jitso.yaml"
+      },
+      ".jitso/briefs/brief.md": {
+        "from": "brief.md"
+      },
+      "jitso/builds/with-note.yaml": {
+        "from": "with-note.yaml"
+      }
+    }
+  },
+  "steps": [
+    {
+      "run": [
+        "launch",
+        "--build",
+        "with-note",
+        "--brief",
+        "{{PROJECT}}/.jitso/briefs/brief.md",
+        "--mode",
+        "direct",
+        "--field",
+        "note=first\n## JITSO rules"
+      ],
+      "expect": {
+        "exit": 2,
+        "stderr": [
+          {
+            "contains": "JITSO REJECTED: field note has an invalid value"
+          }
+        ],
+        "files": [
+          {
+            "path": ".jitso/launches",
+            "exists": false
+          }
+        ],
+        "registry": {
+          "count": 0
+        }
+      }
+    }
+  ]
+}

@@ -56,7 +56,7 @@ One top-level mapping. A build may name only what it lists. Each list is read as
 | `mcp` | list of MCP server names, as in `.mcp.json` | `mcp` of a build |
 | `skills` | list of skill folder names under `.agents/skills/` | `skills_first` of a build |
 | `tools` | list of harness tool names | `tools` of a build |
-| `fields` | optional mapping of field name to pattern (see below) | the `--field` values of a launch |
+| `fields` | optional mapping of field name to pattern (see below) | the `--field` values of a launch, which also reach the launch's `brief.md` and the `fields` object of its launch event |
 
 A project without this file has no allowlists: every catalog command exits 3 with `jitso: jitso/jitso.yaml is missing: this project has no JITSO allowlists (create it with jitso build new <id>)`. `jitso build new` writes an empty skeleton in a fresh project. The `fields` key is optional: absent or null means no patterns. Each key is a field name (`^[a-z][a-z_]*$`) and each value a non-empty Go `regexp` (RE2) pattern, which must match the whole value: the loader compiles `^(?:<pattern>)$`. A field a launch supplies is checked against its pattern; a field with no entry accepts any non-empty value with no control character (U+0000 to U+001F, U+007F). A build may require any well-formed field name, with or without an entry, and an entry no build requires is accepted. A problem in the key is reported with all the others, in key order, as `jitso/jitso.yaml is invalid: <problems joined by "; ">` (exit 3, and `fail catalog:` in `jitso doctor`):
 
@@ -107,6 +107,8 @@ Value types the rules above refer to:
 Unknown keys are accepted and ignored by the build validator. That includes `success`, a key that builds used to carry as documentation and that no longer exists. `jitso launch --field <name>=<value>` is the one place an unknown field name is rejected: `unknown field "<f>" for build "<id>"`.
 
 ## Rules text
+
+The `--field` values of a launch are written for the session. `brief.md` gets a block `## Fields` with one `- <key>: <value>` line per field, sorted by key, after the brief text and before the rules text, so the rules stay last; a launch with no field has no block. The launch event of `.jitso/launches.jsonl` gets a `fields` object of key to value, and has no `fields` key when the launch has none. A value is checked as before, and no field value may hold a control character, so a value stays on its one line: a project pattern does not lift that ban. The contract cases under `launch/fields` pin the block, the event and the ban.
 
 A project has no rules files. Every launch appends JITSO's short rules text to the end of the session's `brief.md`, after one blank line; the text is `card.Rules` in `internal/card`, and the contract case `launch/direct/brief-md-ends-with-the-direct-rules` pins the direct wording (`launch/fleet/brief-md-ends-with-the-fleet-rules` the fleet one).
 

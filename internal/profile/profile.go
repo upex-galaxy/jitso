@@ -91,7 +91,7 @@ func Resolve(req Request, cat *catalog.Catalog) (Profile, error) {
 		}
 		value := req.Fields.Get(name)
 		pattern, ok := cfg.FieldPattern(name)
-		if (ok && !pattern.MatchString(value)) || (!ok && !catalog.ValidFieldValue(value)) {
+		if catalog.HasControl(value) || (ok && !pattern.MatchString(value)) || (!ok && !catalog.ValidFieldValue(value)) {
 			return Profile{}, fail.Rejectedf("field %s has an invalid value", name)
 		}
 	}
