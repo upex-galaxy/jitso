@@ -193,6 +193,41 @@ func TestMissingLinkIsRepaired(t *testing.T) {
 	}
 }
 
+func TestLinkedSkillsFolderPlansNoLink(t *testing.T) {
+	for _, targetExists := range []bool{true, false} {
+		s := newScope(t, false)
+		if err := os.MkdirAll(s.path(".claude"), 0o755); err != nil {
+			t.Fatal(err)
+		}
+		if err := os.Symlink("../.agents/skills", s.path(".claude/skills")); err != nil {
+			t.Skip("cannot make a link:", err)
+		}
+		if targetExists {
+			s.put(".agents/skills/other.txt", "x")
+		}
+		out := s.install("v1")
+		if strings.Contains(out, ".claude/skills/jitso") {
+			t.Errorf("targetExists=%v: a link entry was planned:\n%s", targetExists, out)
+		}
+		if s.read(".agents/skills/jitso/SKILL.md") != string(shipped[0].Data) {
+			t.Errorf("targetExists=%v: the real copy is missing", targetExists)
+		}
+		res := s.build(s.options("v1"))
+		if !res.Plan.Empty() {
+			t.Errorf("targetExists=%v: second plan is not empty: %+v", targetExists, res.Plan.Effective())
+		}
+		o := s.options("v1")
+		o.Remove = true
+		s.apply(s.build(o), "install skill")
+		if s.exists(".agents/skills/jitso") {
+			t.Errorf("targetExists=%v: the real copy was not removed", targetExists)
+		}
+		if _, err := os.Lstat(s.path(".claude/skills")); err != nil {
+			t.Errorf("targetExists=%v: the parent link was removed: %v", targetExists, err)
+		}
+	}
+}
+
 func TestUpgrade(t *testing.T) {
 	s := newScope(t, false)
 	old := []File{{"SKILL.md", []byte("old skill\n")}, {"gone.md", []byte("gone\n")}, {"sub/gone2.md", []byte("g2\n")}}

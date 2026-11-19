@@ -1,0 +1,112 @@
+{
+  "id": "install/skill/linked-skills-folder",
+  "title": "install skill plans no link and no second copy when .claude/skills is a link to .agents/skills",
+  "source": [
+    "intended: a boilerplate ships .claude/skills as a link to .agents/skills, so the real copy is already the entry Claude Code reads"
+  ],
+  "defect": "J18",
+  "intent": "With `.claude/skills` linked to `.agents/skills`, the folder that holds the link is the folder that holds the real copy. Install must write the real copy once, print no `link .claude/skills/jitso` line, report `nothing to do` the second time, and `--remove` must remove only the real folder and keep the parent link. The link dangles when `.agents/skills` does not exist yet; that layout is covered by the second row.",
+  "project": {
+    "files": {
+      ".claude/skills": {
+        "symlink": "../.agents/skills"
+      },
+      "{{keep}}": "x"
+    }
+  },
+  "for_each": {
+    "vars": [
+      "state",
+      "keep"
+    ],
+    "rows": [
+      [
+        "target-exists",
+        ".agents/skills/placeholder.txt"
+      ],
+      [
+        "target-missing",
+        "notes/placeholder.txt"
+      ]
+    ],
+    "ids": [
+      "target-exists",
+      "target-missing"
+    ]
+  },
+  "steps": [
+    {
+      "run": [
+        "install",
+        "skill",
+        "--scope",
+        "project",
+        "--yes"
+      ],
+      "expect": {
+        "exit": 0,
+        "stdout": [
+          "jitso install skill: done",
+          {
+            "not_contains": "link .claude/skills/jitso"
+          }
+        ],
+        "files": [
+          {
+            "path": ".agents/skills/jitso/SKILL.md"
+          }
+        ]
+      }
+    },
+    {
+      "run": [
+        "doctor"
+      ],
+      "expect": {
+        "stdout": [
+          {
+            "regex": "(?m)^ok   skill-project"
+          }
+        ]
+      }
+    },
+    {
+      "run": [
+        "install",
+        "skill",
+        "--scope",
+        "project",
+        "--yes"
+      ],
+      "expect": {
+        "exit": 0,
+        "stdout": [
+          "nothing to do"
+        ]
+      }
+    },
+    {
+      "run": [
+        "install",
+        "skill",
+        "--scope",
+        "project",
+        "--remove",
+        "--yes"
+      ],
+      "expect": {
+        "exit": 0,
+        "files": [
+          {
+            "path": ".agents/skills/jitso",
+            "exists": false
+          },
+          {
+            "path": ".claude/skills",
+            "exists": true
+          }
+        ]
+      }
+    }
+  ]
+}

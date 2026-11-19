@@ -219,6 +219,9 @@ func (b *builder) sync(dir string, f Found) {
 // installLink plans the entry Claude Code reads: a relative link to the real
 // folder, or a second managed copy where links cannot be made.
 func (b *builder) installLink() error {
+	if b.sharesFolder() {
+		return nil
+	}
 	info, err := os.Lstat(b.link)
 	switch {
 	case errors.Is(err, os.ErrNotExist):
@@ -325,6 +328,30 @@ func (b *builder) removeDir(dir string, f Found) {
 		b.plan.Add(adopt.Change{Path: abs, Display: b.display(abs), Kind: adopt.KindDelete, Prune: true})
 	}
 	b.plan.Add(adopt.Change{Path: dir, Display: b.display(dir), Kind: adopt.KindDelete, Prune: true})
+}
+
+// sharesFolder reports whether the folder that would hold the link is the
+// folder that holds the real copy (.claude/skills linked to .agents/skills):
+// the real copy is then already the entry Claude Code reads. A link that
+// dangles because the target does not exist yet is read from its text.
+func (b *builder) sharesFolder() bool {
+	linkDir := filepath.Dir(b.link)
+	realDir := filepath.Dir(b.real)
+	if sameFolder(linkDir, realDir) {
+		return true
+	}
+	info, err := os.Lstat(linkDir)
+	if err != nil || info.Mode()&os.ModeSymlink == 0 {
+		return false
+	}
+	target, err := os.Readlink(linkDir)
+	if err != nil {
+		return false
+	}
+	if !filepath.IsAbs(target) {
+		target = filepath.Join(filepath.Dir(linkDir), filepath.FromSlash(target))
+	}
+	return filepath.Clean(target) == filepath.Clean(realDir)
 }
 
 // pointsTo reports whether the link at linkPath, whose target text is target,
