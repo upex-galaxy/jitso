@@ -25,18 +25,18 @@ What the CLI does, split by responsibility. "Pure" means no file, process, clock
 | Build validation report | a tolerant scan that reports every problem of every file, and the launch-only rules | none | `internal/catalog` (`scan.go`), `internal/cli` |
 | Request resolution | allowlists, required fields, the field patterns of the `fields` key of `jitso/jitso.yaml`, the refusal of a subagent-tier build (new) | none | `internal/profile` |
 | Launch arguments and field allowlist | all | none | `internal/launch` (arguments), `internal/shell` (the field allowlists) |
-| Brief checks | sections, length, language, cited paths | one existence probe per cited path | `internal/brief` |
-| Brief path guard | the "inside" test | `EvalSymlinks`, `Stat` | `internal/brief` |
+| Brief checks | sections, length, language, cited paths, the `Output:` hint after a `paths` failure, and for a pointer brief the target checks (length, language) | one existence probe per cited path | `internal/brief` |
+| Brief path guard | the "inside" test, and for a pointer brief the target rules (primary checkout, real path ends in `.md`) | `EvalSymlinks`, `Stat` | `internal/brief` |
 | Card | all | none | `internal/card` |
 | Launch command on the card | the rule | reads `package.json` | `internal/card` |
 | Shell and `run.sh` text | quoting, script text, terminal title | none | `internal/shell` |
 | Harness adapter | argv, env, MCP file, transcript path, trust dialog detection | session id (random) | `internal/harness`, `internal/harness/claude` |
-| Orca client | response parsing, `worktreeId` path | runs `orca ... --json` | `internal/orca` |
+| Orca client | response parsing, `worktreeId` path, the refusal of a truncated terminal list | runs `orca ... --json` | `internal/orca` |
 | Trust dialog and folder check | the dialog state machine, exact real-path match, and the folder check on every launch (N-22): `SelectorPath`, `Precheck` (before any Orca call) and `Place` (right after `terminal create`) | `git worktree list`, screen reads, key sends, clock | `internal/trust` |
 | Registry | event validation (schema `v: 2` with `build` keys, N-31), folding events into launches | append under a `mkdir` lock, read the file | `internal/registry` |
-| Launch execution | the plan: files, argv, event | files, Orca, registry | `internal/launch` |
+| Launch execution | the plan: files, argv, event, the Task id of a `worker-start` receipt | files, Orca, registry | `internal/launch` |
 | Close | none worth isolating | Orca, registry, footer file | `internal/closeout` |
-| Reap | worker matching (handle or `[jitso:<id>]` mark), evidence text | Orca, registry | `internal/reap` |
+| Reap | worker matching (the handle under `terminal`, `agentTerminalHandle` or `resource.terminalHandle`, or the `[jitso:<id>]` mark), evidence text | Orca, registry | `internal/reap` |
 | Guard hook | Bash segment splitting, launch-verb detection, orca-bridge tool rules, the program of a segment (N-24) | `jitso/jitso.yaml` probe; SessionEnd appends to the registry | `internal/hook` |
 | Rules text | the short JITSO rules a launch appends to the end of `brief.md`, by mode and budget, and the join of the brief file | writes `brief.md` | `internal/card` (`Rules`), `internal/launch` (`BriefFile`) |
 | Templates | one embedded template per tier and the `jitso/jitso.yaml` skeleton | none | `internal/templates` |
@@ -284,6 +284,11 @@ Each block after milestone 8 is its own contract change, cases first, run agains
 | Brief word count | N-27 | `brief` | `^brief/` |
 | Close and reap rows: close order, reap without a handle, unlogged workers | N-28 | `closeout`, `reap`, `cli` | `^(close\|reap)/` |
 | Registry v2: `v: 2` with `build` keys, v1 lines skipped, `doctor` counts them | N-31 | `registry`, `hook`, `doctor` | `^(registry\|close\|reap\|launch\|layers\|project\|hooks/guard/session-end\|doctor)/`, then the whole suite |
+| Pre-release fixes: reap reads the `terminal` key | none (owner decision) | `reap` | `^reap/` |
+| Pre-release fixes: the `Output:` hint in the ghost path rejection | none | `brief` | `^brief/` |
+| Pre-release fixes: pointer briefs | none | `brief`, `launch` | `^brief/pointer/` |
+| Pre-release fixes: every terminal listed, a truncated list refused | none | `orca` | `^(reap\|close)/` |
+| Pre-release fixes: fleet creates the Task from `brief.md` | none | `launch`, `hook`, `cli` | `^(launch/fleet/\|validation/fleet/\|hooks/guard/deny-reason)`, then the whole suite |
 | Release files: packaging, install script, workflow | none (no case) | `scripts/`, `.github/` | `scripts/test-install.sh` (offline), and the steps of `docs/release.md` section 3 |
 
 The pipes inside the table are escaped for Markdown; the filter is the text without the backslashes.
