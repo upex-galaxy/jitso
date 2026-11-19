@@ -68,7 +68,7 @@ A read-only check that prints one line per check, `ok`, `warn` or `fail`, then a
 | `binary`, `path` | the running jitso is not the one on PATH, or is not on PATH | hooks and the launch card use the bare word `jitso`: tell the owner |
 | `git`, `shell` | no git, or no `/bin/sh` (launch does not run on Windows) | environment, not yours to fix |
 | `orca`, `claude` | the Orca CLI or `claude` is not found | a launch cannot start. Tell the human |
-| `project` | not inside a git checkout (the later checks are skipped) | `cd` into the project |
+| `project` | a `warn`: not inside a git checkout, so the project checks are skipped and the exit stays 0 | `cd` into the project |
 | `catalog` | `jitso/jitso.yaml` missing, a repo build invalid, or draft files skipped | `jitso build validate` lists every problem |
 | `mcp` | a launchable build lists servers and `.mcp.json` is missing or invalid | tell the owner |
 | `state`, `drafts`, `registry`, `backups` | `.jitso/` is not git-ignored, drafts are old or not ignored, or the log has invalid lines | ignored lines are skipped. Tell the owner about the rest |

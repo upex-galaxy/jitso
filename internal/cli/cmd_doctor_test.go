@@ -88,11 +88,14 @@ func tree(t *testing.T, root string) []string {
 
 func TestDoctorOutsideGit(t *testing.T) {
 	cwd := t.TempDir()
-	code, out, errOut := doctorRun(t, cwd)
-	if code != 3 || errOut != "" {
-		t.Errorf("exit %d, stderr %q", code, errOut)
+	_, out, errOut := doctorRun(t, cwd)
+	if errOut != "" {
+		t.Errorf("stderr %q", errOut)
 	}
-	for _, want := range []string{"\nfail project: ", " is not inside a git checkout\n", "ok   binary: ", "doctor: "} {
+	if strings.Contains(out, "fail project:") {
+		t.Errorf("outside a checkout the project is a warning, not a failure:\n%s", out)
+	}
+	for _, want := range []string{"\nwarn project: ", " is not inside a git checkout; the project checks are skipped\n", "ok   binary: ", "doctor: "} {
 		if !strings.Contains("\n"+out, want) {
 			t.Errorf("stdout lacks %q:\n%s", want, out)
 		}

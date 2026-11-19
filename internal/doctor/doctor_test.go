@@ -179,7 +179,7 @@ func TestCheckProject(t *testing.T) {
 	line, _, ok = checkProject(Ports{Resolve: func() (project.Root, error) {
 		return project.Root{}, fail.Envf("%s is not inside a git checkout", "/tmp/x")
 	}})
-	want(t, line, Fail, "project", "/tmp/x is not inside a git checkout")
+	want(t, line, Warn, "project", "/tmp/x is not inside a git checkout; the project checks are skipped")
 	if ok || strings.Contains(line.Detail, "jitso:") {
 		t.Errorf("ok = %v, detail %q", ok, line.Detail)
 	}
@@ -206,8 +206,8 @@ func TestRunOutsideGitLeavesProjectChecksOut(t *testing.T) {
 	if got != wantChecks {
 		t.Errorf("checks = %s\nwant     %s", got, wantChecks)
 	}
-	if _, _, failed := Counts(lines); failed != 1 {
-		t.Errorf("fails = %d, want only the project", failed)
+	if _, _, failed := Counts(lines); failed != 0 {
+		t.Errorf("fails = %d, want none", failed)
 	}
 	for _, c := range run.calls {
 		if !strings.HasPrefix(c, "git --version") && !strings.HasPrefix(c, "/bin/claude --version") {

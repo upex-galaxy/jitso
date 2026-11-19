@@ -112,7 +112,7 @@ func checkClaude(p Ports) Line {
 func checkProject(p Ports) (line Line, root project.Root, ok bool) {
 	root, err := p.Resolve()
 	if err != nil {
-		return Line{Fail, "project", message(err)}, project.Root{}, false
+		return Line{Warn, "project", message(err) + "; the project checks are skipped"}, project.Root{}, false
 	}
 	detail := root.Primary
 	if root.Linked {

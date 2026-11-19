@@ -1,11 +1,11 @@
 {
   "id": "doctor/outside-git",
-  "title": "outside a git checkout the project fails, the machine checks still print and the project checks are left out",
+  "title": "outside a git checkout the project warns, the machine checks still print, the project checks are left out and the exit is 0",
   "source": [
     "intended: B4B5-DESIGN.md B4-22 and the doctor spec (defect N-20): a read-only health check"
   ],
   "defect": "N-20",
-  "intent": "INTENDED behavior (defect N-20, B4.5). Run from the sandbox HOME (no git checkout) doctor exits 3 and prints `fail project: <dir> is not inside a git checkout`, still prints `ok   binary: ...` and the other machine checks, and prints no line for the project checks (no `catalog:` line). Nothing goes to stderr.",
+  "intent": "INTENDED behavior (defect N-20, B4.5; the fail became a warning in v0.1.2). Run from the sandbox HOME (no git checkout) doctor exits 0 and prints `warn project: <dir> is not inside a git checkout; the project checks are skipped`, still prints `ok   binary: ...` and the other machine checks, and prints no line for the project checks (no `catalog:` line). Nothing goes to stderr.",
   "steps": [
     {
       "run": [
@@ -13,10 +13,10 @@
       ],
       "cwd": "{{HOME}}",
       "expect": {
-        "exit": 3,
+        "exit": 0,
         "stdout": [
           {
-            "regex": "(?m)^fail project: .* is not inside a git checkout$"
+            "regex": "(?m)^warn project: .* is not inside a git checkout; the project checks are skipped$"
           },
           {
             "regex": "(?m)^ok   binary: "
@@ -31,7 +31,7 @@
             "not_regex": "(?m)^\\S+ +hooks:"
           },
           {
-            "regex": "(?m)^doctor: [0-9]+ ok, [0-9]+ warn, 1 fail$"
+            "regex": "(?m)^doctor: [0-9]+ ok, [0-9]+ warn, 0 fail$"
           }
         ],
         "stderr": [
