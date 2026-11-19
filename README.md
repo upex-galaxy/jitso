@@ -10,7 +10,15 @@ the allowlists of the repo where they launch.
 
 ## Status
 
-Pre-release. What is published is recorded by the git tags and GitHub Releases of this repository, and the procedure is [`docs/release.md`](docs/release.md).
+Released: the versions are the git tags and GitHub Releases of this repository, and the procedure is [`docs/release.md`](docs/release.md).
+
+Install the latest release on macOS or Linux (it installs to `~/.local/bin`, checks the SHA-256 and needs no `sudo`):
+
+```sh
+curl -fsSL https://github.com/upex-galaxy/jitso/releases/latest/download/install.sh | sh
+```
+
+Read the script first if you prefer: it is `scripts/install.sh`. Then run `jitso doctor` in your project.
 
 | Part | State |
 |---|---|
@@ -24,7 +32,7 @@ Pre-release. What is published is recorded by the git tags and GitHub Releases o
 | Distribution (GitHub Releases, install script) | the packaging script, the install script with its offline test and the release workflow are files of this repo. The procedure is [`docs/release.md`](docs/release.md) |
 | Upgrading from the TypeScript CLI | the launch log is schema v2 (`v: 2`, the build id under the key `build`) and a line of an older log (`v: 1`, key `preset`) is not read. Close or reap every running launch with the old CLI before the first run of this one: the old lines stay in `.jitso/launches.jsonl`, `jitso doctor` counts them, and a worker that a still-running old launch started is reported as unlogged. Moving the old file aside (`mv .jitso/launches.jsonl .jitso/launches.v1.jsonl`) is safe |
 | Platforms | builds for macOS, Linux and Windows; `launch` needs `/bin/sh`, so it does not run on Windows. The Windows zip is experimental and not tested: the install script refuses Windows (install by hand, see [`docs/release.md`](docs/release.md) section 7), and `jitso doctor` warns there about `/bin/sh` instead of failing |
-| Gates not closed by the contract suite | the attended real Orca run (idle detection, the real trust dialog text and the real `terminal create` answer, which fakes cannot prove), the real Claude Code interactive path, a Linux run of the contract suite and Windows testing. The release steps are owner-gated in [`docs/release.md`](docs/release.md) |
+| Gates not closed by the contract suite | the attended real Orca run (idle detection, the real trust dialog text and the real `terminal create` answer, which fakes cannot prove), the real Claude Code interactive path and Windows testing. The release steps are owner-gated in [`docs/release.md`](docs/release.md) |
 
 ## Build and test
 

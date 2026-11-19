@@ -1,5 +1,5 @@
-# Release workflow. Written, not yet run: nothing is published from this repo
-# until the owner decides (docs/release.md, every outward step is OWNER-GATED).
+# Release workflow. A pushed tag runs it and it publishes the GitHub Release;
+# every outward step is OWNER-GATED (docs/release.md).
 #
 # Every `uses:` line below is pinned to a full commit SHA with its release tag as
 # the comment (docs/release.md, pre-flight). Only GitHub-owned actions are used.

@@ -2,9 +2,9 @@
 
 How a JITSO release is built, checked and published. Everything that leaves this machine is marked **OWNER-GATED**: it waits for the owner's say in the conversation (AGENTS.md rule 4), and no agent runs it on its own. The local steps change nothing outside this repository and the scratch folder you build into.
 
-The repository `upex-galaxy/jitso` is to be public (decided by the owner on 2026-11-15). Creating it and every other publishing step is OWNER-GATED and done with the owner present.
+The repository `upex-galaxy/jitso` is public (decided by the owner on 2026-11-15). Every publishing step is OWNER-GATED.
 
-Nothing here has been published. The files this procedure uses exist and have been run locally: `scripts/package.sh`, `scripts/install.sh`, `scripts/test-install.sh`. `.github/workflows/release.yml` is written and has never run.
+What has been published is recorded by the tags and GitHub Releases of the repository. The files this procedure uses are `scripts/package.sh`, `scripts/install.sh`, `scripts/test-install.sh` and `.github/workflows/release.yml`, which a pushed tag runs.
 
 Committed prose names the source of truth, not its value (AGENTS.md rule 12), so this file has no sizes, counts or dates: it says which file or command holds each one.
 
@@ -47,7 +47,7 @@ These steps run on this machine and change nothing outside the repository and yo
 4. Package every target: `scripts/package.sh v<x> <scratch>/dist`. Check the archives against `checksums.txt` with `shasum -a 256 -c checksums.txt` (or `sha256sum -c`) inside that folder.
 5. Measure each stripped binary with `ls -l` and compare with the previous release's numbers. Those numbers live in `.session/`, not in a committed file. A noticeable growth goes to the owner with before and after labelled `measured`, as `.agents/skills/go-development/references/builds.md` asks.
 6. `scripts/test-install.sh <scratch>/dist v<x>` (the archives just built) or `scripts/test-install.sh` (it builds the host target itself). Every check prints `ok`. It runs in throwaway folders and never touches your HOME.
-7. **OWNER-GATED** Resolve the action SHAs in `.github/workflows/release.yml`. Every `uses:` line carries a placeholder (forty zeros) and a `PLACEHOLDER` comment; replace each with the full commit SHA of a release tag of that action and review the tag. This is a network read; a command such as `gh api repos/actions/checkout/git/ref/tags/<tag> --jq .object.sha` does it (an annotated tag needs one more dereference). Check that none is left: `grep -c '0000000000000000000000000000000000000000' .github/workflows/release.yml` prints 0.
+7. **OWNER-GATED** Resolve the action SHAs in `.github/workflows/release.yml`. Every `uses:` line is pinned to the full commit SHA of a release tag of that action, with the tag as a comment; to bump one, resolve the new tag's SHA and review the tag. This is a network read; a command such as `gh api repos/actions/checkout/git/ref/tags/<tag> --jq .object.sha` does it (an annotated tag needs one more dereference). Check that none is left: `grep -c '0000000000000000000000000000000000000000' .github/workflows/release.yml` prints 0.
 8. The toolchain pin `GO_VERSION` in the workflow matches the toolchain you verified with (`go version`), and `go.mod` says what you intend: its `go` line is a language version, not a toolchain.
 9. **OWNER-GATED** The contract suite has to pass on Linux at least once before the first tag. A container or a VM is the owner's call, since it may mean a download. The first tag would otherwise be the suite's first Linux run.
 10. Release notes: the workflow asks GitHub to generate them. Read them after the release, and say in the notes which earlier version to skip when one is bad.
@@ -103,4 +103,3 @@ The workflow does not run any Windows job. A `windows-latest` job that runs `jit
 | The binaries are not signed or notarized | A binary downloaded through a browser on macOS may be quarantined by Gatekeeper; `curl` and the install script do not set the attribute (predicted, not measured). The install script copies the binary through a temp file and `mv`, which is what replaces a running binary atomically |
 | Archives are not byte-reproducible | `tar` and `zip` write metadata; the binaries are meant to be reproducible for the same toolchain, flags and commit (predicted) |
 | An old launch log is not read | The launch log is schema v2 and skips every `v: 1` line (the TypeScript-era log, with the key `preset`), so a project that still has running launches at the first run of this CLI must close or reap them with the old CLI first: the old lines stay in `.jitso/launches.jsonl`, `jitso doctor` counts them, and a worker that a still-running old launch started is reported as unlogged. Moving the old file aside (`mv .jitso/launches.jsonl .jitso/launches.v1.jsonl`) is safe. Defect N-31 |
-| The workflow has never run | the SHAs are placeholders, and `gh` and `zip` being present on the runner image is predicted, not measured |

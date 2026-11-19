@@ -22,7 +22,7 @@ JITSO is a strategy for orchestrating agents based on builds: a build is an appr
 | `scripts/`, `.github/workflows/` | packaging, the install script and its offline test, the release workflow |
 | `.session/` | local history and handoffs, gitignored, mostly Spanish: never commit it, never quote it or its tracker keys in committed files |
 
-Not done: the first release and every outward step of `docs/release.md` (no remote, no tag, nothing published; the release workflow has never run), a real Orca run, the real Claude Code interactive path, a Linux run of the contract suite, and Windows testing. The contract runs against the built Go binary only.
+Published releases are the tags and GitHub Releases of `origin`; the release workflow also runs the contract suite on Linux. Not done: a real Orca run, the real Claude Code interactive path, and Windows testing. The contract runs against the built Go binary only.
 
 ## 3. Which skill to load
 
