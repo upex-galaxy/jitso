@@ -222,13 +222,19 @@ func execute(p prepared, d Deps) (err error) {
 		return fail.Rejected(trust.Untrusted(term.WorktreePath, deref(p.args.Worktree)))
 	}
 	if p.args.Mode == ModeFleet {
-		start := []string{"orchestration", "worker-start", "--run", deref(p.args.Run), "--task", deref(p.args.Task), "--terminal", term.Handle}
+		start := []string{"orchestration", "worker-start", "--run", deref(p.args.Run), "--spec-file", files.brief, "--terminal", term.Handle}
 		if p.args.Worktree != nil {
 			start = append(start, "--worktree", *p.args.Worktree)
 		}
-		if _, err := d.Orca.Call(start); err != nil {
+		receipt, err := d.Orca.Call(start)
+		if err != nil {
 			abandon()
 			return err
+		}
+		if task, found := TaskID(receipt); found {
+			p.args.Task = &task
+		} else {
+			d.Warn("jitso: warning: orchestration worker-start returned no task id; the launch is registered with a null task")
 		}
 	}
 
@@ -253,6 +259,43 @@ func execute(p prepared, d Deps) (err error) {
 		d.Warn("jitso: the trust dialog of terminal " + term.Handle + " did not clear in 10 s; the launch is registered")
 	}
 	return nil
+}
+
+// TaskID is the Task id of a worker-start receipt: taskId, else task_id, else
+// the id of a task object (id or taskId), else the taskId of a worker or a
+// dispatch object, else a task that is itself a string. The shape of the
+// receipt was not measured against a live Orca; it follows the worker-list
+// record, whose entries carry taskId.
+func TaskID(receipt map[string]any) (string, bool) {
+	if id, ok := text(receipt["taskId"]); ok {
+		return id, true
+	}
+	if id, ok := text(receipt["task_id"]); ok {
+		return id, true
+	}
+	if id, ok := text(receipt["task"]); ok {
+		return id, true
+	}
+	if task, ok := receipt["task"].(map[string]any); ok {
+		for _, key := range []string{"id", "taskId"} {
+			if id, ok := text(task[key]); ok {
+				return id, true
+			}
+		}
+	}
+	for _, parent := range []string{"worker", "dispatch"} {
+		if obj, ok := receipt[parent].(map[string]any); ok {
+			if id, ok := text(obj["taskId"]); ok {
+				return id, true
+			}
+		}
+	}
+	return "", false
+}
+
+func text(v any) (string, bool) {
+	s, ok := v.(string)
+	return s, ok && s != ""
 }
 
 func deref(s *string) string {

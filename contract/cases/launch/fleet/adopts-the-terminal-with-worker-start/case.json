@@ -1,6 +1,6 @@
 {
   "id": "launch/fleet/adopts-the-terminal-with-worker-start",
-  "title": "a fleet launch calls orchestration worker-start with --run, --task and --terminal right after the trust read",
+  "title": "a fleet launch calls orchestration worker-start with --run, the launch folder's brief.md as --spec-file and --terminal right after the trust read",
   "source": [
     "cli/jitso/launch.test.ts: 'adopts the terminal with worker-start --terminal --worktree and carries no prompt in argv'",
     "cli/jitso/launch.test.ts: 'a conductor launched in fleet mode never gets a raw orca launch verb'"
@@ -23,9 +23,7 @@
         "--mode",
         "fleet",
         "--run",
-        "run_1",
-        "--task",
-        "task_1"
+        "run_1"
       ],
       "capture": {
         "LAUNCH_ID": {
@@ -95,8 +93,8 @@
                 "worker-start",
                 "--run",
                 "run_1",
-                "--task",
-                "task_1",
+                "--spec-file",
+                "{{PROJECT}}/.jitso/launches/{{LAUNCH_ID}}/brief.md",
                 "--terminal",
                 "term_fake"
               ]
@@ -121,5 +119,12 @@
         }
       }
     }
-  ]
+  ],
+  "orca": {
+    "responses": {
+      "orchestration worker-start": {
+        "taskId": "task_1"
+      }
+    }
+  }
 }

@@ -30,8 +30,6 @@
         "{{mode}}",
         "--run",
         "run_1",
-        "--task",
-        "task_1",
         "--dry-run"
       ],
       "expect": {

@@ -88,8 +88,9 @@ func TestCheck(t *testing.T) {
 		{"worktree dots", func(a *Args) { a.Worktree = s("a..b") }, "invalid value for --worktree"},
 		{"mcp exclude", func(a *Args) { a.MCPExclude = []string{"ok", "db.hub"} }, "invalid value for --mcp-exclude"},
 		{"build before run", func(a *Args) { a.Build, a.Run = "X", s("") }, "invalid value for --build"},
-		{"fleet needs run and task", func(a *Args) { a.Mode, a.Run = ModeFleet, s("r") }, "fleet mode requires --run and --task"},
-		{"fields come after the fleet check", func(a *Args) { a.Mode = ModeFleet; a.Run, a.Task = s("r"), s("t") }, ""},
+		{"fleet needs a run", func(a *Args) { a.Mode = ModeFleet }, "fleet mode requires --run"},
+		{"fleet rejects a task", func(a *Args) { a.Mode, a.Run, a.Task = ModeFleet, s("r"), s("t") }, "--task is not accepted in fleet mode: JITSO creates the Task from the brief"},
+		{"fleet with a run passes", func(a *Args) { a.Mode, a.Run = ModeFleet, s("r") }, ""},
 		{"direct ignores run and task", func(a *Args) { a.Run = s("r") }, ""},
 	}
 	for _, tt := range tests {

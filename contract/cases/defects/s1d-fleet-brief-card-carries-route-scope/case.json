@@ -24,8 +24,6 @@
         "fleet",
         "--run",
         "run_1a2b",
-        "--task",
-        "task_9f",
         "--field",
         "ticket_key=PRJ-1"
       ],

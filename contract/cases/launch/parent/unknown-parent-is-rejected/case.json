@@ -32,8 +32,6 @@
         "fleet",
         "--run",
         "run_1",
-        "--task",
-        "task_1",
         "--parent",
         "L20260101T000000-ffff"
       ],

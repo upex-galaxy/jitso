@@ -1,8 +1,8 @@
 {
-  "id": "validation/fleet/needs-run-and-task",
-  "title": "fleet mode without --run, without --task or without both is rejected before any orca call",
+  "id": "validation/fleet/needs-run-and-rejects-task",
+  "title": "fleet mode without --run is rejected, and --task is rejected in fleet mode (JITSO creates the Task from the brief), before any orca call",
   "source": [
-    "cli/jitso/launch.test.ts: 'requires --run and --task and calls no orca without them'"
+    "intended: docs/decisions.md, Pre-release fixes (JITSO creates the Orca Task in fleet mode)"
   ],
   "steps": [
     {
@@ -23,31 +23,7 @@
           }
         ],
         "stderr": [
-          "JITSO REJECTED:",
-          "fleet mode requires --run and --task"
-        ],
-        "orca_calls": {
-          "empty": true
-        }
-      }
-    },
-    {
-      "run": [
-        "launch",
-        "--build",
-        "haiku-explorer",
-        "--brief",
-        "{{PROJECT}}/.jitso/briefs/b.md",
-        "--mode",
-        "fleet",
-        "--run",
-        "run_1"
-      ],
-      "expect": {
-        "exit": 2,
-        "stderr": [
-          "JITSO REJECTED:",
-          "fleet mode requires --run and --task"
+          "JITSO REJECTED: fleet mode requires --run"
         ],
         "orca_calls": {
           "empty": true
@@ -68,9 +44,42 @@
       ],
       "expect": {
         "exit": 2,
+        "stdout": [
+          {
+            "empty": true
+          }
+        ],
         "stderr": [
-          "JITSO REJECTED:",
-          "fleet mode requires --run and --task"
+          "JITSO REJECTED: --task is not accepted in fleet mode: JITSO creates the Task from the brief"
+        ],
+        "orca_calls": {
+          "empty": true
+        }
+      }
+    },
+    {
+      "run": [
+        "launch",
+        "--build",
+        "haiku-explorer",
+        "--brief",
+        "{{PROJECT}}/.jitso/briefs/b.md",
+        "--mode",
+        "fleet",
+        "--run",
+        "run_1",
+        "--task",
+        "task_1"
+      ],
+      "expect": {
+        "exit": 2,
+        "stdout": [
+          {
+            "empty": true
+          }
+        ],
+        "stderr": [
+          "JITSO REJECTED: --task is not accepted in fleet mode: JITSO creates the Task from the brief"
         ],
         "orca_calls": {
           "empty": true

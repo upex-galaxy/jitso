@@ -227,9 +227,38 @@ func TestRunPointer(t *testing.T) {
 	}
 }
 
+func TestTaskID(t *testing.T) {
+	tests := []struct {
+		name    string
+		receipt map[string]any
+		want    string
+	}{
+		{"taskId", map[string]any{"taskId": "t1"}, "t1"},
+		{"task_id", map[string]any{"task_id": "t1"}, "t1"},
+		{"task string", map[string]any{"task": "t1"}, "t1"},
+		{"task id", map[string]any{"task": map[string]any{"id": "t1"}}, "t1"},
+		{"task taskId", map[string]any{"task": map[string]any{"taskId": "t1"}}, "t1"},
+		{"worker", map[string]any{"worker": map[string]any{"taskId": "t1"}}, "t1"},
+		{"dispatch", map[string]any{"dispatch": map[string]any{"taskId": "t1"}}, "t1"},
+		{"top level wins", map[string]any{"taskId": "a", "task": map[string]any{"id": "b"}}, "a"},
+		{"not a string", map[string]any{"taskId": 5.0}, ""},
+		{"empty string", map[string]any{"taskId": ""}, ""},
+		{"nothing", map[string]any{"state": "ready"}, ""},
+		{"nil receipt", nil, ""},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, ok := TaskID(tt.receipt)
+			if got != tt.want || ok != (tt.want != "") {
+				t.Errorf("got %q %v", got, ok)
+			}
+		})
+	}
+}
+
 func TestRunDryRun(t *testing.T) {
 	s := newSandbox(t)
-	if err := s.run(t, "--build", "sonnet-automator", "--brief", s.briefPath, "--mode", "fleet", "--run", "r", "--task", "t",
+	if err := s.run(t, "--build", "sonnet-automator", "--brief", s.briefPath, "--mode", "fleet", "--run", "r",
 		"--field", "ticket_key=PRJ-1", "--dry-run"); err != nil {
 		t.Fatal(err)
 	}
@@ -271,12 +300,12 @@ func TestRunFailuresRemoveOnlyTheirFolder(t *testing.T) {
 		{"refused with a failing close", func(s *sandbox) { s.orca.cwd = s.home; s.orca.fail = map[string]bool{"terminal close": true} }, nil, "JITSO REJECTED: untrusted folder ",
 			[]string{"terminal create", "terminal close"}},
 		{"fleet refused before worker-start", func(s *sandbox) { s.orca.cwd = s.home },
-			[]string{"--build", "haiku-explorer", "--mode", "fleet", "--run", "r", "--task", "t"}, "JITSO REJECTED: untrusted folder ",
+			[]string{"--build", "haiku-explorer", "--mode", "fleet", "--run", "r"}, "JITSO REJECTED: untrusted folder ",
 			[]string{"terminal create", "terminal close"}},
 		{"worker-start", func(s *sandbox) {
 			s.orca.fail = map[string]bool{"orchestration worker-start": true, "terminal close": true}
 		},
-			[]string{"--build", "haiku-explorer", "--mode", "fleet", "--run", "r", "--task", "t"}, "fake failure",
+			[]string{"--build", "haiku-explorer", "--mode", "fleet", "--run", "r"}, "fake failure",
 			[]string{"terminal create", "terminal wait", "terminal read", "orchestration worker-start", "terminal close"}},
 		{"busy lock", func(s *sandbox) {
 			s.store.LockTimeout = 0

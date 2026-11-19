@@ -1,6 +1,6 @@
 # JITSO build template, tier conductor. This is a DRAFT: it is not valid until every empty value is filled.
 # A conductor coordinates a batch of work. It starts workers only with the launch command printed on its card,
-# plus --mode fleet --run <run> --task <task>, never any other way.
+# plus --mode fleet --run <run>, never any other way.
 # Every model, effort, skill, MCP server and tool named here must be listed in jitso/jitso.yaml.
 # Fill each empty value, then check the build with: jitso build validate <id>.
 id: <id>

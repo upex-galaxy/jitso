@@ -121,7 +121,7 @@ func optional(values map[string]string, name string) *string {
 
 // Check runs the launcher field allowlists on every value a model controls
 // besides the brief (build, run, task, parent, worktree, each mcp-exclude,
-// in that order), then requires --run and --task in fleet mode. It needs no
+// in that order), then, in fleet mode, requires --run and rejects --task (JITSO creates the Task). It needs no
 // project, so it runs before anything is read.
 func (a Args) Check() error {
 	type field struct {
@@ -140,8 +140,13 @@ func (a Args) Check() error {
 			return fail.Rejected(reason)
 		}
 	}
-	if a.Mode == ModeFleet && (a.Run == nil || a.Task == nil) {
-		return fail.Rejected("fleet mode requires --run and --task")
+	if a.Mode == ModeFleet {
+		if a.Task != nil {
+			return fail.Rejected("--task is not accepted in fleet mode: JITSO creates the Task from the brief")
+		}
+		if a.Run == nil {
+			return fail.Rejected("fleet mode requires --run")
+		}
 	}
 	return nil
 }

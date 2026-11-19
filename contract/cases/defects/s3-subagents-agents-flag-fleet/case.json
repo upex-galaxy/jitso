@@ -30,9 +30,7 @@
         "--field",
         "ticket_key=PRJ-1",
         "--run",
-        "run_1a2b",
-        "--task",
-        "task_9f"
+        "run_1a2b"
       ],
       "capture": {
         "LAUNCH_ID": {

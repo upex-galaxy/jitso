@@ -107,7 +107,7 @@ func LaunchWord(packageJSON []byte) string {
 // jitso and names the verb that was denied.
 func GuardReason(launchWord, verb string) string {
 	return "JITSO owns worker launch in this project. Use: " + launchWord +
-		" --build <id> --brief <file> --mode fleet --run <run> --task <task> [--worktree <sel>]." +
+		" --build <id> --brief <file> --mode fleet --run <run> [--worktree <sel>]." +
 		" The orca-orchestration launch step is replaced; everything else in that skill still applies." +
 		" (denied: " + verb + ")"
 }

@@ -1,6 +1,6 @@
 {
   "id": "hooks/guard/deny-reason-names-the-build-flag",
-  "title": "the reason of a denied worker start tells the agent to launch with --build <id>, not --preset",
+  "title": "the reason of a denied worker start tells the agent to launch with --build <id> and --run <run>, never --preset and never --task (JITSO creates the Task)",
   "source": [
     "intended: docs/decisions.md D6 (the launch flag is --build); the deny text names the launcher"
   ],
@@ -29,6 +29,12 @@
           },
           {
             "not_contains": "--preset"
+          },
+          {
+            "contains": "--mode fleet --run <run> [--worktree <sel>]"
+          },
+          {
+            "not_contains": "--task"
           }
         ]
       }

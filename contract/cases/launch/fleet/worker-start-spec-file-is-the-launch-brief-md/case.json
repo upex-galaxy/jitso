@@ -1,0 +1,73 @@
+{
+  "id": "launch/fleet/worker-start-spec-file-is-the-launch-brief-md",
+  "title": "the spec file of worker-start is the brief.md of the launch folder, which holds the card, the brief and the JITSO rules, and worker-start gets no --task",
+  "source": [
+    "intended: docs/decisions.md, Pre-release fixes (JITSO creates the Orca Task in fleet mode)"
+  ],
+  "intent": "A fleet worker starts by reading its Task spec. Passing the launch folder's brief.md as the spec means every worker reads its brief and the three JITSO rules first, without the conductor having to write a Task that points at them.",
+  "project": {
+    "files": {
+      ".jitso/briefs/brief.md": {
+        "from": "brief.md"
+      }
+    }
+  },
+  "orca": {
+    "responses": {
+      "orchestration worker-start": {
+        "taskId": "task_1"
+      }
+    }
+  },
+  "steps": [
+    {
+      "run": [
+        "launch",
+        "--build",
+        "haiku-explorer",
+        "--brief",
+        "{{PROJECT}}/.jitso/briefs/brief.md",
+        "--mode",
+        "fleet",
+        "--run",
+        "run_1"
+      ],
+      "capture": {
+        "LAUNCH_ID": {
+          "from": "stdout",
+          "regex": "JITSO (L\\d{8}T\\d{6}-[0-9a-f]{4})",
+          "group": 1
+        }
+      },
+      "expect": {
+        "exit": 0,
+        "orca_calls": {
+          "calls": [
+            {
+              "at": 3,
+              "argv": [
+                "orchestration",
+                "worker-start",
+                "--run",
+                "run_1",
+                "--spec-file",
+                "{{PROJECT}}/.jitso/launches/{{LAUNCH_ID}}/brief.md",
+                "--terminal",
+                "term_fake"
+              ]
+            }
+          ]
+        },
+        "files": [
+          {
+            "path": ".jitso/launches/{{LAUNCH_ID}}/brief.md",
+            "contains": [
+              "## Goal",
+              "## JITSO rules"
+            ]
+          }
+        ]
+      }
+    }
+  ]
+}

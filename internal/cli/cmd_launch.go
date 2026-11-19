@@ -29,8 +29,7 @@ Launches a worker from an approved build and a brief file: prints its card, open
   --build <id>                 the build to launch (required)
   --brief <file>               the brief, a file under .jitso/briefs/ of the project (required)
   --mode direct|fleet          direct: the session reports to you; fleet: a worker of an Orca run (required)
-  --run <run>                  the Orca run (fleet mode, required there)
-  --task <task>                the Orca task (fleet mode, required there)
+  --run <run>                  the Orca run (fleet mode, required there; JITSO creates the Task from the brief)
   --parent <launch_id>         the launch that starts this one
   --worktree <selector>        the Orca worktree the terminal opens in
   --mcp-exclude <name>         leave one MCP server of the build out (repeatable)

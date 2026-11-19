@@ -31,9 +31,7 @@
         "--mode",
         "fleet",
         "--run",
-        "run_1",
-        "--task",
-        "task_1"
+        "run_1"
       ],
       "expect": {
         "exit": 3,
