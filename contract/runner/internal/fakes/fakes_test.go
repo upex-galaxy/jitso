@@ -183,3 +183,17 @@ func TestFakeClaudeExitKnob(t *testing.T) {
 		t.Error("the fake writes its dump before it exits with the knob")
 	}
 }
+
+func TestFakeOrcaWaitBlocked(t *testing.T) {
+	r := newRig(t, `{"wait_blocked":["agent-trust-workspace"]}`)
+	code, msg := r.call("terminal", "wait")
+	wait := msg["result"].(map[string]any)["wait"].(map[string]any)
+	if code != 1 || msg["ok"] != true || wait["satisfied"] != false || wait["blockedReason"] != "agent-trust-workspace" {
+		t.Errorf("blocked wait: %d %v", code, msg)
+	}
+	code, msg = r.call("terminal", "wait")
+	wait = msg["result"].(map[string]any)["wait"].(map[string]any)
+	if code != 0 || wait["satisfied"] != true || wait["blockedReason"] != nil {
+		t.Errorf("wait past the list is idle: %d %v", code, msg)
+	}
+}

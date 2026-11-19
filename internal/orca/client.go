@@ -118,11 +118,41 @@ func (c *Client) CreateTerminal(worktree, title, command string) (Terminal, erro
 	return t, nil
 }
 
-// WaitIdle runs `terminal wait --for tui-idle` and reports whether the
-// terminal got there. A failed call (a timeout) is false, never an error.
-func (c *Client) WaitIdle(handle string, timeoutMS int) bool {
-	_, err := c.Call([]string{"terminal", "wait", "--terminal", handle, "--for", "tui-idle", "--timeout-ms", strconv.Itoa(timeoutMS)})
-	return err == nil
+// TrustBlock is the blockedReason Orca gives a terminal whose agent waits on
+// its folder trust dialog.
+const TrustBlock = "agent-trust-workspace"
+
+// Wait is the answer of `terminal wait --for tui-idle`.
+type Wait struct {
+	// Idle is true when Orca reports the condition satisfied.
+	Idle bool
+	// Blocked is the blockedReason of a wait that is not satisfied, "" when
+	// Orca named none.
+	Blocked string
+}
+
+// WaitIdle runs `terminal wait --for tui-idle` and reads the answer. Orca
+// exits 1 for a wait that is not satisfied, even with ok:true, so the JSON
+// decides, never the exit status: `wait.satisfied` true is Idle, false with a
+// `wait.blockedReason` is Blocked. Anything else (no JSON, ok not true, no
+// `wait` object, a timeout) is the zero Wait.
+func (c *Client) WaitIdle(handle string, timeoutMS int) Wait {
+	out := c.run([]string{"terminal", "wait", "--terminal", handle, "--for", "tui-idle", "--timeout-ms", strconv.Itoa(timeoutMS)})
+	var parsed any
+	if err := json.Unmarshal([]byte(out.Stdout), &parsed); err != nil {
+		return Wait{}
+	}
+	envelope, _ := parsed.(map[string]any)
+	if ok, _ := envelope["ok"].(bool); !ok {
+		return Wait{}
+	}
+	result, _ := envelope["result"].(map[string]any)
+	wait, _ := result["wait"].(map[string]any)
+	if satisfied, _ := wait["satisfied"].(bool); satisfied {
+		return Wait{Idle: true}
+	}
+	reason, _ := wait["blockedReason"].(string)
+	return Wait{Blocked: reason}
 }
 
 // ReadScreen runs `terminal read --screen` and returns the rows joined with

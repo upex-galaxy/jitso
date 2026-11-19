@@ -58,6 +58,18 @@ func respond(sc Scenario, args []string, previous [][]string) (bool, any) {
 	if result, ok := sc.Responses[verb]; ok {
 		return true, result
 	}
+	if verb == "terminal wait" {
+		waits := 0
+		for _, c := range previous {
+			if expect.Verb(c) == "terminal wait" {
+				waits++
+			}
+		}
+		if waits < len(sc.WaitBlocked) {
+			return true, nonZero{waitResult(false, sc.WaitBlocked[waits])}
+		}
+		return true, waitResult(true, "")
+	}
 	switch verb {
 	case "terminal create":
 		terminal := map[string]string{"handle": sc.Handle}
@@ -65,7 +77,7 @@ func respond(sc Scenario, args []string, previous [][]string) (bool, any) {
 			terminal["worktreeId"] = "fake-uuid::" + *sc.Cwd
 		}
 		return true, map[string]any{"terminal": terminal}
-	case "terminal wait", "terminal close":
+	case "terminal close":
 		return true, map[string]any{}
 	case "terminal read":
 		reads := 0
@@ -112,12 +124,34 @@ func listed(sc Scenario, previous [][]string) []map[string]string {
 	return out
 }
 
+// nonZero is an ok:true answer that exits 1, as Orca does for a wait that is not satisfied.
+type nonZero struct{ result any }
+
+// waitResult is the `terminal wait` result of Orca: {wait:{...}}; reason "" is a null blockedReason.
+func waitResult(satisfied bool, reason string) map[string]any {
+	var blocked any
+	if reason != "" {
+		blocked = reason
+	}
+	return map[string]any{"wait": map[string]any{
+		"handle": DefaultHandle, "condition": "tui-idle", "satisfied": satisfied,
+		"status": "running", "exitCode": nil, "blockedReason": blocked,
+	}}
+}
+
 func failure(verb string) map[string]string {
 	return map[string]string{"code": "fake_failure", "message": verb + " failed"}
 }
 
 func answer(stdout io.Writer, ok bool, body any) int {
 	msg := map[string]any{"ok": ok}
+	code := 0
+	if !ok {
+		code = 1
+	}
+	if nz, is := body.(nonZero); is {
+		body, code = nz.result, 1
+	}
 	if ok {
 		msg["result"] = body
 	} else {
@@ -125,10 +159,7 @@ func answer(stdout io.Writer, ok bool, body any) int {
 	}
 	data, _ := json.Marshal(msg)
 	fmt.Fprintln(stdout, string(data))
-	if ok {
-		return 0
-	}
-	return 1
+	return code
 }
 
 func readScenario(path string) (Scenario, error) {

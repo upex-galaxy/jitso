@@ -81,8 +81,8 @@ func TestTerminalVerbs(t *testing.T) {
 	if err != nil || screen != "a\n1\nnull" {
 		t.Errorf("screen %q %v", screen, err)
 	}
-	if c.WaitIdle("term_1", 30000) {
-		t.Error("a failed wait is false")
+	if w := c.WaitIdle("term_1", 30000); w.Idle || w.Blocked != "" {
+		t.Errorf("a failed wait is the zero Wait: %+v", w)
 	}
 	handles, err := c.ListHandles()
 	if err != nil || !reflect.DeepEqual(handles, []string{"term_1", "term_2"}) {
@@ -162,5 +162,27 @@ func TestExecRunner(t *testing.T) {
 	missing := ExecRunner(filepath.Join(dir, "missing"))([]string{"x"})
 	if missing.Status != -1 || missing.Stderr == "" {
 		t.Errorf("missing program: %+v", missing)
+	}
+}
+
+func TestWaitIdleReadsTheJSONNotTheExitStatus(t *testing.T) {
+	cases := []struct {
+		name   string
+		answer Result
+		want   Wait
+	}{
+		{"idle", Result{0, `{"ok":true,"result":{"wait":{"satisfied":true,"blockedReason":null}}}`, ""}, Wait{Idle: true}},
+		{"idle with a non-zero exit", Result{1, `{"ok":true,"result":{"wait":{"satisfied":true}}}`, ""}, Wait{Idle: true}},
+		{"blocked, exit 1", Result{1, `{"ok":true,"result":{"wait":{"satisfied":false,"blockedReason":"agent-trust-workspace"}}}`, ""}, Wait{Blocked: "agent-trust-workspace"}},
+		{"not satisfied, no reason", Result{1, `{"ok":true,"result":{"wait":{"satisfied":false,"blockedReason":null}}}`, ""}, Wait{}},
+		{"no wait object", Result{0, `{"ok":true,"result":{}}`, ""}, Wait{}},
+		{"ok false", Result{1, `{"ok":false,"error":{"code":"timeout"}}`, ""}, Wait{}},
+		{"not JSON", Result{1, `boom`, "x"}, Wait{}},
+	}
+	for _, tc := range cases {
+		s := &script{answers: map[string]Result{"terminal wait": tc.answer}}
+		if got := NewClient(s.run).WaitIdle("term_1", 1000); got != tc.want {
+			t.Errorf("%s: got %+v, want %+v", tc.name, got, tc.want)
+		}
 	}
 }

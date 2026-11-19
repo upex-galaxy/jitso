@@ -1,0 +1,145 @@
+{
+  "id": "launch/trust/still-blocked-after-the-dialog-fails-naming-the-reason",
+  "title": "when the second wait after the dialog is still blocked the launch exits 3 naming the reason, closes the terminal and registers nothing",
+  "source": [
+    "intended: found in the first real Orca run, Orca answers a trust dialog as a blocked wait"
+  ],
+  "project": {
+    "files": {
+      ".jitso/briefs/brief.md": {
+        "from": "brief.md"
+      }
+    }
+  },
+  "orca": {
+    "screens": [
+      "Is this a project you created or one you trust?\n 1. Yes, I trust this folder\n 2. No, exit",
+      "❯ \n medium · /effort\n bypass permissions on"
+    ],
+    "wait_blocked": [
+      "agent-trust-workspace",
+      "agent-trust-workspace"
+    ]
+  },
+  "steps": [
+    {
+      "run": [
+        "launch",
+        "--build",
+        "haiku-explorer",
+        "--brief",
+        "{{PROJECT}}/.jitso/briefs/brief.md",
+        "--mode",
+        "direct"
+      ],
+      "expect": {
+        "exit": 3,
+        "orca_calls": {
+          "verbs": [
+            "terminal create",
+            "terminal wait",
+            "terminal read",
+            "terminal send",
+            "terminal send",
+            "terminal read",
+            "terminal wait",
+            "terminal close"
+          ],
+          "calls": [
+            {
+              "at": 1,
+              "argv": [
+                "terminal",
+                "wait",
+                "--terminal",
+                "term_fake",
+                "--for",
+                "tui-idle",
+                "--timeout-ms",
+                "90000"
+              ]
+            },
+            {
+              "at": 2,
+              "argv": [
+                "terminal",
+                "read",
+                "--terminal",
+                "term_fake",
+                "--screen"
+              ]
+            },
+            {
+              "at": 3,
+              "argv": [
+                "terminal",
+                "send",
+                "--terminal",
+                "term_fake",
+                "--text",
+                "\u001b[B"
+              ]
+            },
+            {
+              "at": 4,
+              "argv": [
+                "terminal",
+                "send",
+                "--terminal",
+                "term_fake",
+                "--text",
+                "\r"
+              ]
+            },
+            {
+              "at": 5,
+              "argv": [
+                "terminal",
+                "read",
+                "--terminal",
+                "term_fake",
+                "--screen"
+              ]
+            },
+            {
+              "at": 6,
+              "argv": [
+                "terminal",
+                "wait",
+                "--terminal",
+                "term_fake",
+                "--for",
+                "tui-idle",
+                "--timeout-ms",
+                "90000"
+              ]
+            },
+            {
+              "at": 7,
+              "argv": [
+                "terminal",
+                "close",
+                "--terminal",
+                "term_fake"
+              ]
+            }
+          ]
+        },
+        "registry": {
+          "count": 0
+        },
+        "stdout": [
+          {
+            "empty": true
+          }
+        ],
+        "stderr": [
+          {
+            "contains": "jitso: terminal term_fake is blocked (agent-trust-workspace); it was closed"
+          }
+        ]
+      }
+    }
+  ],
+  "intent": "After the trust dialog is answered the launch waits for idle once more. A second blocked answer is a failed launch, and its message names the reason instead of the idle timeout text."
+}

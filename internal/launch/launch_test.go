@@ -48,9 +48,9 @@ func (f *fakeOrca) CreateTerminal(worktree, title, command string) (orca.Termina
 	return orca.Terminal{Handle: "term_fake", WorktreePath: f.cwd}, nil
 }
 
-func (f *fakeOrca) WaitIdle(string, int) bool {
+func (f *fakeOrca) WaitIdle(string, int) orca.Wait {
 	f.calls = append(f.calls, "terminal wait")
-	return f.idle
+	return orca.Wait{Idle: f.idle}
 }
 
 func (f *fakeOrca) ReadScreen(string) (string, error) {

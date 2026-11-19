@@ -1,0 +1,78 @@
+{
+  "id": "launch/trust/blocked-wait-in-an-untrusted-folder-is-refused",
+  "title": "a terminal blocked by the trust dialog in a folder outside the repo is refused before any wait, sends no key and closes the terminal",
+  "source": [
+    "intended: found in the first real Orca run, Orca answers a trust dialog as a blocked wait"
+  ],
+  "project": {
+    "files": {
+      ".jitso/briefs/brief.md": {
+        "from": "brief.md"
+      }
+    }
+  },
+  "orca": {
+    "screens": [
+      "Is this a project you created or one you trust?\n 1. Yes, I trust this folder\n 2. No, exit"
+    ],
+    "wait_blocked": [
+      "agent-trust-workspace"
+    ],
+    "cwd": "{{HOME}}/elsewhere"
+  },
+  "steps": [
+    {
+      "run": [
+        "launch",
+        "--build",
+        "haiku-explorer",
+        "--brief",
+        "{{PROJECT}}/.jitso/briefs/brief.md",
+        "--mode",
+        "direct"
+      ],
+      "expect": {
+        "exit": 2,
+        "orca_calls": {
+          "verbs": [
+            "terminal create",
+            "terminal close"
+          ],
+          "calls": [
+            {
+              "at": 1,
+              "argv": [
+                "terminal",
+                "close",
+                "--terminal",
+                "term_fake"
+              ]
+            }
+          ],
+          "none": [
+            "terminal wait",
+            "terminal read",
+            "terminal send"
+          ]
+        },
+        "registry": {
+          "count": 0
+        },
+        "stdout": [
+          {
+            "empty": true
+          }
+        ],
+        "stderr": [
+          {
+            "contains": "JITSO REJECTED: untrusted folder {{HOME}}/elsewhere"
+          },
+          {
+            "contains": "the terminal was closed"
+          }
+        ]
+      }
+    }
+  ],
+  "intent": "The folder check runs right after terminal create, so a blocked trust dialog in an untrusted folder never gets an answer: exit 2, no wait, no key."
+}

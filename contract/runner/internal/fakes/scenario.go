@@ -19,11 +19,13 @@ const DefaultScreen = "❯ \n medium · /effort\n bypass permissions on"
 type Scenario struct {
 	Handle string `json:"handle"`
 	// Cwd is the folder in `worktreeId`; nil omits `worktreeId`.
-	Cwd          *string                    `json:"cwd"`
-	Screens      []string                   `json:"screens"`
-	WaitTimesOut bool                       `json:"wait_times_out"`
-	FailOn       []string                   `json:"fail_on"`
-	Errors       map[string]json.RawMessage `json:"errors"`
+	Cwd          *string  `json:"cwd"`
+	Screens      []string `json:"screens"`
+	WaitTimesOut bool     `json:"wait_times_out"`
+	// WaitBlocked is one blockedReason per successive `terminal wait`; a wait past the end is idle.
+	WaitBlocked []string                   `json:"wait_blocked"`
+	FailOn      []string                   `json:"fail_on"`
+	Errors      map[string]json.RawMessage `json:"errors"`
 	// Listed, when nil, is the default: the scenario handle until it is closed.
 	Listed    []string                   `json:"listed"`
 	Responses map[string]json.RawMessage `json:"responses"`
@@ -84,7 +86,7 @@ func ParseScenario(v any, project string) (Scenario, error) {
 	if err != nil {
 		return sc, err
 	}
-	if err := jsonx.Keys(obj, "orca", "handle", "cwd", "screens", "wait_times_out", "fail_on", "errors", "listed", "responses", "close_keeps_listed"); err != nil {
+	if err := jsonx.Keys(obj, "orca", "handle", "cwd", "screens", "wait_times_out", "wait_blocked", "fail_on", "errors", "listed", "responses", "close_keeps_listed"); err != nil {
 		return sc, err
 	}
 	if raw, ok := obj["handle"]; ok {
@@ -113,6 +115,11 @@ func ParseScenario(v any, project string) (Scenario, error) {
 	}
 	if raw, ok := obj["wait_times_out"]; ok {
 		if sc.WaitTimesOut, err = jsonx.Bool(raw, "orca.wait_times_out"); err != nil {
+			return sc, err
+		}
+	}
+	if raw, ok := obj["wait_blocked"]; ok {
+		if sc.WaitBlocked, err = jsonx.Strings(raw, "orca.wait_blocked"); err != nil {
 			return sc, err
 		}
 	}

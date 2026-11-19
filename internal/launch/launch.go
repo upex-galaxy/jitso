@@ -23,7 +23,7 @@ import (
 // Orca is the part of the Orca client a launch uses.
 type Orca interface {
 	CreateTerminal(worktree, title, command string) (orca.Terminal, error)
-	WaitIdle(handle string, timeoutMS int) bool
+	WaitIdle(handle string, timeoutMS int) orca.Wait
 	ReadScreen(handle string) (string, error)
 	SendText(handle, text string) error
 	CloseTerminal(handle string) error
@@ -208,18 +208,10 @@ func execute(p prepared, d Deps) (err error) {
 		return fail.Rejected(why)
 	}
 
-	if !d.Orca.WaitIdle(term.Handle, IdleTimeoutMS) {
-		abandon()
-		return fail.Envf("terminal %s did not reach %s in %d s; it was closed", term.Handle, p.adapter.Readiness(), IdleTimeoutMS/1000)
-	}
-	outcome, err := answerTrust(p.adapter, d, policy, term)
+	outcome, err := awaitReady(p, d, policy, term)
 	if err != nil {
 		abandon()
 		return err
-	}
-	if outcome == trust.Refused {
-		abandon()
-		return fail.Rejected(trust.Untrusted(term.WorktreePath, deref(p.args.Worktree)))
 	}
 	if p.args.Mode == ModeFleet {
 		start := []string{"orchestration", "worker-start", "--run", deref(p.args.Run), "--spec-file", files.brief, "--terminal", term.Handle}
@@ -259,6 +251,39 @@ func execute(p prepared, d Deps) (err error) {
 		d.Warn("jitso: the trust dialog of terminal " + term.Handle + " did not clear in 10 s; the launch is registered")
 	}
 	return nil
+}
+
+// awaitReady waits for the terminal to be idle and answers its trust dialog.
+// A wait Orca reports as blocked by the trust dialog goes straight to the
+// dialog, then waits once more; any other blocked reason is a failure that
+// names it, and a wait that is neither idle nor blocked is the idle timeout.
+// A refused dialog is a rejection (exit 2); the caller closes the terminal.
+func awaitReady(p prepared, d Deps, policy trust.Policy, term orca.Terminal) (trust.Outcome, error) {
+	first := d.Orca.WaitIdle(term.Handle, IdleTimeoutMS)
+	if !first.Idle && first.Blocked != orca.TrustBlock {
+		return "", notIdle(p, term, first)
+	}
+	outcome, err := answerTrust(p.adapter, d, policy, term)
+	if err != nil {
+		return "", err
+	}
+	if outcome == trust.Refused {
+		return "", fail.Rejected(trust.Untrusted(term.WorktreePath, deref(p.args.Worktree)))
+	}
+	if !first.Idle {
+		if again := d.Orca.WaitIdle(term.Handle, IdleTimeoutMS); !again.Idle {
+			return "", notIdle(p, term, again)
+		}
+	}
+	return outcome, nil
+}
+
+// notIdle is the failure of a wait that did not end idle.
+func notIdle(p prepared, term orca.Terminal, w orca.Wait) error {
+	if w.Blocked != "" {
+		return fail.Envf("terminal %s is blocked (%s); it was closed", term.Handle, w.Blocked)
+	}
+	return fail.Envf("terminal %s did not reach %s in %d s; it was closed", term.Handle, p.adapter.Readiness(), IdleTimeoutMS/1000)
 }
 
 // TaskID is the Task id of a worker-start receipt: taskId, else task_id, else

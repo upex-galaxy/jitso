@@ -1,0 +1,87 @@
+{
+  "id": "launch/orca-failure/blocked-by-another-reason-names-it",
+  "title": "a wait blocked for a reason other than the trust dialog exits 3 with a message that names the reason, not the idle timeout text, and closes the terminal",
+  "source": [
+    "intended: found in the first real Orca run, Orca answers a trust dialog as a blocked wait"
+  ],
+  "project": {
+    "files": {
+      ".jitso/briefs/brief.md": {
+        "from": "brief.md"
+      }
+    }
+  },
+  "orca": {
+    "wait_blocked": [
+      "agent-needs-login"
+    ]
+  },
+  "steps": [
+    {
+      "run": [
+        "launch",
+        "--build",
+        "haiku-explorer",
+        "--brief",
+        "{{PROJECT}}/.jitso/briefs/brief.md",
+        "--mode",
+        "direct"
+      ],
+      "expect": {
+        "exit": 3,
+        "orca_calls": {
+          "verbs": [
+            "terminal create",
+            "terminal wait",
+            "terminal close"
+          ],
+          "calls": [
+            {
+              "at": 1,
+              "argv": [
+                "terminal",
+                "wait",
+                "--terminal",
+                "term_fake",
+                "--for",
+                "tui-idle",
+                "--timeout-ms",
+                "90000"
+              ]
+            },
+            {
+              "at": 2,
+              "argv": [
+                "terminal",
+                "close",
+                "--terminal",
+                "term_fake"
+              ]
+            }
+          ],
+          "none": [
+            "terminal read",
+            "terminal send"
+          ]
+        },
+        "registry": {
+          "count": 0
+        },
+        "stdout": [
+          {
+            "empty": true
+          }
+        ],
+        "stderr": [
+          {
+            "contains": "jitso: terminal term_fake is blocked (agent-needs-login); it was closed"
+          },
+          {
+            "not_contains": "did not reach"
+          }
+        ]
+      }
+    }
+  ],
+  "intent": "Only agent-trust-workspace has an answer. Any other blockedReason fails the launch, and the message names it so the owner is not told the terminal timed out."
+}

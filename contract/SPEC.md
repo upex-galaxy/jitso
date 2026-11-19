@@ -121,13 +121,14 @@ Scenario (`orca` field of the case, all keys optional):
 | `cwd` | `{{PROJECT}}` | the folder reported as `worktreeId: "fake-uuid::<cwd>"`; `null` omits `worktreeId` |
 | `screens` | one idle Claude prompt screen: `"❯ \n medium · /effort\n bypass permissions on"` | successive `terminal read` answers; the last repeats |
 | `wait_times_out` | `false` | `terminal wait` answers `ok: false` |
+| `wait_blocked` | `[]` | one `blockedReason` per successive `terminal wait`: the n-th wait answers `ok: true`, `wait.satisfied: false`, that `blockedReason`, and exits `1` (as Orca does for a terminal blocked by an agent dialog); a wait past the end of the list is idle |
 | `fail_on` | `[]` | verbs (first two argv words joined by a space) that answer `ok:false`, error `{code:"fake_failure",message:"<verb> failed"}` |
 | `errors` | `{}` | `{ "<verb>": {"code": "...", "message": "..."} }`: overrides the error body of a failing verb (also makes that verb fail); each value is an object |
 | `listed` | `[<handle>]`, whether or not `terminal create` ran | handles `terminal list` reports, minus every handle a previous `terminal close --terminal <h>` closed |
 | `responses` | `{}` | `{ "<verb>": <result object> }`: replaces the `result` of a verb that does not fail |
 | `close_keeps_listed` | `false` | `true`: `terminal close` still answers `{}`, but the closed handle stays in `terminal list` (a terminal Orca failed to close) |
 
-Default answers: `terminal create` returns `{terminal:{handle,worktreeId}}`; `terminal wait` returns `{}` (with `wait_times_out`, the `fake_failure` error of `fail_on`); `terminal read` returns `{terminal:{tail:[<screen lines>]}}` (the screen split on `\n`); `terminal list` returns `{terminals:[{handle},...]}`; `terminal close` returns `{}` and removes the handle from `listed` (unless `close_keeps_listed`); every other verb returns `{state:"ready"}`. Precedence: `errors`, then `fail_on` and `wait_times_out`, then `responses`, then the default.
+Default answers: `terminal create` returns `{terminal:{handle,worktreeId}}`; `terminal wait` returns `{wait:{handle,condition:"tui-idle",satisfied:true,status:"running",exitCode:null,blockedReason:null}}` (with `wait_times_out`, the `fake_failure` error of `fail_on`; with `wait_blocked`, the blocked answer above); `terminal read` returns `{terminal:{tail:[<screen lines>]}}` (the screen split on `\n`); `terminal list` returns `{terminals:[{handle},...]}`; `terminal close` returns `{}` and removes the handle from `listed` (unless `close_keeps_listed`); every other verb returns `{state:"ready"}`. Precedence: `errors`, then `fail_on` and `wait_times_out`, then `responses`, then `wait_blocked`, then the default.
 
 Call log: one JSON line per call, `{"argv":["terminal","create","--title","..."]}` (trailing `--json` removed), failing calls included. The fake keeps no other state: the screen index and the closed handles are recomputed from this log, which accumulates over the whole case.
 
