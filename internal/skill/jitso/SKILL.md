@@ -1,6 +1,8 @@
 ---
 name: jitso
 description: Use when launching, delegating to or supervising another agent session (a worker, conductor or subagent) in a project that has jitso/jitso.yaml, when writing a brief for one, reading a JITSO launch card, or running jitso launch, close, reap, build list, build validate or build draft. Also use for a JITSO REJECTED message, for a hook denial that names worker-start, start_worker, terminal create, build save, setup or install, and whenever the words worker, conductor, subagent, build, card, brief, route scope or fleet come up. Load it before spawning any agent session, even if the user never says JITSO, because in these projects only jitso launch may start one.
+metadata:
+  kind: workflow
 ---
 
 # JITSO

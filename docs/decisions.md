@@ -162,6 +162,7 @@ Decided by the owner on 2026-11-19 unless a row says DECIDED.
 | Decision | Options beaten | Why |
 |---|---|---|
 | `jitso install skill --scope project` plans no link when the folder that holds `.claude/skills/jitso` resolves to the folder that holds `.agents/skills/jitso` (a `.claude/skills` link to `.agents/skills`, dangling or not): the real copy is the entry Claude Code reads. `--remove` in that layout removes the real folder only. | catch the write error and exit 0; write a second copy | both boilerplates ship that link, and the old plan tried to create a link inside its own target, exited 3 and had already written the files. |
+| The shipped `SKILL.md` declares `metadata: {kind: workflow}`. The AGENTS.md section 8 rule (only `name` and `description`) is about this repo's own skills and does not bind the shipped one. | teach each boilerplate's skill check to skip jitso's copy; no key | the key is inert for harnesses that do not read it and unblocks every boilerplate adopter's pre-commit at once. |
 
 ## The contract-first rule
 

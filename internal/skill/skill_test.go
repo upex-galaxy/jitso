@@ -92,8 +92,8 @@ func TestSkillFrontmatter(t *testing.T) {
 		t.Fatal("the frontmatter is not closed")
 	}
 	front := strings.Split(skill[4:4+end], "\n")
-	if len(front) != 2 {
-		t.Fatalf("frontmatter has %d lines, want name and description only: %q", len(front), front)
+	if len(front) != 4 || front[2] != "metadata:" || front[3] != "  kind: workflow" {
+		t.Fatalf("frontmatter is %q, want name, description and metadata.kind workflow only", front)
 	}
 	desc := strings.TrimPrefix(front[1], "description: ")
 	if strings.TrimSpace(desc) == "" || strings.Contains(desc, ": ") {

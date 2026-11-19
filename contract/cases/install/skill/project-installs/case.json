@@ -34,7 +34,7 @@
           {
             "path": ".agents/skills/jitso/SKILL.md",
             "regex": [
-              "^---\nname: jitso\ndescription: [^\n]+\n---\n"
+              "^---\nname: jitso\ndescription: [^\n]+\nmetadata:\n  kind: workflow\n---\n"
             ]
           },
           {

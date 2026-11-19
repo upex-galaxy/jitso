@@ -1,0 +1,31 @@
+{
+  "id": "install/skill/shipped-skill-declares-its-kind",
+  "title": "the installed skill declares metadata.kind: workflow in its frontmatter",
+  "source": [
+    "intended: a boilerplate's skills check requires a kind key, and the shipped skill is a workflow"
+  ],
+  "defect": "J23",
+  "intent": "The Agent Skills frontmatter allows an optional `metadata` map and harnesses ignore keys they do not know. The boilerplates' skill check rejects a skill without `metadata.kind`, which blocked every adopter's pre-commit. The key must sit inside the frontmatter.",
+  "steps": [
+    {
+      "run": [
+        "install",
+        "skill",
+        "--scope",
+        "project",
+        "--yes"
+      ],
+      "expect": {
+        "exit": 0,
+        "files": [
+          {
+            "path": ".agents/skills/jitso/SKILL.md",
+            "regex": [
+              "\\A---\\n(?:[^\\n]*\\n)*?metadata:\\n  kind: workflow\\n(?:[^\\n]*\\n)*?---\\n"
+            ]
+          }
+        ]
+      }
+    }
+  ]
+}
