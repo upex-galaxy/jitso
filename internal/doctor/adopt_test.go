@@ -180,7 +180,7 @@ func TestSkillProject(t *testing.T) {
 	root := t.TempDir()
 
 	got, _ := checkSkill(p, "project", root, nil)
-	want(t, got, Warn, "skill-project", "not installed (run jitso install skill --scope project)")
+	want(t, got, Warn, "skill-project", "not installed (run jitso install skill --scope project; sessions that jitso launches load project skills only)")
 
 	installSkill(t, root, "v9.9.9", nil, true)
 	got, found := checkSkill(p, "project", root, nil)
@@ -244,7 +244,7 @@ func TestSkillOutdatedUnmanagedAndOther(t *testing.T) {
 	installSkill(t, home, "v2.0.0", nil, true)
 	_, projectFound := checkSkill(p, "project", root, nil)
 	user, _ = checkSkill(p, "user", home, &projectFound)
-	want(t, user, Warn, "skill-user", "installed at both scopes with different content (Claude Code uses the user copy)")
+	want(t, user, Warn, "skill-user", "installed at both scopes with different content (a session that jitso launches reads the project copy)")
 	same := skillFound{Installed: true, Content: skill.NewManifest("x", skill.Files()).ContentSHA256}
 	user, _ = checkSkill(p, "user", home, &same)
 	want(t, user, OK, "skill-user", "jitso skill v2.0.0 in ~/.agents/skills/jitso and ~/.claude/skills/jitso")

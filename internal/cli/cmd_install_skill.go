@@ -98,6 +98,9 @@ func runInstallSkill(ctx *Context, args []string) error {
 	if flags.Scope == "project" && !flags.Remove && !res.Plan.Empty() && untracked(root, skill.RealRel, skill.LinkRel) {
 		res.Plan.Notes = append(res.Plan.Notes, "note: commit "+skill.RealRel+" and "+skill.LinkRel+" so other clones get the skill")
 	}
+	if flags.Scope == "user" && !flags.Remove && !res.Plan.Empty() {
+		res.Plan.Notes = append(res.Plan.Notes, "note: sessions that jitso launches load project skills only; run jitso install skill --scope project in each project")
+	}
 
 	return adopt.Run(adopt.Options{
 		Command:    "install skill",

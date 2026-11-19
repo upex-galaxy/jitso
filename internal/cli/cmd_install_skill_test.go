@@ -112,8 +112,11 @@ func TestInstallSkillUserScope(t *testing.T) {
 	if code != 0 || errOut != "" || !strings.Contains(out, "created ~/.agents/skills/jitso/SKILL.md\n") || !strings.Contains(out, "linked ~/.claude/skills/jitso -> ../../.agents/skills/jitso\n") || !strings.HasSuffix(out, "jitso install skill: done\n") {
 		t.Fatalf("install: exit %d, stdout %q, stderr %q", code, out, errOut)
 	}
-	if strings.Contains(out, "note:") {
+	if strings.Contains(out, "note: commit") {
 		t.Errorf("the commit note is for project scope only: %q", out)
+	}
+	if !strings.Contains(out, "note: sessions that jitso launches load project skills only; run jitso install skill --scope project in each project\n") {
+		t.Errorf("the user scope note is missing: %q", out)
 	}
 	if !existsAt(home, ".agents/skills/jitso/.jitso-skill.json") || !existsAt(home, ".claude/skills/jitso/SKILL.md") {
 		t.Fatal("the skill is not where Codex and Claude Code read it")

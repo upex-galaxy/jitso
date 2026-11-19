@@ -22,6 +22,7 @@
           "created ~/.agents/skills/jitso/SKILL.md",
           "created ~/.agents/skills/jitso/.jitso-skill.json",
           "linked ~/.claude/skills/jitso -> ../../.agents/skills/jitso",
+          "note: sessions that jitso launches load project skills only; run jitso install skill --scope project in each project",
           "jitso install skill: done"
         ],
         "stderr": [

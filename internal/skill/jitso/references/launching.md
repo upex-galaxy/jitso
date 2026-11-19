@@ -77,7 +77,7 @@ In this order (read from the launch code, then seen with a fake Orca on a scratc
 
 If anything fails before step 5, the launcher closes the terminal it opened and removes the launch folder, so nothing half-made stays. After step 5 nothing is removed.
 
-`run.sh` starts the harness with the build's model and effort, bypassed permissions, project settings only (`--setting-sources project`), a strict MCP file that holds only the servers the build names, and the build's subagents as `--agents`.
+`run.sh` starts the harness with the build's model and effort, bypassed permissions, project settings only (`--setting-sources project`), a strict MCP file that holds only the servers the build names, and the build's subagents as `--agents`. User skills, user hooks and user MCP servers do not reach a launched session.
 
 ## Preconditions
 

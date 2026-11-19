@@ -73,5 +73,5 @@ A read-only check that prints one line per check, `ok`, `warn` or `fail`, then a
 | `mcp` | a launchable build lists servers and `.mcp.json` is missing or invalid | tell the owner |
 | `state`, `drafts`, `registry`, `backups` | `.jitso/` is not git-ignored, drafts are old or not ignored, or the log has invalid lines | ignored lines are skipped. Tell the owner about the rest |
 | `hooks` | the guard is not registered, only on some events, the file is untracked, hooks are disabled, or the registered command does not resolve | the guard is off, so nothing denies a bad launch. Ask the owner to run `jitso setup hook` |
-| `skill-project`, `skill-user` | the jitso skill is missing, out of date, or edited by hand | ask the owner to run `jitso install skill --scope project` (or `user`) |
+| `skill-project`, `skill-user` | the jitso skill is missing, out of date, or edited by hand | ask the owner to run `jitso install skill --scope project`: a session that jitso launches loads project skills only, so a user copy does not reach it |
 | `instructions`, `instructions-user` | the JITSO block is missing or an older version in the instruction files | ask the owner to run `jitso setup instructions` |
