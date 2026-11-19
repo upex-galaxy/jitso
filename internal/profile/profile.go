@@ -72,7 +72,7 @@ func Resolve(req Request, cat *catalog.Catalog) (Profile, error) {
 		return Profile{}, fail.Rejectedf(`effort "%s" is not allowed`, b.Effort)
 	}
 	for _, name := range b.MCP {
-		if !slices.Contains(cfg.MCP, name) {
+		if !catalog.IsScoped(name) && !slices.Contains(cfg.MCP, name) {
 			return Profile{}, fail.Rejectedf(`unknown mcp "%s"`, name)
 		}
 	}

@@ -15,7 +15,7 @@ Every file is `<folder>/<id>.yaml`. Only `*.yaml` files directly inside a layer 
 | `repo` | `<primary>/jitso/builds/` | `jitso/builds/<file>` | a missing folder is an empty layer |
 | `draft` | `<primary>/.jitso/drafts/` | `.jitso/drafts/<file>` | git-ignored through its own `.gitignore` (`*`); the only layer where `status` is `draft` |
 
-Nothing outside the project is read: not a parent folder, not `$HOME/.jitso/builds/`, not `$HOME/.jitso/config.yaml`. A file at one of those places is ignored without a warning.
+No build is read from outside the project: not a parent folder, not `$HOME/.jitso/builds/`, not `$HOME/.jitso/config.yaml`. A file at one of those places is ignored without a warning. The one user file read is the user allowlist `~/.jitso/jitso.yaml` (below), and only for `user:` names.
 
 ### Precedence
 
@@ -71,6 +71,21 @@ A launch that gives a bad value is `JITSO REJECTED: field <name> has an invalid 
 
 Route-scope ids are not in this file: they are the `id:` line of each `.agents/instructions/agent-*.md` file.
 
+## `~/.jitso/jitso.yaml`: the user allowlist
+
+Same YAML subset as `jitso/jitso.yaml`. A build names an item of this file with the scope `user:` in `skills_first` or `mcp` (`user:humanizer`); a plain name never resolves here, and a `user:` name never resolves in the project file. Keys: `version` (`1`), `skills` (folder names under `~/.claude/skills/`), `mcp` (server names of the top-level `mcpServers` of `~/.claude.json`), `literal_env` (`<server>/<KEY>` entries). Any other key is ignored. A missing file is an empty user layer, silent. An invalid file fails only a command whose builds name a `user:` item, with exit 3 and `jitso: ~/.jitso/jitso.yaml is invalid: <problems>`.
+
+| Input | Problem text |
+|---|---|
+| `user:<n>` skill not in `skills` | `skill "user:<n>" is not in the user allowlist (~/.jitso/jitso.yaml)` |
+| `user:<n>` skill without `~/.claude/skills/<n>/SKILL.md` | `user skill "<n>" has no SKILL.md under ~/.claude/skills/<n>` |
+| `user:<n>` skill that is also a project skill (in `skills`, or a folder under `.claude/skills/` or `.agents/skills/`) | `user skill "<n>" has the name of a project skill` |
+| `user:<n>` server not in `mcp` | `mcp "user:<n>" is not in the user allowlist (~/.jitso/jitso.yaml)` |
+| `user:<n>` server that is also in the project's `mcp` | `user mcp "<n>" has the name of a project mcp server` |
+| `user:<n>` server not under `mcpServers` of `~/.claude.json` | `user mcp "<n>" is not defined in ~/.claude.json` |
+| `cloud:<n>` server | `mcp "cloud:<n>": cloud connectors cannot be given to a launched session yet` |
+| any other scope | `skill "<scope>:<n>": unknown scope (use user:)`, `mcp "<scope>:<n>": unknown scope (use user:)` |
+
 ## The build file
 
 Key: R required, O optional (validated when present), U optional and unused by that tier, E must be empty or absent, L checked at launch and also reported by `jitso build validate`.
@@ -88,8 +103,8 @@ Key: R required, O optional (validated when present), U optional and unused by t
 | `route_scope` | list of instruction-section ids, or `[none]`; absent or empty means none (the card prints `ROUTE-SCOPE: none`) | O | U | `route_scope id "<id>" is not an instruction section` |
 | `budget` | mapping with `tokens` and `usd_list_cap` | O | U | none: a build without a budget validates and launches |
 | `harness` | a harness with an adapter (`Adapters` in `internal/launch`) | L | U | validate: `harness "<h>" has no adapter`; launch: `no adapter for harness "<h>"` (exit 2) |
-| `skills_first` | list, each in `skills` | O | E | `skill "<s>" is not in the allowlist`; `skills_first must be empty in a subagent-tier build` |
-| `mcp` | list, each in `mcp`; a launch reads the project's `.mcp.json` only when it still names a server after `--mcp-exclude` | O | E | `mcp "<m>" is not in the allowlist`; `mcp must be empty in a subagent-tier build` |
+| `skills_first` | list, each in `skills`, or `user:<name>` in the user allowlist | O | E | `skill "<s>" is not in the allowlist`; `skills_first must be empty in a subagent-tier build` |
+| `mcp` | list, each in `mcp`, or `user:<name>` in the user allowlist; a launch reads the project's `.mcp.json` only when it still names a server after `--mcp-exclude` | O | E | `mcp "<m>" is not in the allowlist`; `mcp must be empty in a subagent-tier build` |
 | `requires` | list of field names the launch must supply; each matches `^[a-z][a-z_]*$` | O | E | `required field "<f>" is not a field name`; `requires must be empty in a subagent-tier build` |
 | `subagents` | list of kebab-case names, each a subagent-tier build | O | E | `subagents must be a list of kebab-case names`; `subagent "<s>" is not a subagent-tier build`; `a subagent-tier build cannot list subagents` |
 | listed subagent status | each listed subagent is `approved`; a draft worker may also list drafts | L | n/a | launch: `JITSO REJECTED: build "<w>" lists subagent "<s>", which is <status>, not approved`; validate: `subagent "<s>" is <status>, not approved` |

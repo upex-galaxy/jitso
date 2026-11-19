@@ -1,0 +1,15 @@
+id: user-mcp-worker
+version: 1
+status: approved
+role: operator
+type: explorer
+description: A build that names user items.
+harness: claude
+model: claude-haiku-5-5
+effort: low
+mode_default: direct
+agents_md: full
+route_scope: [none]
+skills_first: []
+mcp: [dbhub, user:engram]
+requires: []

@@ -1,0 +1,56 @@
+{
+  "id": "layers/user-allowlist/missing-file-is-an-empty-layer",
+  "title": "without ~/.jitso/jitso.yaml the user layer is empty and silent: plain builds are untouched, a user: name is not in the user allowlist",
+  "source": [
+    "intended: JITSO v0.2 plan 2.1 (a missing user file is an empty user layer, silent)"
+  ],
+  "project": {
+    "files": {
+      ".jitso/drafts/needs-user.yaml": {
+        "from": "needs-user.yaml"
+      }
+    }
+  },
+  "steps": [
+    {
+      "run": [
+        "build",
+        "validate",
+        "haiku-explorer"
+      ],
+      "expect": {
+        "exit": 0,
+        "stdout": [
+          {
+            "contains": "ok haiku-explorer repo jitso/builds/haiku-explorer.yaml\n"
+          }
+        ],
+        "stderr": [
+          {
+            "empty": true
+          }
+        ]
+      }
+    },
+    {
+      "run": [
+        "build",
+        "validate",
+        "needs-user"
+      ],
+      "expect": {
+        "exit": 2,
+        "stdout": [
+          {
+            "contains": "invalid needs-user draft .jitso/drafts/needs-user.yaml\n  skill \"user:humanizer\" is not in the user allowlist (~/.jitso/jitso.yaml)\n  mcp \"user:engram\" is not in the user allowlist (~/.jitso/jitso.yaml)\n"
+          }
+        ],
+        "stderr": [
+          {
+            "empty": true
+          }
+        ]
+      }
+    }
+  ]
+}

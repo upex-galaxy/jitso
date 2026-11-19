@@ -118,10 +118,20 @@ func (r *Result) Drafts() []*File {
 // primary is the real path of the primary checkout, from which the layers are
 // computed. An empty primary means the project layer only (tests).
 func Scan(fsys fs.FS, primary string) (*Result, error) {
+	return ScanHome(fsys, primary, "")
+}
+
+// ScanHome is Scan with the user layer of home: user:<name> items of a build
+// resolve in its ~/.jitso/jitso.yaml. An empty home is no user layer. An
+// invalid user file fails the scan only when a build file names a user
+// item; every other scan ignores it.
+func ScanHome(fsys fs.FS, primary, home string) (*Result, error) {
 	cfg, err := LoadConfig(fsys)
 	if err != nil {
 		return nil, err
 	}
+	cfg.User = LoadUser(home)
+	cfg.ProjectSkillDirs = projectSkillDirs(fsys)
 	ids, err := RouteIDs(fsys)
 	if err != nil {
 		return nil, err
@@ -133,7 +143,18 @@ func Scan(fsys fs.FS, primary string) (*Result, error) {
 		sources = Sources(primary)
 	}
 	sources[0].fsys = subFS(fsys, BuildsDir)
-	return ScanSources(cfg, ids, sources)
+	res, err := ScanSources(cfg, ids, sources)
+	if err != nil {
+		return nil, err
+	}
+	if cfg.User.Err != nil {
+		for _, f := range res.Files {
+			if f.Raw != nil && namesUser(f.Raw) {
+				return nil, cfg.User.Err
+			}
+		}
+	}
+	return res, nil
 }
 
 // ScanSources is Scan over given folders: the pure part, with the allowlists

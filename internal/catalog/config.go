@@ -23,6 +23,12 @@ type Config struct {
 	// Fields are the patterns of the fields a build may require, in the order
 	// of the fields key. Without the key there are none.
 	Fields []FieldRule
+	// User is the user allowlist that user:<name> items resolve in.
+	User User
+	// ProjectSkillDirs are the skill folders the project holds under
+	// .claude/skills and .agents/skills: a user skill may not take one of
+	// these names.
+	ProjectSkillDirs []string
 }
 
 // FieldRule is one entry of the fields key: a field name and the pattern its

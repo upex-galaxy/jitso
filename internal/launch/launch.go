@@ -68,6 +68,9 @@ func Run(a Args, d Deps) error {
 	if !ok {
 		return fail.Rejectedf(`no adapter for harness "%s"`, harnessName)
 	}
+	if namesUserItem(p.Build) {
+		return fail.Rejected("launch of user-scope items needs the launch package")
+	}
 	mcp := MCPAfterExclude(p.MCP, a.MCPExclude)
 
 	briefPath, err := brief.ResolvePath(a.Brief, d.Cwd, AllowedBriefDirs(d.Root.StateDir()))
@@ -328,6 +331,19 @@ func deref(s *string) string {
 		return ""
 	}
 	return *s
+}
+
+// namesUserItem reports whether the build names a user:<name> skill or MCP
+// server.
+func namesUserItem(b *catalog.Build) bool {
+	for _, list := range [][]string{b.SkillsFirst, b.MCP} {
+		for _, name := range list {
+			if _, ok := catalog.UserName(name); ok {
+				return true
+			}
+		}
+	}
+	return false
 }
 
 // jsString is the String() of a build key as a launch prints it

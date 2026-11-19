@@ -1,0 +1,116 @@
+{
+  "id": "validation/scoped-names",
+  "title": "each way a scoped name in skills_first or mcp can fail validation has its own problem text",
+  "source": [
+    "intended: JITSO v0.2 plan 2.1 (validation texts of scoped names); cloud: names are out of v0.2"
+  ],
+  "intent": "The user allowlist approves humanizer, nofile and sprint-testing as skills and engram, undefined and dbhub as servers. Only humanizer and sprint-testing have a SKILL.md, only engram and dbhub are defined in ~/.claude.json. sprint-testing and dbhub are also project names, which a user item may not take.",
+  "for_each": {
+    "vars": [
+      "field",
+      "value",
+      "text"
+    ],
+    "ids": [
+      "skill-not-allowlisted",
+      "skill-without-skill-md",
+      "skill-named-like-a-project-skill",
+      "skill-unknown-scope",
+      "skill-cloud-scope",
+      "mcp-not-allowlisted",
+      "mcp-not-defined",
+      "mcp-named-like-a-project-server",
+      "mcp-cloud-scope",
+      "mcp-unknown-scope"
+    ],
+    "rows": [
+      [
+        "skills_first",
+        "user:nope",
+        "skill \"user:nope\" is not in the user allowlist (~/.jitso/jitso.yaml)"
+      ],
+      [
+        "skills_first",
+        "user:nofile",
+        "user skill \"nofile\" has no SKILL.md under ~/.claude/skills/nofile"
+      ],
+      [
+        "skills_first",
+        "user:sprint-testing",
+        "user skill \"sprint-testing\" has the name of a project skill"
+      ],
+      [
+        "skills_first",
+        "team:x",
+        "skill \"team:x\": unknown scope (use user:)"
+      ],
+      [
+        "skills_first",
+        "cloud:x",
+        "skill \"cloud:x\": unknown scope (use user:)"
+      ],
+      [
+        "mcp",
+        "user:nope",
+        "mcp \"user:nope\" is not in the user allowlist (~/.jitso/jitso.yaml)"
+      ],
+      [
+        "mcp",
+        "user:undefined",
+        "user mcp \"undefined\" is not defined in ~/.claude.json"
+      ],
+      [
+        "mcp",
+        "user:dbhub",
+        "user mcp \"dbhub\" has the name of a project mcp server"
+      ],
+      [
+        "mcp",
+        "cloud:Slack",
+        "mcp \"cloud:Slack\": cloud connectors cannot be given to a launched session yet"
+      ],
+      [
+        "mcp",
+        "team:x",
+        "mcp \"team:x\": unknown scope (use user:)"
+      ]
+    ]
+  },
+  "project": {
+    "files": {
+      ".jitso/drafts/scoped.yaml": {
+        "from": "scoped.yaml"
+      }
+    }
+  },
+  "home": {
+    "files": {
+      ".jitso/jitso.yaml": "version: 1\nskills: [humanizer, nofile, sprint-testing]\nmcp: [engram, undefined, dbhub]\n",
+      ".claude/skills/humanizer/SKILL.md": "---\nname: humanizer\ndescription: Make text read human.\n---\n\nBody.\n",
+      ".claude/skills/sprint-testing/SKILL.md": "---\nname: sprint-testing\ndescription: Make text read human.\n---\n\nBody.\n",
+      ".claude.json": "{\n  \"mcpServers\": {\n    \"engram\": {\n      \"command\": \"engram-cmd\"\n    },\n    \"dbhub\": {\n      \"command\": \"user-dbhub\"\n    }\n  }\n}\n"
+    }
+  },
+  "steps": [
+    {
+      "run": [
+        "build",
+        "validate",
+        "scoped"
+      ],
+      "expect": {
+        "exit": 2,
+        "stderr": [
+          {
+            "empty": true
+          }
+        ],
+        "stdout": [
+          {
+            "equals": "invalid scoped draft .jitso/drafts/scoped.yaml\n  {{text}}\nchecked 1 builds: 0 ok, 1 invalid\n"
+          }
+        ]
+      }
+    }
+  ]
+}

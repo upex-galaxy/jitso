@@ -105,7 +105,7 @@ func (c *Context) Scan() (*catalog.Result, error) {
 		if err != nil {
 			return nil, err
 		}
-		c.scan, c.scanErr = catalog.Scan(os.DirFS(root.Primary), root.Primary)
+		c.scan, c.scanErr = catalog.ScanHome(os.DirFS(root.Primary), root.Primary, c.Home())
 	}
 	return c.scan, c.scanErr
 }

@@ -48,7 +48,7 @@ func (c *projectChecks) gitSays(dir string, args ...string) (exit int, ok bool) 
 // own files keep the whole-catalog rule, drafts that are invalid here are
 // skipped and named.
 func (c *projectChecks) catalog() Line {
-	res, err := catalog.Scan(os.DirFS(c.root.Primary), c.root.Primary)
+	res, err := catalog.ScanHome(os.DirFS(c.root.Primary), c.root.Primary, c.p.Home)
 	if err == nil {
 		c.cat, err = res.Catalog()
 	}
@@ -75,6 +75,9 @@ func (c *projectChecks) mcp() Line {
 	listed := map[string][]string{} // server -> build ids
 	for _, b := range c.cat.Launchable() {
 		for _, s := range b.MCP {
+			if catalog.IsScoped(s) {
+				continue
+			}
 			listed[s] = append(listed[s], b.ID)
 		}
 	}

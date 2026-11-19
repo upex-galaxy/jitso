@@ -1,0 +1,120 @@
+{
+  "id": "layers/user-allowlist/approved-names-validate",
+  "title": "a build that names an approved user skill and an approved user MCP server validates; until the launch package exists its launch is rejected",
+  "source": [
+    "intended: JITSO v0.2 plan 2.1 and 2.2 (user allowlist ~/.jitso/jitso.yaml, scoped names in skills_first and mcp)"
+  ],
+  "intent": "user:<name> in skills_first resolves in the skills list of ~/.jitso/jitso.yaml and needs ~/.claude/skills/<name>/SKILL.md; user:<name> in mcp resolves in its mcp list and needs the server under mcpServers of ~/.claude.json. Plain names keep resolving in the project's jitso/jitso.yaml only.",
+  "project": {
+    "files": {
+      ".jitso/briefs/brief.md": {
+        "from": "brief.md"
+      },
+      "jitso/builds/user-skill-worker.yaml": {
+        "from": "user-skill-worker.yaml"
+      },
+      "jitso/builds/user-mcp-worker.yaml": {
+        "from": "user-mcp-worker.yaml"
+      }
+    }
+  },
+  "home": {
+    "files": {
+      ".jitso/jitso.yaml": "version: 1\nskills: [humanizer]\nmcp: [engram]\n",
+      ".claude/skills/humanizer/SKILL.md": "---\nname: humanizer\ndescription: Make text read human.\n---\n\nBody.\n",
+      ".claude.json": "{\n  \"mcpServers\": {\n    \"engram\": {\n      \"command\": \"engram-cmd\",\n      \"args\": [\n        \"mcp\"\n      ]\n    }\n  }\n}\n"
+    }
+  },
+  "steps": [
+    {
+      "run": [
+        "build",
+        "validate",
+        "user-skill-worker"
+      ],
+      "expect": {
+        "exit": 0,
+        "stdout": [
+          {
+            "contains": "ok user-skill-worker repo jitso/builds/user-skill-worker.yaml\nchecked 1 builds: 1 ok, 0 invalid\n"
+          }
+        ],
+        "stderr": [
+          {
+            "empty": true
+          }
+        ]
+      }
+    },
+    {
+      "run": [
+        "build",
+        "validate",
+        "user-mcp-worker"
+      ],
+      "expect": {
+        "exit": 0,
+        "stdout": [
+          {
+            "contains": "ok user-mcp-worker repo jitso/builds/user-mcp-worker.yaml\nchecked 1 builds: 1 ok, 0 invalid\n"
+          }
+        ],
+        "stderr": [
+          {
+            "empty": true
+          }
+        ]
+      }
+    },
+    {
+      "run": [
+        "launch",
+        "--build",
+        "user-skill-worker",
+        "--brief",
+        "{{PROJECT}}/.jitso/briefs/brief.md",
+        "--mode",
+        "direct",
+        "--dry-run"
+      ],
+      "expect": {
+        "exit": 2,
+        "stdout": [
+          {
+            "empty": true
+          }
+        ],
+        "stderr": [
+          {
+            "equals": "JITSO REJECTED: launch of user-scope items needs the launch package\n"
+          }
+        ]
+      }
+    },
+    {
+      "run": [
+        "launch",
+        "--build",
+        "user-mcp-worker",
+        "--brief",
+        "{{PROJECT}}/.jitso/briefs/brief.md",
+        "--mode",
+        "direct",
+        "--dry-run"
+      ],
+      "expect": {
+        "exit": 2,
+        "stdout": [
+          {
+            "empty": true
+          }
+        ],
+        "stderr": [
+          {
+            "equals": "JITSO REJECTED: launch of user-scope items needs the launch package\n"
+          }
+        ]
+      }
+    }
+  ]
+}

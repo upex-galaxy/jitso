@@ -450,3 +450,17 @@ func TestDefaultFixture(t *testing.T) {
 		}
 	}
 }
+
+func TestDecodeYAMLScopedNamesArePlainScalars(t *testing.T) {
+	raw, err := decodeYAML([]byte("skills_first: [git-flow-master, user:humanizer]\nmcp:\n  - user:engram\n  - cloud:Slack\n"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	m := raw.(*Map)
+	if v, _ := m.Get("skills_first"); !reflect.DeepEqual(v, []any{"git-flow-master", "user:humanizer"}) {
+		t.Errorf("skills_first = %#v", v)
+	}
+	if v, _ := m.Get("mcp"); !reflect.DeepEqual(v, []any{"user:engram", "cloud:Slack"}) {
+		t.Errorf("mcp = %#v", v)
+	}
+}

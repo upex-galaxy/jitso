@@ -1,0 +1,105 @@
+{
+  "id": "layers/user-allowlist/broken-file-fails-only-when-used",
+  "title": "an invalid ~/.jitso/jitso.yaml breaks no command until a build names a user: item; then the catalog commands exit 3 naming the file",
+  "source": [
+    "intended: JITSO v0.2 plan 2.1 (a broken user file is exit 3 only for a command that needs it)"
+  ],
+  "project": {
+    "files": {}
+  },
+  "home": {
+    "files": {
+      ".jitso/jitso.yaml": "skills: [[[ not: yaml\n\t:::\n"
+    }
+  },
+  "steps": [
+    {
+      "run": [
+        "build",
+        "list"
+      ],
+      "expect": {
+        "exit": 0,
+        "stderr": [
+          {
+            "empty": true
+          }
+        ],
+        "stdout": [
+          {
+            "regex": "(?m)^- haiku-explorer: "
+          }
+        ]
+      }
+    },
+    {
+      "run": [
+        "build",
+        "validate"
+      ],
+      "expect": {
+        "exit": 0,
+        "stderr": [
+          {
+            "empty": true
+          }
+        ],
+        "stdout": [
+          {
+            "regex": "(?m)^checked \\d+ builds: \\d+ ok, 0 invalid$"
+          }
+        ]
+      }
+    },
+    {
+      "write": {
+        "project": {
+          "jitso/builds/needs-user.yaml": {
+            "from": "needs-user.yaml"
+          }
+        }
+      }
+    },
+    {
+      "run": [
+        "build",
+        "list"
+      ],
+      "expect": {
+        "exit": 3,
+        "stdout": [
+          {
+            "empty": true
+          }
+        ],
+        "stderr": [
+          {
+            "regex": "^jitso: ~/\\.jitso/jitso\\.yaml is invalid: .+\\n$"
+          },
+          {
+            "line_count": 1
+          }
+        ]
+      }
+    },
+    {
+      "run": [
+        "build",
+        "validate"
+      ],
+      "expect": {
+        "exit": 3,
+        "stdout": [
+          {
+            "empty": true
+          }
+        ],
+        "stderr": [
+          {
+            "regex": "^jitso: ~/\\.jitso/jitso\\.yaml is invalid: .+\\n$"
+          }
+        ]
+      }
+    }
+  ]
+}

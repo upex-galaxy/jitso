@@ -81,12 +81,22 @@ func ValidateBuildIn(raw any, cfg Config, routeIDs []string, layer Layer) []stri
 		add(`effort "` + effort + `" is not in the allowlist`)
 	}
 	for _, skill := range jsconv.Strings(p.Value("skills_first")) {
-		if !slices.Contains(cfg.Skills, skill) {
+		switch {
+		case IsScoped(skill):
+			if problem := scopedSkillProblem(skill, cfg); problem != "" {
+				add(problem)
+			}
+		case !slices.Contains(cfg.Skills, skill):
 			add(`skill "` + skill + `" is not in the allowlist`)
 		}
 	}
 	for _, name := range jsconv.Strings(p.Value("mcp")) {
-		if !slices.Contains(cfg.MCP, name) {
+		switch {
+		case IsScoped(name):
+			if problem := scopedMCPProblem(name, cfg); problem != "" {
+				add(problem)
+			}
+		case !slices.Contains(cfg.MCP, name):
 			add(`mcp "` + name + `" is not in the allowlist`)
 		}
 	}

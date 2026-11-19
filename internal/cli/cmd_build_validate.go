@@ -43,7 +43,7 @@ func runBuildValidate(ctx *Context, args []string) error {
 	if err != nil {
 		return err
 	}
-	res, err := catalog.Scan(os.DirFS(root.Primary), root.Primary)
+	res, err := catalog.ScanHome(os.DirFS(root.Primary), root.Primary, ctx.Home())
 	if err != nil {
 		return err
 	}
