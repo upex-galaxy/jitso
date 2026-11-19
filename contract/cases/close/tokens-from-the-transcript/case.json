@@ -1,0 +1,59 @@
+{
+  "id": "close/tokens-from-the-transcript",
+  "title": "close sums the last usage of each message in the launch's transcript and its subagent transcripts into the end event and prints one tokens line",
+  "intent": "the footer never holds a cost under --setting-sources project, so the end event carries the token counts read from the transcript, deduplicated by message id",
+  "home": {
+    "files": {
+      "t/s.jsonl": {
+        "from": "transcript.jsonl"
+      },
+      "t/s/subagents/agent-a.jsonl": {
+        "from": "subagent.jsonl"
+      }
+    }
+  },
+  "project": {
+    "files": {
+      ".jitso/launches.jsonl": "{\"v\":2,\"event\":\"launch\",\"id\":\"L20261113T142233-a3f9\",\"parent\":null,\"root\":\"L20261113T142233-a3f9\",\"depth\":0,\"ts\":\"2026-11-13T14:22:33.000Z\",\"mode\":\"direct\",\"build\":\"haiku-explorer\",\"transcript_path\":\"{{HOME}}/t/s.jsonl\",\"orca\":{\"run\":null,\"task\":null,\"terminal\":\"term_fake\",\"title\":\"t [jitso:L20261113T142233-a3f9]\"}}\n"
+    }
+  },
+  "steps": [
+    {
+      "run": [
+        "close",
+        "L20261113T142233-a3f9"
+      ],
+      "expect": {
+        "exit": 0,
+        "stdout": [
+          {
+            "equals": "jitso: closed L20261113T142233-a3f9 (terminal term_fake)\ntokens: input 31, cache write 302, cache read 3003, output 16 (3 messages, 1 subagent transcripts)\n"
+          }
+        ],
+        "stderr": [
+          {
+            "empty": true
+          }
+        ],
+        "registry": {
+          "count": 2,
+          "events": [
+            {
+              "at": 1,
+              "event": "end",
+              "fields": {
+                "source": "jitso_close",
+                "tokens.input": 31,
+                "tokens.cache_write": 302,
+                "tokens.cache_read": 3003,
+                "tokens.output": 16,
+                "tokens.messages": 3,
+                "tokens.subagent_files": 1
+              }
+            }
+          ]
+        }
+      }
+    }
+  ]
+}

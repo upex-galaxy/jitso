@@ -1,6 +1,7 @@
 package closeout
 
 import (
+	"encoding/json"
 	"errors"
 	"os"
 	"path/filepath"
@@ -267,6 +268,74 @@ func TestSeconds(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			if got := seconds(registry.Event{"ts": tt.ts}, tt.now); got != tt.want {
 				t.Errorf("got %d, want %d", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestRunTokens(t *testing.T) {
+	use := func(id string, in, out int) string {
+		return `{"message":{"id":"` + id + `","usage":{"input_tokens":` + string(rune('0'+in)) + `,"cache_creation_input_tokens":0,"cache_read_input_tokens":0,"output_tokens":` + string(rune('0'+out)) + `}}}` + "\n"
+	}
+	tests := []struct {
+		name    string
+		files   map[string]string
+		dir     string
+		tokens  string
+		line    string
+		warning bool
+	}{
+		{
+			name:   "transcript and subagent",
+			files:  map[string]string{"s.jsonl": use("a", 1, 2) + use("a", 1, 3), "s/subagents/x.jsonl": use("b", 4, 5)},
+			tokens: `{"input":5,"cache_write":0,"cache_read":0,"output":8,"messages":2,"subagent_files":1}`,
+			line:   "tokens: input 5, cache write 0, cache read 0, output 8 (2 messages, 1 subagent transcripts)",
+		},
+		{name: "absent transcript is silent", tokens: "null"},
+		{name: "a folder is unreadable", dir: "s.jsonl", tokens: "null", warning: true},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			home := t.TempDir()
+			for name, text := range tt.files {
+				p := filepath.Join(home, name)
+				if err := os.MkdirAll(filepath.Dir(p), 0o755); err != nil {
+					t.Fatal(err)
+				}
+				if err := os.WriteFile(p, []byte(text), 0o644); err != nil {
+					t.Fatal(err)
+				}
+			}
+			if tt.dir != "" {
+				if err := os.MkdirAll(filepath.Join(home, tt.dir), 0o755); err != nil {
+					t.Fatal(err)
+				}
+			}
+			reg := launchLine(`,"transcript_path":"`+filepath.Join(home, "s.jsonl")+`"`, `{"terminal":"term_a"}`, "2026-11-13T14:22:33.000Z")
+			d, store := setup(t, reg, &fakeOrca{})
+			var warned []string
+			d.Warn = func(s string) { warned = append(warned, s) }
+			out, err := Run(id, d)
+			if err != nil {
+				t.Fatal(err)
+			}
+			wantOut := "jitso: closed " + id + " (terminal term_a)"
+			if tt.line != "" {
+				wantOut += "\n" + tt.line
+			}
+			if out != wantOut {
+				t.Errorf("stdout %q, want %q", out, wantOut)
+			}
+			if (len(warned) == 1) != tt.warning || len(warned) > 1 {
+				t.Errorf("warnings %v", warned)
+			}
+			launches, _ := registry.ReadLaunches(store)
+			var want any
+			if err := json.Unmarshal([]byte(tt.tokens), &want); err != nil {
+				t.Fatal(err)
+			}
+			if got := launches[0].End["tokens"]; !reflect.DeepEqual(got, want) {
+				t.Errorf("tokens %v, want %v", got, want)
 			}
 		})
 	}

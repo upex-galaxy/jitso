@@ -17,7 +17,10 @@ Reads the last screen of the worker's terminal, closes that one terminal and lis
 
 ```
 jitso: closed L<yyyymmdd>T<hhmmss>-<hex> (terminal term_fake)
+tokens: input 84, cache write 271601, cache read 8553436, output 112274 (42 messages, 0 subagent transcripts)
 ```
+
+The second line comes from the launch's `transcript_path` and every `*.jsonl` under `<transcript without .jsonl>/subagents/`: the last `message.usage` of each message id, summed per field. The end event keeps the same numbers under `tokens` (`input`, `cache_write`, `cache_read`, `output`, `messages`, `subagent_files`). A launch with no transcript, or a missing file, gets `"tokens": null` and no second line; a transcript that cannot be read gets `null` and one warning on stderr. Neither fails the close. The `end` events of the hook and of `reap` have no `tokens` key.
 
 (`term_fake` is the handle of the fake Orca this was measured with; yours is a real handle.) Running it again for an ended launch keeps the first end event, still closes the terminal and prints the same line. An id that is not in the log is `JITSO REJECTED: unknown launch <id>`. The argument must be a full launch id; anything else, including `--help`, is `JITSO REJECTED: usage: jitso close <launch_id>`.
 

@@ -41,6 +41,7 @@ func init() {
 				Store:    store,
 				Orca:     ctx.Orca(),
 				Now:      lifecycleNow(ctx),
+				Warn:     ctx.Warn,
 			})
 			if err != nil {
 				return err

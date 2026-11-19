@@ -1,5 +1,11 @@
 package registry
 
+import (
+	"encoding/json"
+
+	"github.com/upex-galaxy/jitso/internal/usage"
+)
+
 // Record is an event a writer appends: one of *LaunchEvent or *EndEvent. Append sets V and Event itself.
 type Record interface {
 	kind() string
@@ -94,6 +100,20 @@ type EndEvent struct {
 	OutcomeReported string  `json:"outcome_reported"`
 	FooterPath      *string `json:"footer_path"`
 	DurationS       int64   `json:"duration_s"`
+	// Tokens is set only by jitso close: the key is left out of every other
+	// end event, and a close with no readable transcript writes it as null.
+	Tokens *Tokens `json:"tokens,omitempty"`
+}
+
+// Tokens is the tokens field of a close end event; a nil Totals is JSON null.
+type Tokens struct{ Totals *usage.Totals }
+
+// MarshalJSON writes the totals, or null when there are none.
+func (t Tokens) MarshalJSON() ([]byte, error) {
+	if t.Totals == nil {
+		return []byte("null"), nil
+	}
+	return json.Marshal(t.Totals)
 }
 
 func (*EndEvent) kind() string { return KindEnd }

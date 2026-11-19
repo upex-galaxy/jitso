@@ -1,0 +1,51 @@
+{
+  "id": "close/unreadable-transcript-warns",
+  "title": "a transcript path that cannot be read gives a null tokens field and one stderr warning, never a failure",
+  "home": {
+    "files": {
+      "t/s.jsonl/keep": "x"
+    }
+  },
+  "project": {
+    "files": {
+      ".jitso/launches.jsonl": "{\"v\":2,\"event\":\"launch\",\"id\":\"L20261113T142233-a3f9\",\"parent\":null,\"root\":\"L20261113T142233-a3f9\",\"depth\":0,\"ts\":\"2026-11-13T14:22:33.000Z\",\"mode\":\"direct\",\"build\":\"haiku-explorer\",\"transcript_path\":\"{{HOME}}/t/s.jsonl\",\"orca\":{\"run\":null,\"task\":null,\"terminal\":\"term_fake\",\"title\":\"t [jitso:L20261113T142233-a3f9]\"}}\n"
+    }
+  },
+  "steps": [
+    {
+      "run": [
+        "close",
+        "L20261113T142233-a3f9"
+      ],
+      "expect": {
+        "exit": 0,
+        "stdout": [
+          {
+            "equals": "jitso: closed L20261113T142233-a3f9 (terminal term_fake)\n"
+          }
+        ],
+        "stderr": [
+          {
+            "regex": "^jitso: warning: could not read the transcript .*s\\.jsonl.*\\n$"
+          },
+          {
+            "line_count": 1
+          }
+        ],
+        "registry": {
+          "count": 2,
+          "events": [
+            {
+              "at": 1,
+              "event": "end",
+              "fields": {
+                "source": "jitso_close",
+                "tokens": null
+              }
+            }
+          ]
+        }
+      }
+    }
+  ]
+}

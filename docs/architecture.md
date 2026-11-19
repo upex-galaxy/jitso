@@ -35,7 +35,7 @@ What the CLI does, split by responsibility. "Pure" means no file, process, clock
 | Trust dialog and folder check | the dialog state machine, exact real-path match, and the folder check on every launch (N-22): `SelectorPath`, `Precheck` (before any Orca call) and `Place` (right after `terminal create`) | `git worktree list`, screen reads, key sends, clock | `internal/trust` |
 | Registry | event validation (schema `v: 2` with `build` keys, N-31), folding events into launches | append under a `mkdir` lock, read the file | `internal/registry` |
 | Launch execution | the plan: files, argv, event, the Task id of a `worker-start` receipt | files, Orca, registry | `internal/launch` |
-| Close | none worth isolating | Orca, registry, footer file | `internal/closeout` |
+| Close | the token sum of one transcript stream (`internal/usage`) | Orca, registry, footer file, transcript files | `internal/closeout` |
 | Reap | worker matching (the handle under `terminal`, `agentTerminalHandle` or `resource.terminalHandle`, or the `[jitso:<id>]` mark), evidence text | Orca, registry | `internal/reap` |
 | Guard hook | Bash line lexing for the data commands (the segment splitter for every other line), launch-verb detection, orca-bridge tool rules, the program of a segment (N-24) | `jitso/jitso.yaml` probe; SessionEnd appends to the registry | `internal/hook` |
 | Rules text | the short JITSO rules a launch appends to the end of `brief.md`, by mode and budget, and the join of the brief file | writes `brief.md` | `internal/card` (`Rules`), `internal/launch` (`BriefFile`) |

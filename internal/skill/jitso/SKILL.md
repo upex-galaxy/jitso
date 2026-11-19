@@ -47,7 +47,7 @@ Headings `Goal`, `Scope`, `Done when`, `Report format`. English. Within the word
 
 ## After a launch
 
-- `jitso close <launch id>` saves the screen footer, writes the end event and closes that terminal.
+- `jitso close <launch id>` saves the screen footer, writes the end event and closes that terminal. It also prints the session's token counts when the transcript can be read.
 - `jitso reap` ends launches whose terminal is gone and lists workers no launch explains.
 - When a session ends, the SessionEnd hook writes its end event too. Details: `references/lifecycle.md`.
 

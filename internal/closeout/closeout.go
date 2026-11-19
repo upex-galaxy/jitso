@@ -9,16 +9,20 @@ package closeout
 
 import (
 	"errors"
+	"fmt"
+	"io/fs"
 	"math"
 	"os"
 	"path/filepath"
 	"slices"
+	"strings"
 	"time"
 
 	"github.com/upex-galaxy/jitso/internal/fail"
 	"github.com/upex-galaxy/jitso/internal/jsonx"
 	"github.com/upex-galaxy/jitso/internal/orca"
 	"github.com/upex-galaxy/jitso/internal/registry"
+	"github.com/upex-galaxy/jitso/internal/usage"
 )
 
 // Usage is the reason of every rejection of the arguments.
@@ -39,6 +43,9 @@ type Deps struct {
 	Store    registry.Store
 	Orca     Orca
 	Now      func() time.Time
+	// Warn receives a warning that does not fail the close (an unreadable
+	// transcript); nil drops it.
+	Warn func(string)
 }
 
 // ParseArgs is the launch id of `jitso close <launch_id>`: exactly one
@@ -93,12 +100,68 @@ func Run(id string, d Deps) (string, error) {
 	if slices.Contains(handles, handle) {
 		return "", fail.Envf("terminal %s is still open after close", handle)
 	}
+	line := "jitso: closed " + id + " (terminal " + handle + ")"
 	if !l.Ended() {
-		if err := record(l, footer, d); err != nil {
+		totals, err := readTokens(l, d)
+		if err != nil {
 			return "", err
 		}
+		if err := record(l, footer, totals, d); err != nil {
+			return "", err
+		}
+		if totals != nil {
+			line += "\n" + tokensLine(totals)
+		}
 	}
-	return "jitso: closed " + id + " (terminal " + handle + ")", nil
+	return line, nil
+}
+
+func tokensLine(t *usage.Totals) string {
+	return fmt.Sprintf("tokens: input %d, cache write %d, cache read %d, output %d (%d messages, %d subagent transcripts)",
+		t.Input, t.CacheWrite, t.CacheRead, t.Output, t.Messages, t.SubagentFiles)
+}
+
+// readTokens sums the launch's transcript and every subagent transcript next
+// to it. It returns nil when the launch has no transcript (silently, a launch
+// run before a session id existed never has one) or when it cannot be read
+// (with one warning): tokens never fail a close.
+func readTokens(l *registry.Launch, d Deps) (*usage.Totals, error) {
+	path, ok := l.Launch.String("transcript_path")
+	if !ok || path == "" {
+		return nil, nil
+	}
+	if _, err := os.Stat(path); errors.Is(err, fs.ErrNotExist) {
+		return nil, nil
+	}
+	total, err := sumFile(path)
+	if err != nil {
+		if d.Warn != nil {
+			d.Warn("jitso: warning: could not read the transcript " + path + ": " + err.Error())
+		}
+		return nil, nil
+	}
+	subs, _ := filepath.Glob(filepath.Join(strings.TrimSuffix(path, ".jsonl"), "subagents", "*.jsonl"))
+	for _, sub := range subs {
+		part, err := sumFile(sub)
+		if err != nil {
+			continue
+		}
+		total.Add(part)
+		total.SubagentFiles++
+	}
+	return &total, nil
+}
+
+func sumFile(path string) (usage.Totals, error) {
+	f, err := os.Open(path)
+	if err != nil {
+		return usage.Totals{}, err
+	}
+	defer f.Close()
+	if info, err := f.Stat(); err == nil && info.IsDir() {
+		return usage.Totals{}, errors.New("is a directory")
+	}
+	return usage.Sum(f)
 }
 
 // footerText is the screen of the terminal read before it was closed; Found is
@@ -123,7 +186,7 @@ func readFooter(handle string, d Deps) (footerText, error) {
 
 // record saves the footer and appends the end event, once the terminal is
 // confirmed gone. A launch with no footer still ends, with footer_path null.
-func record(l *registry.Launch, footer footerText, d Deps) error {
+func record(l *registry.Launch, footer footerText, totals *usage.Totals, d Deps) error {
 	folder := filepath.Join(d.StateDir, "launches", l.ID)
 	if err := os.MkdirAll(folder, 0o755); err != nil {
 		return err
@@ -144,6 +207,7 @@ func record(l *registry.Launch, footer footerText, d Deps) error {
 		OutcomeReported: "none",
 		FooterPath:      footerPath,
 		DurationS:       seconds(l.Launch, ended),
+		Tokens:          &registry.Tokens{Totals: totals},
 	})
 }
 
