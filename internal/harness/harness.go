@@ -41,6 +41,9 @@ type SpecInput struct {
 	MCPNames []string
 	// RepoServers is the mcpServers table of the repo's .mcp.json, as decoded JSON.
 	RepoServers map[string]any
+	// UserServers are the copied definitions of the user servers among
+	// MCPNames, keyed by the name as the build writes it (user:<name>).
+	UserServers map[string]jsonx.Object
 	// Tools is the build's tool allowlist; ToolsSet false means the harness
 	// default, which is not the same as an empty list.
 	Tools    []string
@@ -87,12 +90,15 @@ type EnvVar struct {
 	Value string
 }
 
-// MCPServer is one MCP server as the launcher copies it: by name, command and
-// args only. Its env is never copied: values never travel.
+// MCPServer is one MCP server as the launcher copies it. A project server
+// travels by name, command and args only: its env is never copied. A user
+// server travels as Def, the definition with variable references only.
 type MCPServer struct {
 	Name    string
 	Command string
 	Args    []string
+	// Def, when set, is written as the server's whole entry.
+	Def jsonx.Object
 }
 
 // MCPConfig is the strict MCP file. It marshals as
@@ -106,6 +112,10 @@ type MCPConfig struct {
 func (c MCPConfig) MarshalJSON() ([]byte, error) {
 	servers := jsonx.Object{}
 	for _, s := range c.Servers {
+		if s.Def != nil {
+			servers = append(servers, jsonx.Field{Key: s.Name, Value: s.Def})
+			continue
+		}
 		args := s.Args
 		if args == nil {
 			args = []string{}

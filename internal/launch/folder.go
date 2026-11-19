@@ -38,7 +38,7 @@ func writeFolder(p prepared, d Deps, dir string) (folder, error) {
 	// --mcp-exclude (defect N-26).
 	var servers map[string]any
 	var err error
-	if len(p.mcp) > 0 {
+	if len(projectNames(p.mcp)) > 0 {
 		if servers, err = repoServers(filepath.Join(d.Root.Primary, RepoMCPFile)); err != nil {
 			return folder{}, err
 		}
@@ -55,6 +55,7 @@ func writeFolder(p prepared, d Deps, dir string) (folder, error) {
 		MCPConfigPath: filepath.Join(dir, FileMCP),
 		MCPNames:      p.mcp,
 		RepoServers:   servers,
+		UserServers:   p.userServers,
 		Tools:         b.Tools,
 		ToolsSet:      b.ToolsSet,
 		AgentsMD:      b.AgentsMD,

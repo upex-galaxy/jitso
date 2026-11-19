@@ -1,6 +1,6 @@
 {
   "id": "layers/user-allowlist/approved-names-validate",
-  "title": "a build that names an approved user skill and an approved user MCP server validates; the skill build launches, and until user MCP servers are copied the server build is rejected",
+  "title": "a build that names an approved user skill and an approved user MCP server validates, and both launch",
   "source": [
     "intended: JITSO v0.2 plan 2.1 and 2.2 (user allowlist ~/.jitso/jitso.yaml, scoped names in skills_first and mcp)"
   ],
@@ -106,15 +106,13 @@
         "--dry-run"
       ],
       "expect": {
-        "exit": 2,
+        "exit": 0,
         "stdout": [
           {
-            "empty": true
-          }
-        ],
-        "stderr": [
+            "regex": "(?m)^model claude-haiku-5-5 effort low \\| bypass \\| MCP dbhub,user:engram \\| skill none$"
+          },
           {
-            "equals": "JITSO REJECTED: launch of user MCP servers is not supported yet\n"
+            "contains": "dry run: nothing was written and Orca was not called"
           }
         ]
       }

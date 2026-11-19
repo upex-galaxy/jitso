@@ -13,6 +13,7 @@ import (
 	"github.com/upex-galaxy/jitso/internal/harness"
 	"github.com/upex-galaxy/jitso/internal/harness/claude"
 	"github.com/upex-galaxy/jitso/internal/jsconv"
+	"github.com/upex-galaxy/jitso/internal/jsonx"
 	"github.com/upex-galaxy/jitso/internal/orca"
 	"github.com/upex-galaxy/jitso/internal/profile"
 	"github.com/upex-galaxy/jitso/internal/project"
@@ -56,6 +57,9 @@ type Deps struct {
 	// Executable is os.Executable: the guard a launch carries runs this
 	// binary.
 	Executable func() (string, error)
+	// LookupEnv is os.LookupEnv: a launch checks that the variables a user
+	// MCP server refers to are set, never what they hold.
+	LookupEnv func(string) (string, bool)
 }
 
 // Run launches a, already parsed and checked (Parse, Args.Check). After the
@@ -71,14 +75,19 @@ func Run(a Args, d Deps) error {
 	if !ok {
 		return fail.Rejectedf(`no adapter for harness "%s"`, harnessName)
 	}
-	if namesUserMCP(p.Build) {
-		return fail.Rejected("launch of user MCP servers is not supported yet")
-	}
 	carried, err := planPackage(p.Build, d.Catalog.Config.User, d.Root.Checkout, d.Executable)
 	if err != nil {
 		return err
 	}
 	mcp := MCPAfterExclude(p.MCP, a.MCPExclude)
+	lookup := d.LookupEnv
+	if lookup == nil {
+		lookup = os.LookupEnv
+	}
+	users, unset, err := userServers(mcp, d.Catalog.Config.User, lookup)
+	if err != nil {
+		return err
+	}
 
 	briefPath, err := brief.ResolvePath(a.Brief, d.Cwd, AllowedBriefDirs(d.Root.StateDir()))
 	if err != nil {
@@ -117,12 +126,15 @@ func Run(a Args, d Deps) error {
 		}
 		d.Warn("jitso: warning: --mcp-exclude \"" + u.Name + "\" is not an MCP server of build " + p.Build.ID + hint + "; nothing excluded")
 	}
+	for _, w := range unset {
+		d.Warn(w)
+	}
 	if a.DryRun {
 		d.Out(cardText)
 		d.Out(DryRunLine)
 		return nil
 	}
-	return execute(prepared{args: a, profile: p, adapter: adapter, mcp: mcp, briefText: briefText, id: id, card: cardText, lineage: lineage, pkg: carried}, d)
+	return execute(prepared{args: a, profile: p, adapter: adapter, mcp: mcp, briefText: briefText, id: id, card: cardText, lineage: lineage, pkg: carried, userServers: users}, d)
 }
 
 // readTarget is the text of a pointer brief: the target is resolved inside the
@@ -173,6 +185,8 @@ type prepared struct {
 	card      string
 	lineage   Lineage
 	pkg       Package
+	// userServers are the copied definitions of the user servers in mcp.
+	userServers map[string]jsonx.Object
 }
 
 // execute writes the launch folder and starts the session. It creates
@@ -340,16 +354,6 @@ func deref(s *string) string {
 		return ""
 	}
 	return *s
-}
-
-// namesUserMCP reports whether the build names a user:<name> MCP server.
-func namesUserMCP(b *catalog.Build) bool {
-	for _, name := range b.MCP {
-		if _, ok := catalog.UserName(name); ok {
-			return true
-		}
-	}
-	return false
 }
 
 // jsString is the String() of a build key as a launch prints it

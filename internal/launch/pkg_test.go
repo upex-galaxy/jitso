@@ -130,3 +130,25 @@ func TestPlanPackage(t *testing.T) {
 		})
 	}
 }
+
+func TestUserServers(t *testing.T) {
+	home := t.TempDir()
+	writeTree(t, home, map[string]string{".claude.json": `{"mcpServers": {"e": {"command": "c", "env": {"T": "${TOKEN}", "D": "${DIR:-/x}"}}}}`})
+	user := catalog.LoadUser(home)
+	unset := func(string) (string, bool) { return "", false }
+	servers, warnings, err := userServers([]string{"dbhub", "user:e"}, user, unset)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, ok := servers["user:e"]; !ok || len(servers) != 1 {
+		t.Errorf("servers %v", servers)
+	}
+	want := []string{`jitso: warning: user mcp "e" refers to ${TOKEN}, which is not set here; the session gets the text unexpanded`}
+	if !reflect.DeepEqual(warnings, want) {
+		t.Errorf("warnings %q", warnings)
+	}
+	set := func(string) (string, bool) { return "v", true }
+	if _, warnings, _ := userServers([]string{"user:e"}, user, set); warnings != nil {
+		t.Errorf("a set variable warns nothing, got %q", warnings)
+	}
+}

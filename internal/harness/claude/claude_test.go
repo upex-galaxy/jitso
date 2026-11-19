@@ -48,7 +48,7 @@ func TestMCPConfig(t *testing.T) {
 		"openapi": map[string]any{"command": "fixture-openapi"},
 		"broken":  map[string]any{"args": []any{}},
 	}
-	cfg, err := MCPConfig([]string{"openapi", "dbhub"}, repo)
+	cfg, err := MCPConfig([]string{"openapi", "dbhub"}, repo, nil)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -58,12 +58,12 @@ func TestMCPConfig(t *testing.T) {
 	if string(got) != want {
 		t.Errorf("got\n%s\nwant\n%s", got, want)
 	}
-	empty, _ := MCPConfig(nil, nil)
+	empty, _ := MCPConfig(nil, nil, nil)
 	if got, _ := jsonx.Marshal(empty); string(got) != `{"mcpServers":{}}` {
 		t.Errorf("empty %s", got)
 	}
 	for _, name := range []string{"missing", "broken"} {
-		if _, err := MCPConfig([]string{name}, repo); err == nil || err.Error() != `MCP server "`+name+`" is not in the repo MCP config` {
+		if _, err := MCPConfig([]string{name}, repo, nil); err == nil || err.Error() != `MCP server "`+name+`" is not in the repo MCP config` {
 			t.Errorf("%s: %v", name, err)
 		}
 	}

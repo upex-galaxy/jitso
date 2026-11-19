@@ -83,10 +83,12 @@ Same YAML subset as `jitso/jitso.yaml`. A build names an item of this file with 
 | `user:<n>` server not in `mcp` | `mcp "user:<n>" is not in the user allowlist (~/.jitso/jitso.yaml)` |
 | `user:<n>` server that is also in the project's `mcp` | `user mcp "<n>" has the name of a project mcp server` |
 | `user:<n>` server not under `mcpServers` of `~/.claude.json` | `user mcp "<n>" is not defined in ~/.claude.json` |
+| `user:<n>` server with a literal `env` or `headers` value whose `<n>/<KEY>` is not in `literal_env` | `user mcp "<n>" has a literal value in env <KEY>: use ${VAR}, or list <n>/<KEY> in literal_env of ~/.jitso/jitso.yaml` (`in headers <KEY>` for a header) |
+| `user:<n>` server with an `oauth` key | `user mcp "<n>" uses OAuth, which a launch cannot carry` |
 | `cloud:<n>` server | `mcp "cloud:<n>": cloud connectors cannot be given to a launched session yet` |
 | any other scope | `skill "<scope>:<n>": unknown scope (use user:)`, `mcp "<scope>:<n>": unknown scope (use user:)` |
 
-A launch copies each `user:` skill into its own folder, `.jitso/launches/<id>/pkg/.claude/skills/<n>/`, and passes that folder to the session, which lists the skill by its plain name; a skill over 5 MiB or 500 files is `JITSO REJECTED: user skill "<n>" is larger than a launch carries`.
+A launch copies each `user:` skill into its own folder, `.jitso/launches/<id>/pkg/.claude/skills/<n>/`, and passes that folder to the session, which lists the skill by its plain name; a skill over 5 MiB or 500 files is `JITSO REJECTED: user skill "<n>" is larger than a launch carries`. A `user:` server is written into the launch's `mcp.json` under its plain name, with variable references only (never a literal value unless `literal_env` lists its key).
 
 ## The build file
 

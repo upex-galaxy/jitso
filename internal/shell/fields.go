@@ -21,7 +21,7 @@ var launchFields = map[string]*regexp.Regexp{
 	"task":        orcaID,
 	"parent":      launchID,
 	"worktree":    regexp.MustCompile(`^[A-Za-z0-9][A-Za-z0-9_.:/-]{0,511}$`),
-	"mcp-exclude": regexp.MustCompile(`^[A-Za-z0-9][A-Za-z0-9_-]{0,63}$`),
+	"mcp-exclude": regexp.MustCompile(`^[A-Za-z0-9][A-Za-z0-9_:-]{0,63}$`),
 }
 
 // CheckLaunchField returns "" when value is acceptable for the launcher field

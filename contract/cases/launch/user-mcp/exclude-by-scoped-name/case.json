@@ -1,0 +1,81 @@
+{
+  "id": "launch/user-mcp/exclude-by-scoped-name",
+  "title": "--mcp-exclude takes a user server by its scoped name, as the build writes it",
+  "source": [
+    "intended: JITSO v0.2 plan 2.2 (--mcp-exclude user:engram works on the scoped name)"
+  ],
+  "project": {
+    "files": {
+      ".jitso/briefs/brief.md": "## Goal\n\nFind where the sync entry point of this project is defined and explain in a few sentences how it is wired to the rest of the code.\n\n## Scope\n\nRead only. Look at `src/sync.ts` and `docs/guide.md` and nothing outside the repo. Do not change any file.\n\n## Done when\n\nYou can name the file and the line that defines the entry point, and you have checked it by reading the file.\n\n## Report format\n\nOne short paragraph with the file path, the line number and a one line summary of what it does.\n",
+      ".claude/settings.json": "{\n  \"hooks\": {\n    \"PreToolUse\": [\n      {\n        \"matcher\": \"Bash\",\n        \"hooks\": [\n          {\n            \"type\": \"command\",\n            \"command\": \"jitso hook guard\"\n          }\n        ]\n      },\n      {\n        \"matcher\": \"mcp__.*orca.*__.*\",\n        \"hooks\": [\n          {\n            \"type\": \"command\",\n            \"command\": \"jitso hook guard\"\n          }\n        ]\n      }\n    ],\n    \"SessionEnd\": [\n      {\n        \"hooks\": [\n          {\n            \"type\": \"command\",\n            \"command\": \"jitso hook guard\"\n          }\n        ]\n      }\n    ]\n  }\n}\n",
+      "jitso/builds/mixed-worker.yaml": {
+        "from": "mixed-worker.yaml"
+      }
+    }
+  },
+  "home": {
+    "files": {
+      ".jitso/jitso.yaml": "version: 1\nmcp: [engram, remote, opendesign, flagged, oauthy]\nliteral_env: [flagged/MODE]\n",
+      ".claude.json": "{\n  \"numStartups\": 3,\n  \"mcpServers\": {\n    \"engram\": {\n      \"type\": \"stdio\",\n      \"command\": \"engram-cmd\",\n      \"args\": [\n        \"mcp\",\n        \"--data\",\n        \"${ENGRAM_DIR:-/tmp/engram}\"\n      ],\n      \"env\": {\n        \"ENGRAM_TOKEN\": \"${ENGRAM_TOKEN}\"\n      },\n      \"alwaysAllow\": [\n        \"x\"\n      ]\n    },\n    \"remote\": {\n      \"type\": \"http\",\n      \"url\": \"https://mcp.example.invalid/${TENANT}\",\n      \"headers\": {\n        \"Authorization\": \"Bearer ${REMOTE_KEY}\"\n      },\n      \"headersHelper\": \"/usr/local/bin/remote-headers\"\n    },\n    \"opendesign\": {\n      \"command\": \"od\",\n      \"env\": {\n        \"OD_TOKEN\": \"sk-literal-must-never-travel-4242\",\n        \"OD_MODE\": \"${OD_MODE}\"\n      }\n    },\n    \"flagged\": {\n      \"command\": \"flagged\",\n      \"env\": {\n        \"MODE\": \"verbose\"\n      }\n    },\n    \"oauthy\": {\n      \"type\": \"http\",\n      \"url\": \"https://oauth.example.invalid/mcp\",\n      \"oauth\": {\n        \"clientId\": \"abc\"\n      }\n    }\n  }\n}\n"
+    }
+  },
+  "steps": [
+    {
+      "run": [
+        "launch",
+        "--build",
+        "mixed-worker",
+        "--brief",
+        "{{PROJECT}}/.jitso/briefs/brief.md",
+        "--mode",
+        "direct",
+        "--mcp-exclude",
+        "user:engram"
+      ],
+      "expect": {
+        "exit": 0,
+        "stderr": [
+          {
+            "empty": true
+          }
+        ],
+        "files": [
+          {
+            "path": ".jitso/launches/{{LAUNCH_ID}}/mcp.json",
+            "json": [
+              {
+                "path": "mcpServers",
+                "keys_exact": [
+                  "dbhub"
+                ]
+              }
+            ]
+          }
+        ],
+        "registry": {
+          "count": 1,
+          "events": [
+            {
+              "at": 0,
+              "event": "launch",
+              "fields": {
+                "mcp": [
+                  "dbhub"
+                ],
+                "mcp_excluded": [
+                  "user:engram"
+                ]
+              }
+            }
+          ]
+        }
+      },
+      "capture": {
+        "LAUNCH_ID": {
+          "from": "stdout",
+          "regex": "JITSO (L\\d{8}T\\d{6}-[0-9a-f]{4})"
+        }
+      }
+    }
+  ]
+}

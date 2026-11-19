@@ -56,7 +56,7 @@ func (Adapter) Readiness() string { return "tui-idle" }
 
 // Spec builds the argv and the strict MCP file of one launch.
 func (a Adapter) Spec(in harness.SpecInput) (harness.Spec, error) {
-	mcp, err := MCPConfig(in.MCPNames, in.RepoServers)
+	mcp, err := MCPConfig(in.MCPNames, in.RepoServers, in.UserServers)
 	if err != nil {
 		return harness.Spec{}, err
 	}
@@ -149,12 +149,19 @@ func Argv(in harness.SpecInput) ([]string, error) {
 	return argv, nil
 }
 
-// MCPConfig copies command and args of each named server from the repo's
-// table. env and every other key are dropped on purpose. A name the table does
-// not define, or one without a string command, is an error.
-func MCPConfig(names []string, repoServers map[string]any) (harness.MCPConfig, error) {
+// MCPConfig copies command and args of each named project server from the
+// repo's table. env and every other key are dropped on purpose. A name the
+// table does not define, or one without a string command, is an error. A
+// user:<name> server is written as its copied definition, under its plain
+// name.
+func MCPConfig(names []string, repoServers map[string]any, userServers map[string]jsonx.Object) (harness.MCPConfig, error) {
 	cfg := harness.MCPConfig{Servers: []harness.MCPServer{}}
 	for _, name := range names {
+		if def, ok := userServers[name]; ok {
+			_, plain, _ := strings.Cut(name, ":")
+			cfg.Servers = append(cfg.Servers, harness.MCPServer{Name: plain, Def: def})
+			continue
+		}
 		server, _ := repoServers[name].(map[string]any)
 		command, ok := server["command"].(string)
 		if !ok {

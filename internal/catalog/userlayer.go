@@ -228,8 +228,10 @@ func scopedMCPProblem(item string, cfg Config) string {
 	case slices.Contains(cfg.MCP, name):
 		return `user mcp "` + name + `" has the name of a project mcp server`
 	}
-	if _, ok := u.Server(name); !ok {
+	def, ok := u.Server(name)
+	if !ok {
 		return `user mcp "` + name + `" is not defined in ` + UserClaudeDisplay
 	}
-	return ""
+	_, problem := UserServerCopy(name, def, u.LiteralEnv)
+	return problem
 }

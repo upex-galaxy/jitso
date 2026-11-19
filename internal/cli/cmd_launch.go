@@ -84,6 +84,7 @@ func runLaunch(ctx *Context, argv []string) error {
 		Out:        ctx.Println,
 		Warn:       ctx.Warn,
 		Executable: ctx.Sys.Executable,
+		LookupEnv:  ctx.Sys.LookupEnv,
 	}
 	if d.Now == nil {
 		d.Now = time.Now
