@@ -25,7 +25,7 @@ Real rejections, from a scratch project (the limits come from the launcher, so q
 
 ```
 JITSO REJECTED: brief failed: sections (missing section: Scope, Done when, Report format); length (3 words, expected 40 to 800)
-JITSO REJECTED: brief failed: paths (cited path does not exist: docs/missing-guide.md)
+JITSO REJECTED: brief failed: paths (cited path does not exist: docs/missing-guide.md). A file the worker will create goes on a line that starts with Output: or Creates:
 JITSO REJECTED: brief failed: language (the brief must be written in English)
 ```
 
@@ -44,6 +44,33 @@ Also:
 - State assumptions you made and decisions already taken, so the worker does not reopen them.
 - One job per brief. Two jobs are two launches.
 - Do not tell a worker to start other sessions, push, publish or message a person unless the human asked for that.
+
+## Pointing at a card you already have
+
+When the job is already written in another format (for example a fleet card another skill wrote inside the project), do not rewrite it. Make the brief file under `.jitso/briefs/` hold one line and nothing else:
+
+```
+Brief: docs/cards/worker-1.md
+```
+
+The keyword may be in any case and the path may sit in backticks. A second non-blank line makes the file an ordinary brief again, checked as above. The launcher then:
+
+- resolves the path from the project's primary checkout (not from your working folder), follows every symlink, and requires a regular file inside the primary checkout whose real path ends in `.md`. A link that leads to `.env` or any other file that is not `.md` is refused;
+- checks the card's text for the language (`--brief-language`) and for at least the minimum words. It asks for no sections, no maximum and no existing cited paths;
+- copies the card's text into `brief.md` where a brief goes, with the JITSO rules last. The registry hash `brief_sha256` is the hash of that card text.
+
+The pointer line carries no extra text: put any instruction the worker needs in the card itself. The target must be a file the worker may read, so keep secrets out of the card.
+
+Rejections, each naming the path as you wrote it:
+
+| Message | Fix |
+|---|---|
+| `brief target path is empty or contains a NUL byte` | write a path after `Brief:` |
+| `brief target does not exist: <path>` | the path does not resolve from the primary checkout |
+| `brief target is not a regular file: <path>` | name a file, not a folder |
+| `brief target is outside the project: <path>` | move the card inside the primary checkout (a linked worktree does not count) |
+| `brief target must be a .md file: <path>` | the real path must end in `.md` |
+| `brief target failed: length (<n> words, expected at least <minimum>)`, `language (...)` | the card is too short or not in English; fix it or pass `--brief-language` |
 
 ## A filled example
 

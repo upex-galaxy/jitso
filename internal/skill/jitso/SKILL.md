@@ -14,14 +14,14 @@ JITSO launches every agent session from an approved **build** (model, effort, MC
 3. Preview, always: `jitso launch --build <id> --brief .jitso/briefs/<name>.md --mode direct --dry-run`. It validates everything and prints the card without touching Orca.
 4. Run it again without `--dry-run`. A real launch opens a paid session, so tell the human which build and brief before you do it, unless they already asked for exactly that.
 
-`--mode` is required (a build's `mode_default` is not used). Fleet adds `--run <run> --task <task>`, and `--worktree <sel>` picks the Orca worktree. A build that `requires` a field needs `--field name=value`. Full flag list: `references/launching.md`.
+`--mode` is required (a build's `mode_default` is not used). Fleet adds `--run <run>`: the Orca Run must exist before the launch (create it once with `orca orchestration run-create --objective <text> --json`). JITSO creates the Orca Task itself from `brief.md`, so there is no `--task`. `--worktree <sel>` picks the Orca worktree. A build that `requires` a field needs `--field name=value`. Full flag list: `references/launching.md`.
 
 Never start a session any other way: not Orca worker start, not an Orca terminal or worktree that runs a harness, not the orca-bridge `start_worker` tool, not `claude`, `codex` or `opencode` by hand. A launch outside `jitso launch` has no card and no registry line. The hook denies the Orca forms. It does not catch a bare `claude`, so the rule binds you anyway.
 
 When the hook denies something, the reply looks like this:
 
 ```
-JITSO owns worker launch in this project. Use: jitso launch --build <id> --brief <file> --mode fleet --run <run> --task <task> [--worktree <sel>]. ... (denied: orchestration worker-start)
+JITSO owns worker launch in this project. Use: jitso launch --build <id> --brief <file> --mode fleet --run <run> [--worktree <sel>]. ... (denied: orchestration worker-start)
 ```
 
 Do not retry the denied call or look for a way around it. Go back to step 1 and use `jitso launch`. The text always shows the fleet shape. Use `--mode direct` when the human talks to the worker, `--mode fleet` when you are a conductor.
@@ -41,7 +41,7 @@ Six lines: header (launch id, role/type, mode, build), model line (model, effort
 
 ## Brief rules in one breath
 
-Headings `Goal`, `Scope`, `Done when`, `Report format`. English. Within the word limits the rejection prints. Every backticked path that has a slash must exist, unless it sits on an `Output:` or `Create:` line. A rejection names the failing check, so fix that and run `--dry-run` again.
+Headings `Goal`, `Scope`, `Done when`, `Report format`. English. Within the word limits the rejection prints. Every backticked path that has a slash must exist, unless it sits on an `Output:` or `Create:` line. A rejection names the failing check, so fix that and run `--dry-run` again. A job already written in another format needs no rewrite: make the brief file the single line `Brief: <path to the card>` (`references/briefs.md`, "Pointing at a card you already have").
 
 ## After a launch
 

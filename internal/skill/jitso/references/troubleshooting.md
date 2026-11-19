@@ -8,7 +8,8 @@ Two prefixes tell you whose problem it is. `JITSO REJECTED: <reason>` (exit 2) m
 |---|---|
 | `--build is required`, `--brief is required` | a required flag is missing |
 | `--mode must be direct or fleet` | `--mode` is required and has no default. A build's `mode_default` is not used |
-| `fleet mode requires --run and --task` | fleet needs both. Direct mode needs neither |
+| `fleet mode requires --run` | fleet needs an existing Orca Run. Direct mode needs none |
+| `--task is not accepted in fleet mode: JITSO creates the Task from the brief` | drop `--task`: the launcher creates the Task from the launch folder's `brief.md` |
 | `unknown argument "<x>"` | a flag `launch` does not have, a stray word, or an old spelling such as `--preset`. `--help` after the first word ends here too (as the first word it prints the usage) |
 | `--<name> needs a value` | the flag is the last word, or the next word starts with `--` (a value may not) |
 | `jitso: warning: --mcp-exclude "<name>" is not an MCP server of build <id>; nothing excluded` | a warning, exit 0: the build does not list that name, so nothing was left out. A `(did you mean "<server>"?)` hint means the name differs only by case. Fix the name if you meant to drop a server |
@@ -20,7 +21,8 @@ Two prefixes tell you whose problem it is. `JITSO REJECTED: <reason>` (exit 2) m
 | `build "<id>" has tier subagent: it is not launched alone, a worker lists it in its subagents` | launch the worker that lists it |
 | `build "<worker>" lists subagent "<s>", which is <status>, not approved` | a subagent must be approved. Ask the owner, or pick another build |
 | `build "<id>" from <layer> <path> is invalid here: <problems>` | a draft does not fit this project's allowlists. `jitso build validate <id>` |
-| `brief failed: sections (...)`, `length (...)`, `language (...)`, `paths (...)` | see `briefs.md`; the text names what is wrong |
+| `brief failed: sections (...)`, `length (...)`, `language (...)`, `paths (...)` | see `briefs.md`; the text names what is wrong. After a `paths` failure the message ends with the `Output:` or `Creates:` hint: a file the worker will create goes on such a line |
+| `brief target ...` (path empty, does not exist, not a regular file, outside the project, must be a .md file, failed) | the brief file is a pointer (`Brief: <path>`) and its target was refused: `briefs.md`, "Pointing at a card you already have" |
 | `brief file does not exist`, `brief path is not a regular file`, `brief path is empty or contains a NUL byte` | the `--brief` path is wrong |
 | `brief file is outside the allowed folders` | move the brief to `.jitso/briefs/` of the project |
 | `unknown parent launch <id>` | `--parent` names an id that is not in `.jitso/launches.jsonl` |

@@ -4,7 +4,7 @@ Everything JITSO knows about a launch is in `.jitso/launches.jsonl`, an append-o
 
 | Event line | Written by | Holds |
 |---|---|---|
-| `launch` | `jitso launch` | build, layer, file and hash, model, effort, flags, brief path and hash, session id, transcript path, Orca terminal, run and task |
+| `launch` | `jitso launch` | build, layer, file and hash, model, effort, flags, brief path and hash (the hash of a pointer brief is the hash of its target card), session id, transcript path, Orca terminal, run and task |
 | `end` | `close`, `reap` or the SessionEnd hook (`source` says which) | when the launch ended and how long it ran |
 
 The log is schema v2 (`"v": 2` on every line) and the build id is the key `build` of a launch line. Only `launch` and `end` lines exist. A line an older jitso wrote (`"v": 1`, with `preset`, or an `analyzed` or `rule_break` event) is skipped as invalid: close every running launch with the old version before upgrading, and `jitso doctor` counts the skipped v1 lines.
