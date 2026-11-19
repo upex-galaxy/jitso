@@ -2,6 +2,8 @@ package launch
 
 import (
 	"bytes"
+	"crypto/sha256"
+	"encoding/hex"
 	"errors"
 	"os"
 	"os/exec"
@@ -196,6 +198,32 @@ func TestRunDirect(t *testing.T) {
 	}
 	if !reflect.DeepEqual(s.orca.calls, []string{"terminal create", "terminal wait", "terminal read"}) {
 		t.Errorf("calls %q", s.orca.calls)
+	}
+}
+
+func TestRunPointer(t *testing.T) {
+	s := newSandbox(t)
+	card, err := os.ReadFile(s.briefPath)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(s.root, "docs", "card.md"), card, 0o644); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(s.briefPath, []byte("Brief: docs/card.md\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	if err := s.run(t, "--build", "haiku-explorer", "--brief", s.briefPath, "--mode", "direct"); err != nil {
+		t.Fatal(err)
+	}
+	data, err := os.ReadFile(filepath.Join(s.root, ".jitso", "launches", id, FileBrief))
+	if err != nil || !strings.Contains(string(data), "## Goal") || strings.Contains(string(data), "Brief: docs/card.md") {
+		t.Errorf("brief.md %q %v", data, err)
+	}
+	events, _ := s.store.Events()
+	sum := sha256.Sum256(card)
+	if got, _ := events[0].Get("brief_sha256"); got != hex.EncodeToString(sum[:]) {
+		t.Errorf("brief_sha256 = %v", got)
 	}
 }
 

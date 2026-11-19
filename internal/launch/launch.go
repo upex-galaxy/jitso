@@ -79,7 +79,12 @@ func Run(a Args, d Deps) error {
 		return err
 	}
 	briefText := string(data)
-	if failures := brief.Check(briefText, a.BriefLanguage, brief.Exists(d.Root.Primary)); len(failures) > 0 {
+	if target, isPointer := brief.Pointer(briefText); isPointer {
+		briefText, err = readTarget(target, a.BriefLanguage, d.Root.Primary)
+		if err != nil {
+			return err
+		}
+	} else if failures := brief.Check(briefText, a.BriefLanguage, brief.Exists(d.Root.Primary)); len(failures) > 0 {
 		return fail.Rejected(brief.Reason(failures))
 	}
 
@@ -108,6 +113,24 @@ func Run(a Args, d Deps) error {
 		return nil
 	}
 	return execute(prepared{args: a, profile: p, adapter: adapter, mcp: mcp, briefText: briefText, id: id, card: cardText, lineage: lineage}, d)
+}
+
+// readTarget is the text of a pointer brief: the target is resolved inside the
+// primary checkout, read and checked, and its text takes the place of the brief.
+func readTarget(target, language, root string) (string, error) {
+	path, err := brief.ResolveTarget(target, root)
+	if err != nil {
+		return "", err
+	}
+	data, err := os.ReadFile(path)
+	if err != nil {
+		return "", err
+	}
+	text := string(data)
+	if failures := brief.CheckTarget(text, language); len(failures) > 0 {
+		return "", fail.Rejected(brief.TargetReason(failures))
+	}
+	return text, nil
 }
 
 // lineageOf finds the parent launch: its root and its depth plus one. An

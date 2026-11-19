@@ -1,0 +1,70 @@
+{
+  "id": "brief/pointer/brief-md-holds-the-target-and-the-rules",
+  "title": "brief.md holds the card, the target text and the JITSO rules, never the Brief: line, and brief_sha256 is the SHA-256 of the target text",
+  "source": [
+    "intended: docs/decisions.md, Pre-release fixes (pointer brief)"
+  ],
+  "project": {
+    "files": {
+      ".jitso/briefs/pointer.md": "Brief: docs/cards/w.md\n",
+      "docs/cards/w.md": {
+        "from": "card.md"
+      }
+    }
+  },
+  "steps": [
+    {
+      "run": [
+        "launch",
+        "--build",
+        "haiku-explorer",
+        "--brief",
+        "{{PROJECT}}/.jitso/briefs/pointer.md",
+        "--mode",
+        "direct"
+      ],
+      "capture": {
+        "LAUNCH_ID": {
+          "from": "stdout",
+          "regex": "JITSO (L\\d{8}T\\d{6}-[0-9a-f]{4})",
+          "group": 1
+        },
+        "CARD": {
+          "from": "stdout",
+          "regex": "(?s)^(.*)\\n$",
+          "group": 1
+        }
+      },
+      "expect": {
+        "exit": 0,
+        "files": [
+          {
+            "path": ".jitso/launches/{{LAUNCH_ID}}/brief.md",
+            "contains": [
+              "{{CARD}}\n\n# Worker card",
+              "Read the sync entry point of this project"
+            ],
+            "not_contains": [
+              "Brief: docs/cards/w.md"
+            ],
+            "regex": [
+              "\\n\\n## JITSO rules\\nStart other agent sessions only with the card's `launch:` line\\. The card's budget is your ceiling: near it, stop and report\\.\\nLoad the card's skills before any other work\\. You may ask the human\\.\\nLeave `jitso/` and `\\.jitso/` alone except your own draft in `\\.jitso/drafts/`, and never run `jitso build save`\\.\\n$"
+            ]
+          }
+        ],
+        "registry": {
+          "count": 1,
+          "events": [
+            {
+              "at": 0,
+              "event": "launch",
+              "fields": {
+                "brief_sha256": "085a326e88466b3f8dc340317829c30104139aa9460f90fb1717a8ff2ff17f0c"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ]
+}

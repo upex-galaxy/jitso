@@ -1,6 +1,6 @@
 {
   "id": "launch/registry/hashes-are-sha256-of-brief-and-build",
-  "title": "brief_sha256 is the SHA-256 of the brief file text as given (without the card), build_sha256 is a SHA-256 and core_sha256 is gone",
+  "title": "brief_sha256 is the SHA-256 of the brief text as given (without the card; for a pointer brief, the text of its target), build_sha256 is a SHA-256 and core_sha256 is gone",
   "source": [
     "cli/jitso/launch.test.ts: launchForReal sha256(p.briefText)",
     "intended: docs/decisions.md, the v0.1.0 cut: the hard rules are removed, so the launch records no core hash"

@@ -1,0 +1,51 @@
+{
+  "id": "brief/pointer/two-lines-is-not-a-pointer",
+  "title": "a file with the Brief: line and a second non-blank line is an ordinary brief and fails the section check",
+  "source": [
+    "intended: docs/decisions.md, Pre-release fixes (pointer brief)"
+  ],
+  "project": {
+    "files": {
+      ".jitso/briefs/pointer.md": "Brief: docs/cards/w.md\nRead it first.\n",
+      "docs/cards/w.md": {
+        "from": "card.md"
+      }
+    }
+  },
+  "steps": [
+    {
+      "run": [
+        "launch",
+        "--build",
+        "haiku-explorer",
+        "--brief",
+        "{{PROJECT}}/.jitso/briefs/pointer.md",
+        "--mode",
+        "direct"
+      ],
+      "expect": {
+        "exit": 2,
+        "stdout": [
+          {
+            "empty": true
+          }
+        ],
+        "stderr": [
+          "JITSO REJECTED: brief failed: sections (missing section: Goal, Scope, Done when, Report format)"
+        ],
+        "orca_calls": {
+          "empty": true
+        },
+        "registry": {
+          "count": 0
+        },
+        "files": [
+          {
+            "path": ".jitso/launches",
+            "exists": false
+          }
+        ]
+      }
+    }
+  ]
+}

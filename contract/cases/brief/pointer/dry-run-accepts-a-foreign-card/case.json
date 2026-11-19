@@ -1,0 +1,47 @@
+{
+  "id": "brief/pointer/dry-run-accepts-a-foreign-card",
+  "title": "a one-line pointer brief whose target has no JITSO sections, more than the maximum words and a ghost cited path is accepted on a dry run",
+  "source": [
+    "intended: docs/decisions.md, Pre-release fixes (pointer brief)"
+  ],
+  "project": {
+    "files": {
+      ".jitso/briefs/pointer.md": "Brief: docs/cards/w.md\n",
+      "docs/cards/w.md": {
+        "from": "card.md"
+      }
+    }
+  },
+  "steps": [
+    {
+      "run": [
+        "launch",
+        "--build",
+        "haiku-explorer",
+        "--brief",
+        "{{PROJECT}}/.jitso/briefs/pointer.md",
+        "--mode",
+        "direct",
+        "--dry-run"
+      ],
+      "expect": {
+        "exit": 0,
+        "stdout": [
+          "dry run: nothing was written and Orca was not called"
+        ],
+        "orca_calls": {
+          "empty": true
+        },
+        "registry": {
+          "count": 0
+        },
+        "files": [
+          {
+            "path": ".jitso/launches",
+            "exists": false
+          }
+        ]
+      }
+    }
+  ]
+}

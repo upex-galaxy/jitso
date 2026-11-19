@@ -1,0 +1,47 @@
+{
+  "id": "brief/pointer/target-language-override",
+  "title": "--brief-language es accepts a Spanish pointer target",
+  "source": [
+    "intended: docs/decisions.md, Pre-release fixes (pointer brief)"
+  ],
+  "project": {
+    "files": {
+      ".jitso/briefs/pointer.md": "Brief: docs/cards/w.md\n",
+      "docs/cards/w.md": "Lee el punto de entrada de la sincronizacion de este proyecto y explica en pocas frases como esta conectado con el resto del codigo. Comprueba lo que dices leyendo el archivo, no cambies nada y devuelve la ruta del archivo y el numero de linea en un parrafo corto para la persona que lo pidio.\n"
+    }
+  },
+  "steps": [
+    {
+      "run": [
+        "launch",
+        "--build",
+        "haiku-explorer",
+        "--brief",
+        "{{PROJECT}}/.jitso/briefs/pointer.md",
+        "--mode",
+        "direct",
+        "--brief-language",
+        "es",
+        "--dry-run"
+      ],
+      "expect": {
+        "exit": 0,
+        "stdout": [
+          "dry run: nothing was written and Orca was not called"
+        ],
+        "orca_calls": {
+          "empty": true
+        },
+        "registry": {
+          "count": 0
+        },
+        "files": [
+          {
+            "path": ".jitso/launches",
+            "exists": false
+          }
+        ]
+      }
+    }
+  ]
+}

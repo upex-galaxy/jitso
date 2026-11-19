@@ -1,0 +1,64 @@
+{
+  "id": "brief/pointer/accepted-forms",
+  "title": "the pointer line is accepted in any case, with the path in backticks, with blank lines around it and with an absolute path inside the project",
+  "source": [
+    "intended: docs/decisions.md, Pre-release fixes (pointer brief)"
+  ],
+  "for_each": {
+    "var": "pointer",
+    "values": [
+      "Brief: docs/cards/w.md\n",
+      "brief: docs/cards/w.md\n",
+      "BRIEF: `docs/cards/w.md`\n",
+      "\n\nBrief: docs/cards/w.md\n\n",
+      "Brief: {{PROJECT}}/docs/cards/w.md\n"
+    ],
+    "ids": [
+      "plain",
+      "lowercase",
+      "uppercase-backticks",
+      "blank-lines",
+      "absolute"
+    ]
+  },
+  "project": {
+    "files": {
+      ".jitso/briefs/pointer.md": "{{pointer}}",
+      "docs/cards/w.md": {
+        "from": "card.md"
+      }
+    }
+  },
+  "steps": [
+    {
+      "run": [
+        "launch",
+        "--build",
+        "haiku-explorer",
+        "--brief",
+        "{{PROJECT}}/.jitso/briefs/pointer.md",
+        "--mode",
+        "direct",
+        "--dry-run"
+      ],
+      "expect": {
+        "exit": 0,
+        "stdout": [
+          "dry run: nothing was written and Orca was not called"
+        ],
+        "orca_calls": {
+          "empty": true
+        },
+        "registry": {
+          "count": 0
+        },
+        "files": [
+          {
+            "path": ".jitso/launches",
+            "exists": false
+          }
+        ]
+      }
+    }
+  ]
+}

@@ -1,0 +1,69 @@
+{
+  "id": "brief/pointer/target-text-checks",
+  "title": "a pointer target under the minimum words or written in Spanish is rejected naming the failed check",
+  "source": [
+    "intended: docs/decisions.md, Pre-release fixes (pointer brief)"
+  ],
+  "for_each": {
+    "vars": [
+      "text",
+      "reason"
+    ],
+    "rows": [
+      [
+        "Name the file that holds the sync entry point here",
+        "brief target failed: length (10 words, expected at least 40)"
+      ],
+      [
+        "Lee el punto de entrada de la sincronizacion de este proyecto y explica en pocas frases como esta conectado con el resto del codigo. Comprueba lo que dices leyendo el archivo, no cambies nada y devuelve la ruta del archivo y el numero de linea en un parrafo corto para la persona que lo pidio.",
+        "brief target failed: language (the brief must be written in English)"
+      ]
+    ],
+    "ids": [
+      "too-short",
+      "spanish"
+    ]
+  },
+  "project": {
+    "files": {
+      ".jitso/briefs/pointer.md": "Brief: docs/cards/w.md\n",
+      "docs/cards/w.md": "{{text}}\n"
+    }
+  },
+  "steps": [
+    {
+      "run": [
+        "launch",
+        "--build",
+        "haiku-explorer",
+        "--brief",
+        "{{PROJECT}}/.jitso/briefs/pointer.md",
+        "--mode",
+        "direct"
+      ],
+      "expect": {
+        "exit": 2,
+        "stdout": [
+          {
+            "empty": true
+          }
+        ],
+        "stderr": [
+          "JITSO REJECTED: {{reason}}"
+        ],
+        "orca_calls": {
+          "empty": true
+        },
+        "registry": {
+          "count": 0
+        },
+        "files": [
+          {
+            "path": ".jitso/launches",
+            "exists": false
+          }
+        ]
+      }
+    }
+  ]
+}
