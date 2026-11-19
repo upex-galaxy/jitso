@@ -99,7 +99,7 @@ func runInstallSkill(ctx *Context, args []string) error {
 		res.Plan.Notes = append(res.Plan.Notes, "note: commit "+skill.RealRel+" and "+skill.LinkRel+" so other clones get the skill")
 	}
 	if flags.Scope == "user" && !flags.Remove && !res.Plan.Empty() {
-		res.Plan.Notes = append(res.Plan.Notes, "note: sessions that jitso launches load project skills only; run jitso install skill --scope project in each project")
+		res.Plan.Notes = append(res.Plan.Notes, "note: a launched session does not read the user skill; a launch carries the jitso skill for a conductor build or a build that names jitso, and a build gets other user skills only as user:<name> allowlisted in ~/.jitso/jitso.yaml")
 	}
 
 	return adopt.Run(adopt.Options{

@@ -1,11 +1,11 @@
 {
   "id": "doctor/fresh-project-warns",
-  "title": "a project that never adopted JITSO gets warnings for the hook, the skill and the instructions, and no failure",
+  "title": "a project that never adopted JITSO gets warnings for the hook and the instructions, an ok for the optional skill, and no failure",
   "source": [
     "intended: B4B5-DESIGN.md B4-22 and the doctor spec (defect N-20): a read-only health check"
   ],
   "defect": "N-20",
-  "intent": "INTENDED behavior (defect N-20, B4.5). On the default project (a catalog, no hook, no skill, no instruction block) doctor exits 0: `warn hooks: not registered: the owner's own session in this project is not guarded (run jitso setup hook --scope user)`, `ok   hooks-user: not registered ... (optional ...)`, `warn skill-project: not installed`, `warn instructions: ...`, `ok   catalog: ...`, and not one `fail` line. A warning never breaks a script.",
+  "intent": "INTENDED behavior (defect N-20, B4.5). On the default project (a catalog, no hook, no skill, no instruction block) doctor exits 0: `warn hooks: not registered: the owner's own session in this project is not guarded (run jitso setup hook --scope user)`, `ok   hooks-user: not registered ... (optional ...)`, `ok   skill-project: not installed (optional: ...)`, `warn instructions: ...`, `ok   catalog: ...`, and not one `fail` line. A warning never breaks a script.",
   "steps": [
     {
       "run": [
@@ -21,7 +21,7 @@
             "regex": "(?m)^ok   hooks-user: not registered in ~/\\.claude/settings\\.json \\(optional: run jitso setup hook --scope user to guard your own session\\)$"
           },
           {
-            "regex": "(?m)^warn skill-project: not installed"
+            "regex": "(?m)^ok   skill-project: not installed \\(optional: "
           },
           {
             "regex": "(?m)^warn instructions: "

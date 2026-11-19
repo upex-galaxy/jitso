@@ -53,7 +53,7 @@ func checkSkill(p Ports, scope, root string, other *skillFound) (Line, skillFoun
 		if scope == "user" {
 			return Line{OK, check, "not installed (optional)"}, found
 		}
-		return Line{Warn, check, "not installed (" + install + "; sessions that jitso launches load project skills only)"}, found
+		return Line{OK, check, "not installed (optional: a launch carries the jitso skill for a conductor build or a build that names jitso; " + install + " to keep a copy in the checkout)"}, found
 	case skill.NotFolder:
 		return Line{Warn, check, real + " is " + f.Why + ", not a folder jitso installed"}, found
 	case skill.Unmanaged:
@@ -68,7 +68,7 @@ func checkSkill(p Ports, scope, root string, other *skillFound) (Line, skillFoun
 		return Line{Warn, check, strings.ReplaceAll(why, "<link>", link) + " (" + install + ")"}, found
 	}
 	if other != nil && other.Installed && other.Content != found.Content {
-		return Line{Warn, check, "installed at both scopes with different content (a session that jitso launches reads the project copy)"}, found
+		return Line{Warn, check, "installed at both scopes with different content (a launched session reads the project copy or the one its launch carries; your own session reads the user copy)"}, found
 	}
 	return Line{OK, check, fmt.Sprintf("jitso skill %s in %s and %s", f.Manifest.JitsoVersion, real, link)}, found
 }

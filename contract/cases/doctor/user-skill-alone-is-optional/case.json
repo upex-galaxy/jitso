@@ -1,0 +1,36 @@
+{
+  "id": "doctor/user-skill-alone-is-optional",
+  "title": "doctor accepts a project with no skill copy and says what a launch carries",
+  "source": [
+    "intended: a session that jitso launches runs with --setting-sources project, so the user copy never reaches it; the launch package carries the jitso skill instead"
+  ],
+  "defect": "J22",
+  "intent": "The user copy of the skill serves the owner's own interactive session. A launched worker reads project skills from the checkout, and the jitso skill travels in the launch package for a conductor build or a build that names jitso, so a project with no copy is `ok`, not `warn`, and the line says what a launch carries.",
+  "steps": [
+    {
+      "run": [
+        "install",
+        "skill",
+        "--scope",
+        "user",
+        "--yes"
+      ],
+      "expect": {
+        "exit": 0
+      }
+    },
+    {
+      "run": [
+        "doctor"
+      ],
+      "expect": {
+        "exit": 0,
+        "stdout": [
+          {
+            "regex": "(?m)^ok   skill-project: not installed \\(optional: a launch carries the jitso skill for a conductor build or a build that names jitso; run jitso install skill --scope project to keep a copy in the checkout\\)$"
+          }
+        ]
+      }
+    }
+  ]
+}

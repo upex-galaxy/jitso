@@ -22,7 +22,7 @@
           "created ~/.agents/skills/jitso/SKILL.md",
           "created ~/.agents/skills/jitso/.jitso-skill.json",
           "linked ~/.claude/skills/jitso -> ../../.agents/skills/jitso",
-          "note: sessions that jitso launches load project skills only; run jitso install skill --scope project in each project",
+          "note: a launched session does not read the user skill; a launch carries the jitso skill for a conductor build or a build that names jitso, and a build gets other user skills only as user:<name> allowlisted in ~/.jitso/jitso.yaml",
           "jitso install skill: done"
         ],
         "stderr": [

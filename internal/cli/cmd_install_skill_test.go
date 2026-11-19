@@ -115,7 +115,7 @@ func TestInstallSkillUserScope(t *testing.T) {
 	if strings.Contains(out, "note: commit") {
 		t.Errorf("the commit note is for project scope only: %q", out)
 	}
-	if !strings.Contains(out, "note: sessions that jitso launches load project skills only; run jitso install skill --scope project in each project\n") {
+	if !strings.Contains(out, "note: a launched session does not read the user skill; a launch carries the jitso skill for a conductor build or a build that names jitso, and a build gets other user skills only as user:<name> allowlisted in ~/.jitso/jitso.yaml\n") {
 		t.Errorf("the user scope note is missing: %q", out)
 	}
 	if !existsAt(home, ".agents/skills/jitso/.jitso-skill.json") || !existsAt(home, ".claude/skills/jitso/SKILL.md") {
