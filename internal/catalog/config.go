@@ -36,6 +36,8 @@ type Config struct {
 type FieldRule struct {
 	Name    string
 	Pattern *regexp.Regexp
+	// Source is the pattern as the fields key writes it.
+	Source string
 }
 
 // FieldPattern is the pattern of the named field, and false for a field with
@@ -117,7 +119,7 @@ func fieldsFrom(m *Map) ([]FieldRule, []string) {
 			problems = append(problems, `field "`+name+`" pattern does not compile: `+err.Error())
 			continue
 		}
-		rules = append(rules, FieldRule{Name: name, Pattern: regexp.MustCompile(`^(?:` + text + `)$`)})
+		rules = append(rules, FieldRule{Name: name, Pattern: regexp.MustCompile(`^(?:` + text + `)$`), Source: text})
 	}
 	return rules, problems
 }

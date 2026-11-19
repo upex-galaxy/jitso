@@ -1,0 +1,90 @@
+{
+  "id": "arsenal/lists-allowlisted",
+  "title": "jitso arsenal lists every item a build may name here, one line per item, grouped, names as a build writes them",
+  "source": [
+    "intended: JITSO v0.2 plan 2.5 (a read-only inventory for the dispatching session)"
+  ],
+  "intent": "Project skills print the first sentence of their SKILL.md description; jitso is listed as built in; user items print with their user: scope. A user server whose env holds a literal shows the key name, never the value. A project without jitso/jitso.yaml is exit 3 with the existing message.",
+  "project": {
+    "files": {
+      ".agents/skills/sprint-testing/SKILL.md": "---\nname: sprint-testing\ndescription: >\n  Runs in-sprint manual QA per issue: plan, execute and report. Use when testing a user story.\n---\n",
+      ".agents/skills/unlisted-skill/SKILL.md": "---\nname: unlisted-skill\ndescription: A project skill the allowlist does not name.\n---\n"
+    }
+  },
+  "home": {
+    "files": {
+      ".jitso/jitso.yaml": "version: 1\nskills: [humanizer, missing]\nmcp: [engram, opendesign, ghost]\nliteral_env: []\n",
+      ".claude/skills/humanizer/SKILL.md": "---\nname: humanizer\ndescription: Remove AI writing patterns from text. Use when writing or editing text a person will read.\n---\n",
+      ".claude/skills/extra/SKILL.md": "---\nname: extra\ndescription: 'An extra user skill nobody approved yet.'\n---\n",
+      ".claude/skills/not-a-skill/notes.md": "no SKILL.md here\n",
+      ".claude.json": "{\n  \"primaryApiKey\": \"api-key-literal-0003\",\n  \"mcpServers\": {\n    \"engram\": {\n      \"command\": \"engram\",\n      \"args\": [\n        \"mcp\"\n      ],\n      \"env\": {\n        \"ENGRAM_TOKEN\": \"${ENGRAM_TOKEN}\"\n      }\n    },\n    \"opendesign\": {\n      \"command\": \"od\",\n      \"env\": {\n        \"OD_TOKEN\": \"sk-od-literal-0001\",\n        \"OD_MODE\": \"${OD_MODE}\"\n      }\n    },\n    \"private\": {\n      \"type\": \"http\",\n      \"url\": \"https://private.example.invalid/mcp\",\n      \"headers\": {\n        \"Authorization\": \"Bearer hdr-literal-0002\"\n      }\n    },\n    \"login\": {\n      \"type\": \"http\",\n      \"url\": \"https://login.example.invalid/mcp\",\n      \"oauth\": {\n        \"clientSecret\": \"oauth-secret-0004\"\n      }\n    }\n  }\n}\n"
+    }
+  },
+  "steps": [
+    {
+      "run": [
+        "arsenal"
+      ],
+      "expect": {
+        "exit": 0,
+        "stderr": [
+          {
+            "empty": true
+          }
+        ],
+        "stdout": [
+          {
+            "equals": "model    claude-haiku-5-5\nmodel    claude-sonnet-5-5\nmodel    claude-opus-5-5\neffort   low\neffort   medium\neffort   high\ntool     Read\ntool     Glob\ntool     Grep\ntool     Bash\ntool     Write\ntool     Edit\nskill    sprint-testing         Runs in-sprint manual QA per issue: plan, execute and report.\nskill    shift-left-testing     (no SKILL.md)\nskill    test-automation        (no SKILL.md)\nskill    framework-development  (no SKILL.md)\nskill    exploratory-testing    (no SKILL.md)\nskill    orca-orchestration     (no SKILL.md)\nskill    jitso                  built in; travels with conductor builds and builds that name it\nskill    user:humanizer         Remove AI writing patterns from text.\nskill    user:missing           (no SKILL.md under ~/.claude/skills/missing)\nmcp      dbhub                  stdio\nmcp      openapi                stdio\nmcp      user:engram            stdio\nmcp      user:opendesign        stdio, literal env: OD_TOKEN (refused at launch)\nmcp      user:ghost             (not defined in ~/.claude.json)\nsubagent code                   Implementer that writes or edits the test code of one step of the plan and reports the files it changed.\nsubagent plan                   Read-only planner that turns one user story into an ordered list of automation steps and returns it without editing a...\nsubagent verifier               Verifier that runs the checks of the repo against the changed files and reports pass or fail with the failing output.\nroute    code-quickref\nroute    context-map\nroute    critical-rules\nroute    git\nroute    harnesses\nroute    local-context-pbi\nroute    orchestration-detail\nroute    project-variables\nroute    project\nroute    skills-and-mcps\nroute    ticket-work\nroute    tool-resolution\nfield    ticket_key             ^[A-Z][A-Z0-9]*-[0-9]+$\nfield    env                    ^[a-z][a-z0-9_-]*$\n"
+          }
+        ],
+        "orca_calls": {
+          "empty": true
+        }
+      }
+    },
+    {
+      "run": [
+        "arsenal",
+        "--bogus"
+      ],
+      "expect": {
+        "exit": 2,
+        "stdout": [
+          {
+            "empty": true
+          }
+        ],
+        "stderr": [
+          {
+            "equals": "JITSO REJECTED: unknown argument \"--bogus\"\n"
+          }
+        ]
+      }
+    },
+    {
+      "write": {
+        "project": {
+          "jitso/jitso.yaml": null
+        }
+      }
+    },
+    {
+      "run": [
+        "arsenal"
+      ],
+      "expect": {
+        "exit": 3,
+        "stdout": [
+          {
+            "empty": true
+          }
+        ],
+        "stderr": [
+          {
+            "regex": "^jitso: jitso/jitso\\.yaml is missing: "
+          }
+        ]
+      }
+    }
+  ]
+}

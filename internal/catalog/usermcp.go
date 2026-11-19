@@ -60,6 +60,29 @@ func UserServerCopy(name string, def map[string]any, literalEnv []string) (jsonx
 	return out, ""
 }
 
+// LiteralKeys are the env and headers keys of a user server definition whose
+// value is literal and not listed in literal_env: the keys that refuse it.
+// Only key names are returned.
+func LiteralKeys(name string, def map[string]any, literalEnv []string) (env, headers []string) {
+	for _, field := range []string{"env", "headers"} {
+		table, _ := def[field].(map[string]any)
+		var keys []string
+		for k, v := range table {
+			s, isString := v.(string)
+			if !(isString && varRef.MatchString(s)) && !slices.Contains(literalEnv, name+"/"+k) {
+				keys = append(keys, k)
+			}
+		}
+		sort.Strings(keys)
+		if field == "env" {
+			env = keys
+		} else {
+			headers = keys
+		}
+	}
+	return env, headers
+}
+
 // References are the variable names a copied definition refers to without a
 // default, in order of first use: the ones Claude Code leaves unexpanded when
 // they are unset.

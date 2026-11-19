@@ -1,0 +1,92 @@
+{
+  "id": "arsenal/never-prints-a-value",
+  "title": "jitso arsenal, with or without --all, never prints a value of ~/.claude.json or of .mcp.json, only names and key names",
+  "source": [
+    "intended: JITSO v0.2 plan 2.5 (names and key names only, never values)"
+  ],
+  "intent": "~/.claude.json is seeded with token-like values in env, headers, an oauth block and a top-level key; the project's .mcp.json holds env values too.",
+  "project": {
+    "files": {
+      ".agents/skills/sprint-testing/SKILL.md": "---\nname: sprint-testing\ndescription: >\n  Runs in-sprint manual QA per issue: plan, execute and report. Use when testing a user story.\n---\n",
+      ".agents/skills/unlisted-skill/SKILL.md": "---\nname: unlisted-skill\ndescription: A project skill the allowlist does not name.\n---\n"
+    }
+  },
+  "home": {
+    "files": {
+      ".jitso/jitso.yaml": "version: 1\nskills: [humanizer, missing]\nmcp: [engram, opendesign, ghost]\nliteral_env: []\n",
+      ".claude/skills/humanizer/SKILL.md": "---\nname: humanizer\ndescription: Remove AI writing patterns from text. Use when writing or editing text a person will read.\n---\n",
+      ".claude/skills/extra/SKILL.md": "---\nname: extra\ndescription: 'An extra user skill nobody approved yet.'\n---\n",
+      ".claude/skills/not-a-skill/notes.md": "no SKILL.md here\n",
+      ".claude.json": "{\n  \"primaryApiKey\": \"api-key-literal-0003\",\n  \"mcpServers\": {\n    \"engram\": {\n      \"command\": \"engram\",\n      \"args\": [\n        \"mcp\"\n      ],\n      \"env\": {\n        \"ENGRAM_TOKEN\": \"${ENGRAM_TOKEN}\"\n      }\n    },\n    \"opendesign\": {\n      \"command\": \"od\",\n      \"env\": {\n        \"OD_TOKEN\": \"sk-od-literal-0001\",\n        \"OD_MODE\": \"${OD_MODE}\"\n      }\n    },\n    \"private\": {\n      \"type\": \"http\",\n      \"url\": \"https://private.example.invalid/mcp\",\n      \"headers\": {\n        \"Authorization\": \"Bearer hdr-literal-0002\"\n      }\n    },\n    \"login\": {\n      \"type\": \"http\",\n      \"url\": \"https://login.example.invalid/mcp\",\n      \"oauth\": {\n        \"clientSecret\": \"oauth-secret-0004\"\n      }\n    }\n  }\n}\n"
+    }
+  },
+  "steps": [
+    {
+      "run": [
+        "arsenal",
+        "--all"
+      ],
+      "expect": {
+        "exit": 0,
+        "stdout": [
+          {
+            "not_contains": "sk-od-literal-0001"
+          },
+          {
+            "not_contains": "Bearer hdr-literal-0002"
+          },
+          {
+            "not_contains": "api-key-literal-0003"
+          },
+          {
+            "not_contains": "oauth-secret-0004"
+          },
+          {
+            "not_contains": "fixture-secret-must-never-travel"
+          },
+          {
+            "contains": "OD_TOKEN"
+          }
+        ],
+        "stderr": [
+          {
+            "empty": true
+          }
+        ]
+      }
+    },
+    {
+      "run": [
+        "arsenal"
+      ],
+      "expect": {
+        "exit": 0,
+        "stdout": [
+          {
+            "not_contains": "sk-od-literal-0001"
+          },
+          {
+            "not_contains": "Bearer hdr-literal-0002"
+          },
+          {
+            "not_contains": "api-key-literal-0003"
+          },
+          {
+            "not_contains": "oauth-secret-0004"
+          },
+          {
+            "not_contains": "fixture-secret-must-never-travel"
+          },
+          {
+            "contains": "OD_TOKEN"
+          }
+        ],
+        "stderr": [
+          {
+            "empty": true
+          }
+        ]
+      }
+    }
+  ]
+}

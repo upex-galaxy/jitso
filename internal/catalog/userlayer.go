@@ -7,6 +7,7 @@ import (
 	"os"
 	"path/filepath"
 	"slices"
+	"sort"
 	"strings"
 	"sync"
 
@@ -125,6 +126,21 @@ func (u User) Server(name string) (map[string]any, bool) {
 	})
 	s, ok := u.servers.table[name].(map[string]any)
 	return s, ok
+}
+
+// ServerNames are the server names under mcpServers of ~/.claude.json,
+// sorted.
+func (u User) ServerNames() []string {
+	u.Server("")
+	if u.servers == nil {
+		return nil
+	}
+	names := make([]string, 0, len(u.servers.table))
+	for name := range u.servers.table {
+		names = append(names, name)
+	}
+	sort.Strings(names)
+	return names
 }
 
 // SplitScope splits a scoped name, scope:name, at its first colon. A name
