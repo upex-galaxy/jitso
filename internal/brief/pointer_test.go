@@ -47,7 +47,16 @@ func TestResolveTarget(t *testing.T) {
 			t.Fatal(err)
 		}
 	}
-	for link, target := range map[string]string{"in.md": "docs/c.md", "out.md": outside, "txt.md": "notes.txt"} {
+	for _, f := range []string{".auth/s.md", ".jitso/s.md", ".env.md", ".AUTH/s.md"} {
+		path := filepath.Join(root, f)
+		if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
+			t.Fatal(err)
+		}
+		if err := os.WriteFile(path, []byte("x"), 0o644); err != nil {
+			t.Fatal(err)
+		}
+	}
+	for link, target := range map[string]string{"auth.md": ".auth/s.md", ".auth/back.md": "../docs/c.md", "in.md": "docs/c.md", "out.md": outside, "txt.md": "notes.txt"} {
 		if err := os.Symlink(target, filepath.Join(root, link)); err != nil {
 			t.Fatal(err)
 		}
@@ -67,6 +76,13 @@ func TestResolveTarget(t *testing.T) {
 		{outside, "", "brief target is outside the project: " + outside},
 		{"notes.txt", "", "brief target must be a .md file: notes.txt"},
 		{"txt.md", "", "brief target must be a .md file: txt.md"},
+		{".auth/s.md", "", "brief target is a protected path: .auth/s.md"},
+		{".jitso/s.md", "", "brief target is a protected path: .jitso/s.md"},
+		{".env.md", "", "brief target is a protected path: .env.md"},
+		{".AUTH/s.md", "", "brief target is a protected path: .AUTH/s.md"},
+		{"auth.md", "", "brief target is a protected path: auth.md"},
+		{".auth/back.md", "", "brief target is a protected path: .auth/back.md"},
+		{filepath.Join(root, ".auth", "s.md"), "", "brief target is a protected path: " + filepath.Join(root, ".auth", "s.md")},
 	}
 	for _, tt := range tests {
 		t.Run(tt.target, func(t *testing.T) {

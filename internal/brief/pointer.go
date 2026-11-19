@@ -28,6 +28,7 @@ const (
 	reasonTargetNotRegular = "brief target is not a regular file"
 	reasonTargetOutside    = "brief target is outside the project"
 	reasonTargetNotMD      = "brief target must be a .md file"
+	reasonTargetProtected  = "brief target is a protected path"
 )
 
 // Pointer reports whether text is a pointer brief and returns the target as
@@ -82,7 +83,40 @@ func ResolveTarget(target, root string) (string, error) {
 	if !strings.HasSuffix(strings.ToLower(real), ".md") {
 		return "", fail.Rejected(reasonTargetNotMD + ": " + target)
 	}
+	if protectedTarget(target, root, realRoot, real) {
+		return "", fail.Rejected(reasonTargetProtected + ": " + target)
+	}
 	return real, nil
+}
+
+// protectedTarget reports whether the target as written or its real path has a
+// segment that is a secret or JITSO's own state: .auth, .jitso or a name that
+// starts with .env, in any case. Segments are taken below the project root, so
+// the folders that hold the project do not count.
+func protectedTarget(target, root, realRoot, real string) bool {
+	written := filepath.ToSlash(target)
+	if filepath.IsAbs(target) {
+		written = ""
+		for _, base := range []string{root, realRoot} {
+			if rel, err := filepath.Rel(base, target); err == nil && rel != ".." && !strings.HasPrefix(rel, ".."+string(filepath.Separator)) {
+				written = filepath.ToSlash(rel)
+				break
+			}
+		}
+	}
+	resolved := ""
+	if rel, err := filepath.Rel(realRoot, real); err == nil {
+		resolved = filepath.ToSlash(rel)
+	}
+	for _, path := range []string{written, resolved} {
+		for _, seg := range strings.FieldsFunc(path, func(r rune) bool { return r == '/' || r == '\\' }) {
+			seg = strings.ToLower(seg)
+			if seg == ".auth" || seg == ".jitso" || strings.HasPrefix(seg, ".env") {
+				return true
+			}
+		}
+	}
+	return false
 }
 
 // CheckTarget runs the checks a pointer's target text owes: a minimum length

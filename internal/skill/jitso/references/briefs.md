@@ -55,7 +55,7 @@ Brief: docs/cards/worker-1.md
 
 The keyword may be in any case and the path may sit in backticks. A second non-blank line makes the file an ordinary brief again, checked as above. The launcher then:
 
-- resolves the path from the project's primary checkout (not from your working folder), follows every symlink, and requires a regular file inside the primary checkout whose real path ends in `.md`. A link that leads to `.env` or any other file that is not `.md` is refused;
+- resolves the path from the project's primary checkout (not from your working folder), follows every symlink, and requires a regular file inside the primary checkout whose real path ends in `.md`. A link that leads to `.env` or any other file that is not `.md` is refused, and so is any target (as written or after links) with a path segment `.auth`, `.jitso` or one starting with `.env`, in any case: `brief target is a protected path: <path>`;
 - checks the card's text for the language (`--brief-language`) and for at least the minimum words. It asks for no sections, no maximum and no existing cited paths;
 - copies the card's text into `brief.md` where a brief goes, with the JITSO rules last. The registry hash `brief_sha256` is the hash of that card text.
 
@@ -70,6 +70,7 @@ Rejections, each naming the path as you wrote it:
 | `brief target is not a regular file: <path>` | name a file, not a folder |
 | `brief target is outside the project: <path>` | move the card inside the primary checkout (a linked worktree does not count) |
 | `brief target must be a .md file: <path>` | the real path must end in `.md` |
+| `brief target is a protected path: <path>` | the path, as written or after links, has a segment `.auth`, `.jitso` or one starting with `.env`; copy the card to another folder |
 | `brief target failed: length (<n> words, expected at least <minimum>)`, `language (...)` | the card is too short or not in English; fix it or pass `--brief-language` |
 
 ## A filled example
