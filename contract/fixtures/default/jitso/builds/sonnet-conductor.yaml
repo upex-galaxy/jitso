@@ -17,6 +17,3 @@ skills_first: [orca-orchestration, test-automation]
 mcp: []
 requires: []
 budget: { tokens: 600000, usd_list_cap: 15.00 }
-success:
-  - { check: answer_delivered }
-  - { check: no_rule_breaks }

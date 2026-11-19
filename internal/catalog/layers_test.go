@@ -61,7 +61,7 @@ func (tr *tree) project(rel string) string {
 // layerBuild is a valid worker build with the given id and description.
 func layerBuild(id, desc string, extra ...string) string {
 	s := "id: " + id + "\nversion: 1\nstatus: approved\nmodel: claude-haiku-5-5\neffort: low\ndescription: " + desc +
-		"\nroute_scope: [none]\ntools: [Read]\nsuccess:\n  - { check: answer_delivered }\n"
+		"\nroute_scope: [none]\ntools: [Read]\n"
 	return s + strings.Join(extra, "\n") + map[bool]string{true: "\n", false: ""}[len(extra) > 0]
 }
 

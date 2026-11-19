@@ -37,8 +37,6 @@ tools: [Read, Bash]
 mcp: []
 requires: []
 budget: { tokens: 250000, usd_list_cap: 0.50 }
-success:
-  - { check: answer_delivered }
 `
 
 // with replaces the top-level key an edit names, with its indented lines (or
@@ -105,6 +103,7 @@ func TestValidateBuild(t *testing.T) {
 		{"subagents scalar", []string{"subagents: plan"}, []string{"subagents must be a list of kebab-case names"}},
 		{"subagents null", []string{"subagents: null"}, []string{"subagents must be a list of kebab-case names"}},
 		{"subagents number item", []string{"subagents: [1]"}, []string{"subagents must be a list of kebab-case names"}},
+		{"success is an unknown key and is ignored", []string{"success: [{ key: '{x}' }]"}, nil},
 		{"route scope empty is none", []string{"route_scope: []"}, nil},
 		{"route scope missing is none", []string{"route_scope:-"}, nil},
 		{"route scope unknown", []string{"route_scope: [ticket-work, nope]"}, []string{`route_scope id "nope" is not an instruction section`}},
@@ -112,20 +111,6 @@ func TestValidateBuild(t *testing.T) {
 		{"required field not a field name", []string{"requires: [Color, env2, a-b]"}, []string{
 			`required field "Color" is not a field name`, `required field "env2" is not a field name`, `required field "a-b" is not a field name`,
 		}},
-		{"success empty", []string{"success: []"}, []string{"success must list at least one check"}},
-		{"success missing", []string{"success:-"}, nil},
-		{"success null", []string{"success: null"}, []string{"success must list at least one check"}},
-		{"success any check name", []string{"success: [{ check: magic }, { check: no_rule_breaks }]"}, nil},
-		{"success check name not text", []string{"success: [{ check: 7 }, { check: '' }]"}, []string{"success entry must have a check name", "success entry must have a check name"}},
-		{"success entry without check", []string{"success: [{ key: x }]"}, []string{"success entry must have a check name"}},
-		{"success string entry", []string{"success: [answer_delivered]"}, []string{"success entry must have a check name"}},
-		{"success placeholder", []string{"success: [{ check: jira_comment_on, key: '{ticket_key}' }]"}, []string{"success placeholder {ticket_key} is not a required field"}},
-		{"success placeholder required", []string{"requires: [ticket_key]", "success: [{ check: jira_comment_on, key: '{ticket_key}' }]"}, nil},
-		{"success placeholders in key order", []string{"success: [{ check: jira_comment_on, b: '{env}', a: '{ticket_key}' }]"}, []string{
-			"success placeholder {env} is not a required field",
-			"success placeholder {ticket_key} is not a required field",
-		}},
-		{"success string entry characters", []string{"success: ['{x}']"}, []string{"success entry must have a check name"}},
 		{"tier worker", []string{"tier: worker"}, nil},
 		{"tier conductor", []string{"tier: conductor"}, nil},
 		{"tier unknown", []string{"tier: boss"}, []string{"tier must be one of worker, conductor, subagent"}},
@@ -136,14 +121,11 @@ func TestValidateBuild(t *testing.T) {
 		{"subagent tier without description", []string{"tier: subagent", "prompt: p", "description:-"}, []string{"description must be a non-empty string in a subagent-tier build"}},
 		{"subagent tier listing subagents", []string{"tier: subagent", "prompt: p", "subagents: [plan]"}, []string{"a subagent-tier build cannot list subagents"}},
 		{"conductor needs no route_scope", []string{"tier: conductor", "route_scope:-"}, nil},
-		{"conductor needs no success", []string{"tier: conductor", "success:-"}, nil},
 		{"conductor may list subagents and skills", []string{"tier: conductor", "skills_first: [sprint-testing]", "mcp: [dbhub]", "requires: [ticket_key]", "subagents: [plan]"}, nil},
-		{"subagent tier needs no launch-only field", []string{"tier: subagent", "prompt: p", "route_scope:-", "success:-", "budget:-", "mode_default:-", "agents_md:-", "harness:-"}, nil},
+		{"subagent tier needs no launch-only field", []string{"tier: subagent", "prompt: p", "route_scope:-", "budget:-", "mode_default:-", "agents_md:-", "harness:-"}, nil},
 		{"subagent tier needs no list field at all", []string{"tier: subagent", "prompt: p", "skills_first:-", "mcp:-", "requires:-"}, nil},
 		{"subagent tier route_scope is checked when present", []string{"tier: subagent", "prompt: p", "route_scope: [nope]"}, []string{`route_scope id "nope" is not an instruction section`}},
 		{"subagent tier empty route_scope is none", []string{"tier: subagent", "prompt: p", "route_scope: []"}, nil},
-		{"subagent tier success shape is checked when present", []string{"tier: subagent", "prompt: p", "success: [{ key: x }]"}, []string{"success entry must have a check name"}},
-		{"subagent tier empty success is checked when present", []string{"tier: subagent", "prompt: p", "success: []"}, []string{"success must list at least one check"}},
 		{"subagent tier skills_first must be empty", []string{"tier: subagent", "prompt: p", "skills_first: [sprint-testing]"}, []string{"skills_first must be empty in a subagent-tier build"}},
 		{"subagent tier mcp must be empty", []string{"tier: subagent", "prompt: p", "mcp: [dbhub]"}, []string{"mcp must be empty in a subagent-tier build"}},
 		{"subagent tier requires must be empty", []string{"tier: subagent", "prompt: p", "requires: [ticket_key]"}, []string{"requires must be empty in a subagent-tier build"}},
@@ -222,8 +204,6 @@ prompt: You help.
 model: claude-haiku-5-5
 effort: low
 route_scope: [none]
-success:
-  - { check: answer_delivered }
 `
 
 func testFS(builds map[string]string) fstest.MapFS {
@@ -305,7 +285,7 @@ func TestLoadErrors(t *testing.T) {
 		{"worker-tier subagent", map[string]string{"w.yaml": worker("[plan, other]"), "p.yaml": sub("plan"),
 			"o.yaml": strings.Replace(validBuild, "id: haiku-explorer", "id: other", 1)},
 			`build jitso/builds/w.yaml is invalid: subagent "other" is not a subagent-tier build`},
-		{"subagent with mcp", map[string]string{"p.yaml": strings.Replace(sub("plan"), "success:", "mcp: [dbhub]\nsuccess:", 1)},
+		{"subagent with mcp", map[string]string{"p.yaml": strings.Replace(sub("plan"), "route_scope:", "mcp: [dbhub]\nroute_scope:", 1)},
 			`build jitso/builds/p.yaml is invalid: mcp "dbhub" is not in the allowlist; mcp must be empty in a subagent-tier build`},
 		{"bad yaml", map[string]string{"y.yaml": "a: [1\n"}, "build jitso/builds/y.yaml is invalid: "},
 	}

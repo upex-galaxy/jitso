@@ -17,6 +17,3 @@ tools: [Read, Glob, Grep]
 mcp: []
 requires: []
 budget: { tokens: 150000, usd_list_cap: 0.30 }
-success:
-  - { check: answer_delivered }
-  - { check: no_rule_breaks }

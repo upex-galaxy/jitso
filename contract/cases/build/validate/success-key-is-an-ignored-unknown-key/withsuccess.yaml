@@ -1,11 +1,11 @@
-# Worker with neither success nor route_scope.
-id: emptysuccess
+# Worker that still carries the removed success key, written with a broken shape.
+id: withsuccess
 version: 1
 status: approved
 role: operator
 type: scanner
 work_kind: repo-scan
-description: A worker with no success list and no route scope.
+description: A worker whose file still has a success key.
 harness: claude
 model: claude-haiku-5-5
 effort: low
@@ -15,4 +15,5 @@ skills_first: []
 tools: [Read, Glob, Grep]
 mcp: []
 requires: []
-success: []
+success:
+  - { key: '{missing_field}' }

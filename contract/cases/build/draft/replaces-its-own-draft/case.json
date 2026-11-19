@@ -8,8 +8,8 @@
   "intent": "INTENDED behavior (defect N-15, drafts; docs/decisions.md D7). A draft of an id that already has a draft replaces it: the file holds the second input's bytes and there is still one draft. Only a saved build blocks an id, never a draft.",
   "project": {
     "files": {
-      "v1/scout.yaml": "# Draft written by a drafts case.\nid: scout\nversion: 1\nstatus: draft\nrole: operator\ntype: scanner\nwork_kind: repo-scan\ndescription: First version of the scout.\nharness: claude\nmodel: claude-haiku-5-5\neffort: low\nmode_default: direct\nagents_md: exclude\nroute_scope: [none]\nskills_first: []\ntools: [Read, Glob, Grep]\nmcp: []\nrequires: []\nbudget: { tokens: 150000, usd_list_cap: 0.30 }\nsuccess:\n  - { check: answer_delivered }\n  - { check: no_rule_breaks }\n",
-      "v2/scout.yaml": "# Draft written by a drafts case.\nid: scout\nversion: 1\nstatus: draft\nrole: operator\ntype: scanner\nwork_kind: repo-scan\ndescription: Second version of the scout.\nharness: claude\nmodel: claude-haiku-5-5\neffort: low\nmode_default: direct\nagents_md: exclude\nroute_scope: [none]\nskills_first: []\ntools: [Read, Glob, Grep]\nmcp: []\nrequires: []\nbudget: { tokens: 150000, usd_list_cap: 0.30 }\nsuccess:\n  - { check: answer_delivered }\n  - { check: no_rule_breaks }\n"
+      "v1/scout.yaml": "# Draft written by a drafts case.\nid: scout\nversion: 1\nstatus: draft\nrole: operator\ntype: scanner\nwork_kind: repo-scan\ndescription: First version of the scout.\nharness: claude\nmodel: claude-haiku-5-5\neffort: low\nmode_default: direct\nagents_md: exclude\nroute_scope: [none]\nskills_first: []\ntools: [Read, Glob, Grep]\nmcp: []\nrequires: []\nbudget: { tokens: 150000, usd_list_cap: 0.30 }\n",
+      "v2/scout.yaml": "# Draft written by a drafts case.\nid: scout\nversion: 1\nstatus: draft\nrole: operator\ntype: scanner\nwork_kind: repo-scan\ndescription: Second version of the scout.\nharness: claude\nmodel: claude-haiku-5-5\neffort: low\nmode_default: direct\nagents_md: exclude\nroute_scope: [none]\nskills_first: []\ntools: [Read, Glob, Grep]\nmcp: []\nrequires: []\nbudget: { tokens: 150000, usd_list_cap: 0.30 }\n"
     }
   },
   "steps": [
@@ -29,7 +29,7 @@
         "files": [
           {
             "path": ".jitso/drafts/scout.yaml",
-            "equals": "# Draft written by a drafts case.\nid: scout\nversion: 1\nstatus: draft\nrole: operator\ntype: scanner\nwork_kind: repo-scan\ndescription: First version of the scout.\nharness: claude\nmodel: claude-haiku-5-5\neffort: low\nmode_default: direct\nagents_md: exclude\nroute_scope: [none]\nskills_first: []\ntools: [Read, Glob, Grep]\nmcp: []\nrequires: []\nbudget: { tokens: 150000, usd_list_cap: 0.30 }\nsuccess:\n  - { check: answer_delivered }\n  - { check: no_rule_breaks }\n"
+            "equals": "# Draft written by a drafts case.\nid: scout\nversion: 1\nstatus: draft\nrole: operator\ntype: scanner\nwork_kind: repo-scan\ndescription: First version of the scout.\nharness: claude\nmodel: claude-haiku-5-5\neffort: low\nmode_default: direct\nagents_md: exclude\nroute_scope: [none]\nskills_first: []\ntools: [Read, Glob, Grep]\nmcp: []\nrequires: []\nbudget: { tokens: 150000, usd_list_cap: 0.30 }\n"
           }
         ]
       }
@@ -55,7 +55,7 @@
         "files": [
           {
             "path": ".jitso/drafts/scout.yaml",
-            "equals": "# Draft written by a drafts case.\nid: scout\nversion: 1\nstatus: draft\nrole: operator\ntype: scanner\nwork_kind: repo-scan\ndescription: Second version of the scout.\nharness: claude\nmodel: claude-haiku-5-5\neffort: low\nmode_default: direct\nagents_md: exclude\nroute_scope: [none]\nskills_first: []\ntools: [Read, Glob, Grep]\nmcp: []\nrequires: []\nbudget: { tokens: 150000, usd_list_cap: 0.30 }\nsuccess:\n  - { check: answer_delivered }\n  - { check: no_rule_breaks }\n"
+            "equals": "# Draft written by a drafts case.\nid: scout\nversion: 1\nstatus: draft\nrole: operator\ntype: scanner\nwork_kind: repo-scan\ndescription: Second version of the scout.\nharness: claude\nmodel: claude-haiku-5-5\neffort: low\nmode_default: direct\nagents_md: exclude\nroute_scope: [none]\nskills_first: []\ntools: [Read, Glob, Grep]\nmcp: []\nrequires: []\nbudget: { tokens: 150000, usd_list_cap: 0.30 }\n"
           },
           {
             "path": ".jitso/drafts",

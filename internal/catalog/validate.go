@@ -28,13 +28,11 @@ const (
 var Tiers = []string{TierWorker, TierConductor, TierSubagent}
 
 // FieldName is the shape of a field name: the keys of the fields mapping of
-// jitso/jitso.yaml and each name a build lists in requires. It has no digits,
-// so it agrees with the placeholder pattern below.
+// jitso/jitso.yaml and each name a build lists in requires.
 var FieldName = regexp.MustCompile(`^[a-z][a-z_]*$`)
 
 var (
-	kebab       = regexp.MustCompile(`^[a-z][a-z0-9-]*$`)
-	placeholder = regexp.MustCompile(`\{([a-z_]+)\}`)
+	kebab = regexp.MustCompile(`^[a-z][a-z0-9-]*$`)
 )
 
 // ValidateBuild checks one decoded build file of a saved layer (the project's
@@ -52,8 +50,8 @@ func ValidateBuild(raw any, cfg Config, routeIDs []string) []string {
 // approved or retired, the draft layer takes exactly draft (defect N-15), so a
 // draft cannot pass as a saved build and a saved file cannot claim to be a draft.
 //
-// Worker and conductor builds are validated identically. route_scope and
-// success are optional on every tier: they are checked only when present. A
+// Worker and conductor builds are validated identically. route_scope is
+// optional on every tier: it is checked only when present. A
 // subagent-tier build never launches alone, so skills_first, mcp, requires and
 // subagents must be empty (docs/decisions.md, tier matrix, defect N-11).
 func ValidateBuildIn(raw any, cfg Config, routeIDs []string, layer Layer) []string {
@@ -105,28 +103,9 @@ func ValidateBuildIn(raw any, cfg Config, routeIDs []string, layer Layer) []stri
 			add(`route_scope id "` + id + `" is not an instruction section`)
 		}
 	}
-	requires := jsconv.Strings(p.Value("requires"))
-	for _, field := range requires {
+	for _, field := range jsconv.Strings(p.Value("requires")) {
 		if !FieldName.MatchString(field) {
 			add(`required field "` + field + `" is not a field name`)
-		}
-	}
-	if v, present := p.Get("success"); present {
-		success, isList := v.([]any)
-		if !isList || len(success) == 0 {
-			add("success must list at least one check")
-		}
-		for _, entry := range success {
-			if name, ok := propertyOf(entry, "check").(string); !ok || name == "" {
-				add("success entry must have a check name")
-			}
-			for _, value := range valuesOf(entry) {
-				for _, m := range placeholder.FindAllStringSubmatch(jsconv.String(value), -1) {
-					if !slices.Contains(requires, m[1]) {
-						add("success placeholder {" + m[1] + "} is not a required field")
-					}
-				}
-			}
 		}
 	}
 	return append(errs, tierProblems(p)...)
@@ -182,31 +161,4 @@ func kebabList(v any) bool {
 		}
 	}
 	return true
-}
-
-// propertyOf is `entry.check` for any decoded value: a mapping's value, else
-// undefined (a null entry is undefined too).
-func propertyOf(entry any, key string) any {
-	if m, ok := entry.(*Map); ok {
-		return m.Value(key)
-	}
-	return jsconv.Undefined
-}
-
-// valuesOf is Object.values(entry): a mapping's values in order, a list's
-// elements, a string's characters, nothing for any other value.
-func valuesOf(entry any) []any {
-	switch x := entry.(type) {
-	case *Map:
-		return x.Values()
-	case []any:
-		return x
-	case string:
-		out := make([]any, 0, len(x))
-		for _, r := range x {
-			out = append(out, string(r))
-		}
-		return out
-	}
-	return nil
 }

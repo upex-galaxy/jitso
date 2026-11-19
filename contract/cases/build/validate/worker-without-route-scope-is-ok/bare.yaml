@@ -1,11 +1,11 @@
-# Worker with neither success nor route_scope.
-id: badshape
+# Worker without route_scope.
+id: bare
 version: 1
 status: approved
 role: operator
 type: scanner
 work_kind: repo-scan
-description: A worker with no success list and no route scope.
+description: A worker with no route scope.
 harness: claude
 model: claude-haiku-5-5
 effort: low
@@ -15,6 +15,3 @@ skills_first: []
 tools: [Read, Glob, Grep]
 mcp: []
 requires: []
-success:
-  - { key: value }
-  - { check: ok-name, note: '{missing_field}' }

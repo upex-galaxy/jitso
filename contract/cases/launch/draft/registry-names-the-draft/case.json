@@ -9,7 +9,7 @@
   "project": {
     "files": {
       ".jitso/briefs/brief.md": "## Goal\n\nFind where the sync entry point of this project is defined and explain in a few sentences how it is wired to the rest of the code.\n\n## Scope\n\nRead only. Do not change any file and do not leave the repository.\n\n## Done when\n\nYou can name the file and the line that defines the entry point, and you have checked it by reading the file.\n\n## Report format\n\nOne short paragraph with the file path, the line number and a one line summary of what it does.\n",
-      ".jitso/drafts/scout.yaml": "# Draft written by a drafts case.\nid: scout\nversion: 1\nstatus: draft\nrole: operator\ntype: scanner\nwork_kind: repo-scan\ndescription: Scan the repo for TODO comments and report them.\nharness: claude\nmodel: claude-haiku-5-5\neffort: low\nmode_default: direct\nagents_md: exclude\nroute_scope: [none]\nskills_first: []\ntools: [Read, Glob, Grep]\nmcp: []\nrequires: []\nbudget: { tokens: 150000, usd_list_cap: 0.30 }\nsuccess:\n  - { check: answer_delivered }\n  - { check: no_rule_breaks }\n"
+      ".jitso/drafts/scout.yaml": "# Draft written by a drafts case.\nid: scout\nversion: 1\nstatus: draft\nrole: operator\ntype: scanner\nwork_kind: repo-scan\ndescription: Scan the repo for TODO comments and report them.\nharness: claude\nmodel: claude-haiku-5-5\neffort: low\nmode_default: direct\nagents_md: exclude\nroute_scope: [none]\nskills_first: []\ntools: [Read, Glob, Grep]\nmcp: []\nrequires: []\nbudget: { tokens: 150000, usd_list_cap: 0.30 }\n"
     }
   },
   "steps": [
@@ -56,7 +56,7 @@
                 "build_version": 1,
                 "build_layer": "draft",
                 "build_file": "{{PROJECT}}/.jitso/drafts/scout.yaml",
-                "build_sha256": "c2924a96bd9b4fec4b15b10e7af04481901c78e60116c77118c4eb84fdc1ec27"
+                "build_sha256": "af604e8e7c1cef74bb424c96b744d1d7dea7d5b7d3d9ffc9e5b9a9d41966a253"
               }
             }
           ]

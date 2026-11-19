@@ -63,7 +63,7 @@
                 "build_version": 1,
                 "build_layer": "repo",
                 "build_file": "{{PROJECT}}/jitso/builds/shared-scan.yaml",
-                "build_sha256": "0d53cd1b501d0f73dc2587f0469a127bbde4c5cdd94eac6691904ededea8a097"
+                "build_sha256": "ac7517bac6b9b641b8ba818cfec4419bbf1929ed36ad92c382214b14308eefcd"
               }
             }
           ]

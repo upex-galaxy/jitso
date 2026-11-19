@@ -2,7 +2,7 @@
 # A subagent is never launched alone: a worker or a conductor lists its id in subagents and hands it work.
 # Its model and effort must be listed in jitso/jitso.yaml, and so must every tool it names.
 # Fill each empty value, then check the build with: jitso build validate <id>.
-# A subagent does not take route_scope, success, budget, skills_first, mcp, requires or subagents.
+# A subagent does not take route_scope, budget, skills_first, mcp, requires or subagents.
 id: <id>
 version: 1
 status: draft

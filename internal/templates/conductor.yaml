@@ -35,7 +35,3 @@ subagents: []
 requires: []
 # budget: optional. A mapping with the two numbers of a ceiling: { tokens: <number>, usd_list_cap: <number> }. Leave it out for a build with no budget.
 budget:
-# success: optional. The checks that say whether a launch did its job, one mapping per check with a check name of your own.
-# Nothing in jitso evaluates them. Leave it out for none.
-# success:
-#   - { check: <name> }

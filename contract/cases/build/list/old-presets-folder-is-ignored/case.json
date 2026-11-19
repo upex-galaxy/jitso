@@ -8,7 +8,7 @@
   "intent": "INTENDED behavior (defect N-10, build vocabulary; docs/decisions.md D6). The catalog is read from `jitso/builds/` only. The overlay adds `jitso/presets/legacy.yaml`, a valid approved build with the id `legacy` (a copy of haiku-explorer with a new id): `build list` does not list it and still lists the real builds, and `launch --build legacy --dry-run` exits 2 with `unknown build \"legacy\"` on stderr.",
   "project": {
     "files": {
-      "jitso/presets/legacy.yaml": "id: legacy\nversion: 1\nstatus: approved\nrole: operator\ntype: explorer\nwork_kind: repo-exploration\ndescription: Read-only search of the repo that returns file paths and line numbers.\nharness: claude\nmodel: claude-haiku-5-5\neffort: low\nmode_default: direct\nagents_md: exclude\nroute_scope: [none]\nskills_first: []\ntools: [Read, Glob, Grep, Bash]\nmcp: []\nrequires: []\nbudget: { tokens: 250000, usd_list_cap: 0.50 }\nsuccess:\n  - { check: answer_delivered }\n  - { check: no_rule_breaks }\n",
+      "jitso/presets/legacy.yaml": "id: legacy\nversion: 1\nstatus: approved\nrole: operator\ntype: explorer\nwork_kind: repo-exploration\ndescription: Read-only search of the repo that returns file paths and line numbers.\nharness: claude\nmodel: claude-haiku-5-5\neffort: low\nmode_default: direct\nagents_md: exclude\nroute_scope: [none]\nskills_first: []\ntools: [Read, Glob, Grep, Bash]\nmcp: []\nrequires: []\nbudget: { tokens: 250000, usd_list_cap: 0.50 }\n",
       ".jitso/briefs/b.md": {
         "from": "brief.md"
       }

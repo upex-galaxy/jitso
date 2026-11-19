@@ -8,7 +8,7 @@
   "intent": "INTENDED behavior (defect N-15, drafts; docs/decisions.md \"The v0.1.0 cut\"). Without a terminal, `jitso build save <id>` refuses and writes nothing; with `--yes` it writes `jitso/builds/<id>.yaml`, which is the draft bytes with the `status` scalar `draft` replaced by `approved` and nothing else changed, removes `.jitso/drafts/<id>.yaml`, shows the file with `+ ` prefixes and prints `saved <id>: jitso/builds/<id>.yaml (status approved); the draft is removed`, exit 0. The saved build is a repo build: `build list` shows it and `build validate <id>` says ok.",
   "project": {
     "files": {
-      ".jitso/drafts/scout.yaml": "# Draft written by a drafts case.\nid: scout\nversion: 1\nstatus: draft\nrole: operator\ntype: scanner\nwork_kind: repo-scan\ndescription: Scan the repo for TODO comments and report them.\nharness: claude\nmodel: claude-haiku-5-5\neffort: low\nmode_default: direct\nagents_md: exclude\nroute_scope: [none]\nskills_first: []\ntools: [Read, Glob, Grep]\nmcp: []\nrequires: []\nbudget: { tokens: 150000, usd_list_cap: 0.30 }\nsuccess:\n  - { check: answer_delivered }\n  - { check: no_rule_breaks }\n"
+      ".jitso/drafts/scout.yaml": "# Draft written by a drafts case.\nid: scout\nversion: 1\nstatus: draft\nrole: operator\ntype: scanner\nwork_kind: repo-scan\ndescription: Scan the repo for TODO comments and report them.\nharness: claude\nmodel: claude-haiku-5-5\neffort: low\nmode_default: direct\nagents_md: exclude\nroute_scope: [none]\nskills_first: []\ntools: [Read, Glob, Grep]\nmcp: []\nrequires: []\nbudget: { tokens: 150000, usd_list_cap: 0.30 }\n"
     }
   },
   "steps": [
@@ -33,7 +33,7 @@
         "exit": 0,
         "stdout": [
           {
-            "equals": "+ # Draft written by a drafts case.\n+ id: scout\n+ version: 1\n+ status: approved\n+ role: operator\n+ type: scanner\n+ work_kind: repo-scan\n+ description: Scan the repo for TODO comments and report them.\n+ harness: claude\n+ model: claude-haiku-5-5\n+ effort: low\n+ mode_default: direct\n+ agents_md: exclude\n+ route_scope: [none]\n+ skills_first: []\n+ tools: [Read, Glob, Grep]\n+ mcp: []\n+ requires: []\n+ budget: { tokens: 150000, usd_list_cap: 0.30 }\n+ success:\n+   - { check: answer_delivered }\n+   - { check: no_rule_breaks }\nsaved scout: jitso/builds/scout.yaml (status approved); the draft is removed\n"
+            "equals": "+ # Draft written by a drafts case.\n+ id: scout\n+ version: 1\n+ status: approved\n+ role: operator\n+ type: scanner\n+ work_kind: repo-scan\n+ description: Scan the repo for TODO comments and report them.\n+ harness: claude\n+ model: claude-haiku-5-5\n+ effort: low\n+ mode_default: direct\n+ agents_md: exclude\n+ route_scope: [none]\n+ skills_first: []\n+ tools: [Read, Glob, Grep]\n+ mcp: []\n+ requires: []\n+ budget: { tokens: 150000, usd_list_cap: 0.30 }\nsaved scout: jitso/builds/scout.yaml (status approved); the draft is removed\n"
           }
         ],
         "stderr": [
@@ -47,7 +47,7 @@
         "files": [
           {
             "path": "jitso/builds/scout.yaml",
-            "equals": "# Draft written by a drafts case.\nid: scout\nversion: 1\nstatus: approved\nrole: operator\ntype: scanner\nwork_kind: repo-scan\ndescription: Scan the repo for TODO comments and report them.\nharness: claude\nmodel: claude-haiku-5-5\neffort: low\nmode_default: direct\nagents_md: exclude\nroute_scope: [none]\nskills_first: []\ntools: [Read, Glob, Grep]\nmcp: []\nrequires: []\nbudget: { tokens: 150000, usd_list_cap: 0.30 }\nsuccess:\n  - { check: answer_delivered }\n  - { check: no_rule_breaks }\n"
+            "equals": "# Draft written by a drafts case.\nid: scout\nversion: 1\nstatus: approved\nrole: operator\ntype: scanner\nwork_kind: repo-scan\ndescription: Scan the repo for TODO comments and report them.\nharness: claude\nmodel: claude-haiku-5-5\neffort: low\nmode_default: direct\nagents_md: exclude\nroute_scope: [none]\nskills_first: []\ntools: [Read, Glob, Grep]\nmcp: []\nrequires: []\nbudget: { tokens: 150000, usd_list_cap: 0.30 }\n"
           },
           {
             "path": ".jitso/drafts/scout.yaml",

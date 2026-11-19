@@ -11,7 +11,7 @@
   ],
   "project": {
     "files": {
-      "notes.txt": "# Draft written by a drafts case.\nid: scout\nversion: 1\nstatus: draft\nrole: operator\ntype: scanner\nwork_kind: repo-scan\ndescription: Scan the repo for TODO comments and report them.\nharness: claude\nmodel: claude-haiku-5-5\neffort: low\nmode_default: direct\nagents_md: exclude\nroute_scope: [none]\nskills_first: []\ntools: [Read, Glob, Grep]\nmcp: []\nrequires: []\nbudget: { tokens: 150000, usd_list_cap: 0.30 }\nsuccess:\n  - { check: answer_delivered }\n  - { check: no_rule_breaks }\n",
+      "notes.txt": "# Draft written by a drafts case.\nid: scout\nversion: 1\nstatus: draft\nrole: operator\ntype: scanner\nwork_kind: repo-scan\ndescription: Scan the repo for TODO comments and report them.\nharness: claude\nmodel: claude-haiku-5-5\neffort: low\nmode_default: direct\nagents_md: exclude\nroute_scope: [none]\nskills_first: []\ntools: [Read, Glob, Grep]\nmcp: []\nrequires: []\nbudget: { tokens: 150000, usd_list_cap: 0.30 }\n",
       "huge.yaml": {
         "symlink": "/dev/zero"
       }

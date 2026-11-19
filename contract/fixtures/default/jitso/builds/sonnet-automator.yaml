@@ -17,6 +17,3 @@ subagents: [plan, code, verifier]
 mcp: [dbhub, openapi]
 requires: [ticket_key]
 budget: { tokens: 400000, usd_list_cap: 6.00 }
-success:
-  - { check: answer_delivered }
-  - { check: no_rule_breaks }

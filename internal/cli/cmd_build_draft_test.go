@@ -93,8 +93,6 @@ effort: low
 route_scope: [none]
 tools: [Read]
 budget: { tokens: 1000, usd_list_cap: 0.5 }
-success:
-  - { check: answer_delivered }
 `
 
 // gitProject is a git checkout holding the allowlists and one instruction, the

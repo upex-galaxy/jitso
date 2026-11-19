@@ -8,7 +8,7 @@
   "intent": "INTENDED behavior (defect N-15, drafts; docs/decisions.md \"The v0.1.0 cut\"). `jitso build save <id>` shows the build it would write (the draft bytes with `status: approved`) on stdout, every line prefixed with `+ `. Standard input is not a terminal here, and the runner never gives one, so with no `--yes` it refuses: `JITSO REJECTED: saving a build needs the owner: read the file above, then run it again with --yes, or in a terminal to answer the prompt; nothing saved`, exit 2. Nothing is written and the draft is kept.",
   "project": {
     "files": {
-      ".jitso/drafts/scout.yaml": "# Draft written by a drafts case.\nid: scout\nversion: 1\nstatus: draft\nrole: operator\ntype: scanner\nwork_kind: repo-scan\ndescription: Scan the repo for TODO comments and report them.\nharness: claude\nmodel: claude-haiku-5-5\neffort: low\nmode_default: direct\nagents_md: exclude\nroute_scope: [none]\nskills_first: []\ntools: [Read, Glob, Grep]\nmcp: []\nrequires: []\nbudget: { tokens: 150000, usd_list_cap: 0.30 }\nsuccess:\n  - { check: answer_delivered }\n  - { check: no_rule_breaks }\n"
+      ".jitso/drafts/scout.yaml": "# Draft written by a drafts case.\nid: scout\nversion: 1\nstatus: draft\nrole: operator\ntype: scanner\nwork_kind: repo-scan\ndescription: Scan the repo for TODO comments and report them.\nharness: claude\nmodel: claude-haiku-5-5\neffort: low\nmode_default: direct\nagents_md: exclude\nroute_scope: [none]\nskills_first: []\ntools: [Read, Glob, Grep]\nmcp: []\nrequires: []\nbudget: { tokens: 150000, usd_list_cap: 0.30 }\n"
     }
   },
   "steps": [
@@ -22,7 +22,7 @@
         "exit": 2,
         "stdout": [
           {
-            "equals": "+ # Draft written by a drafts case.\n+ id: scout\n+ version: 1\n+ status: approved\n+ role: operator\n+ type: scanner\n+ work_kind: repo-scan\n+ description: Scan the repo for TODO comments and report them.\n+ harness: claude\n+ model: claude-haiku-5-5\n+ effort: low\n+ mode_default: direct\n+ agents_md: exclude\n+ route_scope: [none]\n+ skills_first: []\n+ tools: [Read, Glob, Grep]\n+ mcp: []\n+ requires: []\n+ budget: { tokens: 150000, usd_list_cap: 0.30 }\n+ success:\n+   - { check: answer_delivered }\n+   - { check: no_rule_breaks }\n"
+            "equals": "+ # Draft written by a drafts case.\n+ id: scout\n+ version: 1\n+ status: approved\n+ role: operator\n+ type: scanner\n+ work_kind: repo-scan\n+ description: Scan the repo for TODO comments and report them.\n+ harness: claude\n+ model: claude-haiku-5-5\n+ effort: low\n+ mode_default: direct\n+ agents_md: exclude\n+ route_scope: [none]\n+ skills_first: []\n+ tools: [Read, Glob, Grep]\n+ mcp: []\n+ requires: []\n+ budget: { tokens: 150000, usd_list_cap: 0.30 }\n"
           }
         ],
         "stderr": [
@@ -40,7 +40,7 @@
           },
           {
             "path": ".jitso/drafts/scout.yaml",
-            "equals": "# Draft written by a drafts case.\nid: scout\nversion: 1\nstatus: draft\nrole: operator\ntype: scanner\nwork_kind: repo-scan\ndescription: Scan the repo for TODO comments and report them.\nharness: claude\nmodel: claude-haiku-5-5\neffort: low\nmode_default: direct\nagents_md: exclude\nroute_scope: [none]\nskills_first: []\ntools: [Read, Glob, Grep]\nmcp: []\nrequires: []\nbudget: { tokens: 150000, usd_list_cap: 0.30 }\nsuccess:\n  - { check: answer_delivered }\n  - { check: no_rule_breaks }\n"
+            "equals": "# Draft written by a drafts case.\nid: scout\nversion: 1\nstatus: draft\nrole: operator\ntype: scanner\nwork_kind: repo-scan\ndescription: Scan the repo for TODO comments and report them.\nharness: claude\nmodel: claude-haiku-5-5\neffort: low\nmode_default: direct\nagents_md: exclude\nroute_scope: [none]\nskills_first: []\ntools: [Read, Glob, Grep]\nmcp: []\nrequires: []\nbudget: { tokens: 150000, usd_list_cap: 0.30 }\n"
           }
         ]
       }

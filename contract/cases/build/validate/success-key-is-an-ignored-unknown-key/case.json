@@ -1,0 +1,40 @@
+{
+  "id": "build/validate/success-key-is-an-ignored-unknown-key",
+  "title": "a build that still has a success key validates: the key is removed and, like any unknown key, accepted and ignored",
+  "source": [
+    "intended: docs/decisions.md, pre-release fixes (success is removed from builds)"
+  ],
+  "intent": "`success` is not part of the build schema any more, and the build validator accepts and ignores unknown keys (docs/build-schema.md). A file that keeps the key, even with the shape that used to be an error (an entry with no check name and a placeholder naming a field the build does not require), is ok: `build validate withsuccess` prints its ok line and exits 0.",
+  "project": {
+    "files": {
+      "jitso/builds/withsuccess.yaml": {
+        "from": "withsuccess.yaml"
+      }
+    }
+  },
+  "steps": [
+    {
+      "run": [
+        "build",
+        "validate",
+        "withsuccess"
+      ],
+      "expect": {
+        "exit": 0,
+        "stdout": [
+          {
+            "equals": "ok withsuccess repo jitso/builds/withsuccess.yaml\nchecked 1 builds: 1 ok, 0 invalid\n"
+          }
+        ],
+        "stderr": [
+          {
+            "empty": true
+          }
+        ],
+        "orca_calls": {
+          "empty": true
+        }
+      }
+    }
+  ]
+}

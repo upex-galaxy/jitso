@@ -16,5 +16,3 @@ skills_first: []
 tools: [Read, Glob, Grep]
 mcp: []
 requires: []
-success:
-  - { check: answer_delivered }

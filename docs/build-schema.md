@@ -86,7 +86,6 @@ Key: R required, O optional (validated when present), U optional and unused by t
 | `prompt` | text; the subagent's instructions | U | R, non-empty | `prompt must be a non-empty string in a subagent-tier build` |
 | `tools` | list, each in `tools`; absent means the harness default (a subagent inherits its parent's) | O | O | `tool "<t>" is not in the allowlist` |
 | `route_scope` | list of instruction-section ids, or `[none]`; absent or empty means none (the card prints `ROUTE-SCOPE: none`) | O | U | `route_scope id "<id>" is not an instruction section` |
-| `success` | list of mappings, each with a `check` name that is text of the project's own choosing; jitso checks the shape and evaluates nothing | O | U | `success must list at least one check`; `success entry must have a check name`; `success placeholder {<p>} is not a required field` |
 | `budget` | mapping with `tokens` and `usd_list_cap` | O | U | none: a build without a budget validates and launches |
 | `harness` | a harness with an adapter (`Adapters` in `internal/launch`) | L | U | validate: `harness "<h>" has no adapter`; launch: `no adapter for harness "<h>"` (exit 2) |
 | `skills_first` | list, each in `skills` | O | E | `skill "<s>" is not in the allowlist`; `skills_first must be empty in a subagent-tier build` |
@@ -102,12 +101,10 @@ Value types the rules above refer to:
 
 | Name | Values |
 |---|---|
-| success checks | any text in `check`: no list of names is built in |
 | required fields | any name that matches `^[a-z][a-z_]*$`; its value is checked against the pattern in the `fields` key of `jitso/jitso.yaml`, or generically when it has none |
-| placeholders | a `{name}` inside a success entry must name a field the build lists in `requires` |
 | `budget.tokens`, `budget.usd_list_cap` | numbers: the token ceiling and the list-price cap in US dollars of one launch. The budget is optional. With one, the card's sixth line starts `budget <n>k tokens (100%), list cap US$ <x.xx> | ` and the rules text names the card's budget as the ceiling; without one the card's sixth line is `reports to: <whom> | log .jitso/launches.jsonl`, the rules text leaves that sentence out and the `launch` event of the log has no `budget` key. The budget is a ceiling the session is told about, not enforced by jitso |
 
-Unknown keys are accepted and ignored by the build validator. `jitso launch --field <name>=<value>` is the one place an unknown field name is rejected: `unknown field "<f>" for build "<id>"`.
+Unknown keys are accepted and ignored by the build validator. That includes `success`, a key that builds used to carry as documentation and that no longer exists. `jitso launch --field <name>=<value>` is the one place an unknown field name is rejected: `unknown field "<f>" for build "<id>"`.
 
 ## Rules text
 

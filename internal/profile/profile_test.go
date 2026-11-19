@@ -15,7 +15,7 @@ func build(id string, extra ...string) string {
 	lines := map[string]string{
 		"id": id, "version": "1", "status": "approved", "role": "operator", "type": "explorer", "harness": "claude",
 		"model": "claude-haiku-5-5", "effort": "low", "agents_md": "exclude", "route_scope": "[none]", "skills_first": "[]",
-		"mcp": "[]", "requires": "[]", "budget": "{ tokens: 1000, usd_list_cap: 0.5 }", "success": "[{ check: answer_delivered }]",
+		"mcp": "[]", "requires": "[]", "budget": "{ tokens: 1000, usd_list_cap: 0.5 }",
 		"description": "d",
 	}
 	for _, e := range extra {

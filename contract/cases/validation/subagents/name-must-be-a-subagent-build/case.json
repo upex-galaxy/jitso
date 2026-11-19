@@ -19,7 +19,7 @@
   },
   "project": {
     "files": {
-      "jitso/builds/broken-team.yaml": "id: broken-team\nversion: 1\nstatus: approved\ntier: worker\nrole: operator\ntype: explorer\nwork_kind: repo-exploration\ndescription: Worker used by a contract case, its subagents list is broken.\nharness: claude\nmodel: claude-haiku-5-5\neffort: low\nmode_default: direct\nagents_md: exclude\nroute_scope: [none]\nskills_first: []\ntools: [Read, Glob, Grep, Bash]\nsubagents: [plan, {{sub}}]\nmcp: []\nrequires: []\nbudget: { tokens: 250000, usd_list_cap: 0.50 }\nsuccess:\n  - { check: answer_delivered }\n",
+      "jitso/builds/broken-team.yaml": "id: broken-team\nversion: 1\nstatus: approved\ntier: worker\nrole: operator\ntype: explorer\nwork_kind: repo-exploration\ndescription: Worker used by a contract case, its subagents list is broken.\nharness: claude\nmodel: claude-haiku-5-5\neffort: low\nmode_default: direct\nagents_md: exclude\nroute_scope: [none]\nskills_first: []\ntools: [Read, Glob, Grep, Bash]\nsubagents: [plan, {{sub}}]\nmcp: []\nrequires: []\nbudget: { tokens: 250000, usd_list_cap: 0.50 }\n",
       ".jitso/briefs/b.md": {
         "from": "brief.md"
       }

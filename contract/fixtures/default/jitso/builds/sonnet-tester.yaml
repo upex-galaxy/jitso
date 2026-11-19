@@ -16,7 +16,3 @@ skills_first: [sprint-testing]
 mcp: [dbhub, openapi]
 requires: [ticket_key]
 budget: { tokens: 250000, usd_list_cap: 3.00 }
-success:
-  - { check: jira_comment_on, key: '{ticket_key}' }
-  - { check: xray_execution_with_env, story: '{ticket_key}' }
-  - { check: no_rule_breaks }
