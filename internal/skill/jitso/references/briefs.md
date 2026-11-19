@@ -11,9 +11,9 @@ A brief is the whole job description of a worker. The worker has none of your co
 | `sections` | the text has a heading line for each of `Goal`, `Scope`, `Done when` and `Report format`. Any heading level, any case, an optional trailing colon, nothing else on the line |
 | `length` | the word count is inside the limits the rejection prints. A word is a run of characters between spaces that holds a letter: `` `src/sync.ts` `` and `don't` are one word each, a number such as `3.14` is none, and the heading lines (`## Goal` and the like) are not counted |
 | `language` | the text reads as English. The check counts common English and Spanish words, so a short brief of identifiers and paths can fail it. `--brief-language es` or `any` skips it, only for a project that works in another language |
-| `paths` | every backticked token that looks like a path exists |
+| `paths` | every backticked token that looks like a file path exists |
 
-A backticked token counts as a path when it contains a slash and does not start with `~` or `$`, has no URL scheme and none of `*`, `<`, `>`, `{`, `}`. A relative path is looked up from the project's primary checkout. So `docs/guide.md` must exist, and so must something like `and/or` if you backtick it: leave plain words out of backticks.
+A backticked token counts as a path when it contains a slash and does not start with `~`, `$` or `@`, has no URL scheme and none of `*`, `<`, `>`, `{`, `}`, and its last segment ends in a dot and a letter-led extension of up to ten characters (`.ts`, `.md`, `.env`). So `docs/guide.md` must exist, while a branch (`docs/foundation`), a skill (`/project-foundation`), a folder (`src/app/`), an alias (`@platform/kit/line-chart`) and a version (`release/v0.1.2`) are text and are not looked up. A relative path is looked up from the project's primary checkout. An extensionless file is not checked.
 
 A file the worker will create is exempt when its path is on a line that starts with `Output:`, `Outputs:`, `Create:` or `Creates:` (any case, an optional list dash first). Put new files there:
 

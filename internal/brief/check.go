@@ -58,6 +58,7 @@ var (
 	urlScheme    = regexp.MustCompile(`^[A-Za-z]+://`)
 	homeOrVar    = regexp.MustCompile(`^[~$]`)
 	globOrHolder = regexp.MustCompile(`[*<>{}]`)
+	fileName     = regexp.MustCompile(`\.[A-Za-z][A-Za-z0-9]{0,9}$`)
 	outputLine   = regexp.MustCompile(`^` + jsSpace + `*(?:[-*]` + jsSpace + `*)?(?:` + anyCase("output") + `[Ss]?|` + anyCase("create") + `[Ss]?)` + jsSpace + `*:`)
 	sections     = sectionPatterns()
 )
@@ -171,12 +172,17 @@ func Reason(failures []Failure) string {
 }
 
 // citedPaths are the backtick-quoted tokens that look like a file path: a
-// slash, no URL scheme, no leading ~ or $, no glob or placeholder character.
+// slash, no URL scheme, no leading ~, $ or @, no glob or placeholder
+// character, and a last segment that ends in a dot and a letter-led extension
+// (so a trailing slash, a branch name or a skill name is text, not a file).
 func citedPaths(text string) []string {
 	var found []string
 	for _, m := range backticked.FindAllStringSubmatch(text, -1) {
 		v := m[1]
 		if !strings.Contains(v, "/") || urlScheme.MatchString(v) || homeOrVar.MatchString(v) || globOrHolder.MatchString(v) {
+			continue
+		}
+		if strings.HasPrefix(v, "@") || !fileName.MatchString(v[strings.LastIndex(v, "/")+1:]) {
 			continue
 		}
 		found = append(found, v)

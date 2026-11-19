@@ -1,0 +1,57 @@
+{
+  "id": "brief/paths/file-shaped-ghosts-still-rejected",
+  "title": "a file-shaped cited path that does not exist is still rejected",
+  "source": [
+    "intended: the file-shaped rule keeps the paths check for real file names"
+  ],
+  "project": {
+    "files": {
+      ".jitso/briefs/brief.md": {
+        "from": "brief.md"
+      }
+    }
+  },
+  "for_each": {
+    "var": "token",
+    "values": [
+      "docs/foundation/plan.md",
+      "{{PROJECT}}/nowhere/ghost.md",
+      ".github/workflows/ghost.yml",
+      "src/.env.ghost"
+    ]
+  },
+  "steps": [
+    {
+      "run": [
+        "launch",
+        "--build",
+        "haiku-explorer",
+        "--brief",
+        "{{PROJECT}}/.jitso/briefs/brief.md",
+        "--mode",
+        "direct"
+      ],
+      "expect": {
+        "exit": 2,
+        "stdout": [
+          {
+            "empty": true
+          }
+        ],
+        "stderr": [
+          {
+            "regex": "paths \\(cited path does not exist: "
+          }
+        ],
+        "orca_calls": {
+          "empty": true
+        },
+        "registry": {
+          "count": 0
+        }
+      }
+    }
+  ],
+  "defect": "J40",
+  "intent": "Guard rows: the rule that skips non-file tokens must not open the check for a misspelled real file, including one under a folder that exists, a placeholder-led absolute path, a dot folder and a dotfile with a suffix."
+}

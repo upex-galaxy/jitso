@@ -40,6 +40,9 @@ func TestCheck(t *testing.T) {
 		{"Output to does not declare", "Output to: `new/out.md`\n" + good, LanguageEnglish, all,
 			[]Failure{{CheckPaths, "cited path does not exist: new/out.md"}}},
 		{"ignored tokens", good + "`https://x.test/a/b` `~/a/b` `$HOME/a` `src/**/*.ts` `<d>/f.ts` `{a}/b` `ghost.ts`\n", LanguageEnglish, all, nil},
+		{"only file-shaped tokens are checked", good + "`docs/foundation` `/project-foundation` `src/app/` `@platform/kit/line-chart` `@scope/pkg/missing.ts` `release/v0.1.2`\n", LanguageEnglish, all, nil},
+		{"file-shaped ghosts are rejected", good + "`docs/foundation/plan.md` `.github/workflows/ghost.yml` `src/.env.ghost`\n", LanguageEnglish, all,
+			[]Failure{{CheckPaths, "cited path does not exist: docs/foundation/plan.md, .github/workflows/ghost.yml, src/.env.ghost"}}},
 		{"missing sections in order", strings.Replace(strings.Replace(good, "## Scope", "Scope", 1), "## Report format", "## Reports", 1), LanguageEnglish, all,
 			[]Failure{{CheckSections, "missing section: Scope, Report format"}}},
 		{"heading forms", strings.NewReplacer("## Goal", "######   GOAL  :  ", "## Scope", "#scope:").Replace(good), LanguageEnglish, all, nil},
@@ -49,7 +52,7 @@ func TestCheck(t *testing.T) {
 			[]Failure{{CheckLength, "6 words, expected 40 to 800"}}},
 		{"spanish rejected in en", spanishBrief, LanguageEnglish, all, []Failure{{CheckLanguage, "the brief must be written in English"}}},
 		{"spanish accepted in es", spanishBrief, LanguageSpanish, all, nil},
-		{"any skips language only", spanishBrief + "`x/ghost`\n", LanguageAny, all, []Failure{{CheckPaths, "cited path does not exist: x/ghost"}}},
+		{"any skips language only", spanishBrief + "`x/ghost.ts`\n", LanguageAny, all, []Failure{{CheckPaths, "cited path does not exist: x/ghost.ts"}}},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

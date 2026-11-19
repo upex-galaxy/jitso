@@ -1,0 +1,61 @@
+{
+  "id": "brief/paths/only-file-shaped-tokens-are-checked",
+  "title": "a backticked token that is not file-shaped (a branch, a skill name, a future folder, an import alias, a version) is not looked up as a path",
+  "source": [
+    "intended: a cited path is a token that names a file, with an extension"
+  ],
+  "project": {
+    "files": {
+      ".jitso/briefs/brief.md": {
+        "from": "brief.md"
+      }
+    }
+  },
+  "for_each": {
+    "var": "token",
+    "values": [
+      "docs/foundation",
+      "/project-foundation",
+      "src/app/",
+      "@platform/kit/line-chart",
+      "@scope/pkg/missing.ts",
+      "release/v0.1.2"
+    ]
+  },
+  "steps": [
+    {
+      "run": [
+        "launch",
+        "--build",
+        "haiku-explorer",
+        "--brief",
+        "{{PROJECT}}/.jitso/briefs/brief.md",
+        "--mode",
+        "direct",
+        "--dry-run"
+      ],
+      "expect": {
+        "exit": 0,
+        "stderr": [
+          {
+            "empty": true
+          }
+        ],
+        "stdout": [
+          {
+            "regex": "^JITSO L\\d{8}T\\d{6}-[0-9a-f]{4} \\|"
+          },
+          "dry run: nothing was written"
+        ],
+        "orca_calls": {
+          "empty": true
+        },
+        "registry": {
+          "count": 0
+        }
+      }
+    }
+  ],
+  "defect": "J40",
+  "intent": "Branch names, skill names, folders the worker will create, import aliases and version-like names were rejected as ghost paths. Only a token whose last segment ends in a dot and a letter-led extension, with no leading @ and no trailing slash, is looked up."
+}

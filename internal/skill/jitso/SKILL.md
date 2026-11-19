@@ -43,7 +43,7 @@ Six lines: header (launch id, role/type, mode, build), model line (model, effort
 
 ## Brief rules in one breath
 
-Headings `Goal`, `Scope`, `Done when`, `Report format`. English. Within the word limits the rejection prints. Every backticked path that has a slash must exist, unless it sits on an `Output:` or `Create:` line. A rejection names the failing check, so fix that and run `--dry-run` again. A job already written in another format needs no rewrite: make the brief file the single line `Brief: <path to the card>` (`references/briefs.md`, "Pointing at a card you already have").
+Headings `Goal`, `Scope`, `Done when`, `Report format`. English. Within the word limits the rejection prints. Every backticked file path (a slash and a file extension, no leading `@`, no trailing `/`) must exist, unless it sits on an `Output:` or `Create:` line. A rejection names the failing check, so fix that and run `--dry-run` again. A job already written in another format needs no rewrite: make the brief file the single line `Brief: <path to the card>` (`references/briefs.md`, "Pointing at a card you already have").
 
 ## After a launch
 
