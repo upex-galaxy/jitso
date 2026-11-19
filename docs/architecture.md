@@ -8,7 +8,7 @@ The design of the `jitso` Go binary: how it is split into packages, where the se
 |---|---|
 | The contract is the acceptance test | every milestone ends with a runner result against the built binary (`--impl bin`), never with "it compiles" |
 | Change only what is decided | a behavior change is a decided row of `docs/decisions.md` (with a defect id when it has one), each a contract case first, then Go |
-| Functional core, imperative shell | validation, resolution, card, brief checks, argv and `run.sh` text, hook decisions and transcript math are pure functions; I/O sits in a thin layer around them |
+| Functional core, imperative shell | validation, resolution, card, brief checks, argv and `run.sh` text, hook decisions and the transcript path are pure functions; I/O sits in a thin layer around them |
 | Standard library first | one dependency (YAML, section 8), behind a single file |
 | One binary | the CLI and the hook are subcommands of the same executable; no Node or Bun at run time |
 
@@ -53,9 +53,9 @@ The rules text is `card.Rules(mode, hasBudget)`, called with the build's budget 
 
 ## 3. Module and layout
 
-Module path `github.com/upex-galaxy/jitso`. It is the intended path only: nothing is published and the repo has no remote (D2). The module lives at the repo root, separate from `contract/runner`. The `go` line matches the runner's and is raised only by a plan item that names the feature it needs.
+Module path `github.com/upex-galaxy/jitso`, the path of the public repository the owner decided on (`docs/decisions.md`); `go.mod` is the source of truth, and `git remote -v` and the tags say whether it is published yet. The module lives at the repo root, separate from `contract/runner`. The `go` line matches the runner's and is raised only by a plan item that names the feature it needs.
 
-The layout is read from the tree, not from this page: `ls internal cmd/jitso` and `go list ./...` are current, and the table below groups the packages by responsibility so a reader knows where to look. A package that owns text the binary ships (`rules`, `templates`, `skill`, `instructions`) keeps it next to its code.
+The layout is read from the tree, not from this page: `ls internal cmd/jitso` and `go list ./...` are current, and the table below groups the packages by responsibility so a reader knows where to look. A package that owns text the binary ships (`templates`, `skill`, `instructions`) keeps it next to its code.
 
 ```
 cmd/jitso/main.go          wiring only: real ports, one exit-code mapping, nothing else
@@ -113,7 +113,7 @@ Deliberately not abstracted:
 | Table-driven tests | every package | the go-development skill's rule; contract cases stay the test of observable behavior |
 | Consumer-side interfaces | `launch`, `closeout`, `reap` | each declares only the Orca methods it calls, so a fake implements three methods, not nine |
 
-JSON fidelity, in `internal/jsonx`: one encoder with `SetEscapeHTML(false)` (the guard's reason contains `<id>` and `<file>`), optional fields omitted rather than written as `null` when the original omitted them (`budget_pct`), `mcp.json` with a two-space indent and a trailing newline, registry lines compact with one trailing newline, timestamps as UTC with milliseconds (`2006-01-02T15:04:05.000Z`), and floats in the shortest round-trip form.
+JSON fidelity, in `internal/jsonx`: one encoder with `SetEscapeHTML(false)` (the guard's reason contains `<id>` and `<file>`), optional fields omitted rather than written as `null`, `mcp.json` with a two-space indent and a trailing newline, registry lines compact with one trailing newline, timestamps as UTC with milliseconds (`2006-01-02T15:04:05.000Z`), and floats in the shortest round-trip form.
 
 ## 6. Cross-cutting rules
 
