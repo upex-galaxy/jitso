@@ -63,6 +63,11 @@ func writeFolder(p prepared, d Deps, dir string) (folder, error) {
 	if p.args.Mode == ModeDirect {
 		in.InitialPrompt = FirstPrompt(f.brief, p.profile.RouteScope)
 	}
+	if !p.pkg.Empty() {
+		if in.PackageDir, err = p.pkg.write(dir); err != nil {
+			return folder{}, err
+		}
+	}
 	spec, err := p.adapter.Spec(in)
 	if err != nil {
 		return folder{}, err
@@ -81,7 +86,7 @@ func writeFolder(p prepared, d Deps, dir string) (folder, error) {
 	writes := []struct {
 		path, text string
 	}{
-		{f.brief, BriefFile(p.card, b.SkillsFirst, p.briefText, FieldsBlock(p.profile.Fields), card.Rules(string(p.args.Mode), b.Budget.Set))},
+		{f.brief, BriefFile(p.card, SessionSkillNames(b.SkillsFirst), p.briefText, FieldsBlock(p.profile.Fields), card.Rules(string(p.args.Mode), b.Budget.Set))},
 		{in.MCPConfigPath, string(mcpJSON) + "\n"},
 		{filepath.Join(dir, FileCard), p.card + "\n"},
 		{runSh, script},

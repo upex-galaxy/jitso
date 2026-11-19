@@ -86,6 +86,8 @@ Same YAML subset as `jitso/jitso.yaml`. A build names an item of this file with 
 | `cloud:<n>` server | `mcp "cloud:<n>": cloud connectors cannot be given to a launched session yet` |
 | any other scope | `skill "<scope>:<n>": unknown scope (use user:)`, `mcp "<scope>:<n>": unknown scope (use user:)` |
 
+A launch copies each `user:` skill into its own folder, `.jitso/launches/<id>/pkg/.claude/skills/<n>/`, and passes that folder to the session, which lists the skill by its plain name; a skill over 5 MiB or 500 files is `JITSO REJECTED: user skill "<n>" is larger than a launch carries`.
+
 ## The build file
 
 Key: R required, O optional (validated when present), U optional and unused by that tier, E must be empty or absent, L checked at launch and also reported by `jitso build validate`.

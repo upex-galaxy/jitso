@@ -1,0 +1,120 @@
+{
+  "id": "launch/package/user-skill-is-copied",
+  "title": "a launch copies each user skill the build names into .jitso/launches/<id>/pkg/.claude/skills/<name>/ and brief.md names it as the session sees it",
+  "source": [
+    "intended: JITSO v0.2 plan 2.3 (the per-launch package; copy, not link)"
+  ],
+  "intent": "The copy freezes the skill for the session. A link to the skill folder is resolved, regular files keep their execute bit, and a link to a folder inside the skill is left out. The card prints the names as the build writes them; the Load first line of brief.md uses the plain name, which is what the session lists.",
+  "project": {
+    "files": {
+      ".jitso/briefs/brief.md": "## Goal\n\nFind where the sync entry point of this project is defined and explain in a few sentences how it is wired to the rest of the code.\n\n## Scope\n\nRead only. Look at `src/sync.ts` and `docs/guide.md` and nothing outside the repo. Do not change any file.\n\n## Done when\n\nYou can name the file and the line that defines the entry point, and you have checked it by reading the file.\n\n## Report format\n\nOne short paragraph with the file path, the line number and a one line summary of what it does.\n",
+      "jitso/builds/user-skill-worker.yaml": {
+        "from": "user-skill-worker.yaml"
+      }
+    }
+  },
+  "home": {
+    "files": {
+      ".jitso/jitso.yaml": "version: 1\nskills: [humanizer, linked]\nmcp: [engram]\n",
+      ".claude/skills/humanizer/SKILL.md": "---\nname: humanizer\ndescription: Make text read human.\n---\n\nBody.\n",
+      ".claude/skills/humanizer/references/a.md": "# Reference\n\nDetail.\n",
+      ".claude/skills/humanizer/scripts/run.sh": {
+        "content": "#!/bin/sh\necho hi\n",
+        "mode": "0755"
+      },
+      ".claude/skills/humanizer/elsewhere": {
+        "symlink": "{{HOME}}/outside"
+      },
+      "outside/secret.md": "not part of the skill\n",
+      "skills-src/linked/SKILL.md": "---\nname: linked\ndescription: A skill behind a link.\n---\n",
+      ".claude/skills/linked": {
+        "symlink": "{{HOME}}/skills-src/linked"
+      }
+    }
+  },
+  "steps": [
+    {
+      "run": [
+        "launch",
+        "--build",
+        "user-skill-worker",
+        "--brief",
+        "{{PROJECT}}/.jitso/briefs/brief.md",
+        "--mode",
+        "direct"
+      ],
+      "expect": {
+        "exit": 0,
+        "stderr": [
+          {
+            "empty": true
+          }
+        ],
+        "stdout": [
+          {
+            "regex": "(?m)^model claude-haiku-5-5 effort low \\| bypass \\| MCP none \\| skill sprint-testing,user:humanizer,user:linked$"
+          }
+        ],
+        "files": [
+          {
+            "path": ".jitso/launches/{{LAUNCH_ID}}/pkg/.claude/skills/humanizer/SKILL.md",
+            "equals": "---\nname: humanizer\ndescription: Make text read human.\n---\n\nBody.\n"
+          },
+          {
+            "path": ".jitso/launches/{{LAUNCH_ID}}/pkg/.claude/skills/humanizer/references/a.md",
+            "equals": "# Reference\n\nDetail.\n"
+          },
+          {
+            "path": ".jitso/launches/{{LAUNCH_ID}}/pkg/.claude/skills/humanizer/scripts/run.sh",
+            "equals": "#!/bin/sh\necho hi\n",
+            "executable": true
+          },
+          {
+            "path": ".jitso/launches/{{LAUNCH_ID}}/pkg/.claude/skills/humanizer/elsewhere",
+            "exists": false
+          },
+          {
+            "path": ".jitso/launches/{{LAUNCH_ID}}/pkg/.claude/skills/linked/SKILL.md",
+            "equals": "---\nname: linked\ndescription: A skill behind a link.\n---\n"
+          },
+          {
+            "path": ".jitso/launches/{{LAUNCH_ID}}/pkg/.claude/skills",
+            "entries": [
+              {
+                "equals": "humanizer\nlinked"
+              }
+            ]
+          },
+          {
+            "path": ".jitso/launches/{{LAUNCH_ID}}/brief.md",
+            "contains": [
+              "\n\nLoad first: sprint-testing, humanizer, linked\n\n"
+            ]
+          }
+        ],
+        "registry": {
+          "count": 1,
+          "events": [
+            {
+              "at": 0,
+              "event": "launch",
+              "fields": {
+                "skills_first": [
+                  "sprint-testing",
+                  "user:humanizer",
+                  "user:linked"
+                ]
+              }
+            }
+          ]
+        }
+      },
+      "capture": {
+        "LAUNCH_ID": {
+          "from": "stdout",
+          "regex": "JITSO (L\\d{8}T\\d{6}-[0-9a-f]{4})"
+        }
+      }
+    }
+  ]
+}

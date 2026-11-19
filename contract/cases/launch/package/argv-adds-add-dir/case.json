@@ -1,0 +1,84 @@
+{
+  "id": "launch/package/argv-adds-add-dir",
+  "title": "a launch that carries a package starts claude with --add-dir <launch>/pkg right after the MCP file, once, and every other flag as before",
+  "source": [
+    "intended: JITSO v0.2 plan 2.3 (--add-dir, measured in M0-1: the folder's skills load un-namespaced under --setting-sources project)"
+  ],
+  "intent": "--add-dir is variadic in Claude Code, so it sits between two flags: the flag after it ends its list and the first prompt can never be read as a folder.",
+  "tags": [
+    "posix"
+  ],
+  "project": {
+    "files": {
+      ".jitso/briefs/brief.md": "## Goal\n\nFind where the sync entry point of this project is defined and explain in a few sentences how it is wired to the rest of the code.\n\n## Scope\n\nRead only. Look at `src/sync.ts` and `docs/guide.md` and nothing outside the repo. Do not change any file.\n\n## Done when\n\nYou can name the file and the line that defines the entry point, and you have checked it by reading the file.\n\n## Report format\n\nOne short paragraph with the file path, the line number and a one line summary of what it does.\n",
+      ".claude/settings.json": "{\n  \"hooks\": {\n    \"PreToolUse\": [\n      {\n        \"matcher\": \"Bash\",\n        \"hooks\": [\n          {\n            \"type\": \"command\",\n            \"command\": \"jitso hook guard\"\n          }\n        ]\n      },\n      {\n        \"matcher\": \"mcp__.*orca.*__.*\",\n        \"hooks\": [\n          {\n            \"type\": \"command\",\n            \"command\": \"jitso hook guard\"\n          }\n        ]\n      }\n    ],\n    \"SessionEnd\": [\n      {\n        \"hooks\": [\n          {\n            \"type\": \"command\",\n            \"command\": \"jitso hook guard\"\n          }\n        ]\n      }\n    ]\n  }\n}\n",
+      "jitso/builds/user-skill-worker.yaml": {
+        "from": "user-skill-worker.yaml"
+      }
+    }
+  },
+  "home": {
+    "files": {
+      ".jitso/jitso.yaml": "version: 1\nskills: [humanizer, linked]\nmcp: [engram]\n",
+      ".claude/skills/humanizer/SKILL.md": "---\nname: humanizer\ndescription: Make text read human.\n---\n\nBody.\n"
+    }
+  },
+  "steps": [
+    {
+      "run": [
+        "launch",
+        "--build",
+        "user-skill-worker",
+        "--brief",
+        "{{PROJECT}}/.jitso/briefs/brief.md",
+        "--mode",
+        "direct"
+      ],
+      "expect": {
+        "exit": 0
+      },
+      "capture": {
+        "LAUNCH_ID": {
+          "from": "stdout",
+          "regex": "JITSO (L\\d{8}T\\d{6}-[0-9a-f]{4})"
+        }
+      }
+    },
+    {
+      "exec": "run_sh",
+      "launch": "{{LAUNCH_ID}}",
+      "expect": {
+        "exit": 0,
+        "claude": {
+          "ran": true,
+          "argv": [
+            "--dangerously-skip-permissions",
+            "--setting-sources",
+            "project",
+            "--settings",
+            "{\"skipDangerousModePermissionPrompt\":true,\"promptSuggestionEnabled\":false}",
+            "--strict-mcp-config",
+            "--mcp-config",
+            "{{PROJECT}}/.jitso/launches/{{LAUNCH_ID}}/mcp.json",
+            "--add-dir",
+            "{{PROJECT}}/.jitso/launches/{{LAUNCH_ID}}/pkg",
+            "--model",
+            "claude-haiku-5-5",
+            "--effort",
+            "low",
+            "--session-id",
+            {
+              "regex": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+            },
+            {
+              "regex": "^Read .+/brief\\.md and follow it exactly\\.\\nROUTE-SCOPE: none$"
+            }
+          ],
+          "argv_count": {
+            "--add-dir": 1
+          }
+        }
+      }
+    }
+  ]
+}

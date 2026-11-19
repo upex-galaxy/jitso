@@ -101,10 +101,16 @@ func Argv(in harness.SpecInput) ([]string, error) {
 		"--settings", settings,
 		"--strict-mcp-config",
 		"--mcp-config", in.MCPConfigPath,
+	}
+	// --add-dir is variadic: the flag that follows it ends its list.
+	if in.PackageDir != "" {
+		argv = append(argv, "--add-dir", in.PackageDir)
+	}
+	argv = append(argv,
 		"--model", in.Model,
 		"--effort", in.Effort,
 		"--session-id", in.SessionID,
-	}
+	)
 	if len(in.Subagents) > 0 {
 		agents, err := AgentsJSON(in.Subagents)
 		if err != nil {

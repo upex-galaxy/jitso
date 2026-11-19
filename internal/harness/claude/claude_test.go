@@ -154,3 +154,17 @@ func TestSpecEnv(t *testing.T) {
 		t.Error("an unknown MCP server must fail the spec")
 	}
 }
+
+func TestArgvPackageDir(t *testing.T) {
+	in := harness.SpecInput{Model: "m", Effort: "low", SessionID: "sid", MCPConfigPath: "/l/mcp.json", PackageDir: "/l/pkg", InitialPrompt: "Read it."}
+	want := []string{"claude", "--dangerously-skip-permissions", "--setting-sources", "project", "--settings", settings,
+		"--strict-mcp-config", "--mcp-config", "/l/mcp.json", "--add-dir", "/l/pkg", "--model", "m", "--effort", "low",
+		"--session-id", "sid", "Read it."}
+	got, err := Argv(in)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !reflect.DeepEqual(got, want) {
+		t.Errorf("got  %q\nwant %q", got, want)
+	}
+}

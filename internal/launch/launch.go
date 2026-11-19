@@ -68,8 +68,12 @@ func Run(a Args, d Deps) error {
 	if !ok {
 		return fail.Rejectedf(`no adapter for harness "%s"`, harnessName)
 	}
-	if namesUserItem(p.Build) {
-		return fail.Rejected("launch of user-scope items needs the launch package")
+	if namesUserMCP(p.Build) {
+		return fail.Rejected("launch of user MCP servers is not supported yet")
+	}
+	carried, err := planPackage(p.Build, d.Catalog.Config.User)
+	if err != nil {
+		return err
 	}
 	mcp := MCPAfterExclude(p.MCP, a.MCPExclude)
 
@@ -115,7 +119,7 @@ func Run(a Args, d Deps) error {
 		d.Out(DryRunLine)
 		return nil
 	}
-	return execute(prepared{args: a, profile: p, adapter: adapter, mcp: mcp, briefText: briefText, id: id, card: cardText, lineage: lineage}, d)
+	return execute(prepared{args: a, profile: p, adapter: adapter, mcp: mcp, briefText: briefText, id: id, card: cardText, lineage: lineage, pkg: carried}, d)
 }
 
 // readTarget is the text of a pointer brief: the target is resolved inside the
@@ -165,6 +169,7 @@ type prepared struct {
 	id        string
 	card      string
 	lineage   Lineage
+	pkg       Package
 }
 
 // execute writes the launch folder and starts the session. It creates
@@ -242,6 +247,7 @@ func execute(p prepared, d Deps) (err error) {
 		Repo: filepath.Base(d.Root.Primary), Harness: p.adapter.ID(), Argv: files.argv, Prompted: p.args.Mode == ModeDirect,
 		BriefPath: files.brief, BriefText: p.briefText, SessionID: files.sessionID,
 		Cwd: term.WorktreePath, Transcript: transcript, Trust: outcome, Terminal: term.Handle, Title: files.title, Now: d.Now(),
+		Package: p.pkg.Ref(),
 	})
 	if err := d.Registry.Append(event); err != nil {
 		abandon()
@@ -333,14 +339,11 @@ func deref(s *string) string {
 	return *s
 }
 
-// namesUserItem reports whether the build names a user:<name> skill or MCP
-// server.
-func namesUserItem(b *catalog.Build) bool {
-	for _, list := range [][]string{b.SkillsFirst, b.MCP} {
-		for _, name := range list {
-			if _, ok := catalog.UserName(name); ok {
-				return true
-			}
+// namesUserMCP reports whether the build names a user:<name> MCP server.
+func namesUserMCP(b *catalog.Build) bool {
+	for _, name := range b.MCP {
+		if _, ok := catalog.UserName(name); ok {
+			return true
 		}
 	}
 	return false

@@ -51,6 +51,9 @@ type SpecInput struct {
 	Subagents []Subagent
 	// InitialPrompt is the first prompt (direct mode); "" for none (fleet mode).
 	InitialPrompt string
+	// PackageDir is the folder of what travels with the launch, whose
+	// .claude/skills the session loads; "" when nothing travels.
+	PackageDir string
 }
 
 // Subagent is one helper a session may call, from a subagent-tier build.

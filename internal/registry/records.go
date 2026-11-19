@@ -63,6 +63,25 @@ type LaunchEvent struct {
 	// Fields are the --field values of the launch, key to value, in key
 	// order; the key is left out when the launch has none.
 	Fields map[string]string `json:"fields,omitempty"`
+	// Package is what travelled with the launch beyond its own files; the key
+	// is left out when nothing did.
+	Package *Package `json:"package,omitempty"`
+}
+
+// Package is the package key of a launch event.
+type Package struct {
+	// Skills are the skills copied into the launch, in skills_first order.
+	Skills []PackageSkill `json:"skills"`
+	// Flag is how the package reached the harness: add-dir.
+	Flag string `json:"flag"`
+}
+
+// PackageSkill is one copied skill: its name, its scope and the SHA-256 of
+// its tree.
+type PackageSkill struct {
+	Name   string `json:"name"`
+	Scope  string `json:"scope"`
+	SHA256 string `json:"sha256"`
 }
 
 // OrcaRef is the orca field of a launch event.

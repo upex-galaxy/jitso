@@ -1,0 +1,86 @@
+{
+  "id": "registry/launch-event-package-key",
+  "title": "the launch event of a launch that carries a package records it under package, and the registry readers keep that line",
+  "source": [
+    "intended: JITSO v0.2 plan 2.3 (the package key; v stays 2, readers ignore keys they do not know)"
+  ],
+  "intent": "sha256 is the SHA-256 of the lines `<sha256 of the file>  <relative path>` sorted by path, what sha256sum prints for the tree. jitso close then reads the line and ends the launch.",
+  "project": {
+    "files": {
+      ".jitso/briefs/brief.md": "## Goal\n\nFind where the sync entry point of this project is defined and explain in a few sentences how it is wired to the rest of the code.\n\n## Scope\n\nRead only. Look at `src/sync.ts` and `docs/guide.md` and nothing outside the repo. Do not change any file.\n\n## Done when\n\nYou can name the file and the line that defines the entry point, and you have checked it by reading the file.\n\n## Report format\n\nOne short paragraph with the file path, the line number and a one line summary of what it does.\n",
+      "jitso/builds/user-skill-worker.yaml": {
+        "from": "user-skill-worker.yaml"
+      }
+    }
+  },
+  "home": {
+    "files": {
+      ".jitso/jitso.yaml": "version: 1\nskills: [humanizer, linked]\nmcp: [engram]\n",
+      ".claude/skills/humanizer/SKILL.md": "---\nname: humanizer\ndescription: Make text read human.\n---\n\nBody.\n",
+      ".claude/skills/humanizer/references/a.md": "# Reference\n\nDetail.\n"
+    }
+  },
+  "steps": [
+    {
+      "run": [
+        "launch",
+        "--build",
+        "user-skill-worker",
+        "--brief",
+        "{{PROJECT}}/.jitso/briefs/brief.md",
+        "--mode",
+        "direct"
+      ],
+      "expect": {
+        "exit": 0,
+        "registry": {
+          "count": 1,
+          "events": [
+            {
+              "at": 0,
+              "event": "launch",
+              "fields": {
+                "v": 2,
+                "package.skills.0.name": "humanizer",
+                "package.skills.0.scope": "user",
+                "package.skills.0.sha256": "058599b59a4d95c058b14fd69ce4645959daf6c2a696e06a05e2c4784195d195",
+                "package.skills.1": {
+                  "absent": true
+                },
+                "package.flag": "add-dir"
+              }
+            }
+          ]
+        }
+      },
+      "capture": {
+        "LAUNCH_ID": {
+          "from": "stdout",
+          "regex": "JITSO (L\\d{8}T\\d{6}-[0-9a-f]{4})"
+        }
+      }
+    },
+    {
+      "run": [
+        "close",
+        "{{LAUNCH_ID}}"
+      ],
+      "expect": {
+        "exit": 0,
+        "registry": {
+          "count": 2,
+          "events": [
+            {
+              "at": 1,
+              "event": "end",
+              "fields": {
+                "id": "{{LAUNCH_ID}}",
+                "source": "jitso_close"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ]
+}

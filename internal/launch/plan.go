@@ -198,6 +198,8 @@ type EventInput struct {
 	Terminal   string
 	Title      string
 	Now        time.Time
+	// Package is the package key, nil when nothing travelled.
+	Package *registry.Package
 }
 
 // Event is the launch event of in. flags is the argv without the program and,
@@ -254,6 +256,7 @@ func Event(in EventInput) *registry.LaunchEvent {
 	if b.Budget.Set {
 		e.Budget = &registry.Budget{Tokens: b.Budget.Tokens, USDListCap: b.Budget.USDListCap}
 	}
+	e.Package = in.Package
 	if f := in.Profile.Fields; f.Len() > 0 {
 		e.Fields = make(map[string]string, f.Len())
 		for _, k := range f.Keys() {
