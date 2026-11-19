@@ -13,7 +13,7 @@ var orcaTool = regexp.MustCompile(`^mcp__.*orca.*__`)
 // agent outside jitso (an orca launch verb, or a harness run as a program of
 // its own), a `jitso build save` (the owner saves a draft as a build, an agent never does) or a `jitso setup` or `jitso install` that is not
 // a dry run (the owner changes the setup), the zero Denial when it refuses nothing (the
-// guard then stays silent). Bash commands are judged segment by segment; the
+// guard then stays silent). Bash commands are judged command by command (BashDenial); the
 // tools of an MCP server whose name contains orca by tool name and arguments.
 // Every other tool, and any field of the wrong type, passes: the guard protects
 // a workflow and must never break an unrelated session.

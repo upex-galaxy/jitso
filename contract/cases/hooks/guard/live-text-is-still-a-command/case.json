@@ -1,0 +1,225 @@
+{
+  "id": "hooks/guard/live-text-is-still-a-command",
+  "title": "text the shell or another program can run is still judged as a command: every line that holds a program outside the data commands, substitutions, and a line the lexer cannot parse",
+  "source": [
+    "intended: docs/decisions.md v0.1.2 fixes, J41 (the guard reads a Bash line with a shell lexer)"
+  ],
+  "intent": "Guard rows: each one is denied before and after the lexer, so they pin that judging quoted text and heredoc bodies as data opens nothing that runs. Text is masked only when every command of the line, each substitution included, is a data command (git commit or tag, orca orchestration send, ask or reply, gh pr, issue or release create, edit or comment, echo, printf, cat that reads a heredoc); a line that holds any other program (a shell, an interpreter, docker, busybox, xargs, ssh, any git subcommand but commit and tag, git -c) or does not lex is judged as before, by the old splitter with no masking, and a substitution is a command of its own.",
+  "for_each": {
+    "vars": [
+      "command",
+      "verb"
+    ],
+    "ids": [
+      "substitution-in-double-quotes",
+      "backtick-in-double-quotes",
+      "substitution-in-an-unquoted-heredoc",
+      "heredoc-read-by-bash",
+      "heredoc-piped-to-sh",
+      "sh-c",
+      "eval",
+      "env-S",
+      "unbalanced-quote",
+      "bash-c-worker-start",
+      "echo-piped-to-sh",
+      "printf-piped-to-bash",
+      "here-string-to-bash",
+      "source-reads-a-here-string",
+      "watch",
+      "ssh",
+      "tmux",
+      "screen",
+      "su",
+      "parallel",
+      "script",
+      "find-exec",
+      "xargs-runs-its-input",
+      "sudo-s-reads-a-pipe",
+      "a-group-piped-to-a-shell",
+      "substitution-as-the-program",
+      "substitution-in-sh-c",
+      "heredoc-read-into-a-variable-that-runs",
+      "python3-c",
+      "node-e",
+      "echo-piped-to-python3",
+      "docker-exec-sh-c",
+      "busybox-sh-c",
+      "python3-c-setup",
+      "python3-c-worker-start",
+      "git-c-alias-spaced",
+      "git-rebase-exec"
+    ],
+    "rows": [
+      [
+        "git commit -m \"x $(claude -p hi)\"",
+        "claude"
+      ],
+      [
+        "git commit -m \"x `claude -p hi`\"",
+        "claude"
+      ],
+      [
+        "cat <<EOF\n$(claude -p hi)\nEOF",
+        "claude"
+      ],
+      [
+        "bash <<'EOF'\nclaude -p hi\nEOF",
+        "claude"
+      ],
+      [
+        "cat <<'EOF' | sh\nclaude -p hi\nEOF",
+        "claude"
+      ],
+      [
+        "sh -c 'claude -p hi'",
+        "claude"
+      ],
+      [
+        "eval \"claude -p hi\"",
+        "claude"
+      ],
+      [
+        "env -S \"claude -p hi\"",
+        "claude"
+      ],
+      [
+        "echo 'unbalanced; claude -p hi",
+        "claude"
+      ],
+      [
+        "bash -c \"orca orchestration worker-start --run r\"",
+        "orchestration worker-start"
+      ],
+      [
+        "echo \"jitso build save x\" | sh",
+        "jitso build save"
+      ],
+      [
+        "printf 'orca orchestration worker-start --run r' | bash",
+        "orchestration worker-start"
+      ],
+      [
+        "bash <<< \"jitso build save x\"",
+        "jitso build save"
+      ],
+      [
+        "source /dev/stdin <<< \"jitso build save x\"",
+        "jitso build save"
+      ],
+      [
+        "watch \"jitso build save x\"",
+        "jitso build save"
+      ],
+      [
+        "ssh host \"jitso build save x\"",
+        "jitso build save"
+      ],
+      [
+        "tmux new \"orca orchestration worker-start --run r\"",
+        "orchestration worker-start"
+      ],
+      [
+        "screen -dm sh -c \"jitso setup hook --yes\"",
+        "jitso setup"
+      ],
+      [
+        "su -c \"jitso install skill --yes\" me",
+        "jitso install"
+      ],
+      [
+        "parallel ::: \"jitso build save x\"",
+        "jitso build save"
+      ],
+      [
+        "script -q -c \"jitso build save x\" /dev/null",
+        "jitso build save"
+      ],
+      [
+        "find . -exec sh -c 'jitso build save x' \\;",
+        "jitso build save"
+      ],
+      [
+        "echo 'jitso build save x' | xargs -I{} sh -c '{}'",
+        "jitso build save"
+      ],
+      [
+        "echo \"jitso build save x\" | sudo -s",
+        "jitso build save"
+      ],
+      [
+        "{\necho \"jitso build save x\"\n} | sh",
+        "jitso build save"
+      ],
+      [
+        "$(echo \"jitso build save x\")",
+        "jitso build save"
+      ],
+      [
+        "sh -c \"$(echo 'jitso build save x')\"",
+        "jitso build save"
+      ],
+      [
+        "read -r X <<'EOF'\njitso build save x\nEOF\n$X",
+        "jitso build save"
+      ],
+      [
+        "python3 -c \"jitso build save x\"",
+        "jitso build save"
+      ],
+      [
+        "node -e \"jitso build save x\"",
+        "jitso build save"
+      ],
+      [
+        "echo \"jitso build save x\" | python3",
+        "jitso build save"
+      ],
+      [
+        "docker exec c sh -c \"jitso build save x\"",
+        "jitso build save"
+      ],
+      [
+        "busybox sh -c \"jitso build save x\"",
+        "jitso build save"
+      ],
+      [
+        "python3 -c \"jitso setup hook\"",
+        "jitso setup"
+      ],
+      [
+        "python3 -c \"orca orchestration worker-start --run r\"",
+        "orchestration worker-start"
+      ],
+      [
+        "git -c alias.x='! jitso build save x' x",
+        "jitso build save"
+      ],
+      [
+        "git rebase --exec \"jitso build save x\"",
+        "jitso build save"
+      ]
+    ]
+  },
+  "steps": [
+    {
+      "hook": "guard",
+      "input": {
+        "hook_event_name": "PreToolUse",
+        "tool_name": "Bash",
+        "tool_input": {
+          "command": "{{command}}"
+        },
+        "cwd": "{{PROJECT}}"
+      },
+      "expect": {
+        "exit": 0,
+        "decision": "deny",
+        "reason": [
+          {
+            "regex": "\\(denied: {{verb}}\\)$"
+          }
+        ]
+      }
+    }
+  ]
+}

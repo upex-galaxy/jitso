@@ -26,9 +26,9 @@ var (
 	commandPrefix = regexp.MustCompile(`^ ?--command[ =]?`)
 
 	// buildSave is the words `jitso build save` as a word of their own: at the
-	// start of a segment, or after a space or a slash (a path ending in jitso).
-	// Segments has already removed the quotes, so `sh -c 'jitso build save x'`
-	// reads `sh -c jitso build save x`.
+	// start of a command, or after a space or a slash (a path ending in jitso).
+	// The quotes are already gone, so `sh -c 'jitso build save x'` reads
+	// `sh -c jitso build save x`.
 	buildSave = regexp.MustCompile(`(?:^|[ /])jitso build save\b`)
 	// adoption is the words `jitso setup` or `jitso install` as a word of their
 	// own, found like buildSave. The verb is a whole word: `jitso setup-x` is
@@ -52,8 +52,11 @@ const (
 // dryRunFlag is the word that makes an adoption command only read.
 const dryRunFlag = "--dry-run"
 
-// Segments splits a shell line into its commands: cut at every separator,
-// quotes removed, runs of whitespace collapsed, empty parts dropped.
+// Segments is the old splitter, kept as the fallback of BashDenial: it splits
+// a shell line into its commands by cutting at every separator without reading
+// quotes, removes the quotes, collapses runs of whitespace and drops empty
+// parts. It leans toward deny: text after ( , a backtick or a newline is read
+// as a command.
 func Segments(command string) []string {
 	var out []string
 	for _, part := range separators.Split(command, -1) {
@@ -103,7 +106,7 @@ func isAssignment(word string) bool {
 // `jitso build save` anywhere in it (the bare word, `bun run jitso`, a path
 // ending in jitso, after NAME=value words, inside `sh -c '...'`), or a word
 // that is this executable followed by `build save`. The text is judged, not the
-// program, so a commit message that holds those words matches too. id is the
+// program; BashDenial hands it a command whose quoted text is masked. id is the
 // build id the command names, "<id>" when it names none or something that is
 // not an id, so a reason never echoes arbitrary text.
 func (l Launcher) BuildSave(segment string) (id string, ok bool) {
@@ -253,11 +256,24 @@ type Denial struct {
 	SaveID string
 }
 
-// BashDenial is the denial of the first segment of command that launches an
+// BashDenial is the denial of the first command of command that launches an
 // agent outside jitso, runs a harness (claude, codex or opencode) as a program
 // of its own, runs `jitso build save`, `jitso setup` or `jitso install`
-// (other than a dry run); the zero Denial when none does.
+// (other than a dry run); the zero Denial when none does. The line is read
+// with the shell lexer (lex): when every command of it is a data command
+// (dataPositions), its quoted text and heredoc bodies are data; any other
+// line, and a line the lexer cannot parse, is judged by the old splitter
+// (segmentDenial) instead.
 func (l Launcher) BashDenial(command string) Denial {
+	if d, ok := l.lexedDenial(command); ok {
+		return d
+	}
+	return l.segmentDenial(command)
+}
+
+// segmentDenial is BashDenial with the old splitter: Segments, every quote
+// removed, nothing masked.
+func (l Launcher) segmentDenial(command string) Denial {
 	for _, segment := range Segments(command) {
 		if id, ok := l.BuildSave(segment); ok {
 			return Denial{Verb: VerbBuildSave, SaveID: id}

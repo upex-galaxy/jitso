@@ -119,90 +119,92 @@ func TestHarnessProgramDepth(t *testing.T) {
 	}
 }
 
-// The evasion matrix of the design: every input, what Segments makes of it,
-// and the harness the guard names ("" when the line passes). The open rows are
+// The evasion matrix of the design: every input and the harness the guard
+// names ("" when the line passes). The open rows are
 // pinned too, so a change that closes one shows up here.
+var harnessMatrixTests = []struct {
+	command string
+	want    string
+}{
+	{"claude -p hi", "claude"},
+	{"codex exec x", "codex"},
+	{"opencode run x", "opencode"},
+	{"./claude", "claude"},
+	{"/usr/local/bin/claude --version", "claude"},
+	{"../x/claude", "claude"},
+	{"~/bin/claude", "claude"},
+	{"claude --version", "claude"},
+	{"claude mcp list", "claude"},
+	{"codex --help", "codex"},
+	{"sh -c 'claude -p x'", "claude"},
+	{`bash -lc "claude"`, "claude"},
+	{"env claude", "claude"},
+	{"env -i FOO=1 claude", "claude"},
+	{"command claude", "claude"},
+	{"command -v claude", ""},
+	{"which claude", ""},
+	{"type claude", ""},
+	{"exec claude", "claude"},
+	{"nohup claude &", "claude"},
+	{"time claude", "claude"},
+	{"sudo -u me claude", "claude"},
+	{"nice -n 5 opencode", "opencode"},
+	{"timeout 10 claude", "claude"},
+	{"$(claude)", "claude"},
+	{"echo `claude`", "claude"},
+	{"(claude)", "claude"},
+	{"echo x | xargs claude", "claude"},
+	{"xargs -I{} claude {}", "claude"},
+	{"'claude'", "claude"},
+	{`c"l"aude`, "claude"},
+	{`c\laude`, "claude"},
+	{`\claude`, "claude"},
+	{"FOO=1 claude", "claude"},
+	{"CLAUDE", "claude"},
+	{"if true; then claude; fi", "claude"},
+	{"eval claude", "claude"},
+	{"git status && codex", "codex"},
+	{"ls; claude", "claude"},
+	// open, by design (section 3.4)
+	{`ln -s "$(command -v claude)" /tmp/cc && /tmp/cc`, ""},
+	{"C=claude; $C", ""},
+	{"$(echo claude)", ""},
+	{"{claude,}", ""},
+	{"cla?de", ""},
+	{"cla*", ""},
+	{"npx @anthropic-ai/claude-code", ""},
+	{"bunx @anthropic-ai/claude-code", ""},
+	{"node /x/cli.js", ""},
+	{"find . -exec claude {} ;", ""},
+	{"tmux new -d claude", ""},
+	{"screen -dm claude", ""},
+	{"script -c claude", ""},
+	{"watch claude", ""},
+	{"parallel claude", ""},
+	{`python3 -c "import subprocess as s; s.run(['claude'])"`, ""},
+	{"sh x.sh", ""},
+	{"./x.sh", ""},
+	{`jitso "explain X"`, ""},
+	{"orca terminal send --terminal h --text 'claude\\r'", ""},
+	// only the program counts
+	{"echo claude", ""},
+	{"ls ~/.claude", ""},
+	{"cat CLAUDE.md", ""},
+	{"grep -r claude docs", ""},
+	{"git log --author claude", ""},
+	{"sh /p/.jitso/launches/L20261116T000000-abcd/run.sh", ""},
+	{"'/p/.jitso/launches/L20261116T000000-abcd/run.sh'", ""},
+	{"claude-code-notes --help", ""},
+	{"jitso launch --build claude --brief b.md --mode direct", ""},
+	{"git status", ""},
+	// text in a commit message or a heredoc body is data (J41); the old splitter denied these
+	{"git commit -m 'fix (claude) bug'", ""},
+	{"git commit -m 'see `claude` docs'", ""},
+	{"cat <<'EOF'\nclaude rules\nEOF", ""},
+}
+
 func TestHarnessMatrix(t *testing.T) {
-	tests := []struct {
-		command string
-		want    string
-	}{
-		{"claude -p hi", "claude"},
-		{"codex exec x", "codex"},
-		{"opencode run x", "opencode"},
-		{"./claude", "claude"},
-		{"/usr/local/bin/claude --version", "claude"},
-		{"../x/claude", "claude"},
-		{"~/bin/claude", "claude"},
-		{"claude --version", "claude"},
-		{"claude mcp list", "claude"},
-		{"codex --help", "codex"},
-		{"sh -c 'claude -p x'", "claude"},
-		{`bash -lc "claude"`, "claude"},
-		{"env claude", "claude"},
-		{"env -i FOO=1 claude", "claude"},
-		{"command claude", "claude"},
-		{"command -v claude", ""},
-		{"which claude", ""},
-		{"type claude", ""},
-		{"exec claude", "claude"},
-		{"nohup claude &", "claude"},
-		{"time claude", "claude"},
-		{"sudo -u me claude", "claude"},
-		{"nice -n 5 opencode", "opencode"},
-		{"timeout 10 claude", "claude"},
-		{"$(claude)", "claude"},
-		{"echo `claude`", "claude"},
-		{"(claude)", "claude"},
-		{"echo x | xargs claude", "claude"},
-		{"xargs -I{} claude {}", "claude"},
-		{"'claude'", "claude"},
-		{`c"l"aude`, "claude"},
-		{`c\laude`, "claude"},
-		{`\claude`, "claude"},
-		{"FOO=1 claude", "claude"},
-		{"CLAUDE", "claude"},
-		{"if true; then claude; fi", "claude"},
-		{"eval claude", "claude"},
-		{"git status && codex", "codex"},
-		{"ls; claude", "claude"},
-		// open, by design (section 3.4)
-		{`ln -s "$(command -v claude)" /tmp/cc && /tmp/cc`, ""},
-		{"C=claude; $C", ""},
-		{"$(echo claude)", ""},
-		{"{claude,}", ""},
-		{"cla?de", ""},
-		{"cla*", ""},
-		{"npx @anthropic-ai/claude-code", ""},
-		{"bunx @anthropic-ai/claude-code", ""},
-		{"node /x/cli.js", ""},
-		{"find . -exec claude {} ;", ""},
-		{"tmux new -d claude", ""},
-		{"screen -dm claude", ""},
-		{"script -c claude", ""},
-		{"watch claude", ""},
-		{"parallel claude", ""},
-		{`python3 -c "import subprocess as s; s.run(['claude'])"`, ""},
-		{"sh x.sh", ""},
-		{"./x.sh", ""},
-		{`jitso "explain X"`, ""},
-		{"orca terminal send --terminal h --text 'claude\\r'", ""},
-		// only the program counts
-		{"echo claude", ""},
-		{"ls ~/.claude", ""},
-		{"cat CLAUDE.md", ""},
-		{"grep -r claude docs", ""},
-		{"git log --author claude", ""},
-		{"sh /p/.jitso/launches/L20261116T000000-abcd/run.sh", ""},
-		{"'/p/.jitso/launches/L20261116T000000-abcd/run.sh'", ""},
-		{"claude-code-notes --help", ""},
-		{"jitso launch --build claude --brief b.md --mode direct", ""},
-		{"git status", ""},
-		// known false positives: the splitter reads text as commands
-		{"git commit -m 'fix (claude) bug'", "claude"},
-		{"git commit -m 'see `claude` docs'", "claude"},
-		{"cat <<'EOF'\nclaude rules\nEOF", "claude"},
-	}
+	tests := harnessMatrixTests
 	l := Launcher{}
 	for _, tt := range tests {
 		t.Run(tt.command, func(t *testing.T) {
@@ -227,15 +229,17 @@ func TestHarnessReason(t *testing.T) {
 }
 
 // BuildSave, adoption and the launch verbs are judged before a harness program.
+var harnessOrderTests = map[string]string{
+	"jitso build save claude && claude":     VerbBuildSave,
+	"jitso setup hook; claude":              VerbSetup,
+	"orca agent launch claude":              "agent launch",
+	"orca terminal create --command claude": "terminal create --command <harness>",
+	"ls && claude && jitso setup hook":      "claude",
+}
+
 func TestHarnessDenialOrder(t *testing.T) {
 	l := Launcher{}
-	for command, want := range map[string]string{
-		"jitso build save claude && claude":     VerbBuildSave,
-		"jitso setup hook; claude":              VerbSetup,
-		"orca agent launch claude":              "agent launch",
-		"orca terminal create --command claude": "terminal create --command <harness>",
-		"ls && claude && jitso setup hook":      "claude",
-	} {
+	for command, want := range harnessOrderTests {
 		if got := l.BashDenial(command).Verb; got != want {
 			t.Errorf("BashDenial(%q) = %q, want %q", command, got, want)
 		}
