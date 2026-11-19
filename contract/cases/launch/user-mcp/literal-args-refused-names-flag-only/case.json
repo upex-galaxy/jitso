@@ -1,0 +1,84 @@
+{
+  "id": "launch/user-mcp/literal-args-refused-names-flag-only",
+  "title": "a user server with a literal secret in args (after a secret-looking flag, or as --flag=value) is refused by build validate and by launch, naming the server and the flag and never the value",
+  "source": [
+    "intended: JITSO v0.2 plan 2.7 (never copy a literal secret into a launch file), extended to args"
+  ],
+  "intent": "An args element is secret when it follows a flag whose name holds key, token, secret, password, passwd or auth, or is --flag=value for such a flag. Nothing is written and Orca is not called.",
+  "project": {
+    "files": {
+      ".jitso/briefs/brief.md": "## Goal\n\nFind where the sync entry point of this project is defined and explain in a few sentences how it is wired to the rest of the code.\n\n## Scope\n\nRead only. Look at `src/sync.ts` and `docs/guide.md` and nothing outside the repo. Do not change any file.\n\n## Done when\n\nYou can name the file and the line that defines the entry point, and you have checked it by reading the file.\n\n## Report format\n\nOne short paragraph with the file path, the line number and a one line summary of what it does.\n",
+      ".claude/settings.json": "{\n  \"hooks\": {\n    \"PreToolUse\": [\n      {\n        \"matcher\": \"Bash\",\n        \"hooks\": [\n          {\n            \"type\": \"command\",\n            \"command\": \"jitso hook guard\"\n          }\n        ]\n      },\n      {\n        \"matcher\": \"mcp__.*orca.*__.*\",\n        \"hooks\": [\n          {\n            \"type\": \"command\",\n            \"command\": \"jitso hook guard\"\n          }\n        ]\n      }\n    ],\n    \"SessionEnd\": [\n      {\n        \"hooks\": [\n          {\n            \"type\": \"command\",\n            \"command\": \"jitso hook guard\"\n          }\n        ]\n      }\n    ]\n  }\n}\n",
+      ".jitso/drafts/designer.yaml": {
+        "from": "designer.yaml"
+      }
+    }
+  },
+  "home": {
+    "files": {
+      ".jitso/jitso.yaml": "version: 1\nmcp: [opendesign]\nliteral_env: []\n",
+      ".claude.json": "{\n  \"mcpServers\": {\n    \"opendesign\": {\n      \"command\": \"od\",\n      \"args\": [\n        \"serve\",\n        \"--api-key\",\n        \"sk-args-secret-9911\",\n        \"--port\",\n        \"9\"\n      ]\n    }\n  }\n}\n"
+    }
+  },
+  "steps": [
+    {
+      "run": [
+        "build",
+        "validate",
+        "designer"
+      ],
+      "expect": {
+        "exit": 2,
+        "stderr": [
+          {
+            "empty": true
+          }
+        ],
+        "stdout": [
+          {
+            "contains": "  user mcp \"opendesign\" has a literal value in args after --api-key: use ${VAR}, or list opendesign/--api-key in literal_env of ~/.jitso/jitso.yaml\n"
+          },
+          {
+            "not_contains": "sk-args-secret-9911"
+          }
+        ]
+      }
+    },
+    {
+      "run": [
+        "launch",
+        "--build",
+        "designer",
+        "--brief",
+        "{{PROJECT}}/.jitso/briefs/brief.md",
+        "--mode",
+        "direct"
+      ],
+      "expect": {
+        "exit": 2,
+        "stdout": [
+          {
+            "empty": true
+          }
+        ],
+        "stderr": [
+          {
+            "contains": "user mcp \"opendesign\" has a literal value in args after --api-key: use ${VAR}"
+          },
+          {
+            "not_contains": "sk-args-secret-9911"
+          }
+        ],
+        "orca_calls": {
+          "empty": true
+        },
+        "files": [
+          {
+            "path": ".jitso/launches",
+            "exists": false
+          }
+        ]
+      }
+    }
+  ]
+}

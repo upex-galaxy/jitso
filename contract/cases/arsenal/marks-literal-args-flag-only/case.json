@@ -1,0 +1,49 @@
+{
+  "id": "arsenal/marks-literal-args-flag-only",
+  "title": "jitso arsenal marks a user server with a literal secret in args, naming the flag and never the value",
+  "source": [
+    "intended: JITSO v0.2 plan 2.7, args rule"
+  ],
+  "intent": "Like env and headers, the mark names the flag and the line says refused at launch.",
+  "project": {
+    "files": {
+      ".agents/skills/sprint-testing/SKILL.md": "---\nname: sprint-testing\ndescription: >\n  Runs in-sprint manual QA per issue: plan, execute and report. Use when testing a user story.\n---\n",
+      ".agents/skills/unlisted-skill/SKILL.md": "---\nname: unlisted-skill\ndescription: A project skill the allowlist does not name.\n---\n"
+    }
+  },
+  "home": {
+    "files": {
+      ".jitso/jitso.yaml": "version: 1\nmcp: [opendesign]\nliteral_env: []\n",
+      ".claude/skills/humanizer/SKILL.md": "---\nname: humanizer\ndescription: Remove AI writing patterns from text. Use when writing or editing text a person will read.\n---\n",
+      ".claude/skills/extra/SKILL.md": "---\nname: extra\ndescription: 'An extra user skill nobody approved yet.'\n---\n",
+      ".claude/skills/not-a-skill/notes.md": "no SKILL.md here\n",
+      ".claude.json": "{\n  \"mcpServers\": {\n    \"opendesign\": {\n      \"command\": \"od\",\n      \"args\": [\n        \"--api-key\",\n        \"sk-args-secret-9911\",\n        \"--password=abc-eq-secret-7733\"\n      ]\n    }\n  }\n}\n"
+    }
+  },
+  "steps": [
+    {
+      "run": [
+        "arsenal"
+      ],
+      "expect": {
+        "exit": 0,
+        "stdout": [
+          {
+            "contains": "literal args after: --api-key, --password (refused at launch)"
+          },
+          {
+            "not_contains": "sk-args-secret-9911"
+          },
+          {
+            "not_contains": "abc-eq-secret-7733"
+          }
+        ],
+        "stderr": [
+          {
+            "empty": true
+          }
+        ]
+      }
+    }
+  ]
+}

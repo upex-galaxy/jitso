@@ -4,6 +4,7 @@ import (
 	"regexp"
 	"slices"
 	"sort"
+	"strings"
 
 	"github.com/upex-galaxy/jitso/internal/jsonx"
 )
@@ -22,6 +23,9 @@ var varRef = regexp.MustCompile(`\$\{([A-Za-z_][A-Za-z0-9_]*)(:-[^}]*)?\}`)
 func UserServerCopy(name string, def map[string]any, literalEnv []string) (jsonx.Object, string) {
 	if _, ok := def["oauth"]; ok {
 		return nil, `user mcp "` + name + `" uses OAuth, which a launch cannot carry`
+	}
+	if flags := LiteralArgFlags(name, def, literalEnv); len(flags) > 0 {
+		return nil, `user mcp "` + name + `" has a literal value in args after ` + flags[0] + `: use ${VAR}, or list ` + name + `/` + flags[0] + ` in literal_env of ` + UserConfigDisplay
 	}
 	var out jsonx.Object
 	for _, key := range []string{"type", "command", "args", "url"} {
@@ -81,6 +85,62 @@ func LiteralKeys(name string, def map[string]any, literalEnv []string) (env, hea
 		}
 	}
 	return env, headers
+}
+
+var secretFlagWords = []string{"key", "token", "secret", "password", "passwd", "auth"}
+
+var flagName = regexp.MustCompile(`^[A-Za-z0-9_.-]+$`)
+
+var pureRef = regexp.MustCompile(`^\$\{[A-Za-z_][A-Za-z0-9_]*(:-[^}]*)?\}$`)
+
+func secretFlag(flag string) bool {
+	if !flagName.MatchString(flag) {
+		return false
+	}
+	lower := strings.ToLower(strings.TrimLeft(flag, "-"))
+	for _, word := range secretFlagWords {
+		if strings.Contains(lower, word) {
+			return true
+		}
+	}
+	return false
+}
+
+// LiteralArgFlags are the flags, as written in args, whose literal value
+// refuses a user server: the value after a flag whose name holds key, token,
+// secret, password, passwd or auth, or the value of such a flag written as
+// flag=value, unless the value is a lone ${VAR} reference or <server>/<flag>
+// is listed in literal_env. Only flag names are returned, in order of first
+// use.
+func LiteralArgFlags(name string, def map[string]any, literalEnv []string) []string {
+	args, _ := def["args"].([]any)
+	var flags []string
+	add := func(flag string) {
+		if !slices.Contains(literalEnv, name+"/"+flag) && !slices.Contains(flags, flag) {
+			flags = append(flags, flag)
+		}
+	}
+	for i := 0; i < len(args); i++ {
+		arg, ok := args[i].(string)
+		if !ok {
+			continue
+		}
+		if flag, value, found := strings.Cut(arg, "="); found {
+			if secretFlag(flag) && !pureRef.MatchString(value) {
+				add(flag)
+			}
+			continue
+		}
+		if !strings.HasPrefix(arg, "-") || !secretFlag(arg) || i+1 >= len(args) {
+			continue
+		}
+		value, isString := args[i+1].(string)
+		if isString && (strings.HasPrefix(value, "-") || pureRef.MatchString(value)) {
+			continue
+		}
+		add(arg)
+	}
+	return flags
 }
 
 // References are the variable names a copied definition refers to without a

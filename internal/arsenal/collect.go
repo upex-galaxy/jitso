@@ -149,6 +149,9 @@ func userServerDetail(user catalog.User, name string) string {
 	if len(headers) > 0 {
 		detail += ", literal headers: " + strings.Join(headers, ", ") + " (refused at launch)"
 	}
+	if flags := catalog.LiteralArgFlags(name, def, user.LiteralEnv); len(flags) > 0 {
+		detail += ", literal args after: " + strings.Join(flags, ", ") + " (refused at launch)"
+	}
 	return detail
 }
 
