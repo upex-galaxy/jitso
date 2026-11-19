@@ -1,0 +1,53 @@
+{
+  "id": "reap/truncated-terminal-list-is-exit-3",
+  "title": "a terminal list Orca reports as truncated is exit 3 and no launch is ended on a partial list",
+  "source": [
+    "intended: docs/decisions.md, Pre-release fixes (a truncated list is refused)"
+  ],
+  "project": {
+    "files": {
+      ".jitso/launches.jsonl": "{\"v\":2,\"event\":\"launch\",\"id\":\"L20261113T142233-a3f9\",\"parent\":null,\"root\":\"L20261113T142233-a3f9\",\"depth\":0,\"ts\":\"2026-11-13T14:22:33.000Z\",\"mode\":\"direct\",\"build\":\"haiku-explorer\",\"orca\":{\"run\":null,\"task\":null,\"terminal\":\"term_fake\",\"title\":\"t [jitso:L20261113T142233-a3f9]\"}}\n"
+    }
+  },
+  "orca": {
+    "responses": {
+      "terminal list": {
+        "terminals": [
+          {
+            "handle": "term_other"
+          }
+        ],
+        "truncated": true,
+        "totalCount": 2001
+      }
+    }
+  },
+  "steps": [
+    {
+      "run": [
+        "reap"
+      ],
+      "expect": {
+        "exit": 3,
+        "stdout": [
+          {
+            "empty": true
+          }
+        ],
+        "stderr": [
+          {
+            "contains": "orca terminal list is truncated"
+          }
+        ],
+        "orca_calls": {
+          "verbs": [
+            "terminal list"
+          ]
+        },
+        "registry": {
+          "count": 1
+        }
+      }
+    }
+  ]
+}

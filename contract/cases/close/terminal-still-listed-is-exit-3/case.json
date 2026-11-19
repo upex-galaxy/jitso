@@ -56,7 +56,9 @@
               "at": 2,
               "argv": [
                 "terminal",
-                "list"
+                "list",
+                "--limit",
+                "1000"
               ]
             }
           ]

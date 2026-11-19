@@ -91,7 +91,9 @@
               "at": 4,
               "argv": [
                 "terminal",
-                "list"
+                "list",
+                "--limit",
+                "1000"
               ]
             },
             {

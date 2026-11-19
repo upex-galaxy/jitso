@@ -1,0 +1,65 @@
+{
+  "id": "close/truncated-terminal-list-is-exit-3",
+  "title": "a truncated terminal list after the close is exit 3, not proof that the terminal is gone: no footer and no end event",
+  "source": [
+    "intended: docs/decisions.md, Pre-release fixes (a truncated list is refused)"
+  ],
+  "project": {
+    "files": {
+      ".jitso/launches.jsonl": "{\"v\":2,\"event\":\"launch\",\"id\":\"L20261113T142233-a3f9\",\"parent\":null,\"root\":\"L20261113T142233-a3f9\",\"depth\":0,\"ts\":\"2026-11-13T14:22:33.000Z\",\"mode\":\"direct\",\"build\":\"haiku-explorer\",\"orca\":{\"run\":null,\"task\":null,\"terminal\":\"term_fake\",\"title\":\"t [jitso:L20261113T142233-a3f9]\"}}\n"
+    }
+  },
+  "orca": {
+    "screens": [
+      "work done\n  cost footer line"
+    ],
+    "responses": {
+      "terminal list": {
+        "terminals": [
+          {
+            "handle": "term_other"
+          }
+        ],
+        "truncated": true,
+        "totalCount": 2001
+      }
+    }
+  },
+  "steps": [
+    {
+      "run": [
+        "close",
+        "L20261113T142233-a3f9"
+      ],
+      "expect": {
+        "exit": 3,
+        "stdout": [
+          {
+            "empty": true
+          }
+        ],
+        "stderr": [
+          {
+            "contains": "orca terminal list is truncated"
+          }
+        ],
+        "orca_calls": {
+          "verbs": [
+            "terminal read",
+            "terminal close",
+            "terminal list"
+          ]
+        },
+        "registry": {
+          "count": 1
+        },
+        "files": [
+          {
+            "path": ".jitso/launches/L20261113T142233-a3f9/footer.txt",
+            "exists": false
+          }
+        ]
+      }
+    }
+  ]
+}

@@ -156,11 +156,20 @@ func (c *Client) CloseTerminal(handle string) error {
 	return err
 }
 
-// ListHandles runs `terminal list` and returns the handles it reports.
+// ListLimit is the row limit ListHandles asks for. Orca's default page is not
+// documented, so the call names a large one.
+const ListLimit = 1000
+
+// ListHandles runs `terminal list --limit <ListLimit>` and returns the handles
+// it reports. A reply that is still truncated is an error: a partial list
+// would make a live terminal look gone.
 func (c *Client) ListHandles() ([]string, error) {
-	res, err := c.Call([]string{"terminal", "list"})
+	res, err := c.Call([]string{"terminal", "list", "--limit", strconv.Itoa(ListLimit)})
 	if err != nil {
 		return nil, err
+	}
+	if truncated, _ := res["truncated"].(bool); truncated {
+		return nil, &Error{Message: "orca terminal list is truncated: it did not return every terminal, so nothing was decided from it"}
 	}
 	list, _ := res["terminals"].([]any)
 	handles := []string{}

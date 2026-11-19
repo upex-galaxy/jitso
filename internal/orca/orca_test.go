@@ -88,6 +88,10 @@ func TestTerminalVerbs(t *testing.T) {
 	if err != nil || !reflect.DeepEqual(handles, []string{"term_1", "term_2"}) {
 		t.Errorf("handles %v %v", handles, err)
 	}
+	partial := &script{answers: map[string]Result{"terminal list": {0, `{"ok":true,"result":{"terminals":[{"handle":"term_1"}],"truncated":true}}`, ""}}}
+	if _, err := NewClient(partial.run).ListHandles(); err == nil || !strings.Contains(err.Error(), "truncated") {
+		t.Errorf("a truncated list must be refused: %v", err)
+	}
 	if err := c.SendText("term_1", "\x1b[B"); err != nil {
 		t.Error(err)
 	}
@@ -99,7 +103,7 @@ func TestTerminalVerbs(t *testing.T) {
 		{"terminal", "create", "--worktree", "wt", "--title", "t", "--command", "c"},
 		{"terminal", "read", "--terminal", "term_1", "--screen"},
 		{"terminal", "wait", "--terminal", "term_1", "--for", "tui-idle", "--timeout-ms", "30000"},
-		{"terminal", "list"},
+		{"terminal", "list", "--limit", "1000"},
 		{"terminal", "send", "--terminal", "term_1", "--text", "\x1b[B"},
 		{"terminal", "close", "--terminal", "term_1"},
 	}
