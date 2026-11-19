@@ -1,6 +1,7 @@
 package brief
 
 import (
+	"errors"
 	"os"
 	"path/filepath"
 	"strings"
@@ -25,21 +26,11 @@ func ResolvePath(file, cwd string, allowedDirs []string) (string, error) {
 	if file == "" || strings.ContainsRune(file, 0) {
 		return "", fail.Rejected(reasonEmpty)
 	}
-	path := file
-	if !filepath.IsAbs(path) {
-		// No Clean: "link/../x" must climb from where link points, not from
-		// the folder that holds link.
-		path = cwd + string(filepath.Separator) + path
-	}
-	real, err := filepath.EvalSymlinks(path)
-	if err != nil {
+	real, err := realRegular(file, cwd)
+	switch {
+	case errors.Is(err, errMissing):
 		return "", fail.Rejected(reasonMissing)
-	}
-	info, err := os.Stat(real)
-	if err != nil {
-		return "", fail.Rejected(reasonMissing)
-	}
-	if !info.Mode().IsRegular() {
+	case errors.Is(err, errNotRegular):
 		return "", fail.Rejected(reasonNotRegular)
 	}
 	for _, dir := range allowedDirs {
@@ -52,6 +43,34 @@ func ResolvePath(file, cwd string, allowedDirs []string) (string, error) {
 		}
 	}
 	return "", fail.Rejected(reasonOutside)
+}
+
+var (
+	errMissing    = errors.New("does not resolve")
+	errNotRegular = errors.New("not a regular file")
+)
+
+// realRegular resolves file (a relative one from base) to its real path and
+// requires a regular file; the error is errMissing or errNotRegular.
+func realRegular(file, base string) (string, error) {
+	path := file
+	if !filepath.IsAbs(path) {
+		// No Clean: "link/../x" must climb from where link points, not from
+		// the folder that holds link.
+		path = base + string(filepath.Separator) + path
+	}
+	real, err := filepath.EvalSymlinks(path)
+	if err != nil {
+		return "", errMissing
+	}
+	info, err := os.Stat(real)
+	if err != nil {
+		return "", errMissing
+	}
+	if !info.Mode().IsRegular() {
+		return "", errNotRegular
+	}
+	return real, nil
 }
 
 // inside reports whether child is strictly below parent: a sibling that only

@@ -89,21 +89,8 @@ func Check(text, language string, exists func(path string) bool) []Failure {
 	if n := countWords(text); n < MinWords || n > MaxWords {
 		failures = append(failures, Failure{CheckLength, strconv.Itoa(n) + " words, expected " + strconv.Itoa(MinWords) + " to " + strconv.Itoa(MaxWords)})
 	}
-	words := letters.FindAllString(strings.ToLower(text), -1)
-
-	if language == LanguageEnglish && len(words) > 0 {
-		en, es := 0, 0
-		for _, w := range words {
-			if english[w] {
-				en++
-			}
-			if spanish[w] {
-				es++
-			}
-		}
-		if es > en || float64(en)/float64(len(words)) < 0.1 {
-			failures = append(failures, Failure{CheckLanguage, "the brief must be written in English"})
-		}
+	if notEnglish(text, language) {
+		failures = append(failures, Failure{CheckLanguage, "the brief must be written in English"})
 	}
 
 	outputs := declaredOutputs(text)
@@ -118,6 +105,26 @@ func Check(text, language string, exists func(path string) bool) []Failure {
 		failures = append(failures, Failure{CheckPaths, "cited path does not exist: " + strings.Join(ghosts, ", ")})
 	}
 	return failures
+}
+
+// notEnglish is the language check: true when the language is
+// LanguageEnglish and the text has more Spanish stopwords than English ones,
+// or fewer than a tenth of its letter runs are English stopwords.
+func notEnglish(text, language string) bool {
+	words := letters.FindAllString(strings.ToLower(text), -1)
+	if language != LanguageEnglish || len(words) == 0 {
+		return false
+	}
+	en, es := 0, 0
+	for _, w := range words {
+		if english[w] {
+			en++
+		}
+		if spanish[w] {
+			es++
+		}
+	}
+	return es > en || float64(en)/float64(len(words)) < 0.1
 }
 
 // countWords is the length of a brief in words. A word is a maximal run of
