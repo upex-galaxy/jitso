@@ -70,7 +70,7 @@ The contract suite: build the runner and run it as `contract/README.md` ("Run it
 
 ## 7. Git strategy
 
-Single branch `main`, local only, no remote. Commit only when the owner asks, after he has seen the message and the exact path list. Conventional commit subjects, no tracker keys. Pushing, creating a remote, tags and releases wait for his decision (rule 4); when a remote exists, its push policy is written here first. Procedure: `git-flow-master`.
+Single branch `main`. The remote `origin` is the public repository named in `docs/release.md`. Commit only when the owner asks, after he has seen the message and the exact path list. Conventional commit subjects, no tracker keys. Every push to `main` is owner-gated: push only when the owner asks in this conversation, never with force, never after rewriting pushed history. Tags and releases are the owner's alone: an agent never creates, pushes, moves or deletes a tag and never creates, edits or deletes a release (`docs/release.md` section 2). No pull-request flow: one maintainer. Procedure: `git-flow-master`.
 
 ## 8. Skills discovery
 
