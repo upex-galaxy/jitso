@@ -1,4 +1,0 @@
-{
-  "model": "opus",
-  "apiKeyHelper": "./key.sh ENV-CANARY-9"
-}

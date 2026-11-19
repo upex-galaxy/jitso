@@ -1,0 +1,130 @@
+{
+  "id": "setup/hook/edits-only-the-hooks-object",
+  "title": "a file laid out another way outside hooks gets jitso's hooks member and nothing else changes, and --remove gives the bytes back",
+  "source": [
+    "intended: docs/decisions.md, v0.1.2 fixes (J21): setup hook edits only the root member hooks"
+  ],
+  "defect": "N-17",
+  "intent": "INTENDED behavior (J21, supersedes the layout half of N-17). prettier formats `.claude/settings.json` in the boilerplates (inline arrays, `\"ask\": []`), and the whole-file layout rule refused every such file. The edit now touches only the root member `hooks`: when it is absent, a comma goes after the last root member and `\\n  \"hooks\": <value>` after that, before the closing brace; every other byte stays as written (keys on one line, an indent that jumps, a `\\u` escape, extra blank lines at the end, a space before a colon, prettier's inline arrays). Each row's seed is `{{head}}{{tail}}`: `head` ends with the last root member, so the expected file is `head`, the comma, jitso's member, `tail`. A second run is `nothing to do`, and `--remove` gives the seed back byte for byte.",
+  "project": {
+    "files": {
+      ".claude/settings.json": "{{head}}{{tail}}"
+    }
+  },
+  "for_each": {
+    "vars": [
+      "head",
+      "tail"
+    ],
+    "rows": [
+      [
+        "{\n  \"a\": 1, \"b\": 2",
+        "\n}\n"
+      ],
+      [
+        "{\n  \"a\": {\n      \"b\": 1\n  }",
+        "\n}\n"
+      ],
+      [
+        "{\n  \"a\": \"\\u00e9\"",
+        "\n}\n"
+      ],
+      [
+        "{\n  \"a\": 1",
+        "\n}\n\n"
+      ],
+      [
+        "{\n  \"a\" : 1",
+        "\n}\n"
+      ],
+      [
+        "{\n  \"$schema\": \"https://json.schemastore.org/claude-code-settings.json\",\n  \"permissions\": {\n    \"allow\": [\"Read\", \"Edit\"],\n    \"ask\": []\n  },\n  \"enabledMcpjsonServers\": [\"a\", \"b\"]",
+        "\n}\n"
+      ]
+    ],
+    "ids": [
+      "keys-on-one-line",
+      "indent-jumps",
+      "unicode-escape",
+      "two-trailing-newlines",
+      "space-before-colon",
+      "prettier"
+    ]
+  },
+  "steps": [
+    {
+      "run": [
+        "setup",
+        "hook",
+        "--yes"
+      ],
+      "expect": {
+        "exit": 0,
+        "stdout": [
+          "wrote .claude/settings.json",
+          {
+            "regex": "jitso setup hook: done\\n$"
+          }
+        ],
+        "stderr": [
+          {
+            "not_contains": "not laid out"
+          }
+        ],
+        "files": [
+          {
+            "path": ".claude/settings.json",
+            "equals": "{{head}},\n  \"hooks\": {\n    \"PreToolUse\": [\n      {\n        \"matcher\": \"Bash\",\n        \"hooks\": [\n          {\n            \"type\": \"command\",\n            \"command\": \"jitso hook guard\"\n          }\n        ]\n      },\n      {\n        \"matcher\": \"mcp__.*orca.*__.*\",\n        \"hooks\": [\n          {\n            \"type\": \"command\",\n            \"command\": \"jitso hook guard\"\n          }\n        ]\n      }\n    ],\n    \"SessionEnd\": [\n      {\n        \"hooks\": [\n          {\n            \"type\": \"command\",\n            \"command\": \"jitso hook guard\"\n          }\n        ]\n      }\n    ]\n  }{{tail}}"
+          }
+        ]
+      }
+    },
+    {
+      "run": [
+        "setup",
+        "hook",
+        "--yes"
+      ],
+      "expect": {
+        "exit": 0,
+        "stdout": [
+          "nothing to do (the guard is already registered in .claude/settings.json)"
+        ],
+        "files": [
+          {
+            "path": ".claude/settings.json",
+            "equals": "{{head}},\n  \"hooks\": {\n    \"PreToolUse\": [\n      {\n        \"matcher\": \"Bash\",\n        \"hooks\": [\n          {\n            \"type\": \"command\",\n            \"command\": \"jitso hook guard\"\n          }\n        ]\n      },\n      {\n        \"matcher\": \"mcp__.*orca.*__.*\",\n        \"hooks\": [\n          {\n            \"type\": \"command\",\n            \"command\": \"jitso hook guard\"\n          }\n        ]\n      }\n    ],\n    \"SessionEnd\": [\n      {\n        \"hooks\": [\n          {\n            \"type\": \"command\",\n            \"command\": \"jitso hook guard\"\n          }\n        ]\n      }\n    ]\n  }{{tail}}"
+          }
+        ]
+      }
+    },
+    {
+      "run": [
+        "setup",
+        "hook",
+        "--remove",
+        "--yes"
+      ],
+      "expect": {
+        "exit": 0,
+        "stdout": [
+          "wrote .claude/settings.json",
+          {
+            "regex": "jitso setup hook: done\\n$"
+          }
+        ],
+        "stderr": [
+          {
+            "not_contains": "not laid out"
+          }
+        ],
+        "files": [
+          {
+            "path": ".claude/settings.json",
+            "equals": "{{head}}{{tail}}"
+          }
+        ]
+      }
+    }
+  ]
+}

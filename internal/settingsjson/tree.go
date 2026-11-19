@@ -2,12 +2,15 @@
 // without disturbing anything the user wrote.
 //
 // The file is decoded into an order-preserving tree (jsonx.Object for objects,
-// []any, json.Number, string, bool and nil), edited there, and encoded again
-// with the file's own indent. A file that does not give its own bytes back when
-// the unchanged tree is encoded (several keys on a line, an indent that jumps,
-// CRLF, a \u escape, a space before a colon) is refused instead of reformatted,
-// so an edit never rewrites lines it did not mean to change and `--remove`
-// restores the original bytes.
+// []any, json.Number, string, bool and nil) that also records the byte span of
+// every root member. An edit changes only the root member `hooks`: its new
+// value is encoded at depth 1 with the file's own indent and spliced over the
+// old member (or inserted after the last root member), so every other byte of
+// the file stays as written. An old `hooks` member that does not give its own
+// bytes back when encoded (a group on one line, an inline array, a \u escape),
+// and a file with CRLF line ends, are refused instead of reformatted, so an
+// edit never rewrites lines it did not mean to change and `--remove` restores
+// the original bytes.
 //
 // It is pure: bytes in, bytes out. Reading and writing the file is the
 // caller's job. Every problem with the file is a *Problem; the caller turns it
@@ -38,7 +41,8 @@ const (
 	KindWrongType
 	// KindDuplicateKey: an object has the same key twice. Key and Path name it.
 	KindDuplicateKey
-	// KindLayout: the file does not re-encode to its own bytes.
+	// KindLayout: the part of the file an edit rewrites does not re-encode to
+	// its own bytes.
 	KindLayout
 )
 
@@ -84,12 +88,18 @@ type Layout struct {
 // DefaultIndent is the indent of a new file.
 const DefaultIndent = "  "
 
-// document is a decoded file.
+// document is a decoded file. members holds the span of each field of root,
+// in the same order.
 type document struct {
-	raw    []byte
-	root   jsonx.Object
-	layout Layout
+	raw     []byte
+	root    jsonx.Object
+	layout  Layout
+	members []span
 }
+
+// span is the bytes of one root member: from the opening quote of its key to
+// the end of its value.
+type span struct{ start, end int }
 
 // parse decodes and checks the shape of doc. Absent files are the caller's
 // business (a nil doc never reaches it).
@@ -105,7 +115,131 @@ func parse(doc []byte) (*document, *Problem) {
 	if p := checkShape(obj); p != nil {
 		return nil, p
 	}
-	return &document{raw: doc, root: obj, layout: detectLayout(doc, obj)}, nil
+	members, err := rootMembers(doc)
+	if err != nil {
+		return nil, &Problem{Kind: KindSyntax, Detail: err.Error()}
+	}
+	return &document{raw: doc, root: obj, layout: detectLayout(doc, obj), members: members}, nil
+}
+
+// rootMembers is the span of every member of the root object of a valid
+// document, in file order.
+func rootMembers(doc []byte) ([]span, error) {
+	dec := json.NewDecoder(bytes.NewReader(doc))
+	if _, err := dec.Token(); err != nil {
+		return nil, err
+	}
+	var out []span
+	for dec.More() {
+		start := int(dec.InputOffset())
+		for start < len(doc) && strings.IndexByte(" \t\r\n,", doc[start]) >= 0 {
+			start++
+		}
+		if _, err := dec.Token(); err != nil {
+			return nil, err
+		}
+		var value json.RawMessage
+		if err := dec.Decode(&value); err != nil {
+			return nil, err
+		}
+		out = append(out, span{start: start, end: int(dec.InputOffset())})
+	}
+	return out, nil
+}
+
+// setHooks is the file with the root member `hooks` set to hooks, or taken
+// out when hooks is empty; nil means nothing is left and the file goes. Only
+// that member is rewritten, and only when its old bytes are what jitso would
+// write for its old value; an absent member is inserted after the last root
+// member. An empty root has no member to splice after, so it is rendered
+// whole, as before.
+func (d *document) setHooks(hooks jsonx.Object) ([]byte, *Problem) {
+	if d.raw == nil || len(d.root) == 0 {
+		if d.raw != nil {
+			if p := d.checkLayout(); p != nil {
+				return nil, p
+			}
+		}
+		out, err := d.render(with(d.root, "hooks", hooks))
+		if err != nil {
+			return nil, &Problem{Kind: KindLayout}
+		}
+		return out, nil
+	}
+	if bytes.IndexByte(d.raw, '\r') >= 0 {
+		return nil, &Problem{Kind: KindLayout}
+	}
+	if d.layout.Indent == "" && bytes.IndexByte(bytes.TrimSuffix(d.raw, []byte("\n")), '\n') >= 0 {
+		return nil, &Problem{Kind: KindLayout}
+	}
+	at := -1
+	for i, f := range d.root {
+		if f.Key == "hooks" {
+			at = i
+		}
+	}
+	if at < 0 {
+		text, err := d.member("hooks", hooks)
+		if err != nil {
+			return nil, &Problem{Kind: KindLayout}
+		}
+		sep := ",\n" + d.layout.Indent
+		if d.layout.Indent == "" {
+			sep = ","
+		}
+		end := d.members[len(d.members)-1].end
+		return splice(d.raw, end, end, append([]byte(sep), text...)), nil
+	}
+	m := d.members[at]
+	old, err := d.member("hooks", d.root[at].Value)
+	if err != nil || !bytes.Equal(old, d.raw[m.start:m.end]) {
+		return nil, &Problem{Kind: KindLayout}
+	}
+	if len(hooks) == 0 {
+		switch {
+		case len(d.root) == 1:
+			return nil, nil
+		case at > 0:
+			return splice(d.raw, d.members[at-1].end, m.end, nil), nil
+		default:
+			return splice(d.raw, m.start, d.members[at+1].start, nil), nil
+		}
+	}
+	text, err := d.member("hooks", hooks)
+	if err != nil {
+		return nil, &Problem{Kind: KindLayout}
+	}
+	return splice(d.raw, m.start, m.end, text), nil
+}
+
+// member is a root member as jitso writes it in the document's layout: the
+// key, the colon and the value encoded at depth 1.
+func (d *document) member(key string, value any) ([]byte, error) {
+	k, err := jsonx.Marshal(key)
+	if err != nil {
+		return nil, err
+	}
+	if d.layout.Indent == "" {
+		v, err := jsonx.Marshal(value)
+		if err != nil {
+			return nil, err
+		}
+		return append(append(k, ':'), v...), nil
+	}
+	v, err := jsonx.MarshalIndent(value, d.layout.Indent)
+	if err != nil {
+		return nil, err
+	}
+	v = bytes.ReplaceAll(v, []byte("\n"), []byte("\n"+d.layout.Indent))
+	return append(append(k, ':', ' '), v...), nil
+}
+
+// splice is doc with the bytes from start to end replaced by text.
+func splice(doc []byte, start, end int, text []byte) []byte {
+	out := make([]byte, 0, len(doc)-(end-start)+len(text))
+	out = append(out, doc[:start]...)
+	out = append(out, text...)
+	return append(out, doc[end:]...)
 }
 
 // checkLayout is nil when the unchanged tree encodes to the file's own bytes.
@@ -295,17 +429,6 @@ func with(obj jsonx.Object, key string, value any) jsonx.Object {
 	}
 	if !done {
 		out = append(out, jsonx.Field{Key: key, Value: value})
-	}
-	return out
-}
-
-// without is a copy of obj with the key left out.
-func without(obj jsonx.Object, key string) jsonx.Object {
-	out := make(jsonx.Object, 0, len(obj))
-	for _, f := range obj {
-		if f.Key != key {
-			out = append(out, f)
-		}
 	}
 	return out
 }

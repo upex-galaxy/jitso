@@ -1,11 +1,12 @@
 {
   "id": "setup/hook/refuses-a-foreign-layout",
-  "title": "a file that does not re-encode to its own bytes is refused with exit 3 and the fragment to add by hand",
+  "title": "a CRLF file, or a hooks object that does not re-encode to its own bytes, is refused with exit 3 and the fragment to add by hand",
   "source": [
-    "intended: docs/decisions.md D8 (setup hook, defect N-17): jitso registers its guard in the project's .claude/settings.json without clobbering anything"
+    "intended: docs/decisions.md D8 (setup hook, defect N-17): jitso registers its guard in the project's .claude/settings.json without clobbering anything",
+    "intended: docs/decisions.md, v0.1.2 fixes (J21): setup hook edits only the root member hooks"
   ],
   "defect": "N-17",
-  "intent": "INTENDED behavior (defect N-17, setup hook). The edit re-encodes the JSON tree in the file's own indent. When the unchanged tree does not give the file's own bytes (several keys on one line, an indent that jumps, CRLF, a `\\\\u` escape, extra blank lines at the end, a space before a colon), jitso will not reformat the file: `jitso: .claude/settings.json is not laid out the way jitso writes JSON (one value per line, a consistent indent); nothing written. Add these entries by hand, or re-save the file with a 2-space indent and run again:` and then the hooks to add, as JSON, on stderr. Exit 3, the file unchanged.",
+  "intent": "INTENDED behavior (defect N-17, setup hook; J21 narrowed it to the hooks object). The edit re-encodes only the root member `hooks`, in the file's own indent. When that member does not give its own bytes back (a group object on one line, an inline handler array as prettier writes it, two keys of a handler on one line), or the file has CRLF line ends (an inserted LF line would mix them), jitso will not reformat the user's hooks: `jitso: .claude/settings.json is not laid out the way jitso writes JSON (one value per line, a consistent indent); nothing written. Add these entries by hand, or re-save the file with a 2-space indent and run again:` and then the hooks to add, as JSON, on stderr. Exit 3, the file unchanged. A foreign layout outside `hooks` is accepted: `setup/hook/edits-only-the-hooks-object`.",
   "project": {
     "files": {
       ".claude/settings.json": "{{seed}}"
@@ -17,31 +18,23 @@
     ],
     "rows": [
       [
-        "{\n  \"a\": 1, \"b\": 2\n}\n"
-      ],
-      [
-        "{\n  \"a\": {\n      \"b\": 1\n  }\n}\n"
-      ],
-      [
         "{\r\n  \"a\": 1\r\n}\r\n"
       ],
       [
-        "{\n  \"a\": \"\\u00e9\"\n}\n"
+        "{\n  \"hooks\": {\n    \"PostToolUse\": [\n      {\"matcher\": \"Write\", \"hooks\": [{\"type\": \"command\", \"command\": \"./lint.sh\"}]}\n    ]\n  }\n}\n"
       ],
       [
-        "{\n  \"a\": 1\n}\n\n"
+        "{\n  \"hooks\": {\n    \"Stop\": [\n      {\n        \"hooks\": [{ \"type\": \"command\", \"command\": \"./n.sh\" }]\n      }\n    ]\n  }\n}\n"
       ],
       [
-        "{\n  \"a\" : 1\n}\n"
+        "{\n  \"hooks\": {\n    \"Stop\": [\n      {\n        \"hooks\": [\n          {\n            \"type\": \"command\", \"command\": \"./n.sh\"\n          }\n        ]\n      }\n    ]\n  }\n}\n"
       ]
     ],
     "ids": [
-      "keys-on-one-line",
-      "indent-jumps",
       "crlf-line-ends",
-      "unicode-escape",
-      "two-trailing-newlines",
-      "space-before-colon"
+      "group-on-one-line",
+      "inline-handler-array",
+      "keys-on-one-line-in-a-handler"
     ]
   },
   "steps": [

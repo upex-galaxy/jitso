@@ -436,7 +436,7 @@ func TestSetupHookRefusesWhatItCannotEdit(t *testing.T) {
 		{"array", "[]", ".claude/settings.json must hold a JSON object; nothing written"},
 		{"hooks is an array", `{"hooks": []}`, `"hooks" in .claude/settings.json must be an object; nothing written`},
 		{"duplicate key", `{"a":1,"a":2}`, `.claude/settings.json has the key "a" twice at "."; nothing written`},
-		{"foreign layout", "{\n  \"a\": 1, \"b\": 2\n}\n", "is not laid out the way jitso writes JSON (one value per line, a consistent indent); nothing written. Add these entries by hand, or re-save the file with a 2-space indent and run again:\n{\n  \"hooks\": {"},
+		{"foreign layout", "{\n  \"hooks\": {\n    \"Stop\": [{\"hooks\": []}]\n  }\n}\n", "is not laid out the way jitso writes JSON (one value per line, a consistent indent); nothing written. Add these entries by hand, or re-save the file with a 2-space indent and run again:\n{\n  \"hooks\": {"},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

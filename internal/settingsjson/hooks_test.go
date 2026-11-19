@@ -217,17 +217,26 @@ func TestRegisterRefusals(t *testing.T) {
 	}
 }
 
+// userStop is a 2-space hooks member holding one user group under Stop.
+func userStop(command string) string {
+	return "  \"hooks\": {\n    \"Stop\": [\n" + grp("", command) + "\n    ]\n  }"
+}
+
 func TestForeignLayoutsAreRefusedWhenAnEditIsNeeded(t *testing.T) {
 	docs := map[string]string{
-		"several keys on a line":  "{\n  \"a\": 1, \"b\": 2\n}\n",
-		"indent jumps":            "{\n  \"a\": {\n      \"b\": 1\n  }\n}\n",
-		"crlf":                    "{\r\n  \"a\": 1\r\n}\r\n",
-		"unicode escape":          "{\n  \"a\": \"\\u00e9\"\n}\n",
-		"two final newlines":      "{\n  \"a\": 1\n}\n\n",
-		"space before colon":      "{\n  \"a\" : 1\n}\n",
-		"mixed tab and space":     "{\n  \"a\": {\n\t\"b\": 1\n  }\n}\n",
-		"a comma on its own line": "{\n  \"a\": [\n    1\n  ,2]\n}\n",
-		"escaped slash":           "{\n  \"a\": \"x\\/y\"\n}\n",
+		"crlf":                          "{\r\n  \"a\": 1\r\n}\r\n",
+		"crlf with hooks":               strings.ReplaceAll("{\n"+userStop("./n.sh")+"\n}\n", "\n", "\r\n"),
+		"a group on one line":           "{\n  \"hooks\": {\n    \"Stop\": [\n      {\"hooks\": [{\"type\": \"command\", \"command\": \"./n.sh\"}]}\n    ]\n  }\n}\n",
+		"an inline handler array":       "{\n  \"hooks\": {\n    \"Stop\": [\n      {\n        \"hooks\": [{ \"type\": \"command\", \"command\": \"./n.sh\" }]\n      }\n    ]\n  }\n}\n",
+		"two keys on a line in hooks":   strings.Replace("{\n"+userStop("./n.sh")+"\n}\n", "\"command\",\n            \"command\"", "\"command\", \"command\"", 1),
+		"an indent jump in hooks":       strings.Replace("{\n"+userStop("./n.sh")+"\n}\n", "    \"Stop\"", "      \"Stop\"", 1),
+		"a unicode escape in hooks":     "{\n" + userStop("./\\u00e9.sh") + "\n}\n",
+		"an escaped slash in hooks":     "{\n" + userStop("\\/n.sh") + "\n}\n",
+		"a space before a colon":        strings.Replace("{\n"+userStop("./n.sh")+"\n}\n", "\"Stop\": [", "\"Stop\" : [", 1),
+		"a space before the hooks key":  "{\n  \"hooks\" : {\n    \"Stop\": []\n  }\n}\n",
+		"hooks indented another way":    "{\n  \"a\": 1,\n    \"hooks\": {\n      \"Stop\": []\n    }\n}\n",
+		"compact over several lines":    "{\"a\":1,\n\"b\":2}\n",
+		"compact with two final breaks": "{\"a\":1}\n\n",
 	}
 	for name, doc := range docs {
 		t.Run(name, func(t *testing.T) {
@@ -242,13 +251,113 @@ func TestForeignLayoutsAreRefusedWhenAnEditIsNeeded(t *testing.T) {
 		})
 	}
 	// Unregister of a foreign file with no JITSO handler needs no edit.
-	if out, err := Unregister([]byte(docs["several keys on a line"])); err != nil || string(out) != docs["several keys on a line"] {
+	if out, err := Unregister([]byte(docs["a group on one line"])); err != nil || string(out) != docs["a group on one line"] {
 		t.Errorf("Unregister of a file with nothing to remove: %q, %v", out, err)
 	}
-	// ... but one with a JITSO handler does.
-	foreign := strings.Replace(canonical, "\"hooks\": {\n", "\"a\": 1, \"b\": 2,\n  \"hooks\": {\n", 1)
-	if _, err := Unregister([]byte(foreign)); err == nil {
-		t.Error("Unregister edited a file in a foreign layout")
+	// ... but one with a JITSO handler does, and its hooks are refused.
+	foreign := strings.Replace(canonical, "\"SessionEnd\": [", "\"Stop\": [{\"hooks\": []}],\n    \"SessionEnd\": [", 1)
+	var p *Problem
+	if _, err := Unregister([]byte(foreign)); !errors.As(err, &p) || p.Kind != KindLayout {
+		t.Errorf("Unregister of foreign hooks: %v, want a layout problem", err)
+	}
+	crlf := strings.ReplaceAll(canonical, "\n", "\r\n")
+	if _, err := Unregister([]byte(crlf)); !errors.As(err, &p) || p.Kind != KindLayout {
+		t.Errorf("Unregister of a CRLF file: %v, want a layout problem", err)
+	}
+}
+
+// hooksMember is the hooks member Register writes into a 2-space file with no
+// hooks of its own.
+var hooksMember = strings.TrimSuffix(strings.TrimPrefix(canonical, "{\n"), "\n}\n")
+
+// Outside hooks the file stays as written: Register adds the member after the
+// last root member (or splices it over the old one), and Unregister gives the
+// original bytes back.
+func TestEditsOnlyTheHooksMember(t *testing.T) {
+	prettier := "{\n  \"$schema\": \"https://json.schemastore.org/claude-code-settings.json\",\n  \"permissions\": {\n    \"allow\": [\"Read\", \"Edit\"],\n    \"ask\": []\n  },\n  \"enabledMcpjsonServers\": [\"a\", \"b\"]"
+	tests := []struct {
+		name string
+		doc  string
+		want string
+	}{
+		{"several keys on a line", "{\n  \"a\": 1, \"b\": 2\n}\n", "{\n  \"a\": 1, \"b\": 2,\n" + hooksMember + "\n}\n"},
+		{"indent jumps", "{\n  \"a\": {\n      \"b\": 1\n  }\n}\n", "{\n  \"a\": {\n      \"b\": 1\n  },\n" + hooksMember + "\n}\n"},
+		{"unicode escape", "{\n  \"a\": \"\\u00e9\"\n}\n", "{\n  \"a\": \"\\u00e9\",\n" + hooksMember + "\n}\n"},
+		{"two final newlines", "{\n  \"a\": 1\n}\n\n", "{\n  \"a\": 1,\n" + hooksMember + "\n}\n\n"},
+		{"space before colon", "{\n  \"a\" : 1\n}\n", "{\n  \"a\" : 1,\n" + hooksMember + "\n}\n"},
+		{"a comma on its own line", "{\n  \"a\": [\n    1\n  ,2]\n}\n", "{\n  \"a\": [\n    1\n  ,2],\n" + hooksMember + "\n}\n"},
+		{"a number last", "{\n  \"n\": 12.50\n}", "{\n  \"n\": 12.50,\n" + hooksMember + "\n}"},
+		{"prettier inline arrays", prettier + "\n}\n", prettier + ",\n" + hooksMember + "\n}\n"},
+		{"prettier with hooks first", "{\n" + userStop("./n.sh") + ",\n  \"ask\": [\"x\"]\n}\n",
+			"{\n  \"hooks\": {\n    \"Stop\": [\n" + grp("", "./n.sh") + "\n    ],\n    \"PreToolUse\": [\n" + grp("Bash", Command) + ",\n" + grp("mcp__.*orca.*__.*", Command) + "\n    ],\n    \"SessionEnd\": [\n" + grp("", Command) + "\n    ]\n  },\n  \"ask\": [\"x\"]\n}\n"},
+		{"hooks between foreign members", "{\n  \"a\": 1, \"b\": [1, 2],\n" + userStop("./n.sh") + ",\n  \"c\" : {\"d\": 1}\n}\n",
+			"{\n  \"a\": 1, \"b\": [1, 2],\n  \"hooks\": {\n    \"Stop\": [\n" + grp("", "./n.sh") + "\n    ],\n    \"PreToolUse\": [\n" + grp("Bash", Command) + ",\n" + grp("mcp__.*orca.*__.*", Command) + "\n    ],\n    \"SessionEnd\": [\n" + grp("", Command) + "\n    ]\n  },\n  \"c\" : {\"d\": 1}\n}\n"},
+		{"compact with spaces", "{\"a\": 1, \"b\": [1, 2]}\n", "{\"a\": 1, \"b\": [1, 2],\"hooks\":" + compactHooks + "}\n"},
+		{"compact with hooks first", "{\"hooks\":{\"Stop\":[]},\"a\": 1}", "{\"hooks\":{\"Stop\":[]," + compactHooks[1:] + ",\"a\": 1}"},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := register(t, tt.doc, Command)
+			if got != tt.want {
+				t.Errorf("got:\n%s\nwant:\n%s", got, tt.want)
+			}
+			if again := register(t, got, Command); again != got {
+				t.Errorf("a second Register changed the document:\n%s", again)
+			}
+			back, err := Unregister([]byte(got))
+			if err != nil {
+				t.Fatalf("Unregister: %v", err)
+			}
+			if string(back) != tt.doc {
+				t.Errorf("round trip changed the bytes:\n got: %q\nwant: %q", back, tt.doc)
+			}
+		})
+	}
+}
+
+const compactHooks = `{"PreToolUse":[{"matcher":"Bash","hooks":[{"type":"command","command":"jitso hook guard"}]},{"matcher":"mcp__.*orca.*__.*","hooks":[{"type":"command","command":"jitso hook guard"}]}],"SessionEnd":[{"hooks":[{"type":"command","command":"jitso hook guard"}]}]}`
+
+// Unregister takes the whole member out when the removal empties hooks, with
+// the comma and the line break that separated it from its neighbour.
+func TestUnregisterTakesOutTheMember(t *testing.T) {
+	tests := []struct{ name, doc, want string }{
+		{"last", "{\n  \"a\": 1, \"b\": 2,\n" + hooksMember + "\n}\n", "{\n  \"a\": 1, \"b\": 2\n}\n"},
+		{"first", "{\n" + hooksMember + ",\n  \"a\": [\"x\"]\n}\n", "{\n  \"a\": [\"x\"]\n}\n"},
+		{"middle", "{\n  \"a\" : 1,\n" + hooksMember + ",\n  \"b\": [1]\n}\n", "{\n  \"a\" : 1,\n  \"b\": [1]\n}\n"},
+		{"compact last", "{\"a\": 1,\"hooks\":" + compactHooks + "}\n", "{\"a\": 1}\n"},
+		{"compact first", "{\"hooks\":" + compactHooks + ",\"a\": 1}", "{\"a\": 1}"},
+		{"the only member", canonical, "<nil>"},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			out, err := Unregister([]byte(tt.doc))
+			if err != nil {
+				t.Fatal(err)
+			}
+			got := string(out)
+			if out == nil {
+				got = "<nil>"
+			}
+			if got != tt.want {
+				t.Errorf("got %q\nwant %q", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestRootMembers(t *testing.T) {
+	doc := []byte("{\n  \"a\": 1 ,\n\t\"b\":[1, {\"c\": 2}],\"d\" : \"x\\\"}\"\n}\n")
+	spans, err := rootMembers(doc)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var got []string
+	for _, s := range spans {
+		got = append(got, string(doc[s.start:s.end]))
+	}
+	want := []string{`"a": 1`, `"b":[1, {"c": 2}]`, `"d" : "x\"}"`}
+	if !reflect.DeepEqual(got, want) {
+		t.Errorf("got %q, want %q", got, want)
 	}
 }
 

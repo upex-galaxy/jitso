@@ -202,8 +202,9 @@ func asList(v any) []any {
 // The order of the checks matters. A file that is not JSON or has the wrong
 // shape is a *Problem first. When the desired state already holds, doc comes
 // back as it is (the same bytes, whatever its layout). Only a file that has to
-// change must also re-encode to its own bytes, else it is refused with a
-// KindLayout problem.
+// change must also have a `hooks` member that re-encodes to its own bytes (and
+// LF line ends), else it is refused with a KindLayout problem; the rest of the
+// file is kept byte for byte.
 func Register(doc []byte, command string) ([]byte, error) {
 	var d *document
 	if doc == nil {
@@ -217,11 +218,6 @@ func Register(doc []byte, command string) ([]byte, error) {
 	hooks := hooksOf(d.root)
 	if doc != nil && desired(hooks, command) {
 		return doc, nil
-	}
-	if doc != nil {
-		if p := d.checkLayout(); p != nil {
-			return nil, p
-		}
 	}
 	if hooks == nil {
 		hooks = jsonx.Object{}
@@ -238,7 +234,11 @@ func Register(doc []byte, command string) ([]byte, error) {
 		}
 		hooks = with(hooks, w.event, list)
 	}
-	return d.render(with(d.root, "hooks", hooks))
+	out, p := d.setHooks(hooks)
+	if p != nil {
+		return nil, p
+	}
+	return out, nil
 }
 
 // Unregister returns the settings file without any JITSO handler: groups that
@@ -246,7 +246,8 @@ func Register(doc []byte, command string) ([]byte, error) {
 // removal emptied. When nothing is left in the document it returns nil, which
 // means the file itself should be deleted. A file with no JITSO handler (and
 // a nil doc) comes back as it is, whatever its layout; a file that has to
-// change is refused when it does not re-encode to its own bytes.
+// change is refused when its `hooks` member does not re-encode to its own
+// bytes or it has CRLF line ends.
 func Unregister(doc []byte) ([]byte, error) {
 	if doc == nil {
 		return nil, nil
@@ -263,19 +264,11 @@ func Unregister(doc []byte) ([]byte, error) {
 	if removed == 0 {
 		return doc, nil
 	}
-	if p := d.checkLayout(); p != nil {
+	out, p := d.setHooks(hooks)
+	if p != nil {
 		return nil, p
 	}
-	root := d.root
-	if len(hooks) == 0 {
-		root = without(root, "hooks")
-	} else {
-		root = with(root, "hooks", hooks)
-	}
-	if len(root) == 0 {
-		return nil, nil
-	}
-	return d.render(root)
+	return out, nil
 }
 
 // HookState is what a settings file says about the guard, for `jitso doctor`.
