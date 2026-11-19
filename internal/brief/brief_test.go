@@ -124,8 +124,11 @@ func TestCheckCountsWordsNotTokens(t *testing.T) {
 
 func TestReason(t *testing.T) {
 	got := Reason([]Failure{{CheckSections, "missing section: Goal"}, {CheckPaths, "cited path does not exist: a/b"}})
-	if want := "brief failed: sections (missing section: Goal); paths (cited path does not exist: a/b)"; got != want {
+	if want := "brief failed: sections (missing section: Goal); paths (cited path does not exist: a/b). " + pathsHint; got != want {
 		t.Errorf("got %q", got)
+	}
+	if got := Reason([]Failure{{CheckSections, "missing section: Goal"}}); strings.Contains(got, "Output:") {
+		t.Errorf("hint without a paths failure: %q", got)
 	}
 }
 

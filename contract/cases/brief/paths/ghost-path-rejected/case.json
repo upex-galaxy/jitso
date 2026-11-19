@@ -30,7 +30,10 @@
           }
         ],
         "stderr": [
-          "paths (cited path does not exist: src/ghost/missing-file.ts)"
+          "paths (cited path does not exist: src/ghost/missing-file.ts)",
+          {
+            "contains": "A file the worker will create goes on a line that starts with Output: or Creates:"
+          }
         ],
         "orca_calls": {
           "empty": true

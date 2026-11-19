@@ -30,7 +30,10 @@
           }
         ],
         "stderr": [
-          "JITSO REJECTED: brief failed: sections (missing section: Goal)"
+          "JITSO REJECTED: brief failed: sections (missing section: Goal)",
+          {
+            "not_contains": "A file the worker will create goes on a line that starts with Output: or Creates:"
+          }
         ],
         "orca_calls": {
           "empty": true

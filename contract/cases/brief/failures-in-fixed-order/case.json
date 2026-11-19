@@ -32,7 +32,7 @@
         ],
         "stderr": [
           {
-            "regex": "JITSO REJECTED: brief failed: sections \\(missing section: Scope, Done when, Report format\\); length \\(\\d+ words, expected 40 to 800\\); language \\(the brief must be written in English\\); paths \\(cited path does not exist: src/ghost/x\\.ts\\)"
+            "regex": "(?m)JITSO REJECTED: brief failed: sections \\(missing section: Scope, Done when, Report format\\); length \\(\\d+ words, expected 40 to 800\\); language \\(the brief must be written in English\\); paths \\(cited path does not exist: src/ghost/x\\.ts\\)\\. A file the worker will create goes on a line that starts with Output: or Creates:$"
           }
         ],
         "orca_calls": {

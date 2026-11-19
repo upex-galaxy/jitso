@@ -140,14 +140,27 @@ func countWords(text string) int {
 	return n
 }
 
+// pathsHint follows the whole reason when a cited path is missing, so a
+// brief author learns how to declare a file the worker will create.
+const pathsHint = "A file the worker will create goes on a line that starts with Output: or Creates:"
+
 // Reason is the rejection text for failures:
-// `brief failed: <check> (<message>); ...`.
+// `brief failed: <check> (<message>); ...`, followed by pathsHint once when
+// one of the failures is the paths check.
 func Reason(failures []Failure) string {
 	parts := make([]string, len(failures))
+	hint := false
 	for i, f := range failures {
 		parts[i] = f.Check + " (" + f.Message + ")"
+		if f.Check == CheckPaths {
+			hint = true
+		}
 	}
-	return "brief failed: " + strings.Join(parts, "; ")
+	reason := "brief failed: " + strings.Join(parts, "; ")
+	if hint {
+		reason += ". " + pathsHint
+	}
+	return reason
 }
 
 // citedPaths are the backtick-quoted tokens that look like a file path: a
