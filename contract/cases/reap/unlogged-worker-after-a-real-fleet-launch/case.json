@@ -21,12 +21,26 @@
       "orchestration worker-list": {
         "workers": [
           {
-            "agentTerminalHandle": "term_fake",
-            "title": "ok"
+            "dispatchId": "dispatch_task_1",
+            "taskId": "task_1",
+            "state": "running",
+            "liveness": "alive",
+            "terminal": "term_fake",
+            "terminalState": "live",
+            "workspace": "fake-uuid::{{PROJECT}}",
+            "host": "local",
+            "attention": "none"
           },
           {
-            "agentTerminalHandle": "term_rogue",
-            "title": "worker-task_9"
+            "dispatchId": "dispatch_task_9",
+            "taskId": "task_9",
+            "state": "running",
+            "liveness": "alive",
+            "terminal": "term_rogue",
+            "terminalState": "live",
+            "workspace": "fake-uuid::{{PROJECT}}",
+            "host": "local",
+            "attention": "none"
           }
         ]
       }

@@ -248,6 +248,9 @@ func TestAuditPhase(t *testing.T) {
 		{"unknown handle", []map[string]any{{"agentTerminalHandle": "term_rogue"}}, "worker term_rogue in run run_1 has no launch event"},
 		{"the mark of an unknown launch explains nothing", []map[string]any{{"agentTerminalHandle": "term_o", "title": "x [jitso:L20990101T000000-ffff]"}}, "worker term_o in run run_1 has no launch event"},
 		{"no handle", []map[string]any{{"title": "nameless"}}, "worker (no terminal handle) in run run_1 has no launch event"},
+		{"explained by the terminal key", []map[string]any{{"terminal": "term_logged"}}, ""},
+		{"non-string terminal falls back to the full record", []map[string]any{{"terminal": 5.0, "agentTerminalHandle": "term_logged"}}, ""},
+		{"terminal wins over the full record", []map[string]any{{"terminal": "term_rogue", "agentTerminalHandle": "term_logged"}}, "worker term_rogue in run run_1 has no launch event"},
 		{"non-string handle falls back to nested", []map[string]any{{"agentTerminalHandle": 5.0, "resource": map[string]any{"terminalHandle": "term_logged"}}}, ""},
 	}
 	for _, tt := range tests {

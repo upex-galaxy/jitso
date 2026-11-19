@@ -5,7 +5,9 @@
 //     gets an end event with source reap.
 //  2. Every worker of the runs the registry knows (plus any --run) that no
 //     launch explains is printed as an `unlogged worker:` line. A worker is
-//     explained by its terminal handle matching a launch's, or by the
+//     explained by its terminal handle (the key terminal of the default
+//     worker-list view, else agentTerminalHandle, else
+//     resource.terminalHandle) matching a launch's, or by the
 //     [jitso:<id>] mark of a known launch in any string of its entry. Orca has
 //     no verb that lists every run, so a run the registry never heard of is
 //     audited only when named with --run. The phase is output only: it writes
@@ -217,9 +219,13 @@ func workersOf(result map[string]any) []map[string]any {
 	return workers
 }
 
-// handleOf is the terminal handle of a worker: agentTerminalHandle, else
-// resource.terminalHandle.
+// handleOf is the terminal handle of a worker: terminal (the default view of
+// worker-list), else agentTerminalHandle, else resource.terminalHandle (the
+// --full record). A key whose value is not a string is skipped.
 func handleOf(w map[string]any) (string, bool) {
+	if h, ok := w["terminal"].(string); ok {
+		return h, true
+	}
 	if h, ok := w["agentTerminalHandle"].(string); ok {
 		return h, true
 	}

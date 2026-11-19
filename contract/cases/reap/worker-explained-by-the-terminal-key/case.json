@@ -1,0 +1,52 @@
+{
+  "id": "reap/worker-explained-by-the-terminal-key",
+  "title": "a worker whose default-view entry names its handle under the terminal key is explained by the launch that owns that handle",
+  "source": [
+    "intended: docs/decisions.md, Pre-release fixes (reap reads the key Orca's default worker-list returns)"
+  ],
+  "project": {
+    "files": {
+      ".jitso/launches.jsonl": "{\"v\":2,\"event\":\"launch\",\"id\":\"L20261113T142233-a3f9\",\"parent\":null,\"root\":\"L20261113T142233-a3f9\",\"depth\":0,\"ts\":\"2026-11-13T14:22:33.000Z\",\"mode\":\"fleet\",\"build\":\"haiku-explorer\",\"orca\":{\"run\":\"run_1\",\"task\":\"t\",\"terminal\":\"term_logged\",\"title\":\"t\"}}\n"
+    }
+  },
+  "orca": {
+    "listed": [
+      "term_logged"
+    ],
+    "responses": {
+      "orchestration worker-list": {
+        "workers": [
+          {
+            "dispatchId": "dispatch_1",
+            "taskId": "task_1",
+            "state": "running",
+            "liveness": "alive",
+            "terminal": "term_logged",
+            "terminalState": "live",
+            "workspace": "fake-uuid::{{PROJECT}}",
+            "host": "local",
+            "attention": "none"
+          }
+        ]
+      }
+    }
+  },
+  "steps": [
+    {
+      "run": [
+        "reap"
+      ],
+      "expect": {
+        "exit": 0,
+        "stdout": [
+          {
+            "regex": "(?m)^jitso reap: 0 launch\\(es\\) marked ended, 0 unlogged worker\\(s\\)$"
+          },
+          {
+            "not_contains": "(no terminal handle)"
+          }
+        ]
+      }
+    }
+  ]
+}
