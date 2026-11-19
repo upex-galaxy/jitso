@@ -55,9 +55,13 @@ Headings `Goal`, `Scope`, `Done when`, `Report format`. English. Within the word
 
 `jitso build list`, `jitso build validate [<id>]` and `jitso build list --drafts` are read-only. When no build fits, propose one with `jitso build draft <file.yaml|->` and tell the human. A draft launches like any build, but only the owner turns it into an approved build. Where builds live and the draft flow: `references/builds.md`.
 
+## Compose a build from the arsenal
+
+When no build fits, ask what a build may name here: `jitso arsenal` prints one line per item (models, efforts, tools, skills, MCP servers, approved subagents, route ids, fields), each as a build writes it. `jitso arsenal --all` adds what exists in the project or on this machine but no allowlist names yet, each marked with the file the owner would edit. Compose the draft from the first list only. A user skill or user MCP server appears as `user:<name>` and needs the owner's `~/.jitso/jitso.yaml`. It prints names and key names, never a value. Steps and examples: `references/builds.md`.
+
 ## The rules at the end of brief.md
 
-Every launch appends JITSO's rules to the end of `brief.md`, after your brief. They say: start other sessions only with the card's `launch:` line; when the build has a budget, the card's budget is your ceiling, so near it stop and report; load the card's skills before any other work; a direct session may ask the human, a fleet worker never does and sends its questions and its final report to the session that launched it; leave `jitso/` and `.jitso/` alone except your own draft in `.jitso/drafts/`, and never run `jitso build save`. Read the end of your `brief.md` to see the exact text.
+Every launch appends JITSO's rules to the end of `brief.md`, after your brief. They say: start other sessions only with the card's `launch:` line; when the build has a budget, the card's budget is your ceiling, so near it stop and report; load the card's skills before any other work; a direct session may ask the human, a fleet worker never does and sends its questions and its final report to the session that launched it; leave `jitso/`, `.jitso/` and `~/.jitso/` alone except your own draft in `.jitso/drafts/`, and never run `jitso build save`. Read the end of your `brief.md` to see the exact text.
 
 ## Never run these
 
@@ -72,9 +76,9 @@ Every launch appends JITSO's rules to the end of `brief.md`, after your brief. T
 
 | File | Read it when |
 |---|---|
-| `references/launching.md` | building a launch line, using fleet, `--parent`, `--mcp-exclude`, what a real launch writes |
+| `references/launching.md` | building a launch line, using fleet, `--parent`, `--mcp-exclude`, what a real launch writes and carries (the package folder) |
 | `references/briefs.md` | writing a brief, or a brief was rejected |
 | `references/card.md` | reading or explaining a card |
-| `references/builds.md` | choosing, validating or drafting a build |
+| `references/builds.md` | choosing, validating or drafting a build, composing one from `jitso arsenal`, `user:` names |
 | `references/lifecycle.md` | closing, reaping, the registry |
 | `references/troubleshooting.md` | any `JITSO REJECTED`, exit 3, hook denial or doctor line |

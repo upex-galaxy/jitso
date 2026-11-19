@@ -48,14 +48,34 @@ Builds come from two places only:
 | `repo` | `jitso/builds/` in the primary checkout | the project's own; one invalid file here fails every catalog command with exit 3 |
 | `draft` | `.jitso/drafts/` in the primary checkout | git-ignored; last in the order, and a draft never shadows a saved build |
 
-Nothing outside the project is read: a folder of builds under the user's home or in a parent folder is not a source of builds. Two files with the same id are one build: the first one by file name wins, and the other is never used. An invalid draft file is skipped: `build list` warns on stderr, and `jitso launch --build <that id>` is rejected with the problems. Every build is validated against the project that launches it.
+Builds are read only from the project: a folder of builds under the user's home or in a parent folder is not a source of builds. The one file read from outside is the owner's `~/.jitso/jitso.yaml`, and only to resolve `user:` names (below). Two files with the same id are one build: the first one by file name wins, and the other is never used. An invalid draft file is skipped: `build list` warns on stderr, and `jitso launch --build <that id>` is rejected with the problems. Every build is validated against the project that launches it.
 
 Statuses: `draft` (only in `.jitso/drafts/`, launches like any build), `candidate` (not approved, does not launch), `approved` (launches), `retired` (history, does not launch).
+
+## Compose a build from the arsenal
+
+Run `jitso arsenal` first. It lists what a build may name in this project, one line per item, in the form a build writes it:
+
+```
+model   claude-sonnet-5-5
+skill   sprint-testing   <first sentence of its description>
+skill   user:humanizer   <first sentence of its description>
+mcp     user:engram      stdio
+```
+
+Take each `model`, `effort`, `tool`, `skill` and `mcp` value of the draft from those lines. `jitso arsenal --all` adds candidates that no allowlist names, each marked `not allowlisted (edit <file>)`: do not put a candidate in a draft, tell the owner which file to edit. The command prints key names such as `literal env: KEY`, never a value, and an invalid user file is one `user` line, not an error.
+
+## User items: `user:<name>`
+
+`skills_first` and `mcp` accept `user:<name>` for an item the owner listed in `~/.jitso/jitso.yaml` (`skills`, `mcp`, `literal_env`). A plain name resolves only in the project's `jitso/jitso.yaml`. A launch copies each user skill into its own package folder and writes each user server into its `mcp.json`, so the session lists the skill by its plain name. `--mcp-exclude user:<name>` drops one for a launch. A build that names a `user:` item fails validation on a machine whose user file does not list it, and the message names the file to edit: that is the owner's call, not yours. The jitso skill needs no entry: name `jitso` in `skills_first`.
+
+Refused, with the text in `references/troubleshooting.md`: `cloud:` connectors, a user server that uses OAuth, a literal secret value in a user server's `env` or `headers` (use `${VAR}`), and a user skill over 5 MiB or 500 files.
 
 ## When no build fits: draft one
 
 A draft is a build that is not saved yet. You may write one, the owner approves it. Do it in this order:
 
+0. Run `jitso arsenal` and read what the build may name.
 1. Run `jitso build new <id> [--tier worker|conductor|subagent]` once to see the template for the tier (in a fresh project it first writes an empty `jitso/jitso.yaml` skeleton). It writes `.jitso/drafts/<id>.yaml` with every allowlist-bound value empty. A new draft lists as `null null. null` until it is filled.
 2. Fill in the draft: edit `.jitso/drafts/<id>.yaml` (JITSO's rules allow editing a draft, and nothing else under `.jitso/`), or write the complete build in another file or on standard input and keep it with `jitso build draft`. Take every model, effort, MCP server, skill and tool from the allowlists in `jitso/jitso.yaml`. Full model ids only, never aliases. A worker needs a `harness`; a `budget` mapping (`tokens`, `usd_list_cap`) is optional.
 3. Keep it: `jitso build draft <file.yaml>` or `jitso build draft -`. The command checks it with the draft rules and writes `.jitso/drafts/<id>.yaml` byte for byte, or refuses with `JITSO REJECTED: draft <path or stdin> is invalid: <problems>`. A re-draft of the same id replaces that draft. An id that any saved build already has is refused: pick another.

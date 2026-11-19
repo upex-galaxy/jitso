@@ -23,6 +23,6 @@ func Rules(mode string, hasBudget bool) string {
 		"## JITSO rules",
 		launch,
 		skills,
-		"Leave `jitso/` and `.jitso/` alone except your own draft in `.jitso/drafts/`, and never run `jitso build save`.",
+		"Leave `jitso/`, `.jitso/` and `~/.jitso/` alone except your own draft in `.jitso/drafts/`, and never run `jitso build save`.",
 	}, "\n")
 }

@@ -4,14 +4,16 @@ Everything JITSO knows about a launch is in `.jitso/launches.jsonl`, an append-o
 
 | Event line | Written by | Holds |
 |---|---|---|
-| `launch` | `jitso launch` | build, layer, file and hash, model, effort, flags, brief path and hash (the hash of a pointer brief is the hash of its target card), session id, transcript path, Orca terminal, run and task |
+| `launch` | `jitso launch` | build, layer, file and hash, model, effort, flags, package, brief path and hash (the hash of a pointer brief is the hash of its target card), session id, transcript path, Orca terminal, run and task |
 | `end` | `close`, `reap` or the SessionEnd hook (`source` says which) | when the launch ended and how long it ran |
 
 The launch event keeps the Orca ids under `orca`: `orca.run`, `orca.task`, `orca.terminal` and `orca.title`. There is no top-level `task`, `terminal` or `dispatch` key, and the dispatch id is not recorded: read it from `orca orchestration worker-list`.
 
 The log is schema v2 (`"v": 2` on every line) and the build id is the key `build` of a launch line. Only `launch` and `end` lines exist. A line an older jitso wrote (`"v": 1`, with `preset`, or an `analyzed` or `rule_break` event) is skipped as invalid: close every running launch with the old version before upgrading, and `jitso doctor` counts the skipped v1 lines.
 
-The launch folder `.jitso/launches/<id>/` keeps what the session was given (`brief.md`, `card.txt`, `mcp.json`, `run.sh`) and, after `close`, `footer.txt`. Read the end of `brief.md` to see the exact rules a worker carried.
+The launch event also carries `package` when something travelled with the launch: the skills copied in (`name`, `scope`, `sha256` of the copied tree), whether the guard and the jitso skill travelled (`guard`, `jitso_skill`) and how the folder reached the harness (`flag`: `add-dir`, or `none`). The key is absent when nothing travelled.
+
+The launch folder `.jitso/launches/<id>/` keeps what the session was given (`brief.md`, `card.txt`, `mcp.json`, `run.sh`, and `pkg/` when the launch carried a package) and, after `close`, `footer.txt`. Read the end of `brief.md` to see the exact rules a worker carried.
 
 ## `jitso close <launch id>`
 
@@ -45,7 +47,7 @@ Orca has no verb that lists every run, so a run the log never heard of is audite
 
 ## SessionEnd
 
-When the guard hook is registered (the owner runs `jitso setup hook`), the hook's SessionEnd entry writes the `end` event of the closing session's launch with source `session_end_hook`. A registry problem there is swallowed so a session can always close.
+When the guard hook is registered (a launch carries it in its `--settings`, or the owner ran `jitso setup hook`), the hook's SessionEnd entry writes the `end` event of the closing session's launch with source `session_end_hook`. A registry problem there is swallowed so a session can always close.
 
 ## What to report to a human after a fleet
 

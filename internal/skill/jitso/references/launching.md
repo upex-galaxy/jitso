@@ -18,7 +18,7 @@ jitso launch --build <id> --brief <file> --mode direct|fleet [--run <run>] [--wo
 | `--worktree` | which Orca worktree the terminal opens in (an id or a selector); without it, the primary |
 | `--field` | a value for a field the build `requires`, as `name=value`; repeat for more. The values reach the worker in the `## Fields` block of its `brief.md` and the `fields` object of the launch line in the log |
 | `--parent` | the launch id of the launcher, so the registry records the tree (an unknown id is rejected, also on a dry run) |
-| `--mcp-exclude` | drop one of the build's MCP servers for this launch; repeat for more |
+| `--mcp-exclude` | drop one of the build's MCP servers for this launch, by the name the build wrote (`user:<name>` for a user server); repeat for more |
 | `--brief-language` | `en` (default), `es` or `any`. Only change it when the project's briefs are not in English |
 | `--dry-run` | validate and print the card, write nothing, never call Orca |
 
@@ -77,7 +77,19 @@ In this order (read from the launch code, then seen with a fake Orca on a scratc
 
 If anything fails before step 5, the launcher closes the terminal it opened and removes the launch folder, so nothing half-made stays. After step 5 nothing is removed.
 
-`run.sh` starts the harness with the build's model and effort, bypassed permissions, project settings only (`--setting-sources project`), a strict MCP file that holds only the servers the build names, and the build's subagents as `--agents`. User skills, user hooks and user MCP servers do not reach a launched session.
+`run.sh` starts the harness with the build's model and effort, bypassed permissions, project settings only (`--setting-sources project`), a strict MCP file that holds only the servers the build names, and the build's subagents as `--agents`. User settings, user hooks and any user skill or server the build does not name do not reach a launched session.
+
+## The package folder
+
+When a launch carries more than its own files, it also writes `.jitso/launches/<id>/pkg/` and passes it with `--add-dir <launch folder>/pkg`, right after `--mcp-config`. It holds:
+
+| What | When it travels |
+|---|---|
+| each `user:` skill of the build, copied under `pkg/.claude/skills/<name>/` | the build names it and the owner's `~/.jitso/jitso.yaml` lists it |
+| the jitso usage skill | the build is `tier: conductor` or names `jitso`, and the checkout holds no `.claude/skills/jitso/SKILL.md` |
+| the guard hook | not in the folder: it is added to the `--settings` JSON, unless the project's `.claude/settings.json` already registers it on all three slots |
+
+A launch that carries nothing writes no `pkg/` and passes no `--add-dir`. The launch event records what travelled under `package` (`references/lifecycle.md`). User MCP servers go into `mcp.json` by reference only: a `${VAR}` stays a reference, and a variable that is unset in jitso's environment is one stderr warning that names it.
 
 ## Preconditions
 

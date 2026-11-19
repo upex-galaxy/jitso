@@ -35,6 +35,9 @@ What the CLI does, split by responsibility. "Pure" means no file, process, clock
 | Trust dialog and folder check | the dialog state machine, exact real-path match, and the folder check on every launch (N-22): `SelectorPath`, `Precheck` (before any Orca call) and `Place` (right after `terminal create`) | `git worktree list`, screen reads, key sends, clock | `internal/trust` |
 | Registry | event validation (schema `v: 2` with `build` keys, N-31), folding events into launches | append under a `mkdir` lock, read the file | `internal/registry` |
 | Launch execution | the plan: files, argv, event, the Task id of a `worker-start` receipt | files, Orca, registry | `internal/launch` |
+| User allowlist | the keys of `~/.jitso/jitso.yaml` and the scoped names `user:<name>` | reads the user file, `~/.claude/skills/`, `~/.claude.json` | `internal/catalog` (`userlayer.go`, `usermcp.go`) |
+| Launch package | which skills, which user servers and which guard travel with a launch, and the tree hash | writes `.jitso/launches/<id>/pkg/`, copies the user skills, reads `~/.claude.json` | `internal/launch` (`pkg.go`, `usermcp.go`) |
+| Arsenal | the inventory lines of what a build may name, and what exists but no allowlist names | reads the allowlists, skill folders and MCP files; never prints a value | `internal/arsenal` (`Render` pure, `Collect` reads), `internal/cli` (`cmd_arsenal.go`) |
 | Close | the token sum of one transcript stream (`internal/usage`) | Orca, registry, footer file, transcript files | `internal/closeout` |
 | Reap | worker matching (the handle under `terminal`, `agentTerminalHandle` or `resource.terminalHandle`, or the `[jitso:<id>]` mark), evidence text | Orca, registry | `internal/reap` |
 | Guard hook | Bash line lexing for the data commands (the segment splitter for every other line), launch-verb detection, orca-bridge tool rules, the program of a segment (N-24) | `jitso/jitso.yaml` probe; SessionEnd appends to the registry | `internal/hook` |
@@ -69,6 +72,7 @@ internal/<package>/        everything else
 | Launch | `launch` (argument parsing, plan, execute), `brief` (brief checks and the path guard), `card` (card text and the `ROUTE-SCOPE` line), `shell` (quoting, `run.sh` text, launcher field patterns), `harness` (the `Adapter` interface and launch spec types) with `harness/claude` (the Claude Code adapter), `trust` (trusted-folder check and dialog state machine) |
 | Lifecycle | `orca` (client over an injectable runner), `registry` (events, validation, fold, file store with a `mkdir` lock), `closeout` (`jitso close`), `reap` |
 | Hooks | `hook` (guard, SessionEnd) |
+| Discovery | `arsenal` (the inventory behind `jitso arsenal`: `Render` is pure, `Collect` reads the files) |
 | Authoring | `templates` (the embedded build templates and the `jitso/jitso.yaml` skeleton) |
 | Adoption | `adopt` (the shared core: plan, diff, confirmation, backups, apply), `settingsjson` (the order-preserving settings edit), `instructions` (the delimited block), `skill` (the embedded usage skill, its manifest and install plan), `tty` (is a file a terminal; `tty_darwin.go`, `tty_linux.go`, `tty_other.go`) |
 | Diagnosis and identity | `doctor` (the environment checks of `jitso doctor`), `version` (the stamped version line) |
@@ -139,6 +143,8 @@ What the guard denies to a session that has it installed: the launch verbs (`wor
 
 Launcher identity. Under `--impl bin`, `{{JITSO}}` is whatever path was passed to `--bin`; its basename need not be `jitso`. The hook recognizes the launcher by comparing the real path of the command's first word with the real path of `os.Executable()` (symlinks resolved on both sides; `/tmp` and `/private/tmp` differ on darwin). The guard also accepts a bare `jitso` and `bun run jitso`, each optionally after `NAME=value` prefixes; `hooks/guard/allow-bash` and `allow-env-prefix` pin those forms (the boilerplate consumes the CLI as `bun run jitso` until D9 completes). DECIDED: the guard keeps all three forms; dropping `bun run jitso` after D9 is a later contract change.
 
+Where the guard is registered. In the project's `.claude/settings.json` (`setup hook`), in `~/.claude/settings.json` for the owner's own session (`setup hook --scope user`), and, for a launched session, in the JSON of the launch's `--settings` flag: the same three groups, each running the absolute path of the running binary, added only when the project does not already register all three (so a worker is never guarded twice). The launch package (`.jitso/launches/<id>/pkg/`, passed with `--add-dir`) carries user skills and, when the project holds no copy, the embedded jitso skill; it is built in `internal/launch` and the adapter in `internal/harness/claude` adds the flags.
+
 ## 7. How the decided rows and the defects land
 
 ### Decided rows
@@ -191,7 +197,7 @@ The default fixture has `sonnet-automator` with `subagents: [plan, code, verifie
 Rows in `docs/decisions.md`; the shape of each, for a reader of the code:
 
 - Vocabulary (N-10). The word is `build` everywhere a user sees it: the flag `--build`, the folder `jitso/builds/`, the command group `jitso build <subcommand>`, every message and the card header. There is no alias: `--preset`, `presets` and `jitso/presets/` are unknown. The registry log was the one survivor (`v: 1` with the keys `preset` and `preset_version`, a storage schema) until N-31 moved it to `v: 2` with `build` and `build_version`; a v1 line is an invalid line.
-- Layers (N-12, narrowed by the v0.1.0 cut). The lookup order is the repo's `jitso/builds/`, then the drafts; nothing outside the project is read. The nearest file of an id is the build, every file is validated against the launching repo, and the registry line names the layer (`build_layer`, `build_file`, `build_sha256`) and the card names a draft. Code: `internal/catalog`.
+- Layers (N-12, narrowed by the v0.1.0 cut). The lookup order is the repo's `jitso/builds/`, then the drafts; builds are read only from the project. The one file read from outside is the user allowlist `~/.jitso/jitso.yaml`, and only to resolve `user:<name>` items (`docs/build-schema.md`). The nearest file of an id is the build, every file is validated against the launching repo, and the registry line names the layer (`build_layer`, `build_file`, `build_sha256`) and the card names a draft. Code: `internal/catalog`.
 - Validation report (N-13). `jitso build validate` scans every file tolerantly and reports every problem; an invalid repo file is a finding there (exit 2), not the exit 3 of the other commands. Code: `internal/catalog` (`scan.go`).
 - Templates (N-14). `internal/templates` is embedded; `jitso build new` writes a draft from a template and, in a fresh project, the allowlists skeleton.
 - Drafts (N-15). `.jitso/drafts/<id>.yaml` in the primary, a last layer that never shadows a saved build; `build draft`, `build discard` and `build save` fill, empty and promote it. `build save` is the one way a build becomes approved and needs the owner: a terminal answer, or `--yes` (the rule of the adoption commands, `adopt.Confirm`). Code: `internal/drafts`.

@@ -88,7 +88,7 @@ Same YAML subset as `jitso/jitso.yaml`. A build names an item of this file with 
 | `cloud:<n>` server | `mcp "cloud:<n>": cloud connectors cannot be given to a launched session yet` |
 | any other scope | `skill "<scope>:<n>": unknown scope (use user:)`, `mcp "<scope>:<n>": unknown scope (use user:)` |
 
-A launch copies each `user:` skill into its own folder, `.jitso/launches/<id>/pkg/.claude/skills/<n>/`, and passes that folder to the session, which lists the skill by its plain name; a skill over 5 MiB or 500 files is `JITSO REJECTED: user skill "<n>" is larger than a launch carries`. A `user:` server is written into the launch's `mcp.json` under its plain name, with variable references only (never a literal value unless `literal_env` lists its key).
+A launch copies each `user:` skill into its own folder, `.jitso/launches/<id>/pkg/.claude/skills/<n>/`, and passes that folder to the session, which lists the skill by its plain name; a skill over 5 MiB or 500 files is `JITSO REJECTED: user skill "<n>" is larger than a launch carries`. A `user:` server is written into the launch's `mcp.json` under its plain name, with variable references only (never a literal value unless `literal_env` lists its key). A variable a server refers to that is unset in jitso's environment is one stderr warning that names the variable, never a value. The jitso skill needs no allowlist entry: it travels in the package for a conductor build or a build that names `jitso`, unless the checkout holds its own copy. `--mcp-exclude` takes the scoped name (`user:<n>`). `jitso arsenal` lists what a build may name, with these names as a build writes them.
 
 ## The build file
 

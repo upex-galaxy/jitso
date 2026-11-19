@@ -48,7 +48,7 @@
               "{{CARD}}\n\n## Goal"
             ],
             "regex": [
-              "\\n\\n## JITSO rules\\nStart other agent sessions only with the card's `launch:` line\\. The card's budget is your ceiling: near it, stop and report\\.\\nLoad the card's skills before any other work\\. You may ask the human\\.\\nLeave `jitso/` and `\\.jitso/` alone except your own draft in `\\.jitso/drafts/`, and never run `jitso build save`\\.\\n$"
+              "\\n\\n## JITSO rules\\nStart other agent sessions only with the card's `launch:` line\\. The card's budget is your ceiling: near it, stop and report\\.\\nLoad the card's skills before any other work\\. You may ask the human\\.\\nLeave `jitso/`, `\\.jitso/` and `~/\\.jitso/` alone except your own draft in `\\.jitso/drafts/`, and never run `jitso build save`\\.\\n$"
             ]
           }
         ]

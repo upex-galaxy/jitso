@@ -12,7 +12,7 @@ func TestRules(t *testing.T) {
 		budget = " The card's budget is your ceiling: near it, stop and report."
 		direct = "Load the card's skills before any other work. You may ask the human."
 		fleet  = "Load the card's skills before any other work. Never ask a human: send your questions and your final report (a count of done, failed, open) to the session that launched you."
-		last   = "Leave `jitso/` and `.jitso/` alone except your own draft in `.jitso/drafts/`, and never run `jitso build save`."
+		last   = "Leave `jitso/`, `.jitso/` and `~/.jitso/` alone except your own draft in `.jitso/drafts/`, and never run `jitso build save`."
 	)
 	tests := []struct {
 		name      string

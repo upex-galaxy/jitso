@@ -44,7 +44,7 @@
               "Load first"
             ],
             "regex": [
-              "\\n\\n## JITSO rules\\nStart other agent sessions only with the card's `launch:` line\\.\\nLoad the card's skills before any other work\\. You may ask the human\\.\\nLeave `jitso/` and `\\.jitso/` alone except your own draft in `\\.jitso/drafts/`, and never run `jitso build save`\\.\\n$"
+              "\\n\\n## JITSO rules\\nStart other agent sessions only with the card's `launch:` line\\.\\nLoad the card's skills before any other work\\. You may ask the human\\.\\nLeave `jitso/`, `\\.jitso/` and `~/\\.jitso/` alone except your own draft in `\\.jitso/drafts/`, and never run `jitso build save`\\.\\n$"
             ]
           }
         ],
