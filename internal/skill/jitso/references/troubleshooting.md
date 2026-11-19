@@ -45,6 +45,7 @@ Two prefixes tell you whose problem it is. `JITSO REJECTED: <reason>` (exit 2) m
 | `jitso: the trust dialog of terminal <handle> did not clear in 10 s; the launch is registered` | a warning with exit 0. Look at the terminal and tell the human |
 | `terminal <handle> is still open after close`, or an Orca error from `jitso close` | the terminal was not closed. Nothing was written: the launch is still running and has no `footer.txt`. Run `jitso close` again, or tell the human |
 | an Orca error, `terminal <handle> did not reach ... ; it was closed` | Orca did not answer or the harness never became ready. The launch folder was removed. Try once more, then report the message |
+| Claude Code asks "can't rule out a dangerous removal" for a heredoc command, even under bypassed permissions | in an unattended fleet the prompt blocks the worker for about two minutes and Orca reports "waiting on a prompt". Write the file with the Write tool, then run a plain command |
 
 ## What the hook denies
 
