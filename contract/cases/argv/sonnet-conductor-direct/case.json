@@ -5,6 +5,7 @@
     "cli/jitso/launch.ts launchForReal (direct: the prompt is the last argument; fleet: no prompt)",
     "the registered flag list is exactly this one, in this order, with no --agents and no --tools"
   ],
+  "intent": "The project registers the guard in .claude/settings.json and holds its own copy of the jitso skill, so the launch carries nothing and the argv is the v0.1.2 one.",
   "tags": [
     "posix"
   ],
@@ -12,7 +13,11 @@
     "files": {
       ".jitso/briefs/brief.md": {
         "from": "brief.md"
-      }
+      },
+      ".claude/settings.json": {
+        "from": "settings.json"
+      },
+      ".claude/skills/jitso/SKILL.md": "---\nname: jitso\ndescription: the project's own copy of the jitso skill\n---\n"
     }
   },
   "steps": [

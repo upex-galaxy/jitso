@@ -1,0 +1,137 @@
+{
+  "id": "launch/package/guard-travels-in-settings",
+  "title": "in a project whose settings do not register the guard, the launch's --settings JSON carries the guard's three hook groups running this binary",
+  "source": [
+    "intended: JITSO v0.2 plan 2.4 (the guard travels in --settings; hooks there run under --setting-sources project, measured in M0-3)"
+  ],
+  "intent": "The default project has no .claude/settings.json. The guard is the absolute path of the running jitso, quoted as one shell word, so the worker needs no jitso on its PATH. A worker that names no skill to carry writes no pkg folder and gets no --add-dir.",
+  "tags": [
+    "posix"
+  ],
+  "project": {
+    "files": {
+      ".jitso/briefs/brief.md": "## Goal\n\nFind where the sync entry point of this project is defined and explain in a few sentences how it is wired to the rest of the code.\n\n## Scope\n\nRead only. Look at `src/sync.ts` and `docs/guide.md` and nothing outside the repo. Do not change any file.\n\n## Done when\n\nYou can name the file and the line that defines the entry point, and you have checked it by reading the file.\n\n## Report format\n\nOne short paragraph with the file path, the line number and a one line summary of what it does.\n"
+    }
+  },
+  "steps": [
+    {
+      "run": [
+        "launch",
+        "--build",
+        "haiku-explorer",
+        "--brief",
+        "{{PROJECT}}/.jitso/briefs/brief.md",
+        "--mode",
+        "direct"
+      ],
+      "expect": {
+        "exit": 0,
+        "stderr": [
+          {
+            "empty": true
+          }
+        ],
+        "files": [
+          {
+            "path": ".jitso/launches/{{LAUNCH_ID}}",
+            "entries": [
+              {
+                "equals": "brief.md\ncard.txt\nmcp.json\nrun.sh"
+              }
+            ]
+          }
+        ],
+        "registry": {
+          "count": 1,
+          "events": [
+            {
+              "at": 0,
+              "event": "launch",
+              "fields": {
+                "package.guard": true,
+                "package.jitso_skill": false,
+                "package.flag": "none",
+                "package.skills": []
+              }
+            }
+          ]
+        }
+      },
+      "capture": {
+        "LAUNCH_ID": {
+          "from": "stdout",
+          "regex": "JITSO (L\\d{8}T\\d{6}-[0-9a-f]{4})"
+        }
+      }
+    },
+    {
+      "exec": "run_sh",
+      "launch": "{{LAUNCH_ID}}",
+      "expect": {
+        "exit": 0,
+        "claude": {
+          "ran": true,
+          "json_arg_after": {
+            "--settings": [
+              {
+                "path": "",
+                "keys_exact": [
+                  "skipDangerousModePermissionPrompt",
+                  "promptSuggestionEnabled",
+                  "hooks"
+                ]
+              },
+              {
+                "path": "skipDangerousModePermissionPrompt",
+                "equals": true
+              },
+              {
+                "path": "promptSuggestionEnabled",
+                "equals": false
+              },
+              {
+                "path": "hooks",
+                "equals": {
+                  "PreToolUse": [
+                    {
+                      "matcher": "Bash",
+                      "hooks": [
+                        {
+                          "type": "command",
+                          "command": "'{{JITSO}}' hook guard"
+                        }
+                      ]
+                    },
+                    {
+                      "matcher": "mcp__.*orca.*__.*",
+                      "hooks": [
+                        {
+                          "type": "command",
+                          "command": "'{{JITSO}}' hook guard"
+                        }
+                      ]
+                    }
+                  ],
+                  "SessionEnd": [
+                    {
+                      "hooks": [
+                        {
+                          "type": "command",
+                          "command": "'{{JITSO}}' hook guard"
+                        }
+                      ]
+                    }
+                  ]
+                }
+              }
+            ]
+          },
+          "argv_count": {
+            "--add-dir": 0,
+            "--settings": 1
+          }
+        }
+      }
+    }
+  ]
+}

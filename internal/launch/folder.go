@@ -63,11 +63,10 @@ func writeFolder(p prepared, d Deps, dir string) (folder, error) {
 	if p.args.Mode == ModeDirect {
 		in.InitialPrompt = FirstPrompt(f.brief, p.profile.RouteScope)
 	}
-	if !p.pkg.Empty() {
-		if in.PackageDir, err = p.pkg.write(dir); err != nil {
-			return folder{}, err
-		}
+	if in.PackageDir, err = p.pkg.write(dir); err != nil {
+		return folder{}, err
 	}
+	in.GuardCommand = p.pkg.GuardCommand
 	spec, err := p.adapter.Spec(in)
 	if err != nil {
 		return folder{}, err

@@ -168,3 +168,19 @@ func TestArgvPackageDir(t *testing.T) {
 		t.Errorf("got  %q\nwant %q", got, want)
 	}
 }
+
+func TestSettings(t *testing.T) {
+	if got, _ := Settings(""); got != settings {
+		t.Errorf("no guard: got %s", got)
+	}
+	got, err := Settings("'/b/jitso' hook guard")
+	if err != nil {
+		t.Fatal(err)
+	}
+	h := `[{"type":"command","command":"'/b/jitso' hook guard"}]`
+	want := `{"skipDangerousModePermissionPrompt":true,"promptSuggestionEnabled":false,"hooks":{"PreToolUse":[{"matcher":"Bash","hooks":` + h +
+		`},{"matcher":"mcp__.*orca.*__.*","hooks":` + h + `}],"SessionEnd":[{"hooks":` + h + `}]}}`
+	if got != want {
+		t.Errorf("got  %s\nwant %s", got, want)
+	}
+}

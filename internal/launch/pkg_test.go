@@ -7,6 +7,8 @@ import (
 	"reflect"
 	"strings"
 	"testing"
+
+	"github.com/upex-galaxy/jitso/internal/catalog"
 )
 
 func writeTree(t *testing.T, dir string, files map[string]string) {
@@ -84,5 +86,47 @@ func TestSessionSkillNames(t *testing.T) {
 	got := SessionSkillNames([]string{"sprint-testing", "user:humanizer"})
 	if !reflect.DeepEqual(got, []string{"sprint-testing", "humanizer"}) {
 		t.Errorf("got %v", got)
+	}
+}
+
+func TestPlanPackage(t *testing.T) {
+	bin := t.TempDir()
+	writeTree(t, bin, map[string]string{"jitso": ""})
+	binPath, _ := filepath.EvalSymlinks(filepath.Join(bin, "jitso"))
+	self := func() (string, error) { return binPath, nil }
+	registered := `{"hooks": {"PreToolUse": [{"matcher": "Bash", "hooks": [{"type": "command", "command": "jitso hook guard"}]},
+{"matcher": "mcp__.*orca.*__.*", "hooks": [{"type": "command", "command": "jitso hook guard"}]}],
+"SessionEnd": [{"hooks": [{"type": "command", "command": "jitso hook guard"}]}]}}`
+	home := t.TempDir()
+	writeTree(t, home, map[string]string{".claude/skills/jitso/SKILL.md": "user copy\n"})
+	user := catalog.LoadUser(home)
+	tests := []struct {
+		name       string
+		files      map[string]string
+		build      catalog.Build
+		guard      string
+		jitsoSkill bool
+		userSkills int
+	}{
+		{"worker in a bare project carries the guard", nil, catalog.Build{Tier: catalog.TierWorker}, "'" + binPath + "' hook guard", false, 0},
+		{"project registers the guard", map[string]string{".claude/settings.json": registered}, catalog.Build{Tier: catalog.TierWorker}, "", false, 0},
+		{"conductor gets the skill", map[string]string{".claude/settings.json": registered}, catalog.Build{Tier: catalog.TierConductor}, "", true, 0},
+		{"a worker that names jitso gets it", map[string]string{".claude/settings.json": registered}, catalog.Build{Tier: catalog.TierWorker, SkillsFirst: []string{"jitso"}}, "", true, 0},
+		{"a project copy wins", map[string]string{".claude/settings.json": registered, ".claude/skills/jitso/SKILL.md": "x"}, catalog.Build{Tier: catalog.TierConductor}, "", false, 0},
+		{"the user's copy replaces the embedded one", map[string]string{".claude/settings.json": registered}, catalog.Build{Tier: catalog.TierConductor, SkillsFirst: []string{"user:jitso"}}, "", false, 1},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			checkout := t.TempDir()
+			writeTree(t, checkout, tt.files)
+			b := tt.build
+			pkg, err := planPackage(&b, user, checkout, self)
+			if err != nil {
+				t.Fatal(err)
+			}
+			if pkg.GuardCommand != tt.guard || pkg.JitsoSkill != tt.jitsoSkill || len(pkg.Skills) != tt.userSkills {
+				t.Errorf("got guard %q, jitso %v, %d user skills", pkg.GuardCommand, pkg.JitsoSkill, len(pkg.Skills))
+			}
+		})
 	}
 }

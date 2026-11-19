@@ -72,7 +72,12 @@ type LaunchEvent struct {
 type Package struct {
 	// Skills are the skills copied into the launch, in skills_first order.
 	Skills []PackageSkill `json:"skills"`
-	// Flag is how the package reached the harness: add-dir.
+	// Guard is true when the guard hook travelled in the session's settings.
+	Guard bool `json:"guard"`
+	// JitsoSkill is true when the embedded jitso skill travelled.
+	JitsoSkill bool `json:"jitso_skill"`
+	// Flag is how the package folder reached the harness: add-dir, or none
+	// when no folder was written.
 	Flag string `json:"flag"`
 }
 

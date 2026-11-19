@@ -72,17 +72,18 @@ func runLaunch(ctx *Context, argv []string) error {
 		return err
 	}
 	d := launch.Deps{
-		Root:     root,
-		Catalog:  cat,
-		Registry: store,
-		Orca:     ctx.Orca(),
-		Home:     ctx.Home(),
-		Cwd:      cwd,
-		Now:      ctx.Sys.Now,
-		Sleep:    ctx.Sys.Sleep,
-		Rand:     ctx.Sys.Rand,
-		Out:      ctx.Println,
-		Warn:     ctx.Warn,
+		Root:       root,
+		Catalog:    cat,
+		Registry:   store,
+		Orca:       ctx.Orca(),
+		Home:       ctx.Home(),
+		Cwd:        cwd,
+		Now:        ctx.Sys.Now,
+		Sleep:      ctx.Sys.Sleep,
+		Rand:       ctx.Sys.Rand,
+		Out:        ctx.Println,
+		Warn:       ctx.Warn,
+		Executable: ctx.Sys.Executable,
 	}
 	if d.Now == nil {
 		d.Now = time.Now

@@ -1,0 +1,101 @@
+{
+  "id": "launch/package/guard-travels-when-registration-is-partial",
+  "title": "a project that registers the guard on some slots only still gets the guard's three groups in --settings",
+  "source": [
+    "intended: JITSO v0.2 plan 2.4 (the guard travels unless the project registers it; DECIDED: registered means all three slots)"
+  ],
+  "tags": [
+    "posix"
+  ],
+  "project": {
+    "files": {
+      ".jitso/briefs/brief.md": "## Goal\n\nFind where the sync entry point of this project is defined and explain in a few sentences how it is wired to the rest of the code.\n\n## Scope\n\nRead only. Look at `src/sync.ts` and `docs/guide.md` and nothing outside the repo. Do not change any file.\n\n## Done when\n\nYou can name the file and the line that defines the entry point, and you have checked it by reading the file.\n\n## Report format\n\nOne short paragraph with the file path, the line number and a one line summary of what it does.\n",
+      ".claude/settings.json": {
+        "from": "partial.json"
+      }
+    }
+  },
+  "steps": [
+    {
+      "run": [
+        "launch",
+        "--build",
+        "haiku-explorer",
+        "--brief",
+        "{{PROJECT}}/.jitso/briefs/brief.md",
+        "--mode",
+        "direct"
+      ],
+      "expect": {
+        "exit": 0,
+        "registry": {
+          "count": 1,
+          "events": [
+            {
+              "at": 0,
+              "event": "launch",
+              "fields": {
+                "package.guard": true
+              }
+            }
+          ]
+        }
+      },
+      "capture": {
+        "LAUNCH_ID": {
+          "from": "stdout",
+          "regex": "JITSO (L\\d{8}T\\d{6}-[0-9a-f]{4})"
+        }
+      }
+    },
+    {
+      "exec": "run_sh",
+      "launch": "{{LAUNCH_ID}}",
+      "expect": {
+        "exit": 0,
+        "claude": {
+          "ran": true,
+          "json_arg_after": {
+            "--settings": [
+              {
+                "path": "hooks",
+                "equals": {
+                  "PreToolUse": [
+                    {
+                      "matcher": "Bash",
+                      "hooks": [
+                        {
+                          "type": "command",
+                          "command": "'{{JITSO}}' hook guard"
+                        }
+                      ]
+                    },
+                    {
+                      "matcher": "mcp__.*orca.*__.*",
+                      "hooks": [
+                        {
+                          "type": "command",
+                          "command": "'{{JITSO}}' hook guard"
+                        }
+                      ]
+                    }
+                  ],
+                  "SessionEnd": [
+                    {
+                      "hooks": [
+                        {
+                          "type": "command",
+                          "command": "'{{JITSO}}' hook guard"
+                        }
+                      ]
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        }
+      }
+    }
+  ]
+}

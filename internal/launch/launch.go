@@ -53,6 +53,9 @@ type Deps struct {
 	Warn func(string)
 	// TrustExtra are extra trusted folders (tests only; no flag sets it).
 	TrustExtra []string
+	// Executable is os.Executable: the guard a launch carries runs this
+	// binary.
+	Executable func() (string, error)
 }
 
 // Run launches a, already parsed and checked (Parse, Args.Check). After the
@@ -71,7 +74,7 @@ func Run(a Args, d Deps) error {
 	if namesUserMCP(p.Build) {
 		return fail.Rejected("launch of user MCP servers is not supported yet")
 	}
-	carried, err := planPackage(p.Build, d.Catalog.Config.User)
+	carried, err := planPackage(p.Build, d.Catalog.Config.User, d.Root.Checkout, d.Executable)
 	if err != nil {
 		return err
 	}

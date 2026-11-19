@@ -93,6 +93,21 @@ func wanted(command string) []struct {
 	}
 }
 
+// HookGroups is the hooks object of the three canonical groups for command,
+// the value a launch passes in its --settings JSON when the project does not
+// register the guard itself.
+func HookGroups(command string) jsonx.Object {
+	var hooks jsonx.Object
+	for _, w := range wanted(command) {
+		list := make([]any, len(w.groups))
+		for i, g := range w.groups {
+			list[i] = g
+		}
+		hooks = append(hooks, jsonx.Field{Key: w.event, Value: list})
+	}
+	return hooks
+}
+
 // Fragment is the document jitso writes into a project with no settings file:
 // the three groups, 2-space indent, trailing newline. It is also what a person
 // adds by hand when the layout of a file is refused.

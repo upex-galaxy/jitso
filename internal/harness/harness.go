@@ -54,6 +54,9 @@ type SpecInput struct {
 	// PackageDir is the folder of what travels with the launch, whose
 	// .claude/skills the session loads; "" when nothing travels.
 	PackageDir string
+	// GuardCommand is the guard hook command the session's settings carry,
+	// "" when the project registers the guard itself.
+	GuardCommand string
 }
 
 // Subagent is one helper a session may call, from a subagent-tier build.

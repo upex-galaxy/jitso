@@ -105,7 +105,7 @@ Key: R required, O optional (validated when present), U optional and unused by t
 | `route_scope` | list of instruction-section ids, or `[none]`; absent or empty means none (the card prints `ROUTE-SCOPE: none`) | O | U | `route_scope id "<id>" is not an instruction section` |
 | `budget` | mapping with `tokens` and `usd_list_cap` | O | U | none: a build without a budget validates and launches |
 | `harness` | a harness with an adapter (`Adapters` in `internal/launch`) | L | U | validate: `harness "<h>" has no adapter`; launch: `no adapter for harness "<h>"` (exit 2) |
-| `skills_first` | list, each in `skills`, or `user:<name>` in the user allowlist | O | E | `skill "<s>" is not in the allowlist`; `skills_first must be empty in a subagent-tier build` |
+| `skills_first` | list, each in `skills`, or `user:<name>` in the user allowlist, or `jitso` (JITSO's own skill, no entry needed) | O | E | `skill "<s>" is not in the allowlist`; `skills_first must be empty in a subagent-tier build` |
 | `mcp` | list, each in `mcp`, or `user:<name>` in the user allowlist; a launch reads the project's `.mcp.json` only when it still names a server after `--mcp-exclude` | O | E | `mcp "<m>" is not in the allowlist`; `mcp must be empty in a subagent-tier build` |
 | `requires` | list of field names the launch must supply; each matches `^[a-z][a-z_]*$` | O | E | `required field "<f>" is not a field name`; `requires must be empty in a subagent-tier build` |
 | `subagents` | list of kebab-case names, each a subagent-tier build | O | E | `subagents must be a list of kebab-case names`; `subagent "<s>" is not a subagent-tier build`; `a subagent-tier build cannot list subagents` |

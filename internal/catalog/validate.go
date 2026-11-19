@@ -86,6 +86,7 @@ func ValidateBuildIn(raw any, cfg Config, routeIDs []string, layer Layer) []stri
 			if problem := scopedSkillProblem(skill, cfg); problem != "" {
 				add(problem)
 			}
+		case skill == JitsoSkill:
 		case !slices.Contains(cfg.Skills, skill):
 			add(`skill "` + skill + `" is not in the allowlist`)
 		}

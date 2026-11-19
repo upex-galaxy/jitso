@@ -1,0 +1,138 @@
+{
+  "id": "launch/package/jitso-skill-for-conductor",
+  "title": "a conductor-tier build, or a build that names jitso in skills_first, carries the embedded jitso skill in its package when the project holds no copy",
+  "source": [
+    "intended: JITSO v0.2 plan 2.4 (the jitso skill travels; jitso in skills_first needs no allowlist entry)"
+  ],
+  "intent": "The project registers the guard, so only the skill travels. jitso is not in the project's skills allowlist: the worker draft that names it still validates.",
+  "tags": [
+    "posix"
+  ],
+  "for_each": {
+    "vars": [
+      "build",
+      "load"
+    ],
+    "ids": [
+      "conductor",
+      "worker-that-names-jitso"
+    ],
+    "rows": [
+      [
+        "sonnet-conductor",
+        "Load first: orca-orchestration, test-automation\n"
+      ],
+      [
+        "names-jitso",
+        "Load first: jitso\n"
+      ]
+    ]
+  },
+  "project": {
+    "files": {
+      ".jitso/briefs/brief.md": "## Goal\n\nFind where the sync entry point of this project is defined and explain in a few sentences how it is wired to the rest of the code.\n\n## Scope\n\nRead only. Look at `src/sync.ts` and `docs/guide.md` and nothing outside the repo. Do not change any file.\n\n## Done when\n\nYou can name the file and the line that defines the entry point, and you have checked it by reading the file.\n\n## Report format\n\nOne short paragraph with the file path, the line number and a one line summary of what it does.\n",
+      ".claude/settings.json": "{\n  \"hooks\": {\n    \"PreToolUse\": [\n      {\n        \"matcher\": \"Bash\",\n        \"hooks\": [\n          {\n            \"type\": \"command\",\n            \"command\": \"jitso hook guard\"\n          }\n        ]\n      },\n      {\n        \"matcher\": \"mcp__.*orca.*__.*\",\n        \"hooks\": [\n          {\n            \"type\": \"command\",\n            \"command\": \"jitso hook guard\"\n          }\n        ]\n      }\n    ],\n    \"SessionEnd\": [\n      {\n        \"hooks\": [\n          {\n            \"type\": \"command\",\n            \"command\": \"jitso hook guard\"\n          }\n        ]\n      }\n    ]\n  }\n}\n",
+      ".jitso/drafts/names-jitso.yaml": {
+        "from": "names-jitso.yaml"
+      }
+    }
+  },
+  "steps": [
+    {
+      "run": [
+        "build",
+        "validate",
+        "{{build}}"
+      ],
+      "expect": {
+        "exit": 0
+      }
+    },
+    {
+      "run": [
+        "launch",
+        "--build",
+        "{{build}}",
+        "--brief",
+        "{{PROJECT}}/.jitso/briefs/brief.md",
+        "--mode",
+        "direct"
+      ],
+      "expect": {
+        "exit": 0,
+        "stderr": [
+          {
+            "empty": true
+          }
+        ],
+        "files": [
+          {
+            "path": ".jitso/launches/{{LAUNCH_ID}}/pkg/.claude/skills/jitso/SKILL.md",
+            "regex": [
+              "^---\\nname: jitso\\n"
+            ]
+          },
+          {
+            "path": ".jitso/launches/{{LAUNCH_ID}}/pkg/.claude/skills/jitso/references",
+            "entries": [
+              {
+                "contains": "builds.md"
+              }
+            ]
+          },
+          {
+            "path": ".jitso/launches/{{LAUNCH_ID}}/pkg/.claude/skills",
+            "entries": [
+              {
+                "equals": "jitso"
+              }
+            ]
+          },
+          {
+            "path": ".jitso/launches/{{LAUNCH_ID}}/brief.md",
+            "contains": [
+              "{{load}}"
+            ]
+          }
+        ],
+        "registry": {
+          "count": 1,
+          "events": [
+            {
+              "at": 0,
+              "event": "launch",
+              "fields": {
+                "package.jitso_skill": true,
+                "package.guard": false,
+                "package.flag": "add-dir",
+                "package.skills": []
+              }
+            }
+          ]
+        }
+      },
+      "capture": {
+        "LAUNCH_ID": {
+          "from": "stdout",
+          "regex": "JITSO (L\\d{8}T\\d{6}-[0-9a-f]{4})"
+        }
+      }
+    },
+    {
+      "exec": "run_sh",
+      "launch": "{{LAUNCH_ID}}",
+      "expect": {
+        "exit": 0,
+        "claude": {
+          "ran": true,
+          "arg_after": {
+            "--add-dir": "{{PROJECT}}/.jitso/launches/{{LAUNCH_ID}}/pkg"
+          },
+          "argv_count": {
+            "--add-dir": 1
+          }
+        }
+      }
+    }
+  ]
+}

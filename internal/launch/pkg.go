@@ -6,12 +6,17 @@ import (
 	"io/fs"
 	"os"
 	"path/filepath"
+	"slices"
 	"sort"
 	"strings"
 
 	"github.com/upex-galaxy/jitso/internal/catalog"
 	"github.com/upex-galaxy/jitso/internal/fail"
+	"github.com/upex-galaxy/jitso/internal/project"
 	"github.com/upex-galaxy/jitso/internal/registry"
+	"github.com/upex-galaxy/jitso/internal/settingsjson"
+	"github.com/upex-galaxy/jitso/internal/shell"
+	"github.com/upex-galaxy/jitso/internal/skill"
 )
 
 // PackageDir is the folder of a launch that holds what travels with it:
@@ -30,6 +35,12 @@ const (
 // carries nothing: no pkg folder is written and the argv is unchanged.
 type Package struct {
 	Skills []packageSkill
+	// JitsoSkill is true when the embedded jitso skill travels in the
+	// folder.
+	JitsoSkill bool
+	// GuardCommand is the guard hook command the session's --settings carry,
+	// "" when the project registers the guard itself.
+	GuardCommand string
 }
 
 type packageSkill struct {
@@ -45,15 +56,18 @@ type packageFile struct {
 	mode fs.FileMode
 }
 
-// Empty reports whether the launch carries nothing.
-func (p Package) Empty() bool { return len(p.Skills) == 0 }
+// hasFolder reports whether the launch writes a pkg folder.
+func (p Package) hasFolder() bool { return len(p.Skills) > 0 || p.JitsoSkill }
 
 // Ref is the package key of the launch event, nil when nothing travels.
 func (p Package) Ref() *registry.Package {
-	if p.Empty() {
+	if !p.hasFolder() && p.GuardCommand == "" {
 		return nil
 	}
-	ref := &registry.Package{Skills: []registry.PackageSkill{}, Flag: "add-dir"}
+	ref := &registry.Package{Skills: []registry.PackageSkill{}, Guard: p.GuardCommand != "", JitsoSkill: p.JitsoSkill, Flag: "none"}
+	if p.hasFolder() {
+		ref.Flag = "add-dir"
+	}
 	for _, s := range p.Skills {
 		ref.Skills = append(ref.Skills, registry.PackageSkill{Name: s.name, Scope: s.scope, SHA256: s.sha256})
 	}
@@ -61,15 +75,20 @@ func (p Package) Ref() *registry.Package {
 }
 
 // planPackage reads what the build carries: a frozen copy of each user skill
-// it names, in skills_first order. A skill over the size a launch carries is
-// a rejection.
-func planPackage(b *catalog.Build, user catalog.User) (Package, error) {
+// it names, in skills_first order; the embedded jitso skill for a conductor
+// or a build that names it, unless the checkout holds a copy of its own or
+// the build carries the user's; and the guard, unless the checkout's
+// .claude/settings.json registers it on all three slots. A skill over the
+// size a launch carries is a rejection.
+func planPackage(b *catalog.Build, user catalog.User, checkout string, executable func() (string, error)) (Package, error) {
 	var pkg Package
+	carriesJitso := false
 	for _, item := range b.SkillsFirst {
 		name, ok := catalog.UserName(item)
 		if !ok {
 			continue
 		}
+		carriesJitso = carriesJitso || name == catalog.JitsoSkill
 		s, err := readSkill(user.SkillDir(name))
 		if err != nil {
 			return Package{}, err
@@ -80,7 +99,31 @@ func planPackage(b *catalog.Build, user catalog.User) (Package, error) {
 		s.name, s.scope = name, catalog.ScopeUser
 		pkg.Skills = append(pkg.Skills, *s)
 	}
+	wantsJitso := b.Tier == catalog.TierConductor || slices.Contains(b.SkillsFirst, catalog.JitsoSkill)
+	if wantsJitso && !carriesJitso && !isFile(filepath.Join(checkout, ".claude", "skills", skill.Name, "SKILL.md")) {
+		pkg.JitsoSkill = true
+	}
+	doc, err := os.ReadFile(filepath.Join(checkout, ".claude", "settings.json"))
+	if err != nil {
+		doc = nil
+	}
+	if !settingsjson.State(doc).Registered() {
+		self, err := project.Self(executable)
+		if err != nil {
+			return Package{}, fail.Envf("cannot find this binary's own path: %v", err)
+		}
+		quoted, err := shell.Quote(self)
+		if err != nil {
+			return Package{}, fail.Envf("cannot write this binary's path into a command: %v", err)
+		}
+		pkg.GuardCommand = quoted + " hook guard"
+	}
 	return pkg, nil
+}
+
+func isFile(path string) bool {
+	info, err := os.Stat(path)
+	return err == nil && info.Mode().IsRegular()
 }
 
 // readSkill reads the regular files of the skill folder dir (a link to the
@@ -149,10 +192,22 @@ func treeHash(files []packageFile) string {
 	return hex.EncodeToString(sum[:])
 }
 
-// write writes the package under dir/pkg and returns that folder.
+// write writes the package under dir/pkg and returns that folder, "" when
+// the launch writes none.
 func (p Package) write(dir string) (string, error) {
+	if !p.hasFolder() {
+		return "", nil
+	}
 	root := filepath.Join(dir, PackageDir)
-	for _, s := range p.Skills {
+	skills := p.Skills
+	if p.JitsoSkill {
+		embedded := packageSkill{name: skill.Name}
+		for _, f := range skill.Files() {
+			embedded.files = append(embedded.files, packageFile{rel: f.Path, data: f.Data, mode: 0o644})
+		}
+		skills = append(append([]packageSkill(nil), skills...), embedded)
+	}
+	for _, s := range skills {
 		base := filepath.Join(root, ".claude", "skills", s.name)
 		for _, f := range s.files {
 			path := filepath.Join(base, filepath.FromSlash(f.rel))

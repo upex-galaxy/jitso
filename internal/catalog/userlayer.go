@@ -21,6 +21,10 @@ const (
 	UserClaudeDisplay = "~/.claude.json"
 )
 
+// JitsoSkill is JITSO's own usage skill. skills_first may name it without an
+// allowlist entry: a launch carries it when the project holds no copy.
+const JitsoSkill = "jitso"
+
 // ScopeUser is the scope of a name that resolves in the user allowlist.
 const ScopeUser = "user"
 

@@ -1,0 +1,86 @@
+{
+  "id": "launch/package/guard-skipped-when-project-has-it",
+  "title": "the guard stays out of --settings when the project's .claude/settings.json registers it on all three slots, with the bare word or an absolute path",
+  "source": [
+    "intended: JITSO v0.2 plan 2.4 (skip when the project has it: no double guard run and no second SessionEnd event)"
+  ],
+  "tags": [
+    "posix"
+  ],
+  "for_each": {
+    "var": "settings",
+    "ids": [
+      "bare-word",
+      "absolute-path"
+    ],
+    "values": [
+      "full.json",
+      "absolute.json"
+    ]
+  },
+  "project": {
+    "files": {
+      ".jitso/briefs/brief.md": "## Goal\n\nFind where the sync entry point of this project is defined and explain in a few sentences how it is wired to the rest of the code.\n\n## Scope\n\nRead only. Look at `src/sync.ts` and `docs/guide.md` and nothing outside the repo. Do not change any file.\n\n## Done when\n\nYou can name the file and the line that defines the entry point, and you have checked it by reading the file.\n\n## Report format\n\nOne short paragraph with the file path, the line number and a one line summary of what it does.\n",
+      ".claude/settings.json": {
+        "from": "{{settings}}"
+      }
+    }
+  },
+  "steps": [
+    {
+      "run": [
+        "launch",
+        "--build",
+        "haiku-explorer",
+        "--brief",
+        "{{PROJECT}}/.jitso/briefs/brief.md",
+        "--mode",
+        "direct"
+      ],
+      "expect": {
+        "exit": 0,
+        "registry": {
+          "count": 1,
+          "events": [
+            {
+              "at": 0,
+              "event": "launch",
+              "fields": {
+                "package": {
+                  "absent": true
+                }
+              }
+            }
+          ]
+        }
+      },
+      "capture": {
+        "LAUNCH_ID": {
+          "from": "stdout",
+          "regex": "JITSO (L\\d{8}T\\d{6}-[0-9a-f]{4})"
+        }
+      }
+    },
+    {
+      "exec": "run_sh",
+      "launch": "{{LAUNCH_ID}}",
+      "expect": {
+        "exit": 0,
+        "claude": {
+          "ran": true,
+          "json_arg_after": {
+            "--settings": [
+              {
+                "path": "",
+                "keys_exact": [
+                  "skipDangerousModePermissionPrompt",
+                  "promptSuggestionEnabled"
+                ]
+              }
+            ]
+          }
+        }
+      }
+    }
+  ]
+}
