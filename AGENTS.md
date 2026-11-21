@@ -4,7 +4,7 @@ The only instruction body of this repo. Claude Code (2.1.277 or later), OpenCode
 
 ## 1. What this repo is
 
-JITSO is a strategy for orchestrating agents based on builds: a build is an approved profile (model, effort, MCP servers, skills, rules) that a session is launched with. The `jitso` CLI launches each worker from a build, composes the launch line in code, logs every launch to a local event log, and reads the log back to close finished launches and to find workers that no launch explains. Its core is a short rules text appended to the end of every launched session's `brief.md` (start sessions only with the card's `launch:` line, stay inside the card's budget when the build has one, load the card's skills, leave `jitso/` and `.jitso/` alone except your own draft), plus patterns and a schema with validators. JITSO ships no builds of its own: each project writes its builds and JITSO validates them (`docs/decisions.md`, D5). This repo holds the Go CLI and its hooks, the language-independent contract they pass (the earlier TypeScript implementation is gone from the suite; its code is kept at the tag `jitso-oracle-1` of the original QA boilerplate repo), the schema of a build and the validators that check it, and the release files (written, nothing published).
+JITSO is a strategy for orchestrating agents based on builds: a build is an approved profile (model, effort, MCP servers, skills, rules) that a session is launched with. The `jitso` CLI launches each worker from a build, composes the launch line in code, logs every launch to a local event log, and reads the log back to close finished launches and to find workers that no launch explains. Its core is a short rules text appended to the end of every launched session's `brief.md` (start sessions only with the card's `launch:` line, stay inside the card's budget when the build has one, load the card's skills, leave `jitso/` and `.jitso/` alone except your own draft), plus patterns and a schema with validators. JITSO ships no builds of its own: each project writes its builds and JITSO validates them (`docs/decisions.md`, D5). This repo holds the Go CLI and its hooks, the language-independent contract they pass (the earlier TypeScript implementation is gone from the suite; its code is kept at the tag `jitso-oracle-1` of the original QA boilerplate repo), the schema of a build and the validators that check it, and the release files (section 2 says where the published releases are).
 
 ## 2. Repo map
 
@@ -20,7 +20,7 @@ JITSO is a strategy for orchestrating agents based on builds: a build is an appr
 | `docs/build-schema.md` | the schema of a build: where builds come from, tiers, fields, drafts, the exact validator texts |
 | `docs/release.md` | the release procedure; every outward step is marked OWNER-GATED |
 | `scripts/`, `.github/workflows/` | packaging, the install script and its offline test, the release workflow |
-| `.session/` | local history and handoffs, gitignored, mostly Spanish: never commit it, never quote it or its tracker keys in committed files |
+| `.session/` | local history, handoffs and the living records of section 10, gitignored, mostly Spanish: never commit it, never quote it or its tracker keys in committed files |
 
 Published releases are the tags and GitHub Releases of `origin`; the release workflow also runs the contract suite on Linux. Not done: a real Orca run, the real Claude Code interactive path, and Windows testing. The contract runs against the built Go binary only.
 
@@ -35,7 +35,10 @@ Load the skill before acting when the request matches. If none matches and the t
 | staging, committing, a branch, a worktree, history, trailers, a remote | `git-flow-master` |
 | the context window is high, or the work must continue in a fresh session | `session-handoff` |
 | a release, an install script, publishing anything | no skill: `docs/release.md` is the procedure, and every outward step is owner-gated (rule 4) |
-| Orca workers or terminals | no repo skill: use the user-level `orca-cli` / `orchestration` skills if installed; when `orca` is absent, say nothing about it |
+| Orca workers, terminals, a conductor or a fleet | no repo skill: the user-level `agent-orchestration` skill if installed (it loads `orca-cli` and `orchestration`); when `orca` is absent, say nothing about it |
+| using JITSO itself: a launch, a brief, a card, a build in a project that has `jitso/jitso.yaml` | the user-level `jitso` skill, the installed copy of `internal/skill/jitso/` |
+| a decision that needs the owner | small ones (a choice, a default, a deferral) through the harness question tool; heavy ones (architecture, real tradeoffs, a long report) in the user-level `mkd` deck if installed |
+| writing or editing a skill or this file | the user-level `writing-for-agents` and `skill-creator` skills if installed |
 
 ## 4. Critical rules
 
@@ -85,5 +88,11 @@ Single branch `main`. The remote `origin` is the public repository named in `doc
 | defect ids of the port (history) | `docs/decisions.md`, section "Defect ids (history)" |
 
 A new decision is a new row with the options beaten and the why. A reversed decision gets a new row naming the one it supersedes; the old row stays. An `ask` row is the owner's: recommend, do not decide.
+
+## 10. Session records, memory and related repos
+
+- **Living records.** `.session/acr/DIARIO.md` is the chronological diary: append one line per milestone with its evidence label (rule 11). `.session/PIZARRA-JITSO.md` is the owner's board: tick an item only after verifying it. Handoffs go in `.session/handoffs/`. `.session/CONTEXTO-REPOS.md` maps the related repos on this machine. Keep all four current; they are local and never committed.
+- **Memory.** JITSO's history up to 2026-11-21 was saved from sessions in the QA boilerplate, so a memory tool that scopes by project files it under that repo. When looking for earlier JITSO work, search across projects.
+- **Related repos.** JITSO started in `upex-galaxy/agentic-qa-boilerplate`. That repo and `upex-galaxy/agentic-dev-boilerplate` never carry JITSO: their settings and instruction files flow into every downstream project. A project adopts JITSO on its own, with its `jitso/jitso.yaml` and `jitso/builds/`.
 
 Edit this file only with the owner's OK, keep it under 200 lines, and move any procedure that grows here into a skill.
