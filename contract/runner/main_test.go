@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"errors"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -43,6 +44,10 @@ func TestMulticall(t *testing.T) {
 	cmd.Env = sb.Env(nil)
 	out, err := cmd.Output()
 	if err != nil {
+		var ee *exec.ExitError
+		if errors.As(err, &ee) {
+			t.Fatalf("fake orca: %v: %s", err, ee.Stderr)
+		}
 		t.Fatalf("fake orca: %v", err)
 	}
 	var msg struct {

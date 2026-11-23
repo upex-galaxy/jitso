@@ -296,7 +296,7 @@ func (c *Case) validate() error {
 	if err != nil {
 		return err
 	}
-	builtins := Vars{VarProject: "/stub/project", VarHome: "/stub/home", VarBin: "/stub/bin", VarJitso: "/stub/jitso"}
+	builtins := Vars{VarProject: stubPath("/stub/project"), VarHome: stubPath("/stub/home"), VarBin: stubPath("/stub/bin"), VarJitso: stubPath("/stub/jitso")}
 	for _, name := range c.worktrees {
 		builtins[WorktreeVar(name)] = "/stub/worktrees/" + name
 	}
@@ -335,3 +335,6 @@ func contains(list []string, s string) bool {
 	}
 	return false
 }
+
+// stubPath is an absolute stand-in path on every OS: Windows needs a drive letter.
+func stubPath(p string) string { return filepath.Join(filepath.VolumeName(os.TempDir()), p) }

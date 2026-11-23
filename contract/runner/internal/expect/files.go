@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"runtime"
 	"strings"
 
 	"jitso-contract-runner/internal/jsonx"
@@ -143,7 +144,7 @@ func (fc fileCheck) eval(project string) []Failure {
 	if fc.hasEntries {
 		out = append(out, fc.evalEntries(label, path)...)
 	}
-	if fc.executable != nil {
+	if fc.executable != nil && runtime.GOOS != "windows" { // Windows has no execute bit
 		st, err := os.Stat(path)
 		isExec := err == nil && st.Mode()&0o100 != 0
 		if isExec != *fc.executable {

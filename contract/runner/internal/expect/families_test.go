@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"os"
 	"path/filepath"
+	"runtime"
 	"strings"
 	"testing"
 	"time"
@@ -93,7 +94,11 @@ func TestFileChecks(t *testing.T) {
 		{"path":"run.sh","executable":false,"equals":"x"},
 		{"path":"mcp.json","json":[{"path":"mcpServers.dbhub.env","equals":{}}]},
 		{"path":"nope"}]}`
-	expectFailures(t, "four break", build(t, bad, KindWrite).Eval(obs), 4)
+	wantBreaks := 4
+	if runtime.GOOS == "windows" {
+		wantBreaks = 3 // no execute bit to fail
+	}
+	expectFailures(t, "four break", build(t, bad, KindWrite).Eval(obs), wantBreaks)
 }
 
 func TestRegistryChecks(t *testing.T) {

@@ -1,8 +1,6 @@
 package spec
 
 import (
-	"os"
-	"path/filepath"
 	"strings"
 	"testing"
 )
@@ -152,5 +150,4 @@ func TestGitInitStep(t *testing.T) {
 	}
 }
 
-// stub is an absolute path on every OS: Windows needs a drive letter.
-func stub(p string) string { return filepath.Join(filepath.VolumeName(os.TempDir()), p) }
+func stub(p string) string { return stubPath(p) }

@@ -31,6 +31,7 @@ jobs:
         working-directory: contract/runner
         run: go test ./... 2>&1
       - name: Build
+        if: always()
         run: |
           (cd contract/runner && go build -o "$RUNNER_TEMP/jitso-contract.exe" .)
           go build -o "$RUNNER_TEMP/jitso.exe" ./cmd/jitso
