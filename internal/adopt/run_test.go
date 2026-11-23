@@ -3,6 +3,7 @@ package adopt
 import (
 	"bytes"
 	"errors"
+	"os"
 	"path/filepath"
 	"strings"
 	"testing"
@@ -235,4 +236,71 @@ func TestPreviewKinds(t *testing.T) {
 			t.Errorf("got %q", b.String())
 		}
 	})
+}
+
+func TestRunPartsOnePreviewOneDecision(t *testing.T) {
+	a, b := newRunEnv(t), newRunEnv(t)
+	empty := Part{Label: "nothing here", Options: a.opts}
+	parts := []Part{
+		{Label: "first root", Options: a.opts, Plan: a.plan(t)},
+		empty,
+		{Label: "second root", Options: b.opts, Plan: b.plan(t)},
+	}
+	var out bytes.Buffer
+	p := a.ports("y\n", true)
+	p.Stdout = &out
+	p.Rand = bytes.NewReader([]byte{1, 2, 3, 4, 5, 6, 7, 8})
+	if err := RunParts("init", parts, false, false, "all set", p); err != nil {
+		t.Fatal(err)
+	}
+	got := out.String()
+	if strings.Count(got, Prompt) != 1 || strings.Contains(got, "nothing here") {
+		t.Fatalf("want one prompt and no empty part:\n%s", got)
+	}
+	if !strings.Contains(got, "jitso init: first root\n"+wantPreview+"jitso init: second root\n") {
+		t.Fatalf("labels and previews out of order:\n%s", got)
+	}
+	if strings.Count(got, "jitso init: done\n") != 1 || strings.Count(got, "note: commit them\n") != 2 {
+		t.Fatalf("want one done line and each part's notes:\n%s", got)
+	}
+}
+
+func TestRunPartsNothingToDoAndDryRun(t *testing.T) {
+	e := newRunEnv(t)
+	var out bytes.Buffer
+	p := e.ports("", false)
+	p.Stdout = &out
+	if err := RunParts("init", []Part{{Label: "x", Options: e.opts}}, false, false, "all set", p); err != nil || out.String() != "jitso init: nothing to do (all set)\n" {
+		t.Fatalf("nothing to do: %v %q", err, out.String())
+	}
+	out.Reset()
+	if err := RunParts("init", []Part{{Label: "x", Options: e.opts, Plan: e.plan(t)}}, true, true, "", p); err != nil || !strings.HasSuffix(out.String(), "jitso init: dry run, nothing written\n") {
+		t.Fatalf("dry run: %v %q", err, out.String())
+	}
+	out.Reset()
+	err := RunParts("init", []Part{{Label: "x", Options: e.opts, Plan: e.plan(t)}}, false, false, "", p)
+	var fe *fail.Error
+	if !errors.As(err, &fe) {
+		t.Fatalf("no terminal, no --yes: want a refusal, got %v", err)
+	}
+}
+
+func TestRunPartsRefusesBeforeAnyPartIsApplied(t *testing.T) {
+	a, b := newRunEnv(t), newRunEnv(t)
+	first := a.plan(t)
+	// The second part writes a file whose path is a folder.
+	if err := os.MkdirAll(filepath.Join(b.root, "dir.txt"), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	second := Plan{Changes: []Change{{Path: filepath.Join(b.root, "dir.txt"), Display: "dir.txt", Kind: KindFile, New: []byte("x\n")}}}
+	var out bytes.Buffer
+	p := a.ports("", false)
+	p.Stdout = &out
+	err := RunParts("init", []Part{{Label: "one", Options: a.opts, Plan: first}, {Label: "two", Options: b.opts, Plan: second}}, false, true, "", p)
+	if err == nil || !strings.Contains(err.Error(), "dir.txt is a folder") {
+		t.Fatalf("want the folder refusal, got %v", err)
+	}
+	if got := read(t, filepath.Join(a.root, "a.txt")); got != "one\ntwo\n" {
+		t.Fatalf("first part was applied: %q", got)
+	}
 }

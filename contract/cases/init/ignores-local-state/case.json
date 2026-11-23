@@ -1,0 +1,53 @@
+{
+  "id": "init/ignores-local-state",
+  "title": "jitso init adds .jitso/ to .gitignore when git does not ignore it, once",
+  "source": [
+    "intended: jitso init, one command for every adoption step (owner request 2026-11-23)"
+  ],
+  "intent": "INTENDED behavior. .jitso/ holds local state (the launch log, drafts, backups) that is never committed, and doctor warns when git does not ignore it. init appends the line .jitso/ to the primary checkout's .gitignore (creating it when absent) and a second run leaves it alone.",
+  "project": {
+    "base": "default",
+    "files": {
+      ".gitignore": null
+    }
+  },
+  "steps": [
+    {
+      "run": [
+        "init",
+        "--harness",
+        "claude",
+        "--yes"
+      ],
+      "expect": {
+        "exit": 0,
+        "stdout": [
+          "jitso init: local state (.gitignore)",
+          "created .gitignore"
+        ],
+        "files": [
+          {
+            "path": ".gitignore",
+            "equals": ".jitso/\n"
+          }
+        ]
+      }
+    },
+    {
+      "run": [
+        "init",
+        "--harness",
+        "claude",
+        "--yes"
+      ],
+      "expect": {
+        "exit": 0,
+        "stdout": [
+          {
+            "equals": "jitso init: nothing to do (JITSO is already set up here)\n"
+          }
+        ]
+      }
+    }
+  ]
+}

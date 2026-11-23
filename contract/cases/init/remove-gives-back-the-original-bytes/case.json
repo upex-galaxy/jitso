@@ -1,0 +1,102 @@
+{
+  "id": "init/remove-gives-back-the-original-bytes",
+  "title": "jitso init then jitso init --remove gives back the user's own AGENTS.md and .claude/settings.json byte for byte, and deletes what init created",
+  "source": [
+    "intended: jitso init, one command for every adoption step (owner request 2026-11-23); review of v0.3.0 (byte-exact undo across parts)"
+  ],
+  "intent": "INTENDED behavior. init composes the adoption plans, so its undo keeps their byte-exact property: files the user already had come back with the same bytes, files init created are deleted, and the folders it made are pruned. jitso/jitso.yaml and .gitignore are the project's and stay.",
+  "project": {
+    "base": "default",
+    "files": {
+      "AGENTS.md": "# My project\n\nOwn rules here.\n",
+      ".claude/settings.json": "{\n  \"permissions\": {\n    \"allow\": [\n      \"Bash(ls:*)\"\n    ]\n  }\n}\n"
+    }
+  },
+  "steps": [
+    {
+      "run": [
+        "init",
+        "--harness",
+        "claude,codex",
+        "--yes"
+      ],
+      "expect": {
+        "exit": 0,
+        "files": [
+          {
+            "path": "AGENTS.md",
+            "regex": [
+              "^# My project\n\nOwn rules here.\n",
+              "BEGIN JITSO block="
+            ]
+          },
+          {
+            "path": ".claude/settings.json",
+            "regex": [
+              "jitso hook guard",
+              "Bash\\(ls:\\*\\)"
+            ]
+          },
+          {
+            "path": ".codex/hooks.json"
+          }
+        ]
+      }
+    },
+    {
+      "run": [
+        "init",
+        "--harness",
+        "claude,codex",
+        "--remove",
+        "--yes"
+      ],
+      "expect": {
+        "exit": 0,
+        "stdout": [
+          {
+            "regex": "jitso init: done\\n$"
+          }
+        ],
+        "files": [
+          {
+            "path": "AGENTS.md",
+            "equals": "# My project\n\nOwn rules here.\n"
+          },
+          {
+            "path": ".claude/settings.json",
+            "equals": "{\n  \"permissions\": {\n    \"allow\": [\n      \"Bash(ls:*)\"\n    ]\n  }\n}\n"
+          },
+          {
+            "path": ".codex",
+            "exists": false
+          },
+          {
+            "path": "{{HOME}}/.agents",
+            "exists": false
+          },
+          {
+            "path": "jitso/jitso.yaml"
+          }
+        ]
+      }
+    },
+    {
+      "run": [
+        "init",
+        "--harness",
+        "claude,codex",
+        "--remove",
+        "--yes"
+      ],
+      "expect": {
+        "exit": 0,
+        "stdout": [
+          {
+            "equals": "jitso init: nothing to do (no JITSO setup to remove)\n"
+          }
+        ]
+      }
+    }
+  ]
+}

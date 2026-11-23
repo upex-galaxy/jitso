@@ -1,0 +1,47 @@
+{
+  "title": "jitso init outside a git checkout sets up the user account only and says how to set up a project",
+  "source": [
+    "intended: jitso init, one command for every adoption step (owner request 2026-11-23)"
+  ],
+  "intent": "INTENDED behavior. From a folder that is not a git checkout, init installs the user skill and prints a note that a project is set up by running init inside it. --project-only there is exit 3, because there is no project.",
+  "steps": [
+    {
+      "run": [
+        "init",
+        "--yes"
+      ],
+      "cwd": "{{HOME}}",
+      "expect": {
+        "exit": 0,
+        "stdout": [
+          "jitso init: skill for your user account",
+          "created ~/.agents/skills/jitso/SKILL.md",
+          "note: this folder is not inside a git checkout, so only your user account was set up; run jitso init inside a project to set it up too",
+          {
+            "regex": "jitso init: done\\n"
+          }
+        ],
+        "files": [
+          {
+            "path": "{{HOME}}/.agents/skills/jitso/SKILL.md"
+          }
+        ]
+      }
+    },
+    {
+      "run": [
+        "init",
+        "--project-only",
+        "--yes"
+      ],
+      "cwd": "{{HOME}}",
+      "expect": {
+        "exit": 3,
+        "stderr": [
+          "is not inside a git checkout"
+        ]
+      }
+    }
+  ],
+  "id": "init/outside-git-sets-up-the-user"
+}

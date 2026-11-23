@@ -1,0 +1,78 @@
+{
+  "title": "jitso init in a project without jitso/jitso.yaml creates the allowlists skeleton, so the guard has a project to protect",
+  "source": [
+    "intended: jitso init, one command for every adoption step (owner request 2026-11-23)"
+  ],
+  "intent": "INTENDED behavior. The guard does nothing in a folder without jitso/jitso.yaml, so init creates the skeleton (empty allowlists, the same file build new writes) when the primary checkout has none. It is a brief preview line, and --remove leaves it alone: it holds the project's own allowlists.",
+  "project": {
+    "base": "default",
+    "files": {
+      "jitso": null
+    }
+  },
+  "steps": [
+    {
+      "run": [
+        "init",
+        "--harness",
+        "claude",
+        "--yes"
+      ],
+      "expect": {
+        "exit": 0,
+        "stdout": [
+          "jitso init: allowlists (jitso/jitso.yaml)",
+          "created jitso/jitso.yaml",
+          {
+            "regex": "jitso init: done\\n"
+          }
+        ],
+        "files": [
+          {
+            "path": "jitso/jitso.yaml",
+            "regex": [
+              "models"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "run": [
+        "init",
+        "--harness",
+        "claude",
+        "--remove",
+        "--yes"
+      ],
+      "expect": {
+        "exit": 0,
+        "stdout": [
+          "removed ~/.agents/skills/jitso/SKILL.md",
+          "removed .claude/settings.json",
+          {
+            "regex": "jitso init: done\\n"
+          }
+        ],
+        "files": [
+          {
+            "path": "jitso/jitso.yaml"
+          },
+          {
+            "path": "{{HOME}}/.agents",
+            "exists": false
+          },
+          {
+            "path": ".claude",
+            "exists": false
+          },
+          {
+            "path": "AGENTS.md",
+            "exists": false
+          }
+        ]
+      }
+    }
+  ],
+  "id": "init/fresh-project-gets-the-allowlists"
+}

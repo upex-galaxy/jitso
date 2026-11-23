@@ -1,0 +1,43 @@
+{
+  "title": "jitso init --project-only puts the skill in the project and writes nothing under the home folder",
+  "source": [
+    "intended: jitso init, one command for every adoption step (owner request 2026-11-23)"
+  ],
+  "intent": "INTENDED behavior. `--project-only` is for a project that keeps every JITSO file in its own checkout: the skill goes to .agents/skills/jitso with the link .claude/skills/jitso, next to the AGENTS.md block and the guard, and the home folder is not touched.",
+  "steps": [
+    {
+      "run": [
+        "init",
+        "--project-only",
+        "--harness",
+        "claude",
+        "--yes"
+      ],
+      "expect": {
+        "exit": 0,
+        "stdout": [
+          "jitso init: skill in this project",
+          "created .agents/skills/jitso/SKILL.md",
+          "created .claude/settings.json",
+          {
+            "regex": "jitso init: done\\n"
+          }
+        ],
+        "files": [
+          {
+            "path": ".agents/skills/jitso/SKILL.md"
+          },
+          {
+            "path": "{{HOME}}/.agents",
+            "exists": false
+          },
+          {
+            "path": "{{HOME}}/.claude",
+            "exists": false
+          }
+        ]
+      }
+    }
+  ],
+  "id": "init/project-only"
+}

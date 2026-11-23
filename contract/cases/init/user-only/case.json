@@ -1,0 +1,39 @@
+{
+  "title": "jitso init --user-only inside a project changes nothing in the project",
+  "source": [
+    "intended: jitso init, one command for every adoption step (owner request 2026-11-23)"
+  ],
+  "intent": "INTENDED behavior. `--user-only` sets up the user account (the skill) even inside a project, and writes no project file.",
+  "steps": [
+    {
+      "run": [
+        "init",
+        "--user-only",
+        "--yes"
+      ],
+      "expect": {
+        "exit": 0,
+        "stdout": [
+          "created ~/.agents/skills/jitso/SKILL.md",
+          {
+            "regex": "jitso init: done\\n"
+          }
+        ],
+        "files": [
+          {
+            "path": "AGENTS.md",
+            "exists": false
+          },
+          {
+            "path": ".claude",
+            "exists": false
+          },
+          {
+            "path": "{{HOME}}/.agents/skills/jitso/SKILL.md"
+          }
+        ]
+      }
+    }
+  ],
+  "id": "init/user-only"
+}

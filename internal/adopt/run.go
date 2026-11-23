@@ -114,6 +114,90 @@ func Run(opts Options, plan Plan, p Ports) error {
 	return nil
 }
 
+// Part is one plan of a run that changes several scope roots at once (jitso
+// init): its label line, the options of its root (Scope, Version, Root,
+// BackupsDir, Display; Command, DryRun and Yes come from RunParts) and its
+// plan.
+type Part struct {
+	Label   string
+	Options Options
+	Plan    Plan
+}
+
+// RunParts is Run for several plans with one preview and one decision. Every
+// plan is validated first. The parts that change nothing are left out; when
+// none is left it prints `jitso <command>: nothing to do (<why>)`. Each
+// remaining part prints `jitso <command>: <label>` and its preview, then the
+// one decision is taken as Run takes it; on apply each part is applied with
+// its own backup (one per root) and its notes, and one `jitso <command>:
+// done` line ends the run. A failed part stops the run: the parts before it
+// stay applied, each with its backup, as their lines said.
+func RunParts(command string, parts []Part, dryRun, yes bool, why string, p Ports) error {
+	var live []Part
+	for _, part := range parts {
+		if err := part.Plan.Validate(part.Options.Root); err != nil {
+			return err
+		}
+		// A link or a folder where a file goes fails Apply before it writes;
+		// checked here for every part, so no part is applied before another
+		// one is refused.
+		if err := preflight(part.Plan.Effective()); err != nil {
+			return err
+		}
+		if !part.Plan.Empty() {
+			live = append(live, part)
+		}
+	}
+	if len(live) == 0 {
+		if why == "" {
+			fmt.Fprintf(p.Stdout, "jitso %s: nothing to do\n", command)
+		} else {
+			fmt.Fprintf(p.Stdout, "jitso %s: nothing to do (%s)\n", command, why)
+		}
+		return nil
+	}
+	for _, part := range live {
+		fmt.Fprintf(p.Stdout, "jitso %s: %s\n", command, part.Label)
+		Preview(p.Stdout, part.Plan)
+	}
+
+	c := Confirm{DryRun: dryRun, Yes: yes, Terminal: p.Terminal}
+	d := c.Before()
+	if d == DecideAsk {
+		io.WriteString(p.Stdout, Prompt)
+		line, eof := readLine(p.Stdin)
+		d = Reply(line, eof)
+	}
+	switch d {
+	case DecideDryRun:
+		fmt.Fprintf(p.Stdout, "jitso %s: dry run, nothing written\n", command)
+		return nil
+	case DecideApply:
+	default:
+		return d.Err()
+	}
+
+	now, rnd := p.Now, p.Rand
+	if now == nil {
+		now = time.Now
+	}
+	if rnd == nil {
+		rnd = rand.Reader
+	}
+	for _, part := range live {
+		o := part.Options
+		spec := BackupSpec{Dir: o.BackupsDir, Root: o.Root, Command: command, Scope: o.Scope, Version: o.Version, Now: now, Rand: rnd, Display: o.Display}
+		if err := Apply(spec, part.Plan.Effective(), p.Stdout); err != nil {
+			return err
+		}
+		for _, note := range part.Plan.Notes {
+			fmt.Fprintln(p.Stdout, note)
+		}
+	}
+	fmt.Fprintf(p.Stdout, "jitso %s: done\n", command)
+	return nil
+}
+
 // readLine reads one line from r. eof is true when the input ended: before
 // any byte, or with a last line that had no newline.
 func readLine(r io.Reader) (line string, eof bool) {

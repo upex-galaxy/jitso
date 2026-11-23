@@ -1,0 +1,90 @@
+{
+  "title": "jitso init rejects unknown arguments, a positional word and --project-only with --user-only, before anything is written",
+  "source": [
+    "intended: jitso init, one command for every adoption step (owner request 2026-11-23)"
+  ],
+  "intent": "INTENDED behavior. Usage errors are exit 2 with JITSO REJECTED and write nothing; `init --help` prints the usage and exits 0.",
+  "steps": [
+    {
+      "run": [
+        "init",
+        "--scope",
+        "user"
+      ],
+      "expect": {
+        "exit": 2,
+        "stderr": [
+          "JITSO REJECTED: unknown argument \"--scope\""
+        ]
+      }
+    },
+    {
+      "run": [
+        "init",
+        "now"
+      ],
+      "expect": {
+        "exit": 2,
+        "stderr": [
+          "JITSO REJECTED: unknown argument \"now\""
+        ]
+      }
+    },
+    {
+      "run": [
+        "init",
+        "--project-only",
+        "--user-only"
+      ],
+      "expect": {
+        "exit": 2,
+        "stderr": [
+          "JITSO REJECTED: --project-only and --user-only cannot be used together"
+        ],
+        "files": [
+          {
+            "path": "{{HOME}}/.agents",
+            "exists": false
+          },
+          {
+            "path": "AGENTS.md",
+            "exists": false
+          }
+        ]
+      }
+    },
+    {
+      "run": [
+        "init",
+        "--user-only",
+        "--harness",
+        "codex"
+      ],
+      "expect": {
+        "exit": 2,
+        "stderr": [
+          "JITSO REJECTED: --harness picks the project's guard, so it cannot be used with --user-only"
+        ]
+      }
+    },
+    {
+      "run": [
+        "init",
+        "--help"
+      ],
+      "expect": {
+        "exit": 0,
+        "stdout": [
+          "Usage: jitso init",
+          "--project-only",
+          "--user-only",
+          "--harness",
+          "--remove",
+          "--dry-run",
+          "--yes"
+        ]
+      }
+    }
+  ],
+  "id": "init/usage-errors"
+}

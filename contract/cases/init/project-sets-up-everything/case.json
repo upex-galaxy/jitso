@@ -1,0 +1,144 @@
+{
+  "title": "jitso init in a project installs the user skill, the AGENTS.md block and the guard of the chosen harnesses in one preview and one confirmation, then nothing is left to do",
+  "source": [
+    "intended: jitso init, one command for every adoption step (owner request 2026-11-23)"
+  ],
+  "intent": "INTENDED behavior. Inside a git checkout `jitso init --harness claude,codex --yes` writes the jitso skill under the home folder (~/.agents/skills/jitso and the link ~/.claude/skills/jitso), the JITSO block in AGENTS.md, and the guard in .claude/settings.json and .codex/hooks.json. A dry run first shows every part under its label and writes nothing. Without --yes and without a terminal it is refused once and writes nothing. The run ends with one `jitso init: done` line and the next step. A second run is nothing to do. It never writes CLAUDE.md.",
+  "steps": [
+    {
+      "run": [
+        "init",
+        "--harness",
+        "claude,codex",
+        "--dry-run"
+      ],
+      "expect": {
+        "exit": 0,
+        "stdout": [
+          "jitso init: skill for your user account",
+          "jitso init: instructions (AGENTS.md)",
+          "jitso init: guard for claude, codex",
+          "+++ b/.claude/settings.json",
+          "+++ b/.codex/hooks.json",
+          {
+            "regex": "jitso init: dry run, nothing written\\n$"
+          }
+        ],
+        "files": [
+          {
+            "path": "{{HOME}}/.agents",
+            "exists": false
+          },
+          {
+            "path": ".claude",
+            "exists": false
+          },
+          {
+            "path": ".codex",
+            "exists": false
+          },
+          {
+            "path": "AGENTS.md",
+            "exists": false
+          }
+        ]
+      }
+    },
+    {
+      "run": [
+        "init",
+        "--harness",
+        "claude,codex"
+      ],
+      "expect": {
+        "exit": 2,
+        "stderr": [
+          "this changes files"
+        ],
+        "files": [
+          {
+            "path": "{{HOME}}/.agents",
+            "exists": false
+          },
+          {
+            "path": ".claude",
+            "exists": false
+          },
+          {
+            "path": "AGENTS.md",
+            "exists": false
+          }
+        ]
+      }
+    },
+    {
+      "run": [
+        "init",
+        "--harness",
+        "claude,codex",
+        "--yes"
+      ],
+      "expect": {
+        "exit": 0,
+        "stdout": [
+          "created ~/.agents/skills/jitso/SKILL.md",
+          "linked ~/.claude/skills/jitso -> ../../.agents/skills/jitso",
+          "created AGENTS.md",
+          "created .claude/settings.json",
+          "created .codex/hooks.json",
+          "note: Codex runs project hooks only in a trusted project, after you approve them in Codex (/hooks)",
+          {
+            "not_regex": "jitso init: done[\\s\\S]*jitso init: done"
+          },
+          {
+            "regex": "jitso init: done\\nnext: "
+          }
+        ],
+        "files": [
+          {
+            "path": "{{HOME}}/.agents/skills/jitso/SKILL.md"
+          },
+          {
+            "path": "AGENTS.md",
+            "regex": [
+              "<!-- BEGIN JITSO block="
+            ]
+          },
+          {
+            "path": ".claude/settings.json",
+            "regex": [
+              "jitso hook guard"
+            ]
+          },
+          {
+            "path": ".codex/hooks.json",
+            "regex": [
+              "jitso hook guard"
+            ]
+          },
+          {
+            "path": "CLAUDE.md",
+            "exists": false
+          }
+        ]
+      }
+    },
+    {
+      "run": [
+        "init",
+        "--harness",
+        "claude,codex",
+        "--yes"
+      ],
+      "expect": {
+        "exit": 0,
+        "stdout": [
+          {
+            "equals": "jitso init: nothing to do (JITSO is already set up here)\n"
+          }
+        ]
+      }
+    }
+  ],
+  "id": "init/project-sets-up-everything"
+}
