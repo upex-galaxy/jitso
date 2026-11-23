@@ -1,0 +1,174 @@
+# CI workflow. Every push to main and every pull request runs it, and the
+# release workflow calls it (workflow_call) before it builds anything, so a
+# release is verified by the same jobs (docs/release.md).
+#
+# Every `uses:` line below is pinned to a full commit SHA with its release tag as
+# the comment, the same SHAs as release.yml (docs/release.md, pre-flight). Only
+# GitHub-owned actions are used.
+name: ci
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+  workflow_call:
+
+permissions: {}
+
+# One group per ref. A newer push to the same pull request cancels the older
+# run; runs on main and runs called by a release are never cancelled. When the
+# release calls this workflow the ref is the tag, and the release workflow's own
+# group is release-<ref>, so the two never share a group.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+env:
+  GO_VERSION: '1.27.4'
+  CGO_ENABLED: '0'
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  verify:
+    name: verify (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 30
+    permissions:
+      contents: read
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-24.04, macos-15, windows-2025]
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        with:
+          go-version: ${{ env.GO_VERSION }}
+          cache: false
+
+      - name: Verify the CLI module
+        run: |
+          go test ./...
+          go vet ./...
+
+      - name: gofmt, the CLI module
+        if: runner.os == 'Linux'
+        run: test -z "$(gofmt -l .)"
+
+      - name: Verify the contract runner
+        working-directory: contract/runner
+        run: |
+          go test ./...
+          go vet ./...
+
+      - name: gofmt, the contract runner
+        if: runner.os == 'Linux'
+        working-directory: contract/runner
+        run: test -z "$(gofmt -l .)"
+
+      - name: Build the runner and the binary
+        run: |
+          (cd contract/runner && go build -o "$RUNNER_TEMP/jitso-contract" .)
+          go build -o "$RUNNER_TEMP/jitso" ./cmd/jitso
+
+      # Not on Windows: the runner's sandbox is POSIX-only (it builds PATH with
+      # ':' and installs the fake orca and claude without .exe), so the suite
+      # cannot run there until the runner is ported. Windows is verified by the
+      # steps above: tests, vet and both builds.
+      - name: Contract suite
+        if: runner.os != 'Windows'
+        working-directory: contract
+        run: |
+          "$RUNNER_TEMP/jitso-contract" --impl bin --bin "$RUNNER_TEMP/jitso" --jobs 4
+
+      - name: Cross-build every release target
+        if: runner.os == 'Linux'
+        run: sh scripts/package.sh v0.0.0-ci "$RUNNER_TEMP/dist"
+
+      # The guard files jitso generates for OpenCode and Pi, run with fakes
+      # (node is preinstalled on the GitHub-hosted runners). Not on Windows:
+      # the script writes a POSIX shell fake of jitso.
+      - name: Guard plugin files (OpenCode, Pi)
+        if: runner.os != 'Windows'
+        run: node scripts/test-guard-plugins.mjs "$RUNNER_TEMP/jitso"
+
+  install:
+    name: install script (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 15
+    permissions:
+      contents: read
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-24.04, macos-15]
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        with:
+          go-version: ${{ env.GO_VERSION }}
+          cache: false
+
+      - name: Build the release archives
+        run: sh scripts/package.sh v0.0.0-ci "$RUNNER_TEMP/dist"
+
+      - name: Install script against the built archives
+        run: sh scripts/test-install.sh "$RUNNER_TEMP/dist" v0.0.0-ci
+
+  no-orca:
+    name: no Orca on the machine
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        with:
+          go-version: ${{ env.GO_VERSION }}
+          cache: false
+
+      - name: Build jitso
+        run: go build -o "$RUNNER_TEMP/jitso" ./cmd/jitso
+
+      - name: doctor and launch name the missing Orca
+        run: |
+          jitso="$RUNNER_TEMP/jitso"
+          out="$RUNNER_TEMP/out"
+          err="$RUNNER_TEMP/err"
+          unset ORCA_CLI_COMMAND
+          if command -v orca >/dev/null 2>&1; then
+            echo "orca is on PATH: this job needs a machine without it" >&2
+            exit 1
+          fi
+          repo=$(mktemp -d)
+          git -C "$repo" init -q
+          cd "$repo"
+
+          rc=0
+          "$jitso" doctor >"$out" 2>"$err" || rc=$?
+          cat "$out" "$err"
+          test "$rc" -eq 3
+          grep -Fx 'fail orca: orca is not on PATH; install Orca from https://github.com/stablyai/orca and open it once' "$out"
+
+          rc=0
+          "$jitso" launch --build any --brief .jitso/briefs/brief.md --mode direct >"$out" 2>"$err" || rc=$?
+          cat "$out" "$err"
+          test "$rc" -eq 3
+          test ! -s "$out"
+          test "$(wc -l <"$err")" -eq 1
+          grep -Fx 'jitso: Orca is not installed (orca is not on PATH). jitso opens and tracks each worker in an Orca terminal: install Orca from https://github.com/stablyai/orca, open it once, then run jitso doctor.' "$err"
+          test ! -e .jitso

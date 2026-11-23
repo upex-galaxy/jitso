@@ -9,6 +9,12 @@
 #   JITSO_DOWNLOAD_URL  base of the releases; default https://github.com/upex-galaxy/jitso/releases
 #                       (an https:// or file:// URL, or an absolute folder with the same layout)
 #   JITSO_OS, JITSO_ARCH  override the detected platform (darwin or linux, amd64 or arm64)
+#   JITSO_NO_MODIFY_PATH=1  never edit a shell profile (only print how to add the folder to PATH)
+#
+# When the install folder is not on PATH, it adds one marked line to the
+# profile of your shell ($SHELL): ~/.zshrc (zsh), ~/.bashrc and on macOS also
+# ~/.bash_profile (bash), ~/.config/fish/conf.d/jitso.fish (fish), else
+# ~/.profile. A profile that already has the line is left alone.
 #
 # It downloads the archive and checksums.txt, checks the SHA-256, and moves
 # the binary into place. It never uses sudo and runs nothing it downloaded
@@ -72,10 +78,61 @@ else
 fi
 target="$dir/jitso"
 
+# tilde is a path written ~/... when it lies under HOME.
+tilde() {
+  case "$1" in
+    "${HOME:-/nonexistent}"/*) printf '~/%s' "${1#"$HOME"/}" ;;
+    *) printf '%s' "$1" ;;
+  esac
+}
+
+# ensure_path adds the install folder to PATH in the shell profile, once, when
+# it is not on PATH already (see the header). JITSO_NO_MODIFY_PATH=1 only says how.
+ensure_path() {
+  case ":${PATH:-}:" in
+    *":$dir:"*) return 0 ;;
+  esac
+  hint="export PATH=\"$dir:\$PATH\""
+  if [ "${JITSO_NO_MODIFY_PATH:-}" = 1 ] || [ -z "${HOME:-}" ]; then
+    say "$dir is not on your PATH; add it, for example: $hint"
+    say "the hook that jitso setup hook registers runs the word jitso, so it needs jitso on PATH"
+    return 0
+  fi
+  case "$dir" in
+    "$HOME"/*) shown="\$HOME/${dir#"$HOME"/}" ;;
+    *) shown=$dir ;;
+  esac
+  pline="export PATH=\"$shown:\$PATH\""
+  case "$(basename "${SHELL:-sh}")" in
+    zsh) files="${ZDOTDIR:-$HOME}/.zshrc" ;;
+    bash)
+      files="$HOME/.bashrc"
+      [ "$os" = darwin ] && files="$files $HOME/.bash_profile" ;;
+    fish)
+      files="$HOME/.config/fish/conf.d/jitso.fish"
+      pline="contains -- \"$dir\" \$PATH; or set -gx PATH \"$dir\" \$PATH" ;;
+    *) files="$HOME/.profile" ;;
+  esac
+  marker="# added by the jitso installer"
+  for f in $files; do
+    if [ -f "$f" ] && grep -qF "$marker" "$f"; then
+      continue
+    fi
+    mkdir -p "$(dirname "$f")" || { say "cannot write $(tilde "$f"); add it yourself: $hint"; continue; }
+    if [ -s "$f" ]; then
+      printf '\n%s\n%s\n' "$marker" "$pline" >>"$f" || { say "cannot write $(tilde "$f"); add it yourself: $hint"; continue; }
+    else
+      printf '%s\n%s\n' "$marker" "$pline" >>"$f" || { say "cannot write $(tilde "$f"); add it yourself: $hint"; continue; }
+    fi
+    say "added $dir to your PATH in $(tilde "$f")"
+  done
+  say "open a new terminal to use jitso, or run now: $hint"
+}
+
 if [ "$version" != latest ] && [ -x "$target" ]; then
   current=$("$target" version 2>/dev/null || true)
   case "$current" in
-    "jitso $version "*) say "jitso $version is already installed at $target"; exit 0 ;;
+    "jitso $version "*) say "jitso $version is already installed at $target"; ensure_path; exit 0 ;;
   esac
 fi
 
@@ -142,6 +199,7 @@ if [ -x "$target" ]; then
   old=$("$target" version 2>/dev/null || true)
   if [ "$old" = "$line" ]; then
     say "$line is already installed at $target"
+    ensure_path
     exit 0
   fi
 fi
@@ -156,8 +214,5 @@ if [ -n "$old" ]; then
 else
   say "installed $line at $target"
 fi
-case ":${PATH:-}:" in
-  *":$dir:"*) ;;
-  *) say "$dir is not on your PATH; add it, for example: export PATH=\"$dir:\$PATH\""
-     say "the hook that jitso setup hook registers runs the word jitso, so it needs jitso on PATH" ;;
-esac
+ensure_path
+say "next: run jitso init in your project to set it up (skill, AGENTS.md block, guard)"

@@ -1,5 +1,6 @@
 # Release workflow. A pushed tag runs it and it publishes the GitHub Release;
-# every outward step is OWNER-GATED (docs/release.md).
+# every outward step is OWNER-GATED (docs/release.md). It first runs the CI
+# workflow (ci.yml) on the tagged commit; nothing is built until CI passes.
 #
 # Every `uses:` line below is pinned to a full commit SHA with its release tag as
 # the comment (docs/release.md, pre-flight). Only GitHub-owned actions are used.
@@ -21,8 +22,15 @@ env:
   CGO_ENABLED: '0'
 
 jobs:
+  ci:
+    name: CI on the tagged commit
+    uses: ./.github/workflows/ci.yml
+    permissions:
+      contents: read
+
   build:
     name: verify and build
+    needs: ci
     runs-on: ubuntu-24.04
     timeout-minutes: 30
     permissions:

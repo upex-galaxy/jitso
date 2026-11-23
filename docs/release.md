@@ -4,7 +4,7 @@ How a JITSO release is built, checked and published. Everything that leaves this
 
 The repository `upex-galaxy/jitso` is public (decided by the owner on 2026-11-15). Every publishing step is OWNER-GATED.
 
-What has been published is recorded by the tags and GitHub Releases of the repository. The files this procedure uses are `scripts/package.sh`, `scripts/install.sh`, `scripts/test-install.sh` and `.github/workflows/release.yml`, which a pushed tag runs.
+What has been published is recorded by the tags and GitHub Releases of the repository. The files this procedure uses are `scripts/package.sh`, `scripts/install.sh`, `scripts/test-install.sh`, `.github/workflows/ci.yml` (section 9) and `.github/workflows/release.yml`, which a pushed tag runs.
 
 Committed prose names the source of truth, not its value (AGENTS.md rule 12), so this file has no sizes, counts or dates: it says which file or command holds each one.
 
@@ -47,14 +47,14 @@ These steps run on this machine and change nothing outside the repository and yo
 4. Package every target: `scripts/package.sh v<x> <scratch>/dist`. Check the archives against `checksums.txt` with `shasum -a 256 -c checksums.txt` (or `sha256sum -c`) inside that folder.
 5. Measure each stripped binary with `ls -l` and compare with the previous release's numbers. Those numbers live in `.session/`, not in a committed file. A noticeable growth goes to the owner with before and after labelled `measured`, as `.agents/skills/go-development/references/builds.md` asks.
 6. `scripts/test-install.sh <scratch>/dist v<x>` (the archives just built) or `scripts/test-install.sh` (it builds the host target itself). Every check prints `ok`. It runs in throwaway folders and never touches your HOME.
-7. **OWNER-GATED** Resolve the action SHAs in `.github/workflows/release.yml`. Every `uses:` line is pinned to the full commit SHA of a release tag of that action, with the tag as a comment; to bump one, resolve the new tag's SHA and review the tag. This is a network read; a command such as `gh api repos/actions/checkout/git/ref/tags/<tag> --jq .object.sha` does it (an annotated tag needs one more dereference). Check that none is left: `grep -c '0000000000000000000000000000000000000000' .github/workflows/release.yml` prints 0.
+7. **OWNER-GATED** Resolve the action SHAs in `.github/workflows/release.yml` and `.github/workflows/ci.yml`; both files pin the same SHAs. Every `uses:` line is pinned to the full commit SHA of a release tag of that action, with the tag as a comment; to bump one, resolve the new tag's SHA and review the tag. This is a network read; a command such as `gh api repos/actions/checkout/git/ref/tags/<tag> --jq .object.sha` does it (an annotated tag needs one more dereference). Check that none is left: `grep -c '0000000000000000000000000000000000000000' .github/workflows/release.yml .github/workflows/ci.yml` prints 0 for each file.
 8. The toolchain pin `GO_VERSION` in the workflow matches the toolchain you verified with (`go version`), and `go.mod` says what you intend: its `go` line is a language version, not a toolchain.
-9. **OWNER-GATED** The contract suite has to pass on Linux at least once before the first tag. A container or a VM is the owner's call, since it may mean a download. The first tag would otherwise be the suite's first Linux run.
+9. **OWNER-GATED** The contract suite has to pass on Linux at least once before the first tag. Once `ci.yml` is on `main`, its green run on the commit you tag is that proof (section 9). A container or a VM is the owner's call, since it may mean a download. The first tag would otherwise be the suite's first Linux run.
 10. Release notes: the workflow asks GitHub to generate them. Read them after the release, and say in the notes which earlier version to skip when one is bad.
 
 ## 4. Publishing, in order
 
-Every step in this list is **OWNER-GATED**. Do not run one without the owner's say in the conversation, and stop at the first failure.
+Every step in this list is **OWNER-GATED**. Do not run one without the owner's say in the conversation, and stop at the first failure. His OK to push `main` for a release covers steps 3 to 6 in one go, as AGENTS.md section 7 says: the agent pushes, waits for `ci.yml` on that commit, tags, watches the workflow and verifies the release. Step 7 stays his.
 
 | # | Step | Notes |
 |---|---|---|
@@ -62,11 +62,11 @@ Every step in this list is **OWNER-GATED**. Do not run one without the owner's s
 | 2 | **OWNER-GATED** Add the remote | Write the push policy into AGENTS.md section 7 first (rule 4 and section 7 say it goes there before the first push). |
 | 3 | **OWNER-GATED** Push `main` | No force-push, ever. |
 | 4 | **OWNER-GATED** Create the annotated tag `v<x>` on the verified commit and push it | The tag push starts the workflow. |
-| 5 | **OWNER-GATED** Run and watch the release workflow | The workflow verifies both modules, builds the archives, runs the contract on the Linux binary, runs the install test, then the `release` job creates the GitHub Release. If anything fails, nothing is published: the `release` job needs the `build` job. |
+| 5 | **OWNER-GATED** Run and watch the release workflow | The workflow first runs `ci.yml` on the tagged commit (section 9); then it verifies both modules, builds the archives, runs the contract on the Linux binary, runs the install test, then the `release` job creates the GitHub Release. If anything fails, nothing is published: the `build` job needs the `ci` job and the `release` job needs the `build` job. |
 | 6 | **OWNER-GATED** Verify the published release from a clean machine or container | Download `checksums.txt` and one archive, `shasum -a 256 -c` it, run `jitso version`. Then download `install.sh` from the release, read it, and run `sh install.sh v<x>`. |
 | 7 | **OWNER-GATED** Announce | Where and what is the owner's call. |
 
-The workflow uses no configured secret: `github.token` is the automatic token, scoped by the `permissions` blocks (`contents: read` for the build job, `contents: write` only for the release job, which checks out no code).
+The workflow uses no configured secret: `github.token` is the automatic token, scoped by the `permissions` blocks (`contents: read` for the build job and for every CI job, `contents: write` only for the release job, which checks out no code).
 
 ## 5. How people install it
 
@@ -93,7 +93,7 @@ The release has zips for `amd64` and `arm64`, published marked experimental and 
 
 `jitso launch` needs `/bin/sh` and does not run on Windows. `jitso version` and the commands that only read files are what a Windows build can be expected to do. `jitso doctor` on Windows prints `warn shell` and still exits 0 when nothing else fails.
 
-The workflow does not run any Windows job. A `windows-latest` job that runs `jitso.exe version` would cost runner minutes and is the owner's call.
+The release workflow runs no Windows job of its own. The CI workflow (section 9) runs `go test` and `go vet` for both modules on `windows-2025` and builds the runner and `jitso.exe` there, but not the contract suite: the runner's sandbox is POSIX-only (it builds `PATH` with `:` and installs the fake `orca` and `claude` without `.exe`).
 
 ## 8. Known limits
 
@@ -103,3 +103,15 @@ The workflow does not run any Windows job. A `windows-latest` job that runs `jit
 | The binaries are not signed or notarized | A binary downloaded through a browser on macOS may be quarantined by Gatekeeper; `curl` and the install script do not set the attribute (predicted, not measured). The install script copies the binary through a temp file and `mv`, which is what replaces a running binary atomically |
 | Archives are not byte-reproducible | `tar` and `zip` write metadata; the binaries are meant to be reproducible for the same toolchain, flags and commit (predicted) |
 | An old launch log is not read | The launch log is schema v2 and skips every `v: 1` line (the TypeScript-era log, with the key `preset`), so a project that still has running launches at the first run of this CLI must close or reap them with the old CLI first: the old lines stay in `.jitso/launches.jsonl`, `jitso doctor` counts them, and a worker that a still-running old launch started is reported as unlogged. Moving the old file aside (`mv .jitso/launches.jsonl .jitso/launches.v1.jsonl`) is safe. Defect N-31 |
+
+## 9. Continuous integration
+
+`.github/workflows/ci.yml` runs on every push to `main`, on every pull request, and as a reusable workflow (`workflow_call`) that the release workflow calls first. It has no secret and no write permission (`permissions: {}` at the top, `contents: read` per job), and one concurrency group per ref: a newer push to a pull request cancels the older run; on `main` and in a release a running job is not cancelled, though GitHub drops a run that is still pending when a newer one joins the group.
+
+| Job | Runs on | What it checks |
+|---|---|---|
+| `verify` | `ubuntu-24.04`, `macos-15`, `windows-2025` | `go test` and `go vet` in both modules (`gofmt` on Linux only), builds the runner and `jitso`, runs the whole contract suite (Linux and macOS, section 7 says why not Windows), and on Linux cross-builds every release target through `scripts/package.sh` |
+| `install` | `ubuntu-24.04`, `macos-15` | `scripts/package.sh` into a temp folder, then `scripts/test-install.sh` against those archives, as the release does |
+| `no-orca` | `ubuntu-24.04` | on a machine with no `orca`, `jitso doctor` and `jitso launch` exit 3 with the install hint, and the launch writes nothing |
+
+The release depends on it: the `build` job of `release.yml` needs the `ci` job, which runs `ci.yml` on the tagged commit, so a tag whose commit fails CI builds and publishes nothing. The CI run uses the version `v0.0.0-ci` for its archives; nothing it builds is kept.

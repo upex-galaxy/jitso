@@ -81,7 +81,7 @@ newhome() { # newhome <name>: an empty HOME that is not on the PATH
 h1=$(newhome home1)
 run HOME="$h1" JITSO_DOWNLOAD_URL="$rel" "$sh_bin" "$install_sh" "$tag"
 bin="$h1/.local/bin/jitso"
-if [ "$rc" -eq 0 ] && [ -x "$bin" ] && "$bin" version | grep -q "^jitso $tag " && has "$out" "is not on your PATH"; then
+if [ "$rc" -eq 0 ] && [ -x "$bin" ] && "$bin" version | grep -q "^jitso $tag " && has "$out" "to your PATH in"; then
   pass "pinned install"
 else
   fail "pinned install" "rc=$rc $(cat "$err")"
@@ -269,6 +269,48 @@ if [ -z "$(ls -A "$tmp/bin2" | grep -v '^jitso$' || true)" ]; then
   pass "install dir holds only jitso"
 else
   fail "install dir holds only jitso" "$(ls -A "$tmp/bin2")"
+fi
+
+# 14 PATH: the shell profile gains one marked line, once
+h14=$(newhome home14)
+run HOME="$h14" SHELL=/bin/zsh PATH=/usr/bin:/bin JITSO_DOWNLOAD_URL="$rel" "$sh_bin" "$install_sh" "$tag"
+run HOME="$h14" SHELL=/bin/zsh PATH=/usr/bin:/bin JITSO_DOWNLOAD_URL="$rel" JITSO_VERSION="$tag" "$sh_bin" "$install_sh"
+if [ -f "$h14/.zshrc" ] && [ "$(grep -c 'added by the jitso installer' "$h14/.zshrc")" -eq 1 ] &&
+  grep -q 'export PATH="$HOME/.local/bin:$PATH"' "$h14/.zshrc" && has "$out" "already installed"; then
+  pass "PATH added to .zshrc once"
+else
+  fail "PATH added to .zshrc once" "rc=$rc $(cat "$h14/.zshrc" 2>/dev/null) $(cat "$out")"
+fi
+h14b=$(newhome home14b)
+run HOME="$h14b" SHELL=/bin/zsh PATH=/usr/bin:/bin JITSO_DOWNLOAD_URL="$rel" "$sh_bin" "$install_sh" "$tag"
+if has "$out" "added $h14b/.local/bin to your PATH in ~/.zshrc" && has "$out" "open a new terminal"; then
+  pass "PATH change is announced"
+else
+  fail "PATH change is announced" "$(cat "$out")"
+fi
+
+# 15 PATH: bash writes .bashrc, fish its conf.d file, an unknown shell .profile
+for case_ in bash:.bashrc fish:.config/fish/conf.d/jitso.fish dash:.profile; do
+  sh_=${case_%%:*}; file=${case_#*:}
+  h=$(newhome "home15-$sh_")
+  run HOME="$h" SHELL="/bin/$sh_" PATH=/usr/bin:/bin JITSO_DOWNLOAD_URL="$rel" "$sh_bin" "$install_sh" "$tag"
+  if [ "$rc" -eq 0 ] && [ -f "$h/$file" ] && grep -q 'added by the jitso installer' "$h/$file" && grep -q '.local/bin' "$h/$file"; then
+    pass "PATH for $sh_ goes to $file"
+  else
+    fail "PATH for $sh_ goes to $file" "rc=$rc $(ls -A "$h") $(cat "$err")"
+  fi
+done
+
+# 16 PATH: nothing is written when the folder is on PATH, or with JITSO_NO_MODIFY_PATH=1
+h16=$(newhome home16)
+run HOME="$h16" SHELL=/bin/zsh PATH="$h16/.local/bin:/usr/bin:/bin" JITSO_DOWNLOAD_URL="$rel" "$sh_bin" "$install_sh" "$tag"
+h16b=$(newhome home16b)
+rc1=$rc
+run HOME="$h16b" SHELL=/bin/zsh PATH=/usr/bin:/bin JITSO_NO_MODIFY_PATH=1 JITSO_DOWNLOAD_URL="$rel" "$sh_bin" "$install_sh" "$tag"
+if [ "$rc1" -eq 0 ] && [ "$rc" -eq 0 ] && [ ! -e "$h16/.zshrc" ] && [ ! -e "$h16b/.zshrc" ] && has "$out" "is not on your PATH"; then
+  pass "PATH left alone when present or opted out"
+else
+  fail "PATH left alone when present or opted out" "rc=$rc1/$rc $(ls -A "$h16" "$h16b")"
 fi
 
 if [ "$failed" -ne 0 ]; then
