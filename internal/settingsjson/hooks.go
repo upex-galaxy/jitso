@@ -22,7 +22,7 @@ const Command = "jitso hook guard"
 // jitsoCommand recognizes a command that runs `jitso hook guard`: the bare
 // word, or the path of the binary (a quoted or an absolute one) ending in
 // jitso, which is what an earlier jitso or --absolute wrote.
-var jitsoCommand = regexp.MustCompile(`^(?:jitso|'(?:[^']|'\\'')*/jitso[^'/]*'|"[^"]*/jitso[^"/]*"|/[^ '"]*/jitso[^ /'"]*) hook guard$`)
+var jitsoCommand = regexp.MustCompile(`^(?:jitso|'(?:[^']|'\\'')*[/\\]jitso[^'/\\]*'|"[^"]*[/\\]jitso[^"/\\]*"|/[^ '"]*/jitso[^ /'"]*) hook guard$`)
 
 // IsJitsoCommand reports whether command is a JITSO hook command.
 func IsJitsoCommand(command string) bool { return jitsoCommand.MatchString(command) }

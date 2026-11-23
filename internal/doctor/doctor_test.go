@@ -219,7 +219,7 @@ func TestRunOutsideGitLeavesProjectChecksOut(t *testing.T) {
 		t.Errorf("checks = %s\nwant     %s", got, wantChecks)
 	}
 	if _, _, failed := Counts(lines); failed != 0 {
-		t.Errorf("fails = %d, want none", failed)
+		t.Errorf("fails = %d, want none:\n%v", failed, lines)
 	}
 	for _, c := range run.calls {
 		if !strings.HasPrefix(c, "git --version") && !strings.HasPrefix(c, "/bin/claude --version") {

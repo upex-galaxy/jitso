@@ -14,3 +14,15 @@ internal/skill/*-workspace/
 # Claude Code local state: never committed (AGENTS.md rule 1)
 .claude/settings.local.json
 .claude/worktrees/
+
+# Pi runtime state: packages write loops, tasks and subagent state under .pi/.
+# What a project commits is allowlisted back.
+.pi/*
+!.pi/mcp.json
+!.pi/settings.json
+!.pi/SYSTEM.md
+!.pi/APPEND_SYSTEM.md
+!.pi/extensions/
+!.pi/skills/
+!.pi/prompts/
+!.pi/themes/

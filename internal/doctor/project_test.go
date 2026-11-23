@@ -41,7 +41,7 @@ func checksFor(t *testing.T, dir string, git map[string]int) (*projectChecks, *s
 	for args, exit := range git {
 		s.answers["git "+args] = Result{Exit: exit}
 	}
-	p := Ports{GOOS: "linux", Version: "v9.9.9", Home: t.TempDir(), Run: s.run, Now: time.Now}.withDefaults()
+	p := Ports{GOOS: runtime.GOOS, Version: "v9.9.9", Home: t.TempDir(), Run: s.run, Now: time.Now}.withDefaults()
 	return &projectChecks{p: p, root: project.Root{Primary: dir, Checkout: dir}}, s
 }
 
