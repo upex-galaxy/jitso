@@ -9,14 +9,36 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"runtime"
 	"sort"
 	"strings"
 
 	"jitso-contract-runner/internal/fakes"
 )
 
-// SystemPath is the minimal system path after {{BIN}} (SPEC 5).
-const SystemPath = "/usr/bin:/bin"
+// SystemPath is the minimal system path after {{BIN}} (SPEC 5): /usr/bin and /bin on
+// POSIX. On Windows it is the folder of git (the CLI under test runs git) and System32.
+func SystemPath() string {
+	if runtime.GOOS != "windows" {
+		return "/usr/bin" + string(os.PathListSeparator) + "/bin"
+	}
+	dirs := []string{}
+	if git, err := exec.LookPath("git"); err == nil {
+		dirs = append(dirs, filepath.Dir(git))
+	}
+	if root := os.Getenv("SystemRoot"); root != "" {
+		dirs = append(dirs, filepath.Join(root, "System32"))
+	}
+	return strings.Join(dirs, string(os.PathListSeparator))
+}
+
+// exeName is the file name of a program: Windows needs the .exe.
+func exeName(name string) string {
+	if runtime.GOOS == "windows" {
+		return name + ".exe"
+	}
+	return name
+}
 
 // Sandbox is one case's temp root. Every path is a real path (symlinks resolved).
 type Sandbox struct {
@@ -61,7 +83,7 @@ func New(self string) (*Sandbox, error) {
 		}
 	}
 	for _, name := range []string{"orca", "claude"} {
-		if err := linkOrCopy(self, filepath.Join(s.Bin, name)); err != nil {
+		if err := linkOrCopy(self, filepath.Join(s.Bin, exeName(name))); err != nil {
 			s.Remove()
 			return nil, fmt.Errorf("install fake %s: %w", name, err)
 		}
@@ -94,11 +116,20 @@ func (s *Sandbox) SetEnv(name, value string) { s.extraEnv[name] = value }
 func (s *Sandbox) Env(step map[string]string) []string {
 	env := map[string]string{
 		"HOME":              s.Home,
-		"PATH":              s.Bin + ":" + SystemPath + ":" + s.Tools,
-		"ORCA_CLI_COMMAND":  filepath.Join(s.Bin, "orca"),
+		"PATH":              strings.Join([]string{s.Bin, SystemPath(), s.Tools}, string(os.PathListSeparator)),
+		"ORCA_CLI_COMMAND":  filepath.Join(s.Bin, exeName("orca")),
 		fakes.EnvScenario:   s.Scenario,
 		fakes.EnvOrcaLog:    s.OrcaLog,
 		fakes.EnvClaudeDump: s.ClaudeDump,
+	}
+	if runtime.GOOS == "windows" {
+		// A Windows process needs its profile folder and a few system variables to start.
+		env["USERPROFILE"] = s.Home
+		for _, k := range []string{"SystemRoot", "SystemDrive", "windir", "TEMP", "TMP", "ComSpec", "PATHEXT"} {
+			if v := os.Getenv(k); v != "" {
+				env[k] = v
+			}
+		}
 	}
 	for k, v := range s.extraEnv {
 		env[k] = v
@@ -140,7 +171,7 @@ var gitIdentity = map[string]string{
 	"GIT_COMMITTER_NAME":  "jitso-contract",
 	"GIT_COMMITTER_EMAIL": "contract@example.invalid",
 	"GIT_CONFIG_NOSYSTEM": "1",
-	"GIT_CONFIG_GLOBAL":   "/dev/null",
+	"GIT_CONFIG_GLOBAL":   os.DevNull,
 }
 
 // git runs one git command in the project, with the sandbox environment plus gitIdentity,
@@ -150,12 +181,12 @@ func (s *Sandbox) git(args ...string) error { return s.gitIn(s.Project, args...)
 // gitIn is git run in dir.
 func (s *Sandbox) gitIn(dir string, args ...string) error {
 	path := "/usr/bin/git"
-	if _, err := os.Stat(path); err != nil {
+	if _, err := os.Stat(path); err != nil || runtime.GOOS == "windows" {
 		if path, err = exec.LookPath("git"); err != nil {
 			return err
 		}
 	}
-	cmd := exec.Command(path, append([]string{"-c", "commit.gpgsign=false", "-c", "core.hooksPath=/dev/null"}, args...)...)
+	cmd := exec.Command(path, append([]string{"-c", "commit.gpgsign=false", "-c", "core.hooksPath=" + os.DevNull}, args...)...)
 	cmd.Dir = dir
 	cmd.Env = s.Env(gitIdentity)
 	out, err := cmd.CombinedOutput()
@@ -240,7 +271,7 @@ func (s *Sandbox) insideProjectOrHome(path string) error {
 
 // RemoveFake takes a fake off PATH (the case field `claude: {"missing": true}`).
 func (s *Sandbox) RemoveFake(name string) error {
-	return os.Remove(filepath.Join(s.Bin, name))
+	return os.Remove(filepath.Join(s.Bin, exeName(name)))
 }
 
 // ClearClaudeDump removes the fake claude dump, so a check sees only the current step.

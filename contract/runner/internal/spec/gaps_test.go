@@ -1,6 +1,8 @@
 package spec
 
 import (
+	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 )
@@ -114,9 +116,9 @@ func TestGitInitStep(t *testing.T) {
 	good := []struct{ name, step, wantPath string }{
 		{"relative", `{"git_init":{"path":"nested"},"expect":{"files":[{"path":"nested/.git"}]}}`, "nested"},
 		{"nested relative", `{"git_init":{"path":"a/b/c"}}`, "a/b/c"},
-		{"placeholder home", `{"git_init":{"path":"{{HOME}}/repo"},"expect":{"elapsed_ms_lt":60000,"registry":{"count":0},"orca_calls":{"empty":true}}}`, "/stub/home/repo"},
+		{"placeholder home", `{"git_init":{"path":"{{HOME}}/repo"},"expect":{"elapsed_ms_lt":60000,"registry":{"count":0},"orca_calls":{"empty":true}}}`, stub("/stub/home/repo")},
 	}
-	builtins := Vars{VarProject: "/stub/project", VarHome: "/stub/home", VarBin: "/stub/bin", VarJitso: "/stub/jitso"}
+	builtins := Vars{VarProject: stub("/stub/project"), VarHome: stub("/stub/home"), VarBin: stub("/stub/bin"), VarJitso: stub("/stub/jitso")}
 	for _, g := range good {
 		c, err := writeCase(t, "g", `{"id":"g","title":"t","steps":[`+g.step+`]}`, nil)
 		if err != nil {
@@ -149,3 +151,6 @@ func TestGitInitStep(t *testing.T) {
 		}
 	}
 }
+
+// stub is an absolute path on every OS: Windows needs a drive letter.
+func stub(p string) string { return filepath.Join(filepath.VolumeName(os.TempDir()), p) }

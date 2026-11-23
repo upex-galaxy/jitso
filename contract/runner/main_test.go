@@ -5,6 +5,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"runtime"
 	"strings"
 	"testing"
 
@@ -38,7 +39,7 @@ func TestMulticall(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	cmd := exec.Command(filepath.Join(sb.Bin, "orca"), "terminal", "create", "--title", "t", "--json")
+	cmd := exec.Command(filepath.Join(sb.Bin, "orca"+exeSuffix()), "terminal", "create", "--title", "t", "--json")
 	cmd.Env = sb.Env(nil)
 	out, err := cmd.Output()
 	if err != nil {
@@ -72,4 +73,12 @@ func TestMulticall(t *testing.T) {
 	if err := json.Unmarshal(data, &dump); err != nil || strings.Join(dump.Argv, " ") != "--model m" || dump.Cwd != sb.Home {
 		t.Errorf("dump %s: %v", data, err)
 	}
+}
+
+// exeSuffix is the executable suffix of the OS.
+func exeSuffix() string {
+	if runtime.GOOS == "windows" {
+		return ".exe"
+	}
+	return ""
 }

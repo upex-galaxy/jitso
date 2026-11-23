@@ -35,7 +35,7 @@ func TestAddWorktree(t *testing.T) {
 		t.Fatal(err)
 	}
 	for _, name := range []string{"linked", "second"} {
-		if !strings.Contains(string(out), "worktree "+sb.Worktree(name)+"\n") {
+		if !strings.Contains(string(out), "worktree "+filepath.ToSlash(sb.Worktree(name))+"\n") {
 			t.Errorf("git worktree list lacks %s:\n%s", sb.Worktree(name), out)
 		}
 	}
@@ -146,6 +146,7 @@ func TestInitRepo(t *testing.T) {
 				t.Fatal(err)
 			}
 			want, _ := filepath.EvalSymlinks(path)
+			want = filepath.ToSlash(want) // git prints forward slashes on Windows
 			if got := strings.TrimSpace(string(out)); got != want {
 				t.Errorf("the repo top level is %s, want %s (a nested checkout of its own)", got, want)
 			}

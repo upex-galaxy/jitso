@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"runtime"
 
 	"jitso-contract-runner/internal/sandbox"
 )
@@ -24,7 +25,7 @@ func NewBin(path string) (*Bin, error) {
 	if err != nil {
 		return nil, fmt.Errorf("--bin: %v", err)
 	}
-	if !st.Mode().IsRegular() || st.Mode()&0o111 == 0 {
+	if !st.Mode().IsRegular() || (runtime.GOOS != "windows" && st.Mode()&0o111 == 0) {
 		return nil, fmt.Errorf("--bin: %s is not an executable file", abs)
 	}
 	return &Bin{path: abs}, nil

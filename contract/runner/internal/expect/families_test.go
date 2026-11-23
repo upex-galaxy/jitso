@@ -87,7 +87,7 @@ func TestFileChecks(t *testing.T) {
 			{"path":"mcpServers.dbhub.args.0","regex":"^a$"},
 			{"path":"mcpServers.dbhub.env","absent":true},
 			{"path":"cap","equals":0.50}]},
-		{"path":"` + filepath.Join(dir, "nope") + `","exists":false}]}`
+		{"path":` + jsonString(filepath.Join(dir, "nope")) + `,"exists":false}]}`
 	expectFailures(t, "all hold", build(t, ok, KindWrite).Eval(obs), 0)
 	bad := `{"files":[
 		{"path":"run.sh","executable":false,"equals":"x"},
@@ -148,4 +148,10 @@ func TestClaudeChecks(t *testing.T) {
 	if _, err := Build(map[string]any{"claude": map[string]any{}}, KindHook); err == nil {
 		t.Error("claude is not available on a hook step")
 	}
+}
+
+// jsonString is s as a JSON string literal (a Windows path holds backslashes).
+func jsonString(s string) string {
+	b, _ := json.Marshal(s)
+	return string(b)
 }
