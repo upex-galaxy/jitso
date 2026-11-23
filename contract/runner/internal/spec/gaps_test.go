@@ -1,6 +1,7 @@
 package spec
 
 import (
+	"path/filepath"
 	"strings"
 	"testing"
 )
@@ -125,7 +126,7 @@ func TestGitInitStep(t *testing.T) {
 		}
 		x := c.Expand()[0]
 		a, err := x.Action(0, x.Bind(builtins))
-		if err != nil || a.Kind != "git_init" || a.InitPath != g.wantPath {
+		if err != nil || a.Kind != "git_init" || filepath.Clean(a.InitPath) != g.wantPath {
 			t.Errorf("%s: action %+v, err %v", g.name, a, err)
 		}
 	}

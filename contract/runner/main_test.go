@@ -16,7 +16,7 @@ import (
 
 // TestMain lets the test binary act as the fakes too, exactly like the runner binary does.
 func TestMain(m *testing.M) {
-	switch filepath.Base(os.Args[0]) {
+	switch strings.TrimSuffix(filepath.Base(os.Args[0]), ".exe") {
 	case "orca", "claude":
 		main()
 	}

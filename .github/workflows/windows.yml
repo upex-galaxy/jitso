@@ -39,5 +39,7 @@ jobs:
         if: always()
         working-directory: contract
         run: |
-          "$RUNNER_TEMP/jitso-contract.exe" --impl bin --bin "$RUNNER_TEMP/jitso.exe" --skip-tag posix --jobs 4 2>&1 | tail -400
-          exit ${PIPESTATUS[0]}
+          rc=0
+          "$RUNNER_TEMP/jitso-contract.exe" --impl bin --bin "$RUNNER_TEMP/jitso.exe" --skip-tag posix --jobs 4 > "$RUNNER_TEMP/suite.txt" 2>&1 || rc=$?
+          grep -v '^PASS' "$RUNNER_TEMP/suite.txt" | cut -c1-900 | head -900
+          exit $rc
