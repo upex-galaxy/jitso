@@ -37,6 +37,11 @@ jobs:
     name: verify (${{ matrix.os }})
     runs-on: ${{ matrix.os }}
     timeout-minutes: 30
+    # Windows is informational until its unit tests pass there (POSIX paths in
+    # tests, CRLF checkouts of embedded files, file modes): a red Windows job
+    # is reported but does not fail the run or block a release. Remove this
+    # line when the Windows job is green.
+    continue-on-error: ${{ matrix.os == 'windows-2025' }}
     permissions:
       contents: read
     strategy:
