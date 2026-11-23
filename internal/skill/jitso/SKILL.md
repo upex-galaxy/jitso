@@ -18,7 +18,7 @@ JITSO launches every agent session from an approved **build** (model, effort, MC
 
 `--mode` is required (a build's `mode_default` is not used). Fleet adds `--run <run>`: the Orca Run must exist before the launch (create it once with `orca orchestration run-create --objective <text> --json`). JITSO creates the Orca Task itself from `brief.md`, so there is no `--task`. `--worktree <sel>` picks the Orca worktree. A build that `requires` a field needs `--field name=value`. Full flag list: `references/launching.md`.
 
-Never start a session any other way: not Orca worker start, not an Orca terminal or worktree that runs a harness, not the orca-bridge `start_worker` tool, not `claude`, `codex` or `opencode` by hand. A launch outside `jitso launch` has no card and no registry line. The hook denies the Orca forms. It does not catch a bare `claude`, so the rule binds you anyway.
+Never start a session any other way: not Orca worker start, not an Orca terminal or worktree that runs a harness, not the orca-bridge `start_worker` tool, not `claude`, `codex`, `opencode` or `pi` by hand. A launch outside `jitso launch` has no card and no registry line. The hook denies the Orca forms. A session without the guard is not stopped, so the rule binds you anyway.
 
 When the hook denies something, the reply looks like this:
 

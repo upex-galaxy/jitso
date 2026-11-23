@@ -77,7 +77,7 @@ In this order (read from the launch code, then seen with a fake Orca on a scratc
 
 If anything fails before step 5, the launcher closes the terminal it opened and removes the launch folder, so nothing half-made stays. After step 5 nothing is removed.
 
-`run.sh` starts the harness with the build's model and effort, bypassed permissions, project settings only (`--setting-sources project`), a strict MCP file that holds only the servers the build names, and the build's subagents as `--agents`. User settings, user hooks and any user skill or server the build does not name do not reach a launched session.
+`run.sh` starts the harness of the build (`harness:` is `claude`, `codex`, `opencode` or `pi`). For Claude Code: the build's model and effort, bypassed permissions, project settings only (`--setting-sources project`), a strict MCP file that holds only the servers the build names, and the build's subagents as `--agents`; user settings, user hooks and any user skill or server the build does not name do not reach the session. The other harnesses honor less, and a build that asks for what its harness cannot give is rejected by `jitso build validate` and `launch` with a text that names the harness: codex keeps the owner's own Codex MCP servers (a note line after the card says so) and loads no package skills, so install the jitso skill with `jitso init`; opencode runs with its own config folder; pi gets no MCP server at all. Only a Claude launch records tokens at `jitso close`.
 
 ## The package folder
 
