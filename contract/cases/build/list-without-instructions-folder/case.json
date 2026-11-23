@@ -1,0 +1,43 @@
+{
+  "id": "build/list-without-instructions-folder",
+  "title": "a project without .agents/instructions loads its catalog: the folder only feeds the optional route_scope ids",
+  "source": [
+    "intended: route_scope is optional (docs/decisions.md, the QA vocabulary row); found by the first real jitso init in a fresh repo (2026-11-23)"
+  ],
+  "intent": "INTENDED behavior. `.agents/instructions/agent-*.md` only gives the ids a build's optional route_scope may name. A project that has no such folder (any project that is not one of the boilerplates) has no route ids, and every command that loads the catalog works: build list exits 0 and doctor's catalog check is ok. Before, the missing folder failed the catalog with `open .agents/instructions: no such file or directory`. The fixture's builds name route_scope ids, so the case drops them too: a build that names an id still fails, as it should.",
+  "project": {
+    "base": "default",
+    "files": {
+      ".agents/instructions": null,
+      "jitso/builds": null
+    }
+  },
+  "steps": [
+    {
+      "run": [
+        "build",
+        "list"
+      ],
+      "expect": {
+        "exit": 0,
+        "stderr": [
+          {
+            "not_regex": "agents/instructions"
+          }
+        ]
+      }
+    },
+    {
+      "run": [
+        "doctor"
+      ],
+      "expect": {
+        "stdout": [
+          {
+            "regex": "\\nok   catalog: "
+          }
+        ]
+      }
+    }
+  ]
+}

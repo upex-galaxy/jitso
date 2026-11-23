@@ -114,9 +114,13 @@ var routeFile = regexp.MustCompile(`^agent-.+\.md$`)
 var routeIDLine = regexp.MustCompile(`(?m)^id:\s*(\S+)`)
 
 // RouteIDs reads the route-scope ids: the first `id:` line of each
-// .agents/instructions/agent-*.md file, in file name order.
+// .agents/instructions/agent-*.md file, in file name order. A project with no
+// such folder has no route ids: route_scope is optional.
 func RouteIDs(fsys fs.FS) ([]string, error) {
 	entries, err := fs.ReadDir(fsys, InstructionsDir)
+	if errors.Is(err, fs.ErrNotExist) {
+		return nil, nil
+	}
 	if err != nil {
 		return nil, err
 	}

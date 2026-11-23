@@ -67,8 +67,10 @@ func TestCatalogErrorKeepsTheFileName(t *testing.T) {
 	if err := os.RemoveAll(filepath.Join(dir, ".agents/instructions")); err != nil {
 		t.Fatal(err)
 	}
+	// A missing folder is no route ids (route_scope is optional); a path that
+	// cannot be read as a folder is an error that names it.
+	put(t, dir, ".agents/instructions", "not a folder\n")
 	c, _ := checksFor(t, dir, nil)
-	// The route ids come from .agents/instructions: the read error names it.
 	want(t, c.catalog(), Fail, "catalog", ".agents/instructions")
 }
 
