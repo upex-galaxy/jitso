@@ -146,6 +146,8 @@ type Ports struct {
 	Lstat    func(string) (fs.FileInfo, error)
 	Readlink func(string) (string, error)
 	ReadDir  func(string) ([]fs.DirEntry, error)
+	// EvalSymlinks is filepath.EvalSymlinks.
+	EvalSymlinks func(string) (string, error)
 }
 
 func (p Ports) withDefaults() Ports {
@@ -184,6 +186,9 @@ func (p Ports) withDefaults() Ports {
 	}
 	if p.ReadDir == nil {
 		p.ReadDir = os.ReadDir
+	}
+	if p.EvalSymlinks == nil {
+		p.EvalSymlinks = filepath.EvalSymlinks
 	}
 	return p
 }

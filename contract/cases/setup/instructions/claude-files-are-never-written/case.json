@@ -1,0 +1,156 @@
+{
+  "id": "setup/instructions/claude-files-are-never-written",
+  "title": "a CLAUDE.md, .claude/CLAUDE.md or CLAUDE.local.md is never written: only AGENTS.md gets the block, a Claude file that does not import AGENTS.md gets a warning, and --remove restores AGENTS.md",
+  "source": [
+    "intended: owner decision (v0.2): JITSO writes instruction blocks to AGENTS.md files only, never to CLAUDE.md",
+    "intended: owner decision (v0.3): a CLAUDE.md or .claude/CLAUDE.md that does not import AGENTS.md is a warning, because Claude Code reads only it"
+  ],
+  "defect": "N-18",
+  "intent": "INTENDED behavior (setup instructions writes AGENTS.md only). Whatever Claude Code memory file the checkout has, as long as it holds no JITSO block, `setup instructions --yes` creates `AGENTS.md` with the block, does not name the Claude file in the preview or the result, and leaves that file byte for byte. Claude Code reads only `CLAUDE.md` or `.claude/CLAUDE.md` when one exists, and resolves an import relative to the file that holds it, so a `CLAUDE.md` without `@AGENTS.md` (one that only quotes it in code does not count) and a `.claude/CLAUDE.md` without `@../AGENTS.md` get one warning on stderr naming the line to add; a file that imports AGENTS.md and a `CLAUDE.local.md` (not looked at) get none. `--remove --yes` deletes the created `AGENTS.md`, warns about nothing and still leaves the Claude file alone.",
+  "project": {
+    "files": {
+      "{{file}}": "{{seed}}",
+      ".golden/golden-new.md": {
+        "from": "golden-new.md"
+      }
+    }
+  },
+  "for_each": {
+    "vars": [
+      "file",
+      "seed",
+      "stderr"
+    ],
+    "rows": [
+      [
+        "CLAUDE.md",
+        "# Claude\n",
+        "jitso: warning: CLAUDE.md does not import AGENTS.md, and Claude Code reads only CLAUDE.md when it exists: add a line @AGENTS.md to it so Claude Code reads the JITSO block\n"
+      ],
+      [
+        "CLAUDE.md",
+        "@AGENTS.md\n",
+        ""
+      ],
+      [
+        "CLAUDE.md",
+        "# Claude\n\nRead @./AGENTS.md first.\n",
+        ""
+      ],
+      [
+        "CLAUDE.md",
+        "# Claude\n\nUse `@AGENTS.md` to import.\n\n```\n@AGENTS.md\n```\n",
+        "jitso: warning: CLAUDE.md does not import AGENTS.md, and Claude Code reads only CLAUDE.md when it exists: add a line @AGENTS.md to it so Claude Code reads the JITSO block\n"
+      ],
+      [
+        ".claude/CLAUDE.md",
+        "# Claude\n",
+        "jitso: warning: .claude/CLAUDE.md does not import AGENTS.md, and Claude Code reads only .claude/CLAUDE.md when it exists: add a line @../AGENTS.md to it so Claude Code reads the JITSO block\n"
+      ],
+      [
+        ".claude/CLAUDE.md",
+        "@AGENTS.md\n",
+        "jitso: warning: .claude/CLAUDE.md does not import AGENTS.md, and Claude Code reads only .claude/CLAUDE.md when it exists: add a line @../AGENTS.md to it so Claude Code reads the JITSO block\n"
+      ],
+      [
+        ".claude/CLAUDE.md",
+        "@../AGENTS.md\n",
+        ""
+      ],
+      [
+        "CLAUDE.local.md",
+        "# mine\n",
+        ""
+      ]
+    ],
+    "ids": [
+      "claude-md",
+      "claude-md-that-imports",
+      "claude-md-that-imports-dot-slash",
+      "claude-md-with-the-import-in-code",
+      "dot-claude-claude-md",
+      "dot-claude-claude-md-with-the-wrong-import",
+      "dot-claude-claude-md-that-imports",
+      "claude-local-md"
+    ]
+  },
+  "steps": [
+    {
+      "run": [
+        "setup",
+        "instructions",
+        "--yes"
+      ],
+      "capture": {
+        "NEW": {
+          "from": "file",
+          "path": ".golden/golden-new.md",
+          "regex": "(?s)^(.*)$"
+        }
+      },
+      "expect": {
+        "exit": 0,
+        "stdout": [
+          "+++ b/AGENTS.md",
+          "created AGENTS.md",
+          {
+            "not_contains": "CLAUDE"
+          },
+          {
+            "regex": "jitso setup instructions: done\\n$"
+          }
+        ],
+        "stderr": [
+          {
+            "equals": "{{stderr}}"
+          }
+        ],
+        "files": [
+          {
+            "path": "AGENTS.md",
+            "equals": "{{NEW}}"
+          },
+          {
+            "path": "{{file}}",
+            "equals": "{{seed}}"
+          }
+        ]
+      }
+    },
+    {
+      "run": [
+        "setup",
+        "instructions",
+        "--remove",
+        "--yes"
+      ],
+      "expect": {
+        "exit": 0,
+        "stdout": [
+          "removed AGENTS.md",
+          {
+            "not_contains": "CLAUDE"
+          },
+          {
+            "regex": "jitso setup instructions: done\\n$"
+          }
+        ],
+        "stderr": [
+          {
+            "empty": true
+          }
+        ],
+        "files": [
+          {
+            "path": "AGENTS.md",
+            "exists": false
+          },
+          {
+            "path": "{{file}}",
+            "equals": "{{seed}}"
+          }
+        ]
+      }
+    }
+  ]
+}

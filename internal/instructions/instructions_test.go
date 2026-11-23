@@ -329,31 +329,36 @@ func TestBeginAttributes(t *testing.T) {
 
 func TestImports(t *testing.T) {
 	cases := []struct {
-		name string
-		data string
-		want bool
+		name   string
+		data   string
+		target string
+		want   bool
 	}{
-		{"own line", "@AGENTS.md\n", true},
-		{"after text", "# Claude\n\nSee @AGENTS.md for the rules.\n", true},
-		{"dot slash", "@./AGENTS.md\n", true},
-		{"crlf", "@AGENTS.md\r\n", true},
-		{"no final break", "x\n@AGENTS.md", true},
-		{"code span", "Use `@AGENTS.md` to import.\n", false},
-		{"double backtick span", "Use ``@AGENTS.md`` here.\n", false},
-		{"span closes after", "`a` and @AGENTS.md\n", true},
-		{"unmatched backtick", "` @AGENTS.md\n", true},
-		{"fenced", "```\n@AGENTS.md\n```\n", false},
-		{"tilde fenced", "~~~\n@AGENTS.md\n~~~\n", false},
-		{"after a closed fence", "```\nx\n```\n@AGENTS.md\n", true},
-		{"other file", "@docs/AGENTS.md\n", false},
-		{"inside a word", "mail@AGENTS.md\n", false},
-		{"trailing period", "@AGENTS.md.\n", false},
-		{"empty", "", false},
-		{"nothing", "# Claude\n", false},
+		{"own line", "@AGENTS.md\n", "AGENTS.md", true},
+		{"after text", "# Claude\n\nSee @AGENTS.md for the rules.\n", "AGENTS.md", true},
+		{"dot slash", "@./AGENTS.md\n", "AGENTS.md", true},
+		{"crlf", "@AGENTS.md\r\n", "AGENTS.md", true},
+		{"no final break", "x\n@AGENTS.md", "AGENTS.md", true},
+		{"code span", "Use `@AGENTS.md` to import.\n", "AGENTS.md", false},
+		{"double backtick span", "Use ``@AGENTS.md`` here.\n", "AGENTS.md", false},
+		{"span closes after", "`a` and @AGENTS.md\n", "AGENTS.md", true},
+		{"unmatched backtick", "` @AGENTS.md\n", "AGENTS.md", true},
+		{"fenced", "```\n@AGENTS.md\n```\n", "AGENTS.md", false},
+		{"tilde fenced", "~~~\n@AGENTS.md\n~~~\n", "AGENTS.md", false},
+		{"after a closed fence", "```\nx\n```\n@AGENTS.md\n", "AGENTS.md", true},
+		{"other file", "@docs/AGENTS.md\n", "AGENTS.md", false},
+		{"inside a word", "mail@AGENTS.md\n", "AGENTS.md", false},
+		{"trailing period", "@AGENTS.md.\n", "AGENTS.md", false},
+		{"empty", "", "AGENTS.md", false},
+		{"nothing", "# Claude\n", "AGENTS.md", false},
+		{"parent from .claude", "@../AGENTS.md\n", "../AGENTS.md", true},
+		{"parent with dot slash", "@./../AGENTS.md\n", "../AGENTS.md", true},
+		{"same folder from .claude", "@AGENTS.md\n", "../AGENTS.md", false},
+		{"parent from the checkout", "@../AGENTS.md\n", "AGENTS.md", false},
 	}
 	for _, c := range cases {
-		if got := Imports([]byte(c.data)); got != c.want {
-			t.Errorf("%s: Imports(%q) = %v, want %v", c.name, c.data, got, c.want)
+		if got := Imports([]byte(c.data), c.target); got != c.want {
+			t.Errorf("%s: Imports(%q, %q) = %v, want %v", c.name, c.data, c.target, got, c.want)
 		}
 	}
 }
@@ -381,10 +386,39 @@ func (m memEnv) env(root, home, codex string) Env {
 	}
 }
 
+// links makes EvalSymlinks of an Env follow the given links: each key is a
+// link path (a file or a folder) and its value the absolute path it leads to.
+// A path whose file is absent (not in files) fails, as the real one does.
+func links(e Env, files memEnv, l map[string]string) Env {
+	e.EvalSymlinks = func(p string) (string, error) {
+		for {
+			changed := false
+			for from, to := range l {
+				if p == from || strings.HasPrefix(p, from+"/") {
+					p = to + strings.TrimPrefix(p, from)
+					changed = true
+				}
+			}
+			if !changed {
+				break
+			}
+		}
+		if _, ok := files[p]; ok || e.IsDir(p) || p == e.Root || p == e.Home {
+			return p, nil
+		}
+		return "", &fs.PathError{Op: "lstat", Path: p, Err: fs.ErrNotExist}
+	}
+	return e
+}
+
 func displays(ts []Target) []string {
 	var out []string
 	for _, t := range ts {
-		out = append(out, t.Display)
+		d := t.Display
+		if t.Legacy {
+			d += "(legacy)"
+		}
+		out = append(out, d)
 	}
 	return out
 }
@@ -392,25 +426,31 @@ func displays(ts []Target) []string {
 func eq(a, b []string) bool { return strings.Join(a, "|") == strings.Join(b, "|") }
 
 func TestProjectTargets(t *testing.T) {
+	warn := func(rel, imp, end string) string {
+		return "jitso: warning: " + rel + " does not import AGENTS.md, and Claude Code reads only " + rel + " when it exists: add a line @" + imp + " to it" + end
+	}
+	const noBlock, keeps = " so Claude Code reads the JITSO block", "; its old JITSO block stays until then"
+	oldBlock := Render(Added1, "\n") + "\n"
 	cases := []struct {
 		name   string
 		files  map[string]string
 		remove bool
 		want   []string
-		warns  int
+		warns  []string
 	}{
-		{"agents only", nil, false, []string{"AGENTS.md"}, 0},
-		{"claude without import", map[string]string{"CLAUDE.md": "# c\n"}, false, []string{"AGENTS.md", "CLAUDE.md"}, 0},
-		{"claude with import", map[string]string{"CLAUDE.md": "@AGENTS.md\n"}, false, []string{"AGENTS.md"}, 0},
-		{"claude with the import in a span", map[string]string{"CLAUDE.md": "`@AGENTS.md`\n"}, false, []string{"AGENTS.md", "CLAUDE.md"}, 0},
-		{"dot claude", map[string]string{".claude/CLAUDE.md": "# c\n"}, false, []string{"AGENTS.md", ".claude/CLAUDE.md"}, 0},
-		{"root claude wins over dot claude", map[string]string{"CLAUDE.md": "# c\n", ".claude/CLAUDE.md": "# d\n"}, false, []string{"AGENTS.md", "CLAUDE.md"}, 0},
-		{"import in root claude hides dot claude", map[string]string{"CLAUDE.md": "@AGENTS.md\n", ".claude/CLAUDE.md": "# d\n"}, false, []string{"AGENTS.md"}, 0},
-		{"local warns", map[string]string{"CLAUDE.local.md": "# mine\n"}, false, []string{"AGENTS.md"}, 1},
-		{"local with import is quiet", map[string]string{"CLAUDE.local.md": "@AGENTS.md\n"}, false, []string{"AGENTS.md"}, 0},
-		{"local next to claude is quiet", map[string]string{"CLAUDE.local.md": "# m\n", "CLAUDE.md": "@AGENTS.md\n"}, false, []string{"AGENTS.md"}, 0},
-		{"remove lists every existing file", map[string]string{"CLAUDE.md": "@AGENTS.md\n", ".claude/CLAUDE.md": "# d\n"}, true, []string{"AGENTS.md", "CLAUDE.md", ".claude/CLAUDE.md"}, 0},
-		{"remove has no warning", map[string]string{"CLAUDE.local.md": "# m\n"}, true, []string{"AGENTS.md"}, 0},
+		{"agents only", nil, false, []string{"AGENTS.md"}, nil},
+		{"claude without the import", map[string]string{"CLAUDE.md": "# c\n"}, false, []string{"AGENTS.md"},
+			[]string{warn("CLAUDE.md", "AGENTS.md", noBlock)}},
+		{"claude without the import keeps its block", map[string]string{"CLAUDE.md": "# c\n\n" + oldBlock}, false, []string{"AGENTS.md"},
+			[]string{warn("CLAUDE.md", "AGENTS.md", keeps)}},
+		{"claude that imports is legacy", map[string]string{"CLAUDE.md": "@AGENTS.md\n"}, false, []string{"AGENTS.md", "CLAUDE.md(legacy)"}, nil},
+		{"dot claude imports from its parent", map[string]string{".claude/CLAUDE.md": "@../AGENTS.md\n"}, false, []string{"AGENTS.md", ".claude/CLAUDE.md(legacy)"}, nil},
+		{"dot claude with the checkout import", map[string]string{".claude/CLAUDE.md": "@AGENTS.md\n"}, false, []string{"AGENTS.md"},
+			[]string{warn(".claude/CLAUDE.md", "../AGENTS.md", noBlock)}},
+		{"both claude files", map[string]string{"CLAUDE.md": "# c\n", ".claude/CLAUDE.md": "@../AGENTS.md\n"}, false, []string{"AGENTS.md", ".claude/CLAUDE.md(legacy)"},
+			[]string{warn("CLAUDE.md", "AGENTS.md", noBlock)}},
+		{"claude local is not looked at", map[string]string{"CLAUDE.local.md": "# mine\n"}, false, []string{"AGENTS.md"}, nil},
+		{"remove lists every claude file", map[string]string{"CLAUDE.md": "@AGENTS.md\n", ".claude/CLAUDE.md": "# d\n"}, true, []string{"AGENTS.md", "CLAUDE.md(legacy)", ".claude/CLAUDE.md(legacy)"}, nil},
 	}
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
@@ -418,27 +458,78 @@ func TestProjectTargets(t *testing.T) {
 			for k, v := range c.files {
 				m["/p/"+k] = v
 			}
-			ts, warns, err := ProjectTargets(m.env("/p", "", ""), c.remove)
+			got, err := ProjectTargets(m.env("/p", "", ""), c.remove)
 			if err != nil {
 				t.Fatal(err)
 			}
-			if !eq(displays(ts), c.want) {
-				t.Errorf("targets = %v, want %v", displays(ts), c.want)
+			if !eq(displays(got.List), c.want) {
+				t.Errorf("targets = %v, want %v", displays(got.List), c.want)
 			}
-			if len(warns) != c.warns {
-				t.Errorf("warnings = %v", warns)
+			if !eq(got.Warnings, c.warns) {
+				t.Errorf("warnings = %v, want %v", got.Warnings, c.warns)
 			}
-			if c.warns == 1 && warns[0] != LocalWarning {
-				t.Errorf("warning = %q", warns[0])
+			if len(got.Notes) != 0 || got.None != "" {
+				t.Errorf("notes %v, none %q", got.Notes, got.None)
 			}
-			if ts[0].Old != nil {
+			if got.List[0].Old != nil {
 				t.Errorf("AGENTS.md should be absent")
+			}
+			for _, tg := range got.List {
+				if want := map[string]string{"CLAUDE.md": "AGENTS.md", ".claude/CLAUDE.md": "../AGENTS.md"}[tg.Display]; tg.Import != want {
+					t.Errorf("%s: import %q, want %q", tg.Display, tg.Import, want)
+				}
 			}
 		})
 	}
 }
 
+func TestProjectTargetsLinks(t *testing.T) {
+	// CLAUDE.md is a link to AGENTS.md: one file, named AGENTS.md.
+	m := memEnv{"/p/AGENTS.md": "# a\n", "/p/CLAUDE.md": "# a\n"}
+	got, err := ProjectTargets(links(m.env("/p", "", ""), m, map[string]string{"/p/CLAUDE.md": "/p/AGENTS.md"}), false)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !eq(displays(got.List), []string{"AGENTS.md"}) || !eq(got.Notes, []string{"note: CLAUDE.md is the same file as AGENTS.md"}) {
+		t.Errorf("targets %v, notes %v", displays(got.List), got.Notes)
+	}
+
+	// AGENTS.md leads out of the checkout: skipped with a warning, and the
+	// add then lists nothing, an old block in a CLAUDE.md that imports it
+	// included.
+	m = memEnv{"/p/AGENTS.md": "# a\n", "/elsewhere/AGENTS.md": "# a\n", "/p/CLAUDE.md": "@AGENTS.md\n"}
+	e := links(m.env("/p", "", ""), m, map[string]string{"/p/AGENTS.md": "/elsewhere/AGENTS.md"})
+	got, err = ProjectTargets(e, false)
+	if err != nil {
+		t.Fatal(err)
+	}
+	wantWarn := "jitso: warning: AGENTS.md is a link to /elsewhere/AGENTS.md, which is outside this checkout, so jitso left it alone"
+	if len(got.List) != 0 || !eq(got.Warnings, []string{wantWarn}) || got.None != "no AGENTS.md jitso may write" {
+		t.Errorf("targets %v, warnings %v, none %q", displays(got.List), got.Warnings, got.None)
+	}
+	// Removing still cleans CLAUDE.md.
+	got, err = ProjectTargets(e, true)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !eq(displays(got.List), []string{"CLAUDE.md(legacy)"}) || got.None != "" {
+		t.Errorf("remove: targets %v, none %q", displays(got.List), got.None)
+	}
+
+	// A linked folder: the file is written under the scope root.
+	m = memEnv{"/p/real/CLAUDE.md": "@../AGENTS.md\n", "/p/.claude/CLAUDE.md": "@../AGENTS.md\n", "/p/AGENTS.md": ""}
+	got, err = ProjectTargets(links(m.env("/p", "", ""), m, map[string]string{"/p/.claude": "/p/real"}), false)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(got.List) != 2 || got.List[1].Path != "/p/real/CLAUDE.md" || got.List[1].Display != ".claude/CLAUDE.md" {
+		t.Errorf("targets = %+v", got.List)
+	}
+}
+
 func TestUserTargets(t *testing.T) {
+	const noFolder = "no harness user folder found: ~/.codex, ~/.config/opencode, ~/.pi/agent"
+	const noOpencode = "jitso: warning: ~/.config/opencode/AGENTS.md was not created, because OpenCode reads ~/.claude/CLAUDE.md only while it is absent; create it yourself (it may import your rules) and run again"
 	cases := []struct {
 		name   string
 		files  map[string]string
@@ -446,43 +537,109 @@ func TestUserTargets(t *testing.T) {
 		remove bool
 		want   []string
 		warns  []string
+		none   string
 	}{
-		{"empty home", nil, "", false, []string{"~/.claude/CLAUDE.md"}, nil},
-		{"codex folder", map[string]string{"/h/.codex/config.toml": "x"}, "", false, []string{"~/.claude/CLAUDE.md", "~/.codex/AGENTS.md"}, nil},
-		{"opencode file", map[string]string{"/h/.config/opencode/AGENTS.md": "# oc\n"}, "", false, []string{"~/.claude/CLAUDE.md", "~/.config/opencode/AGENTS.md"}, nil},
-		{"opencode folder only", map[string]string{"/h/.config/opencode/opencode.json": "{}"}, "", false, []string{"~/.claude/CLAUDE.md"}, nil},
-		{"override with text", map[string]string{"/h/.codex/AGENTS.override.md": "x\n"}, "", false, []string{"~/.claude/CLAUDE.md"},
-			[]string{"jitso: warning: ~/.codex/AGENTS.override.md is not empty, so Codex reads it instead of AGENTS.md; the JITSO block was not written to ~/.codex/AGENTS.md"}},
-		{"empty override", map[string]string{"/h/.codex/AGENTS.override.md": ""}, "", false, []string{"~/.claude/CLAUDE.md", "~/.codex/AGENTS.md"}, nil},
-		{"blank override", map[string]string{"/h/.codex/AGENTS.override.md": " \n"}, "", false, []string{"~/.claude/CLAUDE.md", "~/.codex/AGENTS.md"}, nil},
-		{"codex home", map[string]string{"/h/alt/config.toml": "x"}, "/h/alt", false, []string{"~/.claude/CLAUDE.md", "~/alt/AGENTS.md"}, nil},
-		{"codex home folder missing", nil, "/h/alt", false, []string{"~/.claude/CLAUDE.md"}, nil},
-		{"codex home outside the home folder", map[string]string{"/elsewhere/config.toml": "x"}, "/elsewhere", false, []string{"~/.claude/CLAUDE.md"},
-			[]string{"jitso: warning: CODEX_HOME (/elsewhere) is not inside your home folder, so the JITSO block was not written to its AGENTS.md"}},
-		{"remove skips the override", map[string]string{"/h/.codex/AGENTS.override.md": "x\n", "/h/.codex/AGENTS.md": "a\n"}, "", true, []string{"~/.claude/CLAUDE.md", "~/.codex/AGENTS.md"}, nil},
+		{"empty home", nil, "", false, nil, nil, noFolder},
+		{"old block with no harness stays", map[string]string{"/h/.claude/CLAUDE.md": "x\n"}, "", false, nil, nil, noFolder},
+		{"codex folder", map[string]string{"/h/.codex/config.toml": "x"}, "", false, []string{"~/.codex/AGENTS.md"}, nil, ""},
+		{"opencode folder", map[string]string{"/h/.config/opencode/opencode.json": "{}"}, "", false, []string{"~/.config/opencode/AGENTS.md"}, nil, ""},
+		{"pi folder", map[string]string{"/h/.pi/agent/settings.json": "{}"}, "", false, []string{"~/.pi/agent/AGENTS.md"}, nil, ""},
+		{"every harness, and claude is not listed", map[string]string{
+			"/h/.codex/config.toml": "x", "/h/.config/opencode/AGENTS.md": "# oc\n", "/h/.pi/agent/settings.json": "{}", "/h/.claude/CLAUDE.md": "x\n",
+		}, "", false, []string{"~/.codex/AGENTS.md", "~/.config/opencode/AGENTS.md", "~/.pi/agent/AGENTS.md"}, nil, ""},
+		{"opencode is not created beside claude", map[string]string{
+			"/h/.config/opencode/opencode.json": "{}", "/h/.pi/agent/settings.json": "{}", "/h/.claude/CLAUDE.md": "x\n",
+		}, "", false, []string{"~/.pi/agent/AGENTS.md"}, []string{noOpencode}, ""},
+		{"opencode alone beside claude", map[string]string{
+			"/h/.config/opencode/opencode.json": "{}", "/h/.claude/CLAUDE.md": "x\n",
+		}, "", false, nil, []string{noOpencode}, "no AGENTS.md jitso may write"},
+		{"override with text", map[string]string{"/h/.codex/AGENTS.override.md": "x\n", "/h/.pi/agent/settings.json": "{}"}, "", false, []string{"~/.pi/agent/AGENTS.md"},
+			[]string{"jitso: warning: ~/.codex/AGENTS.override.md is not empty, so Codex reads it instead of AGENTS.md; the JITSO block was not written to ~/.codex/AGENTS.md"}, ""},
+		{"override alone", map[string]string{"/h/.codex/AGENTS.override.md": "x\n"}, "", false, nil,
+			[]string{"jitso: warning: ~/.codex/AGENTS.override.md is not empty, so Codex reads it instead of AGENTS.md; the JITSO block was not written to ~/.codex/AGENTS.md"}, "no AGENTS.md jitso may write"},
+		{"empty override", map[string]string{"/h/.codex/AGENTS.override.md": ""}, "", false, []string{"~/.codex/AGENTS.md"}, nil, ""},
+		{"blank override", map[string]string{"/h/.codex/AGENTS.override.md": " \n"}, "", false, []string{"~/.codex/AGENTS.md"}, nil, ""},
+		{"codex home", map[string]string{"/h/alt/config.toml": "x"}, "/h/alt", false, []string{"~/alt/AGENTS.md"}, nil, ""},
+		{"codex home folder missing", nil, "/h/alt", false, nil, nil, "no harness user folder found: ~/alt, ~/.config/opencode, ~/.pi/agent"},
+		{"codex home outside the home folder", map[string]string{"/elsewhere/config.toml": "x"}, "/elsewhere", false, nil,
+			[]string{"jitso: warning: CODEX_HOME (/elsewhere) is not inside your home folder, so the JITSO block was not written to its AGENTS.md"}, "no AGENTS.md jitso may write"},
+		{"remove skips the override", map[string]string{"/h/.codex/AGENTS.override.md": "x\n", "/h/.codex/AGENTS.md": "a\n"}, "", true, []string{"~/.codex/AGENTS.md", "~/.claude/CLAUDE.md(legacy)"}, nil, ""},
+		{"remove lists existing files only, claude always", map[string]string{"/h/.config/opencode/opencode.json": "{}", "/h/.pi/agent/AGENTS.md": "a\n"}, "", true, []string{"~/.pi/agent/AGENTS.md", "~/.claude/CLAUDE.md(legacy)"}, nil, ""},
+		{"remove in an empty home", nil, "", true, []string{"~/.claude/CLAUDE.md(legacy)"}, nil, ""},
 	}
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
-			ts, warns, err := UserTargets(memEnv(c.files).env("", "/h", c.codex), c.remove)
+			got, err := UserTargets(memEnv(c.files).env("", "/h", c.codex), c.remove)
 			if err != nil {
 				t.Fatal(err)
 			}
-			if !eq(displays(ts), c.want) {
-				t.Errorf("targets = %v, want %v", displays(ts), c.want)
+			if !eq(displays(got.List), c.want) {
+				t.Errorf("targets = %v, want %v", displays(got.List), c.want)
 			}
-			if !eq(warns, c.warns) {
-				t.Errorf("warnings = %v, want %v", warns, c.warns)
+			if !eq(got.Warnings, c.warns) {
+				t.Errorf("warnings = %v, want %v", got.Warnings, c.warns)
 			}
-			if ts[0].PruneDir != "/h/.claude" || ts[0].PruneDisplay != "~/.claude" {
-				t.Errorf("prune = %q %q", ts[0].PruneDir, ts[0].PruneDisplay)
+			if got.None != c.none {
+				t.Errorf("none = %q, want %q", got.None, c.none)
+			}
+			for _, tg := range got.List {
+				if tg.Legacy && (tg.PruneDir != "/h/.claude" || tg.PruneDisplay != "~/.claude") {
+					t.Errorf("prune = %q %q", tg.PruneDir, tg.PruneDisplay)
+				}
+				if !tg.Legacy && tg.PruneDir != "" {
+					t.Errorf("%s prunes %q", tg.Display, tg.PruneDir)
+				}
 			}
 		})
 	}
 }
 
+func TestUserTargetsLinks(t *testing.T) {
+	m := memEnv{
+		"/h/.codex/config.toml":         "x",
+		"/h/.agents/AGENTS.md":          "# shared\n",
+		"/h/.codex/AGENTS.md":           "# shared\n",
+		"/h/.pi/agent/AGENTS.md":        "# shared\n",
+		"/h/.claude/CLAUDE.md":          "# shared\n",
+		"/out/AGENTS.md":                "# out\n",
+		"/h/.config/opencode/AGENTS.md": "# out\n",
+	}
+	e := links(m.env("", "/h", ""), m, map[string]string{
+		"/h/.codex/AGENTS.md":           "/h/.agents/AGENTS.md",
+		"/h/.pi/agent/AGENTS.md":        "/h/.agents/AGENTS.md",
+		"/h/.claude/CLAUDE.md":          "/h/.agents/AGENTS.md",
+		"/h/.config/opencode/AGENTS.md": "/out/AGENTS.md",
+	})
+	got, err := UserTargets(e, false)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !eq(displays(got.List), []string{"~/.codex/AGENTS.md"}) || got.List[0].Path != "/h/.agents/AGENTS.md" {
+		t.Errorf("targets = %+v", got.List)
+	}
+	wantNotes := []string{"note: ~/.pi/agent/AGENTS.md is the same file as ~/.codex/AGENTS.md"}
+	if !eq(got.Notes, wantNotes) {
+		t.Errorf("notes = %v", got.Notes)
+	}
+	wantWarn := []string{"jitso: warning: ~/.config/opencode/AGENTS.md is a link to /out/AGENTS.md, which is outside your home folder, so jitso left it alone"}
+	if !eq(got.Warnings, wantWarn) {
+		t.Errorf("warnings = %v", got.Warnings)
+	}
+
+	// Removing lists ~/.claude/CLAUDE.md too: the same file again.
+	got, err = UserTargets(e, true)
+	if err != nil {
+		t.Fatal(err)
+	}
+	wantNotes = append(wantNotes, "note: ~/.claude/CLAUDE.md is the same file as ~/.codex/AGENTS.md")
+	if !eq(displays(got.List), []string{"~/.codex/AGENTS.md"}) || !eq(got.Notes, wantNotes) || !eq(got.Warnings, wantWarn) {
+		t.Errorf("remove: targets %v, notes %v, warnings %v", displays(got.List), got.Notes, got.Warnings)
+	}
+}
+
 func TestReadErrorIsAnEnvironmentError(t *testing.T) {
 	e := Env{Root: "/p", ReadFile: func(string) ([]byte, error) { return nil, errors.New("boom") }}
-	if _, _, err := ProjectTargets(e, false); err == nil || !strings.Contains(err.Error(), "could not read") {
+	if _, err := ProjectTargets(e, false); err == nil || !strings.Contains(err.Error(), "could not read") {
 		t.Errorf("err = %v", err)
 	}
 }

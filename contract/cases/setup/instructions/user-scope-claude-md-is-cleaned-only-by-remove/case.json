@@ -1,0 +1,157 @@
+{
+  "id": "setup/instructions/user-scope-claude-md-is-cleaned-only-by-remove",
+  "title": "--scope user never touches ~/.claude/CLAUDE.md when adding; --remove takes the block an older jitso put there out, deleting a file and a ~/.claude folder jitso made",
+  "source": [
+    "intended: owner decision (v0.2): JITSO writes instruction blocks to AGENTS.md files only, never to CLAUDE.md",
+    "intended: owner decision (v0.3): ~/.claude/CLAUDE.md is what Claude Code reads for the user, so an add leaves its block and only --remove cleans it"
+  ],
+  "defect": "N-18",
+  "intent": "INTENDED behavior (setup instructions writes AGENTS.md only). An older jitso created `~/.claude/CLAUDE.md` holding only the block (`added=new`). With a `~/.pi/agent` folder, `--scope user --yes` creates `~/.pi/agent/AGENTS.md` and leaves `~/.claude/CLAUDE.md` byte for byte, without naming it: that block is the one Claude Code reads. `--remove --yes` deletes `~/.pi/agent/AGENTS.md` and `~/.claude/CLAUDE.md` (after a backup) and prunes the then empty `~/.claude`. When the old block was appended (`added=1`) to a file with other text, `--remove` gives that file its original bytes and keeps `~/.claude`.",
+  "project": {
+    "files": {
+      ".golden/golden-new.md": {
+        "from": "golden-new.md"
+      }
+    }
+  },
+  "home": {
+    "files": {
+      ".pi/agent/settings.json": "{}\n",
+      ".claude/CLAUDE.md": {
+        "from": "golden-new.md"
+      }
+    }
+  },
+  "steps": [
+    {
+      "run": [
+        "setup",
+        "instructions",
+        "--scope",
+        "user",
+        "--yes"
+      ],
+      "cwd": "{{HOME}}",
+      "capture": {
+        "NEW": {
+          "from": "file",
+          "path": ".golden/golden-new.md",
+          "regex": "(?s)^(.*)$"
+        }
+      },
+      "expect": {
+        "exit": 0,
+        "stdout": [
+          "+++ b/~/.pi/agent/AGENTS.md",
+          "created ~/.pi/agent/AGENTS.md",
+          {
+            "not_contains": "CLAUDE.md"
+          },
+          {
+            "regex": "jitso setup instructions: done\\n$"
+          }
+        ],
+        "stderr": [
+          {
+            "empty": true
+          }
+        ],
+        "files": [
+          {
+            "path": "{{HOME}}/.pi/agent/AGENTS.md",
+            "equals": "{{NEW}}"
+          },
+          {
+            "path": "{{HOME}}/.claude/CLAUDE.md",
+            "equals": "{{NEW}}"
+          }
+        ]
+      }
+    },
+    {
+      "run": [
+        "setup",
+        "instructions",
+        "--scope",
+        "user",
+        "--remove",
+        "--yes"
+      ],
+      "cwd": "{{HOME}}",
+      "expect": {
+        "exit": 0,
+        "stdout": [
+          "--- a/~/.claude/CLAUDE.md",
+          {
+            "regex": "backed up ~/\\.claude/CLAUDE\\.md to ~/\\.jitso/backups/\\d{8}T\\d{6}Z-[0-9a-f]{4}/\\.claude/CLAUDE\\.md\\n"
+          },
+          "removed ~/.pi/agent/AGENTS.md",
+          "removed ~/.claude/CLAUDE.md",
+          "removed ~/.claude\n",
+          {
+            "regex": "jitso setup instructions: done\\n$"
+          }
+        ],
+        "stderr": [
+          {
+            "empty": true
+          }
+        ],
+        "files": [
+          {
+            "path": "{{HOME}}/.pi/agent/AGENTS.md",
+            "exists": false
+          },
+          {
+            "path": "{{HOME}}/.claude",
+            "exists": false
+          }
+        ]
+      }
+    },
+    {
+      "write": {
+        "home": {
+          ".claude/CLAUDE.md": {
+            "from": "golden-appended.md"
+          }
+        }
+      }
+    },
+    {
+      "run": [
+        "setup",
+        "instructions",
+        "--scope",
+        "user",
+        "--remove",
+        "--yes"
+      ],
+      "cwd": "{{HOME}}",
+      "expect": {
+        "exit": 0,
+        "stdout": [
+          "-<!-- BEGIN JITSO block=1 added=1:",
+          "wrote ~/.claude/CLAUDE.md",
+          {
+            "not_contains": "removed ~/.claude"
+          },
+          {
+            "regex": "jitso setup instructions: done\\n$"
+          }
+        ],
+        "stderr": [
+          {
+            "empty": true
+          }
+        ],
+        "files": [
+          {
+            "path": "{{HOME}}/.claude/CLAUDE.md",
+            "equals": "# Claude\n"
+          }
+        ]
+      }
+    }
+  ]
+}

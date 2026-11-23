@@ -1,0 +1,124 @@
+{
+  "id": "setup/instructions/claude-md-without-the-import-keeps-its-block",
+  "title": "a CLAUDE.md or .claude/CLAUDE.md that does not import AGENTS.md keeps the block an older jitso put there, with a warning naming the import line; --remove still takes it out",
+  "source": [
+    "intended: owner decision (v0.3): the old block moves out only of a Claude file that imports AGENTS.md, so Claude Code still reads the block"
+  ],
+  "defect": "N-18",
+  "intent": "INTENDED behavior (setup instructions writes AGENTS.md only). An older jitso appended the block (`added=1`) to a Claude memory file that does not import AGENTS.md. Claude Code reads only that file when it exists, so taking the block out would leave Claude Code without it, and jitso never writes the import itself. `setup instructions --yes` creates `AGENTS.md` with the block, leaves the Claude file byte for byte, does not name it on stdout, and warns on stderr with the line to add (`@AGENTS.md` in `CLAUDE.md`, `@../AGENTS.md` in `.claude/CLAUDE.md`, because Claude Code resolves an import relative to the file that holds it). `--remove --yes` deletes `AGENTS.md` and gives the Claude file its original bytes.",
+  "project": {
+    "files": {
+      "{{file}}": {
+        "from": "golden-appended.md"
+      },
+      ".golden/golden-new.md": {
+        "from": "golden-new.md"
+      },
+      ".golden/golden-appended.md": {
+        "from": "golden-appended.md"
+      }
+    }
+  },
+  "for_each": {
+    "vars": [
+      "file",
+      "import"
+    ],
+    "rows": [
+      [
+        "CLAUDE.md",
+        "@AGENTS.md"
+      ],
+      [
+        ".claude/CLAUDE.md",
+        "@../AGENTS.md"
+      ]
+    ],
+    "ids": [
+      "claude-md",
+      "dot-claude-claude-md"
+    ]
+  },
+  "steps": [
+    {
+      "run": [
+        "setup",
+        "instructions",
+        "--yes"
+      ],
+      "capture": {
+        "NEW": {
+          "from": "file",
+          "path": ".golden/golden-new.md",
+          "regex": "(?s)^(.*)$"
+        },
+        "APPENDED": {
+          "from": "file",
+          "path": ".golden/golden-appended.md",
+          "regex": "(?s)^(.*)$"
+        }
+      },
+      "expect": {
+        "exit": 0,
+        "stdout": [
+          "+++ b/AGENTS.md",
+          "created AGENTS.md",
+          {
+            "not_contains": "CLAUDE"
+          },
+          {
+            "regex": "jitso setup instructions: done\\n$"
+          }
+        ],
+        "stderr": [
+          {
+            "equals": "jitso: warning: {{file}} does not import AGENTS.md, and Claude Code reads only {{file}} when it exists: add a line {{import}} to it; its old JITSO block stays until then\n"
+          }
+        ],
+        "files": [
+          {
+            "path": "AGENTS.md",
+            "equals": "{{NEW}}"
+          },
+          {
+            "path": "{{file}}",
+            "equals": "{{APPENDED}}"
+          }
+        ]
+      }
+    },
+    {
+      "run": [
+        "setup",
+        "instructions",
+        "--remove",
+        "--yes"
+      ],
+      "expect": {
+        "exit": 0,
+        "stdout": [
+          "removed AGENTS.md",
+          "wrote {{file}}",
+          {
+            "regex": "jitso setup instructions: done\\n$"
+          }
+        ],
+        "stderr": [
+          {
+            "empty": true
+          }
+        ],
+        "files": [
+          {
+            "path": "AGENTS.md",
+            "exists": false
+          },
+          {
+            "path": "{{file}}",
+            "equals": "# Claude\n"
+          }
+        ]
+      }
+    }
+  ]
+}

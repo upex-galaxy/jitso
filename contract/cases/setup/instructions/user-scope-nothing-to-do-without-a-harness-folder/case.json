@@ -1,0 +1,128 @@
+{
+  "id": "setup/instructions/user-scope-nothing-to-do-without-a-harness-folder",
+  "title": "--scope user with no harness user folder is nothing to do (exit 0), leaves an old block in ~/.claude/CLAUDE.md in place, and --remove still takes it out",
+  "source": [
+    "intended: owner decision (v0.2): JITSO writes instruction blocks to AGENTS.md files only, never to CLAUDE.md"
+  ],
+  "defect": "N-18",
+  "intent": "INTENDED behavior (setup instructions writes AGENTS.md only). An empty home has none of `~/.codex`, `~/.config/opencode` and `~/.pi/agent`, so there is no user `AGENTS.md` to write: the command prints `jitso setup instructions: nothing to do (no harness user folder found: ~/.codex, ~/.config/opencode, ~/.pi/agent)`, exit 0, and creates nothing (no `~/.claude`). A block an older jitso left in `~/.claude/CLAUDE.md` is never taken out by an add (it is the block Claude Code reads); `--remove --yes` still removes it byte-exactly.",
+  "project": {
+    "files": {
+      ".golden/golden-appended.md": {
+        "from": "golden-appended.md"
+      }
+    }
+  },
+  "steps": [
+    {
+      "run": [
+        "setup",
+        "instructions",
+        "--scope",
+        "user",
+        "--yes"
+      ],
+      "cwd": "{{HOME}}",
+      "expect": {
+        "exit": 0,
+        "stdout": [
+          {
+            "equals": "jitso setup instructions: nothing to do (no harness user folder found: ~/.codex, ~/.config/opencode, ~/.pi/agent)\n"
+          }
+        ],
+        "stderr": [
+          {
+            "empty": true
+          }
+        ],
+        "files": [
+          {
+            "path": "{{HOME}}/.claude",
+            "exists": false
+          },
+          {
+            "path": "{{HOME}}/.jitso",
+            "exists": false
+          }
+        ]
+      }
+    },
+    {
+      "write": {
+        "home": {
+          ".claude/CLAUDE.md": {
+            "from": "golden-appended.md"
+          }
+        }
+      }
+    },
+    {
+      "run": [
+        "setup",
+        "instructions",
+        "--scope",
+        "user",
+        "--yes"
+      ],
+      "cwd": "{{HOME}}",
+      "capture": {
+        "APPENDED": {
+          "from": "file",
+          "path": ".golden/golden-appended.md",
+          "regex": "(?s)^(.*)$"
+        }
+      },
+      "expect": {
+        "exit": 0,
+        "stdout": [
+          {
+            "equals": "jitso setup instructions: nothing to do (no harness user folder found: ~/.codex, ~/.config/opencode, ~/.pi/agent)\n"
+          }
+        ],
+        "stderr": [
+          {
+            "empty": true
+          }
+        ],
+        "files": [
+          {
+            "path": "{{HOME}}/.claude/CLAUDE.md",
+            "equals": "{{APPENDED}}"
+          }
+        ]
+      }
+    },
+    {
+      "run": [
+        "setup",
+        "instructions",
+        "--scope",
+        "user",
+        "--remove",
+        "--yes"
+      ],
+      "cwd": "{{HOME}}",
+      "expect": {
+        "exit": 0,
+        "stdout": [
+          "-<!-- BEGIN JITSO block=1 added=1:",
+          "wrote ~/.claude/CLAUDE.md",
+          {
+            "regex": "jitso setup instructions: done\\n$"
+          }
+        ],
+        "stderr": [
+          {
+            "empty": true
+          }
+        ],
+        "files": [
+          {
+            "path": "{{HOME}}/.claude/CLAUDE.md",
+            "equals": "# Claude\n"
+          }
+        ]
+      }
+    }
+  ]
+}

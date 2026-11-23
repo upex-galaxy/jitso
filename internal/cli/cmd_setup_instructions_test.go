@@ -117,27 +117,46 @@ func TestSetupInstructionsBrokenMarkerChangesNothing(t *testing.T) {
 	}
 }
 
-func TestSetupInstructionsCLAUDEMirror(t *testing.T) {
+func TestSetupInstructionsMovesTheBlockOutOfCLAUDE(t *testing.T) {
 	root := setupRepo(t)
-	setupWrite(t, root, "CLAUDE.md", "# Claude\n")
-	if code, out, errOut := setupInstrRun(t, root, "", "", "--yes"); code != 0 {
+	block := instructions.Render(instructions.Added1, "\n") + "\n"
+	setupWrite(t, root, "CLAUDE.md", "@AGENTS.md\n\n"+block)
+	if code, out, errOut := setupInstrRun(t, root, "", "", "--yes"); code != 0 || errOut != "" {
 		t.Fatalf("exit %d\n%s\n%s", code, out, errOut)
 	}
-	a, _ := setupRead(root, "AGENTS.md")
-	c, _ := setupRead(root, "CLAUDE.md")
-	if !strings.HasPrefix(c, "# Claude\n\n") || !strings.HasSuffix(c, instructions.Render(instructions.Added1, "\n")+"\n") {
+	if c, _ := setupRead(root, "CLAUDE.md"); c != "@AGENTS.md\n" {
 		t.Errorf("CLAUDE.md = %q", c)
 	}
-	if a != instructions.Render(instructions.AddedNew, "\n")+"\n" {
+	if a, _ := setupRead(root, "AGENTS.md"); a != instructions.Render(instructions.AddedNew, "\n")+"\n" {
 		t.Errorf("AGENTS.md = %q", a)
 	}
-	// Once CLAUDE.md imports AGENTS.md, --remove still cleans its old block.
-	setupWrite(t, root, "CLAUDE.md", c+"@AGENTS.md\n")
-	if code, out, errOut := setupInstrRun(t, root, "", "", "--remove", "--yes"); code != 0 {
+	// A CLAUDE.md without a block is never written.
+	if code, out, _ := setupInstrRun(t, root, "", "", "--yes"); code != 0 || out != "jitso setup instructions: nothing to do (the JITSO block is up to date in AGENTS.md)\n" {
+		t.Fatalf("second run: exit %d\n%s", code, out)
+	}
+
+	// A CLAUDE.md that does not import AGENTS.md keeps its block, with a
+	// warning: Claude Code reads only it.
+	appended := "# Claude\n\n" + block
+	setupWrite(t, root, "CLAUDE.md", appended)
+	code, out, errOut := setupInstrRun(t, root, "", "", "--yes")
+	wantWarn := "jitso: warning: CLAUDE.md does not import AGENTS.md, and Claude Code reads only CLAUDE.md when it exists: add a line @AGENTS.md to it; its old JITSO block stays until then\n"
+	if code != 0 || errOut != wantWarn || out != "jitso setup instructions: nothing to do (the JITSO block is up to date in AGENTS.md)\n" {
+		t.Fatalf("no import: exit %d\n%s\n%s", code, out, errOut)
+	}
+	if c, _ := setupRead(root, "CLAUDE.md"); c != appended {
+		t.Errorf("CLAUDE.md without the import = %q", c)
+	}
+
+	// --remove still examines CLAUDE.md.
+	if code, out, errOut := setupInstrRun(t, root, "", "", "--remove", "--yes"); code != 0 || errOut != "" {
 		t.Fatalf("remove: exit %d\n%s\n%s", code, out, errOut)
 	}
-	if c, _ := setupRead(root, "CLAUDE.md"); c != "# Claude\n@AGENTS.md\n" {
+	if c, _ := setupRead(root, "CLAUDE.md"); c != "# Claude\n" {
 		t.Errorf("CLAUDE.md after remove = %q", c)
+	}
+	if _, ok := setupRead(root, "AGENTS.md"); ok {
+		t.Errorf("AGENTS.md should be gone")
 	}
 }
 
@@ -146,14 +165,17 @@ func TestSetupInstructionsUserScope(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+	created := instructions.Render(instructions.AddedNew, "\n") + "\n"
 	setupWrite(t, home, ".codex/config.toml", "x\n")
 	setupWrite(t, home, ".config/opencode/AGENTS.md", "# oc\n")
+	setupWrite(t, home, ".pi/agent/settings.json", "{}\n")
+	setupWrite(t, home, ".claude/CLAUDE.md", created)
 	cwd := t.TempDir() // not a git checkout: user scope needs none
 	code, out, errOut := setupInstrRun(t, cwd, home, "", "--scope", "user", "--yes")
-	if code != 0 {
+	if code != 0 || errOut != "" {
 		t.Fatalf("exit %d\n%s\n%s", code, out, errOut)
 	}
-	for _, line := range []string{"created ~/.claude/CLAUDE.md", "created ~/.codex/AGENTS.md", "wrote ~/.config/opencode/AGENTS.md"} {
+	for _, line := range []string{"created ~/.codex/AGENTS.md", "wrote ~/.config/opencode/AGENTS.md", "created ~/.pi/agent/AGENTS.md"} {
 		if !strings.Contains(out, line+"\n") {
 			t.Errorf("stdout lacks %q:\n%s", line, out)
 		}
@@ -161,9 +183,21 @@ func TestSetupInstructionsUserScope(t *testing.T) {
 	if !regexp.MustCompile(`backed up ~/\.config/opencode/AGENTS\.md to ~/\.jitso/backups/\d{8}T\d{6}Z-[0-9a-f]{4}/\.config/opencode/AGENTS\.md\n`).MatchString(out) {
 		t.Errorf("no backup line:\n%s", out)
 	}
+	// An add never touches ~/.claude/CLAUDE.md: Claude Code reads its block.
+	if strings.Contains(out, "CLAUDE.md") {
+		t.Errorf("an add names ~/.claude/CLAUDE.md:\n%s", out)
+	}
+	if got, _ := setupRead(home, ".claude/CLAUDE.md"); got != created {
+		t.Errorf("~/.claude/CLAUDE.md = %q", got)
+	}
 	code, out, errOut = setupInstrRun(t, cwd, home, "", "--scope", "user", "--remove", "--yes")
 	if code != 0 {
 		t.Fatalf("remove: exit %d\n%s\n%s", code, out, errOut)
+	}
+	for _, line := range []string{"removed ~/.claude/CLAUDE.md", "removed ~/.claude"} {
+		if !strings.Contains(out, line+"\n") {
+			t.Errorf("remove stdout lacks %q:\n%s", line, out)
+		}
 	}
 	if _, err := os.Stat(filepath.Join(home, ".claude")); !os.IsNotExist(err) {
 		t.Errorf("~/.claude should be pruned: %v", err)
@@ -171,8 +205,100 @@ func TestSetupInstructionsUserScope(t *testing.T) {
 	if _, err := os.Stat(filepath.Join(home, ".codex", "config.toml")); err != nil {
 		t.Errorf("~/.codex must stay: %v", err)
 	}
+	if _, err := os.Stat(filepath.Join(home, ".pi", "agent", "AGENTS.md")); !os.IsNotExist(err) {
+		t.Errorf("~/.pi/agent/AGENTS.md should be gone: %v", err)
+	}
 	if got, _ := setupRead(home, ".config/opencode/AGENTS.md"); got != "# oc\n" {
 		t.Errorf("opencode file = %q", got)
+	}
+}
+
+func TestSetupInstructionsUserScopeKeepsOpencodeFallback(t *testing.T) {
+	home, err := filepath.EvalSymlinks(t.TempDir())
+	if err != nil {
+		t.Fatal(err)
+	}
+	setupWrite(t, home, ".config/opencode/opencode.json", "{}\n")
+	setupWrite(t, home, ".claude/CLAUDE.md", "# mine\n")
+	code, out, errOut := setupInstrRun(t, t.TempDir(), home, "", "--scope", "user", "--yes")
+	want := "jitso: warning: ~/.config/opencode/AGENTS.md was not created, because OpenCode reads ~/.claude/CLAUDE.md only while it is absent; create it yourself (it may import your rules) and run again\n"
+	if code != 0 || errOut != want || out != "jitso setup instructions: nothing to do (no AGENTS.md jitso may write)\n" {
+		t.Fatalf("exit %d\n%s\n%s", code, out, errOut)
+	}
+	if _, ok := setupRead(home, ".config/opencode/AGENTS.md"); ok {
+		t.Errorf("~/.config/opencode/AGENTS.md must not be created")
+	}
+}
+
+func TestSetupInstructionsUserScopeLinks(t *testing.T) {
+	home, err := filepath.EvalSymlinks(t.TempDir())
+	if err != nil {
+		t.Fatal(err)
+	}
+	outside, err := filepath.EvalSymlinks(t.TempDir())
+	if err != nil {
+		t.Fatal(err)
+	}
+	setupWrite(t, home, ".agents/AGENTS.md", "# shared\n")
+	setupWrite(t, home, ".codex/config.toml", "x\n")
+	setupWrite(t, home, ".pi/agent/settings.json", "{}\n")
+	setupWrite(t, outside, "AGENTS.md", "# out\n")
+	if err := os.Symlink("../.agents/AGENTS.md", filepath.Join(home, ".codex", "AGENTS.md")); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.Symlink(filepath.Join(outside, "AGENTS.md"), filepath.Join(home, ".pi", "agent", "AGENTS.md")); err != nil {
+		t.Fatal(err)
+	}
+	code, out, errOut := setupInstrRun(t, t.TempDir(), home, "", "--scope", "user", "--yes")
+	if code != 0 || !strings.Contains(out, "wrote ~/.codex/AGENTS.md\n") {
+		t.Fatalf("exit %d\n%s\n%s", code, out, errOut)
+	}
+	if want := "jitso: warning: ~/.pi/agent/AGENTS.md is a link to " + filepath.Join(outside, "AGENTS.md") + ", which is outside your home folder, so jitso left it alone\n"; errOut != want {
+		t.Errorf("stderr = %q, want %q", errOut, want)
+	}
+	if got, _ := setupRead(home, ".agents/AGENTS.md"); !strings.HasPrefix(got, "# shared\n\n<!-- BEGIN JITSO block=1 added=1:") {
+		t.Errorf("real file = %q", got)
+	}
+	if info, err := os.Lstat(filepath.Join(home, ".codex", "AGENTS.md")); err != nil || info.Mode()&os.ModeSymlink == 0 {
+		t.Errorf("~/.codex/AGENTS.md is no longer a link: %v", err)
+	}
+	if got, _ := setupRead(outside, "AGENTS.md"); got != "# out\n" {
+		t.Errorf("a file outside the home folder changed: %q", got)
+	}
+}
+
+func TestSetupInstructionsUserScopeWithoutHarness(t *testing.T) {
+	home, _ := filepath.EvalSymlinks(t.TempDir())
+	code, out, errOut := setupInstrRun(t, t.TempDir(), home, "", "--scope", "user", "--yes")
+	if code != 0 || errOut != "" || out != "jitso setup instructions: nothing to do (no harness user folder found: ~/.codex, ~/.config/opencode, ~/.pi/agent)\n" {
+		t.Errorf("exit %d\nstdout %q\nstderr %q", code, out, errOut)
+	}
+}
+
+func TestInstructionsPlanBuildsWithoutWriting(t *testing.T) {
+	home, _ := filepath.EvalSymlinks(t.TempDir())
+	setupWrite(t, home, ".pi/agent/settings.json", "{}\n")
+	ctx := &Context{Sys: System{LookupEnv: func(k string) (string, bool) {
+		if k == "HOME" {
+			return home, true
+		}
+		return "", false
+	}}}
+	s, err := InstructionsPlan(ctx, "user", false)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if s.Scope != "user" || s.Root != home || s.BackupsDir != filepath.Join(home, ".jitso", "backups") {
+		t.Errorf("setup = %+v", s)
+	}
+	if ch := s.Plan.Effective(); len(ch) != 1 || ch[0].Display != "~/.pi/agent/AGENTS.md" {
+		t.Errorf("plan = %+v", ch)
+	}
+	if got := s.Display(filepath.Join(home, ".jitso", "backups", "x")); got != "~/.jitso/backups/x" {
+		t.Errorf("display = %q", got)
+	}
+	if _, err := os.Stat(filepath.Join(home, ".pi", "agent", "AGENTS.md")); !os.IsNotExist(err) {
+		t.Errorf("InstructionsPlan wrote a file: %v", err)
 	}
 }
 

@@ -1,0 +1,65 @@
+{
+  "id": "setup/instructions/remove-cleans-an-old-claude-md-block",
+  "title": "--remove still examines CLAUDE.md and .claude/CLAUDE.md and takes out a block an older jitso put there",
+  "source": [
+    "intended: owner decision (v0.2): JITSO writes instruction blocks to AGENTS.md files only, never to CLAUDE.md"
+  ],
+  "defect": "N-18",
+  "intent": "INTENDED behavior (setup instructions writes AGENTS.md only; project --remove is unchanged). `AGENTS.md` holds a block jitso created (`added=new`) and a Claude memory file holds one an older jitso appended (`added=1`). `--remove --yes` deletes `AGENTS.md` and gives the Claude file its original bytes.",
+  "project": {
+    "files": {
+      "AGENTS.md": {
+        "from": "golden-new.md"
+      },
+      "{{file}}": {
+        "from": "golden-appended.md"
+      }
+    }
+  },
+  "for_each": {
+    "var": "file",
+    "values": [
+      "CLAUDE.md",
+      ".claude/CLAUDE.md"
+    ],
+    "ids": [
+      "claude-md",
+      "dot-claude-claude-md"
+    ]
+  },
+  "steps": [
+    {
+      "run": [
+        "setup",
+        "instructions",
+        "--remove",
+        "--yes"
+      ],
+      "expect": {
+        "exit": 0,
+        "stdout": [
+          "removed AGENTS.md",
+          "wrote {{file}}",
+          {
+            "regex": "jitso setup instructions: done\\n$"
+          }
+        ],
+        "stderr": [
+          {
+            "empty": true
+          }
+        ],
+        "files": [
+          {
+            "path": "AGENTS.md",
+            "exists": false
+          },
+          {
+            "path": "{{file}}",
+            "equals": "# Claude\n"
+          }
+        ]
+      }
+    }
+  ]
+}

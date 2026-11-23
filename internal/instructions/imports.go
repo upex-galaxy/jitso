@@ -2,20 +2,20 @@ package instructions
 
 import "strings"
 
-// Imports reports whether a CLAUDE.md imports AGENTS.md: it has `@AGENTS.md`
-// (or `@./AGENTS.md`) as a word of its own, outside fenced code blocks and
-// inline code spans, which Claude Code does not follow. A word is a run of
-// non-blank characters: `@AGENTS.md.` does not count, so a doubtful file is
-// treated as not importing and gets the block (a repeated block is harmless,
-// a missing one is not).
-func Imports(data []byte) bool {
+// Imports reports whether a Claude Code memory file imports AGENTS.md of the
+// checkout: target is the path that reaches it from that file (ImportPath),
+// and the file has `@<target>` (or `@./<target>`) as a word of its own,
+// outside fenced code blocks and inline code spans, which Claude Code does not
+// follow. A word is a run of non-blank characters: `@AGENTS.md.` does not
+// count, so a doubtful file is treated as not importing and gets a warning.
+func Imports(data []byte, target string) bool {
 	var f fences
 	for _, l := range splitLines(data) {
 		if f.step(l) {
 			continue
 		}
 		for _, word := range strings.Fields(stripCodeSpans(l.text)) {
-			if word == "@AGENTS.md" || word == "@./AGENTS.md" {
+			if word == "@"+target || word == "@./"+target {
 				return true
 			}
 		}

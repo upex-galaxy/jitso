@@ -1,0 +1,123 @@
+{
+  "id": "setup/instructions/claude-md-linked-to-agents-md",
+  "title": "a CLAUDE.md that is a link to AGENTS.md is the same file: the block is written and removed once, and the next run is nothing to do",
+  "source": [
+    "intended: owner decision (v0.2): JITSO writes instruction blocks to AGENTS.md files only; targets that resolve to the same real file are one target"
+  ],
+  "defect": "N-18",
+  "intent": "INTENDED behavior (setup instructions writes AGENTS.md only, targets deduplicated by real path). `CLAUDE.md` is a symbolic link to `AGENTS.md`. The block an add writes to `AGENTS.md` must not be read back through `CLAUDE.md` as an old block to take out. The add writes `AGENTS.md` once and adds the note `note: CLAUDE.md is the same file as AGENTS.md`; a second add is `nothing to do`; `--remove` gives `AGENTS.md` its original bytes, and the link is never written through.",
+  "project": {
+    "files": {
+      "AGENTS.md": "# A\n",
+      "CLAUDE.md": {
+        "symlink": "AGENTS.md"
+      },
+      ".golden/golden.md": {
+        "from": "golden.md"
+      }
+    }
+  },
+  "steps": [
+    {
+      "run": [
+        "setup",
+        "instructions",
+        "--yes"
+      ],
+      "capture": {
+        "WANT": {
+          "from": "file",
+          "path": ".golden/golden.md",
+          "regex": "(?s)^(.*)$"
+        }
+      },
+      "expect": {
+        "exit": 0,
+        "stdout": [
+          "+++ b/AGENTS.md",
+          "wrote AGENTS.md",
+          "note: CLAUDE.md is the same file as AGENTS.md\n",
+          {
+            "not_contains": "wrote CLAUDE.md"
+          },
+          {
+            "not_contains": "+++ b/CLAUDE.md"
+          },
+          {
+            "regex": "jitso setup instructions: done\\n$"
+          }
+        ],
+        "stderr": [
+          {
+            "empty": true
+          }
+        ],
+        "files": [
+          {
+            "path": "AGENTS.md",
+            "equals": "{{WANT}}"
+          },
+          {
+            "path": "CLAUDE.md",
+            "equals": "{{WANT}}"
+          }
+        ]
+      }
+    },
+    {
+      "run": [
+        "setup",
+        "instructions",
+        "--yes"
+      ],
+      "expect": {
+        "exit": 0,
+        "stdout": [
+          {
+            "equals": "jitso setup instructions: nothing to do (the JITSO block is up to date in AGENTS.md)\n"
+          }
+        ],
+        "stderr": [
+          {
+            "empty": true
+          }
+        ]
+      }
+    },
+    {
+      "run": [
+        "setup",
+        "instructions",
+        "--remove",
+        "--yes"
+      ],
+      "expect": {
+        "exit": 0,
+        "stdout": [
+          "wrote AGENTS.md",
+          {
+            "not_contains": "wrote CLAUDE.md"
+          },
+          {
+            "regex": "jitso setup instructions: done\\n$"
+          }
+        ],
+        "stderr": [
+          {
+            "empty": true
+          }
+        ],
+        "files": [
+          {
+            "path": "AGENTS.md",
+            "equals": "# A\n"
+          },
+          {
+            "path": "CLAUDE.md",
+            "equals": "# A\n"
+          }
+        ]
+      }
+    }
+  ]
+}

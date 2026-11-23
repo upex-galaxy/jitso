@@ -1,0 +1,114 @@
+{
+  "id": "setup/instructions/user-scope-opencode-agents-md-not-created-beside-claude-md",
+  "title": "--scope user does not create ~/.config/opencode/AGENTS.md while ~/.claude/CLAUDE.md exists, and warns; an existing ~/.config/opencode/AGENTS.md still gets the block",
+  "source": [
+    "intended: owner decision (v0.3): OpenCode reads ~/.claude/CLAUDE.md only while its own AGENTS.md is absent, so jitso does not create that file beside it"
+  ],
+  "defect": "N-18",
+  "intent": "INTENDED behavior (setup instructions writes AGENTS.md only). The home has a `~/.config/opencode` folder without `AGENTS.md`, a `~/.pi/agent` folder and a `~/.claude/CLAUDE.md`. OpenCode falls back to `~/.claude/CLAUDE.md` only while `~/.config/opencode/AGENTS.md` is absent, so creating it would hide the user's rules from OpenCode. `--scope user --yes` creates `~/.pi/agent/AGENTS.md`, creates no `~/.config/opencode/AGENTS.md`, leaves `~/.claude/CLAUDE.md` byte for byte and warns `jitso: warning: ~/.config/opencode/AGENTS.md was not created, because OpenCode reads ~/.claude/CLAUDE.md only while it is absent; create it yourself (it may import your rules) and run again`. Once the user has created that file, the next run appends the block to it, with no warning.",
+  "home": {
+    "files": {
+      ".config/opencode/opencode.json": "{}\n",
+      ".pi/agent/settings.json": "{}\n",
+      ".claude/CLAUDE.md": "# mine\n"
+    }
+  },
+  "steps": [
+    {
+      "run": [
+        "setup",
+        "instructions",
+        "--scope",
+        "user",
+        "--yes"
+      ],
+      "cwd": "{{HOME}}",
+      "expect": {
+        "exit": 0,
+        "stdout": [
+          "created ~/.pi/agent/AGENTS.md",
+          {
+            "not_contains": "opencode"
+          },
+          {
+            "not_contains": "CLAUDE.md"
+          },
+          {
+            "regex": "jitso setup instructions: done\\n$"
+          }
+        ],
+        "stderr": [
+          {
+            "equals": "jitso: warning: ~/.config/opencode/AGENTS.md was not created, because OpenCode reads ~/.claude/CLAUDE.md only while it is absent; create it yourself (it may import your rules) and run again\n"
+          }
+        ],
+        "files": [
+          {
+            "path": "{{HOME}}/.config/opencode/AGENTS.md",
+            "exists": false
+          },
+          {
+            "path": "{{HOME}}/.pi/agent/AGENTS.md",
+            "contains": [
+              "BEGIN JITSO block=1 added=new:"
+            ]
+          },
+          {
+            "path": "{{HOME}}/.claude/CLAUDE.md",
+            "equals": "# mine\n"
+          }
+        ]
+      }
+    },
+    {
+      "write": {
+        "home": {
+          ".config/opencode/AGENTS.md": "# oc\n"
+        }
+      }
+    },
+    {
+      "run": [
+        "setup",
+        "instructions",
+        "--scope",
+        "user",
+        "--yes"
+      ],
+      "cwd": "{{HOME}}",
+      "expect": {
+        "exit": 0,
+        "stdout": [
+          "wrote ~/.config/opencode/AGENTS.md",
+          {
+            "not_contains": "~/.pi/agent/AGENTS.md"
+          },
+          {
+            "not_contains": "CLAUDE.md"
+          },
+          {
+            "regex": "jitso setup instructions: done\\n$"
+          }
+        ],
+        "stderr": [
+          {
+            "empty": true
+          }
+        ],
+        "files": [
+          {
+            "path": "{{HOME}}/.config/opencode/AGENTS.md",
+            "contains": [
+              "# oc\n",
+              "BEGIN JITSO block=1 added=1:"
+            ]
+          },
+          {
+            "path": "{{HOME}}/.claude/CLAUDE.md",
+            "equals": "# mine\n"
+          }
+        ]
+      }
+    }
+  ]
+}

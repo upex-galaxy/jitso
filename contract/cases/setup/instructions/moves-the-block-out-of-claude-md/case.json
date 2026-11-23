@@ -1,0 +1,114 @@
+{
+  "id": "setup/instructions/moves-the-block-out-of-claude-md",
+  "title": "a block an older jitso put in a CLAUDE.md or .claude/CLAUDE.md that imports AGENTS.md is taken out by the same run that writes AGENTS.md",
+  "source": [
+    "intended: owner decision (v0.2): JITSO writes instruction blocks to AGENTS.md files only, never to CLAUDE.md",
+    "intended: owner decision (v0.3): the old block moves out only of a Claude file that imports AGENTS.md, so Claude Code still reads the block"
+  ],
+  "defect": "N-18",
+  "intent": "INTENDED behavior (setup instructions writes AGENTS.md only). An older jitso appended the block (`added=1`) to a Claude memory file that imports AGENTS.md (`@AGENTS.md` in `CLAUDE.md`, `@../AGENTS.md` in `.claude/CLAUDE.md`, because Claude Code resolves an import relative to the file that holds it). One `setup instructions --yes` migrates: it creates `AGENTS.md` with the block and removes the old block from the Claude file byte-exactly (after a backup), so that file gets its original bytes back and Claude Code reads the block through the import. A second run is `nothing to do` and names only `AGENTS.md`. A Claude file that does not import AGENTS.md keeps its block: `claude-md-without-the-import-keeps-its-block`.",
+  "project": {
+    "files": {
+      "{{file}}": {
+        "from": "{{golden}}"
+      },
+      ".golden/golden-new.md": {
+        "from": "golden-new.md"
+      }
+    }
+  },
+  "for_each": {
+    "vars": [
+      "file",
+      "golden",
+      "import"
+    ],
+    "rows": [
+      [
+        "CLAUDE.md",
+        "golden-claude-md.md",
+        "@AGENTS.md\n"
+      ],
+      [
+        ".claude/CLAUDE.md",
+        "golden-dot-claude-claude-md.md",
+        "@../AGENTS.md\n"
+      ]
+    ],
+    "ids": [
+      "claude-md",
+      "dot-claude-claude-md"
+    ]
+  },
+  "steps": [
+    {
+      "run": [
+        "setup",
+        "instructions",
+        "--yes"
+      ],
+      "capture": {
+        "NEW": {
+          "from": "file",
+          "path": ".golden/golden-new.md",
+          "regex": "(?s)^(.*)$"
+        }
+      },
+      "expect": {
+        "exit": 0,
+        "stdout": [
+          "+++ b/AGENTS.md",
+          "--- a/{{file}}",
+          "-<!-- BEGIN JITSO block=1 added=1:",
+          "backed up {{file}} to .jitso/backups/",
+          "created AGENTS.md",
+          "wrote {{file}}",
+          {
+            "regex": "jitso setup instructions: done\\n$"
+          }
+        ],
+        "stderr": [
+          {
+            "empty": true
+          }
+        ],
+        "files": [
+          {
+            "path": "AGENTS.md",
+            "equals": "{{NEW}}"
+          },
+          {
+            "path": "{{file}}",
+            "equals": "{{import}}"
+          }
+        ]
+      }
+    },
+    {
+      "run": [
+        "setup",
+        "instructions",
+        "--yes"
+      ],
+      "expect": {
+        "exit": 0,
+        "stdout": [
+          {
+            "equals": "jitso setup instructions: nothing to do (the JITSO block is up to date in AGENTS.md)\n"
+          }
+        ],
+        "stderr": [
+          {
+            "empty": true
+          }
+        ],
+        "files": [
+          {
+            "path": "{{file}}",
+            "equals": "{{import}}"
+          }
+        ]
+      }
+    }
+  ]
+}

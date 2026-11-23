@@ -18,6 +18,7 @@ func instructionsEnv(p Ports) instructions.Env {
 			info, err := p.Stat(path)
 			return err == nil && info.IsDir()
 		},
+		EvalSymlinks: p.EvalSymlinks,
 	}
 }
 
@@ -32,21 +33,22 @@ func blockProblem(display string, err error) string {
 }
 
 // checkInstructions looks for the JITSO block in the files `jitso setup
-// instructions` writes for this checkout: AGENTS.md, and CLAUDE.md when Claude
-// Code would read that instead and it does not import AGENTS.md.
+// instructions` examines for this checkout: it belongs in AGENTS.md. A
+// CLAUDE.md or .claude/CLAUDE.md that does not import AGENTS.md (and is not
+// the same file) is a warning, because Claude Code then reads only it; a
+// block an older jitso left in one that imports AGENTS.md is a warning too.
 func checkInstructions(p Ports, root project.Root) Line {
 	const check = "instructions"
 	env := instructionsEnv(p)
 	env.Root = root.Checkout
-	targets, warnings, err := instructions.ProjectTargets(env, false)
+	targets, err := instructions.ProjectTargets(env, true)
 	if err != nil {
 		return Line{Fail, check, message(err)}
 	}
 
 	var have, warns, fails []string
 	number := 0
-	for _, t := range targets {
-		isAgents := t.Display == "AGENTS.md"
+	for _, t := range targets.List {
 		if t.Old == nil {
 			warns = append(warns, "no "+t.Display+", so no JITSO block (run jitso setup instructions)")
 			continue
@@ -55,10 +57,13 @@ func checkInstructions(p Ports, root project.Root) Line {
 		switch {
 		case err != nil:
 			fails = append(fails, blockProblem(t.Display, err))
-		case b == nil && isAgents:
-			warns = append(warns, "no JITSO block in AGENTS.md (run jitso setup instructions)")
+		case t.Legacy && !instructions.Imports(t.Old, t.Import):
+			warns = append(warns, t.Display+" does not import AGENTS.md, so Claude Code does not read the JITSO block: add a line @"+t.Import+" to it")
+		case t.Legacy && b != nil:
+			warns = append(warns, leftInClaude(t.Display))
+		case t.Legacy:
 		case b == nil:
-			warns = append(warns, t.Display+" has no JITSO block and does not import @AGENTS.md (run jitso setup instructions)")
+			warns = append(warns, "no JITSO block in "+t.Display+" (run jitso setup instructions)")
 		case b.Number < instructions.Number:
 			warns = append(warns, olderBlock(t.Display, b.Number))
 		default:
@@ -68,10 +73,17 @@ func checkInstructions(p Ports, root project.Root) Line {
 			have = append(have, t.Display)
 		}
 	}
-	for _, w := range warnings {
+	for _, w := range targets.Warnings {
 		warns = append(warns, strings.TrimPrefix(w, "jitso: warning: "))
 	}
 	return instructionsLine(check, number, have, warns, fails)
+}
+
+// leftInClaude is the warning for a block an older jitso put in a project
+// Claude Code memory file that imports AGENTS.md, which jitso no longer
+// writes; setup instructions moves it.
+func leftInClaude(display string) string {
+	return display + " holds a JITSO block: run jitso setup instructions to move it to AGENTS.md"
 }
 
 // olderBlock is the warning for a block that a newer jitso replaces.
@@ -79,8 +91,10 @@ func olderBlock(display string, n int) string {
 	return fmt.Sprintf("block %d in %s is older than block %d (run jitso setup instructions)", n, display, instructions.Number)
 }
 
-// checkInstructionsUser is the same look at the user's own files: it is
-// optional, so no block anywhere is fine.
+// checkInstructionsUser is the same look at the user's own files, the
+// AGENTS.md of each harness user folder: it is optional, so no block anywhere
+// is fine. A block in ~/.claude/CLAUDE.md is the one Claude Code reads for
+// the user, so only its broken markers count.
 func checkInstructionsUser(p Ports) Line {
 	const check = "instructions-user"
 	if p.Home == "" {
@@ -88,14 +102,14 @@ func checkInstructionsUser(p Ports) Line {
 	}
 	env := instructionsEnv(p)
 	env.Home, env.CodexHome = p.Home, p.Getenv("CODEX_HOME")
-	targets, _, err := instructions.UserTargets(env, false)
+	targets, err := instructions.UserTargets(env, true)
 	if err != nil {
 		return Line{Fail, check, message(err)}
 	}
 
 	var have, warns, fails []string
 	number := 0
-	for _, t := range targets {
+	for _, t := range targets.List {
 		if t.Old == nil {
 			continue
 		}
@@ -103,6 +117,7 @@ func checkInstructionsUser(p Ports) Line {
 		switch {
 		case err != nil:
 			fails = append(fails, blockProblem(t.Display, err))
+		case t.Legacy:
 		case b == nil:
 		case b.Number < instructions.Number:
 			warns = append(warns, olderBlock(t.Display, b.Number))

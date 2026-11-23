@@ -1,0 +1,124 @@
+{
+  "id": "setup/instructions/user-scope-dedupes-linked-files",
+  "title": "harness files that are links to one real file are one target: the real file is written and restored once, named by the first harness path, and the links stay links",
+  "source": [
+    "intended: owner decision (v0.2): JITSO writes instruction blocks to AGENTS.md files only; targets that resolve to the same real file are one target"
+  ],
+  "defect": "N-18",
+  "intent": "INTENDED behavior (setup instructions writes AGENTS.md only, targets deduplicated by real path). `~/.codex/AGENTS.md` and `~/.config/opencode/AGENTS.md` are symbolic links to `~/.agents/AGENTS.md`. `--scope user --yes` changes the real file once (it is inside the home folder), names the change by the first harness path (`wrote ~/.codex/AGENTS.md`), backs up the real file under its own path, and adds `note: ~/.config/opencode/AGENTS.md is the same file as ~/.codex/AGENTS.md`. Neither link is replaced by a plain file, so the real file holds the block. `--remove --yes` gives the real file its original bytes, again once.",
+  "project": {
+    "files": {
+      ".golden/golden.md": {
+        "from": "golden.md"
+      }
+    }
+  },
+  "home": {
+    "files": {
+      ".codex/config.toml": "x = 1\n",
+      ".agents/AGENTS.md": "# shared\n",
+      ".codex/AGENTS.md": {
+        "symlink": "../.agents/AGENTS.md"
+      },
+      ".config/opencode/AGENTS.md": {
+        "symlink": "../../.agents/AGENTS.md"
+      }
+    }
+  },
+  "steps": [
+    {
+      "run": [
+        "setup",
+        "instructions",
+        "--scope",
+        "user",
+        "--yes"
+      ],
+      "cwd": "{{HOME}}",
+      "capture": {
+        "WANT": {
+          "from": "file",
+          "path": ".golden/golden.md",
+          "regex": "(?s)^(.*)$"
+        }
+      },
+      "expect": {
+        "exit": 0,
+        "stdout": [
+          "+++ b/~/.codex/AGENTS.md",
+          {
+            "regex": "backed up ~/\\.codex/AGENTS\\.md to ~/\\.jitso/backups/\\d{8}T\\d{6}Z-[0-9a-f]{4}/\\.agents/AGENTS\\.md\\n"
+          },
+          "wrote ~/.codex/AGENTS.md\n",
+          "note: ~/.config/opencode/AGENTS.md is the same file as ~/.codex/AGENTS.md\n",
+          {
+            "not_contains": "+++ b/~/.config/opencode/AGENTS.md"
+          },
+          {
+            "not_contains": "wrote ~/.config/opencode/AGENTS.md"
+          },
+          {
+            "regex": "jitso setup instructions: done\\n$"
+          }
+        ],
+        "stderr": [
+          {
+            "empty": true
+          }
+        ],
+        "files": [
+          {
+            "path": "{{HOME}}/.agents/AGENTS.md",
+            "equals": "{{WANT}}"
+          },
+          {
+            "path": "{{HOME}}/.codex/AGENTS.md",
+            "equals": "{{WANT}}"
+          },
+          {
+            "path": "{{HOME}}/.config/opencode/AGENTS.md",
+            "equals": "{{WANT}}"
+          }
+        ]
+      }
+    },
+    {
+      "run": [
+        "setup",
+        "instructions",
+        "--scope",
+        "user",
+        "--remove",
+        "--yes"
+      ],
+      "cwd": "{{HOME}}",
+      "expect": {
+        "exit": 0,
+        "stdout": [
+          "wrote ~/.codex/AGENTS.md\n",
+          {
+            "not_contains": "wrote ~/.config/opencode/AGENTS.md"
+          },
+          {
+            "regex": "jitso setup instructions: done\\n$"
+          }
+        ],
+        "stderr": [
+          {
+            "empty": true
+          }
+        ],
+        "files": [
+          {
+            "path": "{{HOME}}/.agents/AGENTS.md",
+            "equals": "# shared\n"
+          },
+          {
+            "path": "{{HOME}}/.config/opencode/AGENTS.md",
+            "equals": "# shared\n"
+          }
+        ]
+      }
+    }
+  ]
+}
