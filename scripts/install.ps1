@@ -153,12 +153,18 @@ try {
   }
   if (-not $want) { Die "checksums.txt has no line for $asset; nothing installed" }
   if ($want -notmatch '^[0-9a-f]{64}$') { Die "checksums.txt has a malformed line for $asset; nothing installed" }
-  $got = (Get-FileHash -LiteralPath (Join-Path $tmp $asset) -Algorithm SHA256).Hash.ToLowerInvariant()
+  # .NET, not Get-FileHash: a child PowerShell started from another one may not load that module.
+  $sha = [System.Security.Cryptography.SHA256]::Create()
+  $stream = [System.IO.File]::OpenRead((Join-Path $tmp $asset))
+  try { $got = ([BitConverter]::ToString($sha.ComputeHash($stream)) -replace '-', '').ToLowerInvariant() }
+  finally { $stream.Dispose(); $sha.Dispose() }
   if ($got -ne $want) { Die "checksum mismatch for $asset (expected $want, got $got); nothing installed" }
 
   $x = Join-Path $tmp 'x'
-  try { Expand-Archive -LiteralPath (Join-Path $tmp $asset) -DestinationPath $x }
-  catch { Die "cannot extract $asset; nothing installed" }
+  try {
+    Add-Type -AssemblyName System.IO.Compression.FileSystem
+    [System.IO.Compression.ZipFile]::ExtractToDirectory((Join-Path $tmp $asset), $x)
+  } catch { Die "cannot extract $asset; nothing installed: $($_.Exception.Message)" }
   $new = Join-Path $x "jitso-windows-$arch\jitso.exe"
   if (-not (Test-Path -LiteralPath $new)) { Die "$asset has no jitso-windows-$arch\jitso.exe; nothing installed" }
   $line = Get-VersionLine $new

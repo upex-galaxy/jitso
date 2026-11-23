@@ -65,6 +65,9 @@ func TestMulticall(t *testing.T) {
 	}
 
 	cmd = exec.Command("/bin/sh", "-c", "claude --model m")
+	if runtime.GOOS == "windows" {
+		cmd = exec.Command(filepath.Join(sb.Bin, "claude.exe"), "--model", "m") // there is no /bin/sh
+	}
 	cmd.Env = sb.Env(nil)
 	cmd.Dir = sb.Home
 	if out, err := cmd.CombinedOutput(); err != nil || len(out) != 0 {
