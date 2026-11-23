@@ -4,7 +4,7 @@ How a JITSO release is built, checked and published. Everything that leaves this
 
 The repository `upex-galaxy/jitso` is public (decided by the owner on 2026-11-15). Every publishing step is OWNER-GATED.
 
-What has been published is recorded by the tags and GitHub Releases of the repository. The files this procedure uses are `scripts/package.sh`, `scripts/install.sh`, `scripts/test-install.sh`, `.github/workflows/ci.yml` (section 9) and `.github/workflows/release.yml`, which a pushed tag runs.
+What has been published is recorded by the tags and GitHub Releases of the repository. The files this procedure uses are `scripts/package.sh`, `scripts/install.sh`, `scripts/install.ps1`, `scripts/test-install.sh`, `scripts/test-install.ps1`, `.github/workflows/ci.yml` (section 9) and `.github/workflows/release.yml`, which a pushed tag runs.
 
 Committed prose names the source of truth, not its value (AGENTS.md rule 12), so this file has no sizes, counts or dates: it says which file or command holds each one.
 
@@ -16,8 +16,9 @@ A release is a tag `v<x>` on `main` and a GitHub Release of that tag. Its assets
 |---|---|
 | `jitso-darwin-<arch>.tar.gz`, `jitso-linux-<arch>.tar.gz` | one folder `jitso-<os>-<arch>/` with `jitso`, `LICENSE` and `README.md`; `<arch>` is `amd64` or `arm64` |
 | `jitso-windows-<arch>.zip` | the same folder with `jitso.exe` |
-| `checksums.txt` | one line per asset above and `install.sh`, in the output format of `sha256sum` |
-| `install.sh` | a copy of `scripts/install.sh` |
+| `checksums.txt` | one line per asset above, `install.sh` and `install.ps1`, in the output format of `sha256sum` |
+| `install.sh` | a copy of `scripts/install.sh` (macOS, Linux) |
+| `install.ps1` | a copy of `scripts/install.ps1` (Windows) |
 
 `scripts/package.sh` is the only definition of these names and of the build flags (`CGO_ENABLED=0`, `-trimpath`, `-ldflags '-s -w -X ...'`). The release workflow and `scripts/test-install.sh` both call it, so the local test proves the format the release ships. The tag is the version: it is stamped into the binary with `-X github.com/upex-galaxy/jitso/internal/version.Version=<tag>`, and `jitso version` prints it. The decisions behind this layout are in `docs/decisions.md` (rows on release assets, the plain `go build` matrix and the install script). Homebrew is deferred (`docs/decisions.md`, "The v0.1.0 cut").
 
@@ -74,7 +75,7 @@ The workflow uses no configured secret: `github.token` is the automatic token, s
 |---|---|---|
 | Install script | `sh install.sh v<x>` from the release's own `install.sh`, or `latest` | Installs into `$HOME/.local/bin` unless `JITSO_INSTALL_DIR` says otherwise, never with `sudo`. It checks the SHA-256 of the archive against `checksums.txt` and fails closed when neither `sha256sum` nor `shasum` exists. Pin a tag in documentation. |
 | `go install` | `go install github.com/upex-galaxy/jitso/cmd/jitso@v<x>` | Needs Go at the `go.mod` language version or newer. Works once the repository is public and the tag is pushed; a private repository needs `GOPRIVATE=github.com/upex-galaxy/*` and git credentials. Such a build reports the tag as its version and `commit unknown`. |
-| Windows (experimental) | download the zip and `checksums.txt` by hand, check the SHA-256, put `jitso.exe` on `PATH` | `launch` does not run there. See section 7. |
+| Windows | `install.ps1` from the release, or the zip and `checksums.txt` by hand | `launch` does not run there. See section 7. |
 
 The hook that `jitso setup hook` will register runs the bare word `jitso`, so the install folder has to be on `PATH`; the install script says so when it is not.
 
@@ -89,11 +90,13 @@ Never re-tag, never force-push, never rewrite a pushed history.
 
 ## 7. Windows
 
-The release has zips for `amd64` and `arm64`, published marked experimental and not tested until the owner runs one (`docs/decisions.md`, "Other decisions"). The install script refuses Windows with a message that points to the zip: its job needs `uname`, `tar` and a POSIX shell. To install by hand: download the zip for your architecture and `checksums.txt` from the release page, check the SHA-256 of the zip against its line in `checksums.txt` (`certutil -hashfile <zip> SHA256` in a Windows shell), unpack it and put the folder with `jitso.exe` on `PATH`.
+The release has zips for `amd64` and `arm64` and `install.ps1`. In PowerShell 5.1 or 7, download `install.ps1` from the release, read it, and run `.\install.ps1 [v<x>]`. It never needs administrator rights. It downloads the zip and `checksums.txt`, checks the SHA-256 (with .NET, so it needs no module), unpacks the zip and puts `jitso.exe` in `%LOCALAPPDATA%\Programs\jitso`, then appends that folder to the user `PATH` once. Its variables are the ones of `install.sh`, under the same names: `JITSO_VERSION`, `JITSO_INSTALL_DIR`, `JITSO_DOWNLOAD_URL`, `JITSO_ARCH`, `JITSO_NO_MODIFY_PATH=1`. To install by hand instead: check the zip against its line in `checksums.txt` (`certutil -hashfile <zip> SHA256`), unpack it and put the folder with `jitso.exe` on `PATH`. `install.sh` refuses Windows and points to `install.ps1`.
 
-`jitso launch` needs `/bin/sh` and does not run on Windows. `jitso version` and the commands that only read files are what a Windows build can be expected to do. `jitso doctor` on Windows prints `warn shell` and still exits 0 when nothing else fails.
+`jitso launch` needs `/bin/sh` and does not run on Windows: a real launch exits 3 with one line, and `--dry-run` still works. Every other command is expected to work. `jitso doctor` prints `warn shell` there and still exits 0 when nothing else fails. The decision and its why are in `docs/decisions.md` (section v0.3, the Windows rows).
 
-The release workflow runs no Windows job of its own. The CI workflow (section 9) runs `go test` and `go vet` for both modules on `windows-2025` and builds the runner and `jitso.exe` there, but not the contract suite: the runner's sandbox is POSIX-only (it builds `PATH` with `:` and installs the fake `orca` and `claude` without `.exe`).
+The contract suite runs on Windows with `--skip-tag posix`: a case tagged `posix` writes POSIX path syntax into an expected value or a `PATH`, executes `run.sh`, or goes through `jitso launch`. Read `contract/SPEC.md` for the tag. The rest of the suite is what proves Windows. A case needs a Windows fix before it loses the tag.
+
+The release workflow runs no Windows job of its own; it needs `ci.yml` (section 9), which runs Windows on every push.
 
 ## 8. Known limits
 
@@ -110,8 +113,9 @@ The release workflow runs no Windows job of its own. The CI workflow (section 9)
 
 | Job | Runs on | What it checks |
 |---|---|---|
-| `verify` | `ubuntu-24.04`, `macos-15`, `windows-2025` | `go test` and `go vet` in both modules (`gofmt` on Linux only), builds the runner and `jitso`, runs the whole contract suite (Linux and macOS, section 7 says why not Windows), and on Linux cross-builds every release target through `scripts/package.sh` |
+| `verify` | `ubuntu-24.04`, `macos-15`, `windows-2025` (all required) | `go test` and `go vet` in both modules (`gofmt` on Linux only), builds the runner and `jitso`, runs the contract suite (on Windows with `--skip-tag posix`, section 7), and on Linux cross-builds every release target through `scripts/package.sh` |
 | `install` | `ubuntu-24.04`, `macos-15` | `scripts/package.sh` into a temp folder, then `scripts/test-install.sh` against those archives, as the release does |
+| `dist`, `install-windows` | `ubuntu-24.04`, then `windows-2025` | `dist` builds the archives once and uploads them; `install-windows` runs `scripts/test-install.ps1` against them in Windows PowerShell 5.1 and in PowerShell 7 |
 | `no-orca` | `ubuntu-24.04` | on a machine with no `orca`, `jitso doctor` and `jitso launch` exit 3 with the install hint, and the launch writes nothing |
 
 The release depends on it: the `build` job of `release.yml` needs the `ci` job, which runs `ci.yml` on the tagged commit, so a tag whose commit fails CI builds and publishes nothing. The CI run uses the version `v0.0.0-ci` for its archives; nothing it builds is kept.

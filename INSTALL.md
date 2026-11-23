@@ -2,7 +2,7 @@
 
 This page is written for an AI agent that was asked to "install JITSO" or "set up JITSO in this project", and for the person who asked. Follow the steps in order. Each step says how to check it worked. Stop and report at the first step that fails.
 
-JITSO needs macOS or Linux for `jitso launch` (it runs `/bin/sh`). On Windows the commands that only read or write files work, launching does not.
+JITSO needs macOS or Linux (or WSL) for `jitso launch` (it runs `/bin/sh`). On Windows every other command works, launching does not: `jitso launch` stops with one line there, and `--dry-run` still checks a launch.
 
 ## 1. Is it installed?
 
@@ -19,6 +19,15 @@ curl -fsSL https://github.com/upex-galaxy/jitso/releases/latest/download/install
 ```
 
 The script installs to `~/.local/bin/jitso`, checks the SHA-256 of the archive, and needs no `sudo`. When `~/.local/bin` is not on `PATH`, it adds one marked line to the profile of your shell (`~/.zshrc`, `~/.bashrc`, `~/.config/fish/conf.d/jitso.fish`, else `~/.profile`) and says which file it changed. Open a new terminal afterwards, or run the `export PATH=...` line it prints. Set `JITSO_NO_MODIFY_PATH=1` to keep your profiles untouched.
+
+On Windows, use PowerShell instead: download `install.ps1` from the latest release, read it, and run it.
+
+```powershell
+irm https://github.com/upex-galaxy/jitso/releases/latest/download/install.ps1 -OutFile install.ps1
+.\install.ps1
+```
+
+It installs `jitso.exe` into `%LOCALAPPDATA%\Programs\jitso`, checks the SHA-256 of the zip against `checksums.txt`, needs no administrator rights, and appends that folder to your user `PATH` once (set `JITSO_NO_MODIFY_PATH=1` to skip that). Open a new terminal afterwards.
 
 Check: `jitso version` prints a version.
 
