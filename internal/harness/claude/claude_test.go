@@ -2,6 +2,7 @@ package claude
 
 import (
 	"bytes"
+	"path/filepath"
 	"reflect"
 	"regexp"
 	"testing"
@@ -87,7 +88,7 @@ func TestNewSessionID(t *testing.T) {
 
 func TestTranscriptPath(t *testing.T) {
 	got := Adapter{}.TranscriptPath("/Users/a/my.repo", "sid", "/home/h")
-	if got != "/home/h/.claude/projects/-Users-a-my-repo/sid.jsonl" {
+	if got != filepath.Join("/home/h", ".claude", "projects", "-Users-a-my-repo", "sid.jsonl") {
 		t.Errorf("got %s", got)
 	}
 }

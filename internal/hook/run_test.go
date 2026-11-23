@@ -54,6 +54,7 @@ func TestRunGuard(t *testing.T) {
 	}
 	self, _ = filepath.EvalSymlinks(self)
 	env := map[string]string{"CLAUDE_PROJECT_DIR": project}
+	selfJSON := strings.ReplaceAll(self, `\`, `\\`) // the path sits inside a JSON string
 	deny := `{"tool_name":"Bash","tool_input":{"command":"orca orchestration worker-start --run r1"}}`
 
 	tests := []struct {
@@ -64,10 +65,10 @@ func TestRunGuard(t *testing.T) {
 		{"denies a direct worker-start", deny, env, "(denied: orchestration worker-start)"},
 		{"names the launcher of a project without a jitso script", deny, env, "Use: jitso launch --build"},
 		{"lets ls pass", `{"tool_name":"Bash","tool_input":{"command":"ls"}}`, env, ""},
-		{"lets the own launcher pass", `{"tool_name":"Bash","tool_input":{"command":"` + self + ` launch --build p"}}`, env, ""},
-		{"denies the own setup", `{"tool_name":"Bash","tool_input":{"command":"` + self + ` setup hook --remove --yes"}}`, env, "only the owner changes the JITSO setup"},
+		{"lets the own launcher pass", `{"tool_name":"Bash","tool_input":{"command":"` + selfJSON + ` launch --build p"}}`, env, ""},
+		{"denies the own setup", `{"tool_name":"Bash","tool_input":{"command":"` + selfJSON + ` setup hook --remove --yes"}}`, env, "only the owner changes the JITSO setup"},
 		{"denies a bare install", `{"tool_name":"Bash","tool_input":{"command":"jitso install skill --scope user --yes"}}`, env, "(denied: jitso install)"},
-		{"lets a setup dry run pass", `{"tool_name":"Bash","tool_input":{"command":"` + self + ` setup hook --dry-run"}}`, env, ""},
+		{"lets a setup dry run pass", `{"tool_name":"Bash","tool_input":{"command":"` + selfJSON + ` setup hook --dry-run"}}`, env, ""},
 		{"lets doctor pass", `{"tool_name":"Bash","tool_input":{"command":"jitso doctor"}}`, env, ""},
 		{"fails open on bad JSON", `not json`, env, ""},
 		{"fails open on an empty input", ``, env, ""},

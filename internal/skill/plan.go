@@ -236,7 +236,7 @@ func (b *builder) installLink() error {
 	case err != nil:
 		return fail.Envf("could not look at %s: %v", b.display(b.link), unwrap(err))
 	case info.Mode()&os.ModeSymlink != 0:
-		target, err := os.Readlink(b.link)
+		target, err := readLink(b.link)
 		if err != nil {
 			return fail.Envf("could not read the link %s: %v", b.display(b.link), unwrap(err))
 		}
@@ -278,7 +278,7 @@ func (b *builder) remove() error {
 	case err != nil:
 		return fail.Envf("could not look at %s: %v", b.display(b.link), unwrap(err))
 	case info.Mode()&os.ModeSymlink != 0:
-		target, err := os.Readlink(b.link)
+		target, err := readLink(b.link)
 		if err != nil {
 			return fail.Envf("could not read the link %s: %v", b.display(b.link), unwrap(err))
 		}
@@ -404,4 +404,11 @@ func unwrap(err error) error {
 		return pe.Err
 	}
 	return err
+}
+
+// readLink is os.Readlink with forward slashes: Windows reports a link written
+// as ../../x as ..\..\x, and the messages and the stored targets use one form.
+func readLink(path string) (string, error) {
+	target, err := os.Readlink(path)
+	return filepath.ToSlash(target), err
 }

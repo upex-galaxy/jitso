@@ -9,6 +9,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"reflect"
+	"runtime"
 	"strings"
 	"testing"
 	"time"
@@ -179,7 +180,7 @@ func TestRunDirect(t *testing.T) {
 		!strings.HasSuffix(script, "'Read "+filepath.Join(dir, FileBrief)+" and follow it exactly.\nROUTE-SCOPE: none'\n") {
 		t.Errorf("run.sh %q", script)
 	}
-	if info, _ := os.Stat(filepath.Join(dir, FileRunSh)); info.Mode().Perm() != 0o755 {
+	if info, _ := os.Stat(filepath.Join(dir, FileRunSh)); info.Mode().Perm() != 0o755 && runtime.GOOS != "windows" {
 		t.Errorf("run.sh mode %v", info.Mode())
 	}
 	events, _ := s.store.Events()
@@ -282,7 +283,7 @@ func TestRunFailuresRemoveOnlyTheirFolder(t *testing.T) {
 		reason    string
 		wantCalls []string
 	}{
-		{"missing .mcp.json", func(s *sandbox) { os.Remove(filepath.Join(s.root, ".mcp.json")) }, namesServers, "no such file", nil},
+		{"missing .mcp.json", func(s *sandbox) { os.Remove(filepath.Join(s.root, ".mcp.json")) }, namesServers, noSuchFile(), nil},
 		{"null .mcp.json", func(s *sandbox) { os.WriteFile(filepath.Join(s.root, ".mcp.json"), []byte("null"), 0o644) }, namesServers, "null", nil},
 		{"terminal create", func(s *sandbox) { s.orca.fail = map[string]bool{"terminal create": true} }, nil, "fake failure", []string{"terminal create"}},
 		{"idle timeout survives a failing close", func(s *sandbox) { s.orca.idle = false; s.orca.fail = map[string]bool{"terminal close": true} }, nil,
@@ -482,6 +483,9 @@ func TestRunWorktreeSelector(t *testing.T) {
 		// The selector allowlist has no comma, so no test name may have one:
 		// t.TempDir() puts the name in the project path.
 		t.Run(tt.name, func(t *testing.T) {
+			if runtime.GOOS == "windows" && (strings.Contains(tt.name, "path selector") || strings.Contains(tt.name, "id selector")) {
+				t.Skip("jitso launch does not run on Windows; the worktree allowlist has no backslash or drive letter")
+			}
 			s := newSandbox(t)
 			linked := s.gitRepo(t)
 			linked, _ = filepath.EvalSymlinks(linked)
@@ -606,4 +610,12 @@ func TestEventNamesTheBuildFile(t *testing.T) {
 	if e := Event(in); e.BuildLayer != "repo" {
 		t.Errorf("a build made by hand reads as repo, got %q", e.BuildLayer)
 	}
+}
+
+// noSuchFile is the operating system's text for a missing file.
+func noSuchFile() string {
+	if runtime.GOOS == "windows" {
+		return "cannot find the file"
+	}
+	return "no such file"
 }

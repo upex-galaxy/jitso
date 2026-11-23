@@ -3,6 +3,7 @@ package instructions
 import (
 	"errors"
 	"io/fs"
+	"path/filepath"
 	"strings"
 	"testing"
 )
@@ -370,12 +371,14 @@ func (m memEnv) env(root, home, codex string) Env {
 	return Env{
 		Root: root, Home: home, CodexHome: codex,
 		ReadFile: func(p string) ([]byte, error) {
+			p = filepath.ToSlash(p)
 			if v, ok := m[p]; ok {
 				return []byte(v), nil
 			}
 			return nil, &fs.PathError{Op: "open", Path: p, Err: fs.ErrNotExist}
 		},
 		IsDir: func(p string) bool {
+			p = filepath.ToSlash(p)
 			for k := range m {
 				if strings.HasPrefix(k, p+"/") {
 					return true
@@ -391,6 +394,7 @@ func (m memEnv) env(root, home, codex string) Env {
 // A path whose file is absent (not in files) fails, as the real one does.
 func links(e Env, files memEnv, l map[string]string) Env {
 	e.EvalSymlinks = func(p string) (string, error) {
+		p = filepath.ToSlash(p)
 		for {
 			changed := false
 			for from, to := range l {
@@ -404,7 +408,7 @@ func links(e Env, files memEnv, l map[string]string) Env {
 			}
 		}
 		if _, ok := files[p]; ok || e.IsDir(p) || p == e.Root || p == e.Home {
-			return p, nil
+			return filepath.FromSlash(p), nil
 		}
 		return "", &fs.PathError{Op: "lstat", Path: p, Err: fs.ErrNotExist}
 	}
@@ -503,7 +507,7 @@ func TestProjectTargetsLinks(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	wantWarn := "jitso: warning: AGENTS.md is a link to /elsewhere/AGENTS.md, which is outside this checkout, so jitso left it alone"
+	wantWarn := "jitso: warning: AGENTS.md is a link to " + filepath.FromSlash("/elsewhere/AGENTS.md") + ", which is outside this checkout, so jitso left it alone"
 	if len(got.List) != 0 || !eq(got.Warnings, []string{wantWarn}) || got.None != "no AGENTS.md jitso may write" {
 		t.Errorf("targets %v, warnings %v, none %q", displays(got.List), got.Warnings, got.None)
 	}
@@ -522,7 +526,7 @@ func TestProjectTargetsLinks(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if len(got.List) != 2 || got.List[1].Path != "/p/real/CLAUDE.md" || got.List[1].Display != ".claude/CLAUDE.md" {
+	if len(got.List) != 2 || got.List[1].Path != filepath.FromSlash("/p/real/CLAUDE.md") || got.List[1].Display != ".claude/CLAUDE.md" {
 		t.Errorf("targets = %+v", got.List)
 	}
 }
@@ -583,7 +587,7 @@ func TestUserTargets(t *testing.T) {
 				t.Errorf("none = %q, want %q", got.None, c.none)
 			}
 			for _, tg := range got.List {
-				if tg.Legacy && (tg.PruneDir != "/h/.claude" || tg.PruneDisplay != "~/.claude") {
+				if tg.Legacy && (tg.PruneDir != filepath.FromSlash("/h/.claude") || tg.PruneDisplay != "~/.claude") {
 					t.Errorf("prune = %q %q", tg.PruneDir, tg.PruneDisplay)
 				}
 				if !tg.Legacy && tg.PruneDir != "" {
@@ -614,14 +618,14 @@ func TestUserTargetsLinks(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if !eq(displays(got.List), []string{"~/.codex/AGENTS.md"}) || got.List[0].Path != "/h/.agents/AGENTS.md" {
+	if !eq(displays(got.List), []string{"~/.codex/AGENTS.md"}) || got.List[0].Path != filepath.FromSlash("/h/.agents/AGENTS.md") {
 		t.Errorf("targets = %+v", got.List)
 	}
 	wantNotes := []string{"note: ~/.pi/agent/AGENTS.md is the same file as ~/.codex/AGENTS.md"}
 	if !eq(got.Notes, wantNotes) {
 		t.Errorf("notes = %v", got.Notes)
 	}
-	wantWarn := []string{"jitso: warning: ~/.config/opencode/AGENTS.md is a link to /out/AGENTS.md, which is outside your home folder, so jitso left it alone"}
+	wantWarn := []string{"jitso: warning: ~/.config/opencode/AGENTS.md is a link to " + filepath.FromSlash("/out/AGENTS.md") + ", which is outside your home folder, so jitso left it alone"}
 	if !eq(got.Warnings, wantWarn) {
 		t.Errorf("warnings = %v", got.Warnings)
 	}

@@ -199,10 +199,11 @@ func TestCheckProject(t *testing.T) {
 func TestRunOutsideGitLeavesProjectChecksOut(t *testing.T) {
 	home := t.TempDir()
 	run := &script{answers: map[string]Result{"git --version": {Stdout: "git version 2\n"}, "/bin/claude --version": {}}}
+	self, _ := os.Executable() // a file that exists on every OS
 	lines := Run(Ports{
 		GOOS: "linux", Version: "dev", Home: home,
-		Executable: func() (string, error) { return "/bin/sh", nil },
-		LookPath:   lookup(map[string]string{"git": "/usr/bin/git", "claude": "/bin/claude", "orca": "/bin/orca", "jitso": "/bin/sh"}),
+		Executable: func() (string, error) { return self, nil },
+		LookPath:   lookup(map[string]string{"git": "/usr/bin/git", "claude": "/bin/claude", "orca": "/bin/orca", "jitso": self}),
 		Run:        run.run,
 		Resolve: func() (project.Root, error) {
 			return project.Root{}, fail.Envf("%s is not inside a git checkout", home)

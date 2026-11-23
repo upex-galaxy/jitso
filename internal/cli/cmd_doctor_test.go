@@ -7,6 +7,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"regexp"
+	"runtime"
 	"sort"
 	"strings"
 	"testing"
@@ -21,9 +22,12 @@ func doctorRun(t *testing.T, cwd string, args ...string) (int, string, string) {
 	if err != nil {
 		t.Skip("git is not installed")
 	}
-	bin := t.TempDir()
-	if err := os.Symlink(git, filepath.Join(bin, "git")); err != nil {
-		t.Fatal(err)
+	bin := filepath.Dir(git) // on Windows git.exe is a shim that needs its own folder
+	if runtime.GOOS != "windows" {
+		bin = t.TempDir()
+		if err := os.Symlink(git, filepath.Join(bin, "git")); err != nil {
+			t.Fatal(err)
+		}
 	}
 	t.Setenv("PATH", bin)
 	// A temp folder inside some repository must not become its project.

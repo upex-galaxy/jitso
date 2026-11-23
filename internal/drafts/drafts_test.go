@@ -6,6 +6,7 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"runtime"
 	"strings"
 	"testing"
 )
@@ -176,7 +177,7 @@ func TestPutCreatesTheFolderAndItsIgnoreFile(t *testing.T) {
 		t.Errorf("entries %q: a temporary file was left", got)
 	}
 	info, _ := os.Stat(File(root, "scout"))
-	if info.Mode().Perm() != 0o644 {
+	if info.Mode().Perm() != 0o644 && runtime.GOOS != "windows" {
 		t.Errorf("mode %v", info.Mode().Perm())
 	}
 }

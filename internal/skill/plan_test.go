@@ -532,7 +532,7 @@ func TestRemoveLeavesWhatIsNotOurs(t *testing.T) {
 		if _, err := s.apply(res, "install skill"); err != nil {
 			t.Fatal(err)
 		}
-		if target, err := os.Readlink(s.path(".claude/skills/jitso")); err != nil || target != "../elsewhere" {
+		if target, err := os.Readlink(s.path(".claude/skills/jitso")); err != nil || filepath.ToSlash(target) != "../elsewhere" {
 			t.Errorf("the foreign link is %q, %v", target, err)
 		}
 		if s.exists(".agents") {

@@ -2,6 +2,7 @@ package opencode
 
 import (
 	"bytes"
+	"path/filepath"
 	"reflect"
 	"regexp"
 	"strings"
@@ -24,13 +25,14 @@ func TestSpec(t *testing.T) {
 	if want := []string{"opencode", "--standalone", "--auto", "--session", "ses_1", "--prompt", "Read /b.md"}; !reflect.DeepEqual(spec.Argv, want) {
 		t.Errorf("argv %q", spec.Argv)
 	}
-	if want := []harness.EnvVar{{Name: EnvConfigDir, Value: "/l/opencode"}}; !reflect.DeepEqual(spec.Env, want) {
+	if want := []harness.EnvVar{{Name: EnvConfigDir, Value: filepath.Join("/l", "opencode")}}; !reflect.DeepEqual(spec.Env, want) {
 		t.Errorf("env %v", spec.Env)
 	}
 	if len(spec.Files) != 2 || spec.Files[0].Name != ConfigFile || spec.Files[1].Name != GuardFile {
 		t.Fatalf("files %v", spec.Files)
 	}
-	want := "{\n  \"model\": \"opencode/m#high\",\n  \"mcp\": {\n    \"servers\": {\n      \"dbhub\": {\n        \"type\": \"local\",\n        \"command\": [\n          \"db\",\n          \"-x\"\n        ]\n      }\n    }\n  },\n  \"skills\": [\n    \"/l/pkg/.claude/skills\"\n  ]\n}\n"
+	skills := strings.ReplaceAll(filepath.Join("/l/pkg", ".claude", "skills"), `\`, `\\`)
+	want := "{\n  \"model\": \"opencode/m#high\",\n  \"mcp\": {\n    \"servers\": {\n      \"dbhub\": {\n        \"type\": \"local\",\n        \"command\": [\n          \"db\",\n          \"-x\"\n        ]\n      }\n    }\n  },\n  \"skills\": [\n    \"" + skills + "\"\n  ]\n}\n"
 	if got := string(spec.Files[0].Data); got != want {
 		t.Errorf("config\n%s\nwant\n%s", got, want)
 	}

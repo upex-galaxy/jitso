@@ -438,7 +438,7 @@ func TestSetupHookAbsolute(t *testing.T) {
 		t.Fatalf("exit %d, stderr %q", code, errOut)
 	}
 	got, _ := setupRead(root, ".claude/settings.json")
-	re := regexp.MustCompile(`"command": "('[^"]*/jitso') hook guard"`)
+	re := regexp.MustCompile(`"command": "('[^"]*[/\\]jitso') hook guard"`)
 	all := re.FindAllStringSubmatch(got, -1)
 	if len(all) != 3 {
 		t.Fatalf("want 3 absolute handlers:\n%s", got)
@@ -523,7 +523,7 @@ func TestSetupHookLinkedWorktree(t *testing.T) {
 	if code != 0 || errOut != "" {
 		t.Fatalf("remove: exit %d, stderr %q", code, errOut)
 	}
-	want := "backed up .claude/settings.json to " + primary + "/.jitso/backups/"
+	want := "backed up .claude/settings.json to " + filepath.Join(primary, ".jitso", "backups") + string(filepath.Separator)
 	if !strings.Contains(out, want) {
 		t.Errorf("stdout lacks %q:\n%s", want, out)
 	}
@@ -666,7 +666,7 @@ func TestHookPlanCoversEveryHarnessInOnePlan(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if hs.BareCommand || !strings.Contains(string(hs.Plan.Changes[0].New), "\nconst command = \""+setupBinary(t)+"\";\n") {
+	if hs.BareCommand || !strings.Contains(string(hs.Plan.Changes[0].New), "\nconst command = \""+strings.ReplaceAll(setupBinary(t), `\`, `\\`)+"\";\n") {
 		t.Errorf("absolute plan:\n%s", hs.Plan.Changes[0].New)
 	}
 }

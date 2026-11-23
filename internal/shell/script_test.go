@@ -1,6 +1,7 @@
 package shell
 
 import (
+	"runtime"
 	"testing"
 
 	"github.com/upex-galaxy/jitso/internal/harness"
@@ -41,6 +42,9 @@ func TestRunScript(t *testing.T) {
 }
 
 func TestCommandFor(t *testing.T) {
+	if runtime.GOOS == "windows" {
+		t.Skip("jitso launch does not run on Windows; a /p path is not absolute there")
+	}
 	if got, err := CommandFor("/p/.jitso/launches/L1/run.sh"); err != nil || got != "'/p/.jitso/launches/L1/run.sh'" {
 		t.Errorf("got %q, %v", got, err)
 	}

@@ -87,6 +87,7 @@ func linkProblem(p Ports, root string, want skill.Manifest) string {
 		return "cannot read <link>: " + message(err)
 	case info.Mode()&fs.ModeSymlink != 0:
 		target, err := p.Readlink(linkPath)
+		target = filepath.ToSlash(target)
 		if err != nil {
 			return "cannot read the link <link>: " + message(err)
 		}

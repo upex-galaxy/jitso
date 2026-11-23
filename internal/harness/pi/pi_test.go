@@ -1,6 +1,7 @@
 package pi
 
 import (
+	"path/filepath"
 	"reflect"
 	"strings"
 	"testing"
@@ -23,8 +24,8 @@ func TestArgv(t *testing.T) {
 			in.PackageDir, in.PackageSkills = "/l/pkg", []string{"humanizer", "jitso"}
 			in.GuardBinary, in.InitialPrompt = "/b/jitso", "Read /b.md"
 		}, []string{"--no-context-files", "--tools", "read,bash",
-			"--skill", "/l/pkg/.claude/skills/humanizer", "--skill", "/l/pkg/.claude/skills/jitso",
-			"-e", "/l/pi/jitso-guard.js", "Read /b.md"}},
+			"--skill", filepath.Join("/l/pkg", ".claude", "skills", "humanizer"), "--skill", filepath.Join("/l/pkg", ".claude", "skills", "jitso"),
+			"-e", filepath.Join("/l", "pi", "jitso-guard.js"), "Read /b.md"}},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

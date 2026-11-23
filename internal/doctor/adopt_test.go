@@ -3,6 +3,7 @@ package doctor
 import (
 	"os"
 	"path/filepath"
+	"runtime"
 	"strings"
 	"testing"
 
@@ -101,7 +102,7 @@ func TestHookCommandResolution(t *testing.T) {
 	os.MkdirAll(filepath.Dir(spaced), 0o755)
 	os.WriteFile(spaced, []byte("x"), 0o755)
 
-	c := &projectChecks{p: Ports{GOOS: "linux", LookPath: lookup(map[string]string{"jitso": "/bin/jitso"})}.withDefaults()}
+	c := &projectChecks{p: Ports{GOOS: runtime.GOOS, LookPath: lookup(map[string]string{"jitso": "/bin/jitso"})}.withDefaults()}
 	cases := []struct {
 		command string
 		want    string
@@ -110,11 +111,13 @@ func TestHookCommandResolution(t *testing.T) {
 		{"nosuch hook guard", "nosuch is not on PATH"},
 		{"'" + exe + "' hook guard", ""},
 		{"'" + spaced + "' hook guard", ""},
-		{exe + " hook guard", ""},
 		{"'/nonexistent/jitso' hook guard", "/nonexistent/jitso does not exist"},
-		{"'" + plain + "' hook guard", plain + " is not executable"},
 		{"'" + dir + "' hook guard", dir + " is a folder, not a program"},
 		{"", "the hook command is empty"},
+	}
+	if filepath.Separator == '/' { // an unquoted Windows path loses its backslashes, as in any POSIX shell; Windows has no execute bit
+		cases = append(cases, struct{ command, want string }{exe + " hook guard", ""},
+			struct{ command, want string }{"'" + plain + "' hook guard", plain + " is not executable"})
 	}
 	for _, tc := range cases {
 		if got := c.resolveHook(tc.command); got != tc.want {

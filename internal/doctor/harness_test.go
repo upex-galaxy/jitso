@@ -3,6 +3,7 @@ package doctor
 import (
 	"os"
 	"path/filepath"
+	"runtime"
 	"strings"
 	"testing"
 
@@ -62,7 +63,7 @@ func TestHooksReportsTheOtherHarnessFiles(t *testing.T) {
 func TestHooksUserReportsTheOtherHarnessFiles(t *testing.T) {
 	home := t.TempDir()
 	env := map[string]string{}
-	p := Ports{GOOS: "linux", Home: home, LookPath: lookup(map[string]string{"jitso": "/usr/local/bin/jitso"}), Getenv: func(k string) string { return env[k] }}.withDefaults()
+	p := Ports{GOOS: runtime.GOOS, Home: home, LookPath: lookup(map[string]string{"jitso": "/usr/local/bin/jitso"}), Getenv: func(k string) string { return env[k] }}.withDefaults()
 
 	put(t, home, ".codex/hooks.json", string(settingsjson.Fragment(settingsjson.Command)))
 	put(t, home, ".config/opencode/plugins/jitso-guard.js", string(guardfiles.OpenCode("jitso", "dev")))

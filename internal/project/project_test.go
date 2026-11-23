@@ -107,7 +107,7 @@ func TestResolveOutsideGit(t *testing.T) {
 }
 
 func TestUserDir(t *testing.T) {
-	if got := UserDir("/h"); got != "/h/.jitso" {
+	if got := UserDir("/h"); got != filepath.FromSlash("/h/.jitso") {
 		t.Errorf("got %s", got)
 	}
 }

@@ -3,6 +3,7 @@ package doctor
 import (
 	"os"
 	"path/filepath"
+	"runtime"
 	"strings"
 	"testing"
 	"time"
@@ -63,6 +64,9 @@ func TestCatalog(t *testing.T) {
 }
 
 func TestCatalogErrorKeepsTheFileName(t *testing.T) {
+	if runtime.GOOS == "windows" {
+		t.Skip("Windows reports reading a file as a folder as a missing path, which counts as no route ids")
+	}
 	dir := fixture(t)
 	if err := os.RemoveAll(filepath.Join(dir, ".agents/instructions")); err != nil {
 		t.Fatal(err)

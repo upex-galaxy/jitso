@@ -88,7 +88,7 @@ func Inspect(dir string, want Manifest) (Found, error) {
 	case err != nil:
 		return Found{}, err
 	case info.Mode()&os.ModeSymlink != 0:
-		target, _ := os.Readlink(dir)
+		target, _ := readLink(dir)
 		return Found{State: NotFolder, Why: "a link to " + target}, nil
 	case !info.IsDir():
 		return Found{State: NotFolder, Why: "a file"}, nil

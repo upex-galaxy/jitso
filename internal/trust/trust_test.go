@@ -151,7 +151,7 @@ func TestSelectorPath(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.selector, func(t *testing.T) {
 			got, ok := SelectorPath(tt.selector)
-			if got != tt.want || ok != tt.ok {
+			if got != filepath.FromSlash(tt.want) || ok != tt.ok {
 				t.Errorf("SelectorPath(%q) = %q, %v; want %q, %v", tt.selector, got, ok, tt.want, tt.ok)
 			}
 		})

@@ -316,7 +316,8 @@ func TestRunTokens(t *testing.T) {
 					t.Fatal(err)
 				}
 			}
-			extra := `,"transcript_path":"` + filepath.Join(home, "s.jsonl") + `"`
+			quoted, _ := json.Marshal(filepath.Join(home, "s.jsonl"))
+			extra := `,"transcript_path":` + string(quoted)
 			if tt.harness != "" {
 				extra += `,"harness":"` + tt.harness + `"`
 			}

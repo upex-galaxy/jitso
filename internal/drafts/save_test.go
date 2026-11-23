@@ -4,6 +4,7 @@ import (
 	"errors"
 	"os"
 	"path/filepath"
+	"runtime"
 	"strings"
 	"testing"
 )
@@ -93,7 +94,7 @@ func TestSave(t *testing.T) {
 	if err != nil || string(got) != "id: scout\nstatus: approved\n" {
 		t.Fatalf("build file %q, %v", got, err)
 	}
-	if info, _ := os.Stat(BuildFile(primary, "scout")); info.Mode().Perm() != 0o644 {
+	if info, _ := os.Stat(BuildFile(primary, "scout")); info.Mode().Perm() != 0o644 && runtime.GOOS != "windows" {
 		t.Errorf("mode %v", info.Mode().Perm())
 	}
 	if _, err := Get(primary, "scout"); !errors.Is(err, ErrNoDraft) {
