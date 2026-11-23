@@ -1,6 +1,9 @@
 {
   "id": "launch/package/user-skill-is-copied",
   "title": "a launch copies each user skill the build names into .jitso/launches/<id>/pkg/.claude/skills/<name>/ and brief.md names it as the session sees it",
+  "tags": [
+    "posix"
+  ],
   "source": [
     "intended: JITSO v0.2 plan 2.3 (the per-launch package; copy, not link)"
   ],

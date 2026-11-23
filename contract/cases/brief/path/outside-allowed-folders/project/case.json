@@ -1,6 +1,9 @@
 {
   "id": "brief/path/outside-allowed-folders/project",
   "title": "a brief inside the project but outside .jitso/briefs is rejected",
+  "tags": [
+    "posix"
+  ],
   "source": [
     "cli/jitso/launch.test.ts: 'a brief outside the allowed folders is rejected'"
   ],

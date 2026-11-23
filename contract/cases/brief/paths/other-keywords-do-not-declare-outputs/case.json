@@ -1,6 +1,9 @@
 {
   "id": "brief/paths/other-keywords-do-not-declare-outputs",
   "title": "only Output, Outputs, Create and Creates lines exempt a path: Writes, Result and Output to do not",
+  "tags": [
+    "posix"
+  ],
   "source": [
     "cli/jitso/brief.test.ts: declaredOutputs regex /^\\\\s*(?:[-*]\\\\s*)?(?:outputs?|creates?)\\\\s*:/i"
   ],

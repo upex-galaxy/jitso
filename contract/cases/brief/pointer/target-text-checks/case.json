@@ -1,6 +1,9 @@
 {
   "id": "brief/pointer/target-text-checks",
   "title": "a pointer target under the minimum words or written in Spanish is rejected naming the failed check",
+  "tags": [
+    "posix"
+  ],
   "source": [
     "intended: docs/decisions.md, Pre-release fixes (pointer brief)"
   ],

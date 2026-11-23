@@ -1,6 +1,9 @@
 {
   "id": "brief/section-missing/report-format",
   "title": "a brief without the \"Report format\" section is rejected naming that section, before any orca call",
+  "tags": [
+    "posix"
+  ],
   "source": [
     "cli/jitso/brief.test.ts: 'fails when the \"Report format\" section is missing'"
   ],

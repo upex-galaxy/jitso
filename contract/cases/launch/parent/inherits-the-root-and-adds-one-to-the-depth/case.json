@@ -1,6 +1,9 @@
 {
   "id": "launch/parent/inherits-the-root-and-adds-one-to-the-depth",
   "title": "a child of a depth-2 launch gets that launch's root and depth 3, in fleet mode too",
+  "tags": [
+    "posix"
+  ],
   "source": [
     "cli/jitso/launch.test.ts: 'a known parent sets root and depth'"
   ],

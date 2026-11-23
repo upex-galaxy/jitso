@@ -1,5 +1,8 @@
 {
   "title": "in fleet mode there is no initial prompt, so the card at the top of the brief file the session reads carries ROUTE-SCOPE:",
+  "tags": [
+    "posix"
+  ],
   "source": [
     "intended: PLAN.md defect S1; fleet mode passes no prompt (adapters/claude.ts), so brief.md is what carries the scope"
   ],

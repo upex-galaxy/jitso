@@ -1,6 +1,9 @@
 {
   "id": "launch/trust/fleet-refusal-skips-worker-start",
   "title": "a refused fleet launch never adopts the terminal: no orchestration worker-start",
+  "tags": [
+    "posix"
+  ],
   "source": [
     "intended: owner decision, defect N-22: the folder Orca reports is checked on every launch"
   ],

@@ -1,6 +1,9 @@
 {
   "id": "launch/trust/unreadable-screen-counts-as-absent",
   "title": "a terminal read answer without a screen is an empty screen: absent, no keys, launch succeeds",
+  "tags": [
+    "posix"
+  ],
   "source": [
     "cli/jitso/orca.test.ts: 'readScreen joins the tail rows of the rendered screen' (empty tail)"
   ],

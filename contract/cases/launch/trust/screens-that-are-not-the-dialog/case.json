@@ -1,6 +1,9 @@
 {
   "id": "launch/trust/screens-that-are-not-the-dialog",
   "title": "a screen needs both the word trust (any case) and 'No, exit' to count as the dialog",
+  "tags": [
+    "posix"
+  ],
   "source": [
     "cli/jitso/adapters/claude.ts: detect = /trust/i.test(screen) && screen.includes('No, exit')"
   ],

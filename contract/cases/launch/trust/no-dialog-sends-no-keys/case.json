@@ -1,6 +1,9 @@
 {
   "id": "launch/trust/no-dialog-sends-no-keys",
   "title": "a normal idle screen means trust_dialog absent and no key is sent",
+  "tags": [
+    "posix"
+  ],
   "source": [
     "cli/jitso/trust.test.ts: 'a screen without the dialog gets no keys and reports absent'"
   ],

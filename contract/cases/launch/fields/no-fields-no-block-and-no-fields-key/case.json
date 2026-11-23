@@ -1,6 +1,9 @@
 {
   "id": "launch/fields/no-fields-no-block-and-no-fields-key",
   "title": "a launch with no field has no ## Fields block in brief.md and no fields key in its launch event",
+  "tags": [
+    "posix"
+  ],
   "source": [
     "intended: docs/decisions.md, Pre-release fixes (the fields reach brief.md and the launch event)"
   ],

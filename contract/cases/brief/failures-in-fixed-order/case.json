@@ -1,6 +1,9 @@
 {
   "id": "brief/failures-in-fixed-order",
   "title": "when a brief fails several checks they are reported as one line in the order sections, length, language, paths",
+  "tags": [
+    "posix"
+  ],
   "source": [
     "cli/jitso/brief.test.ts: checkBrief order of checks",
     "cli/jitso/launch.test.ts: runLaunch joins failures with '; '"

@@ -1,6 +1,9 @@
 {
   "id": "validation/field/empty-value",
   "title": "ticket_key= with an empty value is an invalid value, not a missing field",
+  "tags": [
+    "posix"
+  ],
   "source": [
     "cli/jitso/launch.ts: parseLaunchArgs (`at < 1` only rejects an empty name)",
     "cli/jitso/profile.ts: resolveRequest"

@@ -1,6 +1,9 @@
 {
   "id": "validation/field/unknown-for-build",
   "title": "a field the build does not require is rejected by name, even a real field of another build",
+  "tags": [
+    "posix"
+  ],
   "source": [
     "cli/jitso/profile.test.ts: 'a field no preset declares is rejected'"
   ],

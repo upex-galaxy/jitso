@@ -1,6 +1,9 @@
 {
   "id": "registry/location",
   "title": "the registry is .jitso/launches.jsonl of the project and the launch keeps its big files under .jitso/launches/<id>/",
+  "tags": [
+    "posix"
+  ],
   "source": [
     "cli/jitso/log.test.ts: header (one JSON event per line, big data under launches/<id>/)"
   ],

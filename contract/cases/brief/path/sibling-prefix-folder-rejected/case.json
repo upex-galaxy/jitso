@@ -1,6 +1,9 @@
 {
   "id": "brief/path/sibling-prefix-folder-rejected",
   "title": "a folder that only shares the name prefix with the allowed folder is rejected",
+  "tags": [
+    "posix"
+  ],
   "source": [
     "cli/jitso/brief.test.ts: 'rejects a sibling folder that merely shares the prefix'"
   ],

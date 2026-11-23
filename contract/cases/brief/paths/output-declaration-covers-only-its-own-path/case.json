@@ -1,6 +1,9 @@
 {
   "id": "brief/paths/output-declaration-covers-only-its-own-path",
   "title": "an Output line exempts only the paths on that line, other missing paths still fail",
+  "tags": [
+    "posix"
+  ],
   "source": [
     "cli/jitso/brief.test.ts: declaredOutputs"
   ],

@@ -1,6 +1,9 @@
 {
   "id": "brief/section-missing/two",
   "title": "several missing sections are listed together, in Goal, Scope, Done when, Report format order",
+  "tags": [
+    "posix"
+  ],
   "source": [
     "cli/jitso/brief.test.ts: 'fails when the \"<section>\" section is missing' (two at once)"
   ],

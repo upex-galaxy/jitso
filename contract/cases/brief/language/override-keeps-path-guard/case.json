@@ -1,6 +1,9 @@
 {
   "id": "brief/language/override-keeps-path-guard",
   "title": "--brief-language es does not relax the allowed-folder rule",
+  "tags": [
+    "posix"
+  ],
   "source": [
     "cli/jitso/launch.test.ts: 'the other checks and the path guard still apply with the override'"
   ],

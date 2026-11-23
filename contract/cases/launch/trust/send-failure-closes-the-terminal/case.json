@@ -1,6 +1,9 @@
 {
   "id": "launch/trust/send-failure-closes-the-terminal",
   "title": "if sending the confirm key fails the launch exits 3, closes the terminal and writes no line; no launch folder is left behind",
+  "tags": [
+    "posix"
+  ],
   "source": [
     "cli/jitso/launch.ts: the try block calls abandon() on any throw",
     "intended: owner decision 2026-11-15: a failed launch leaves no launch folder"

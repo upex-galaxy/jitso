@@ -1,6 +1,9 @@
 {
   "id": "brief/language/explicit-en-rejects-spanish",
   "title": "--brief-language en behaves like the default and rejects a Spanish brief",
+  "tags": [
+    "posix"
+  ],
   "source": [
     "cli/jitso/launch.test.ts: 'default still rejects a Spanish brief'"
   ],

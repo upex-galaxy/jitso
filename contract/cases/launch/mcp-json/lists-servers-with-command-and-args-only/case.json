@@ -1,6 +1,9 @@
 {
   "id": "launch/mcp-json/lists-servers-with-command-and-args-only",
   "title": "mcp.json for sonnet-tester has dbhub and openapi with their command and args and never an env key",
+  "tags": [
+    "posix"
+  ],
   "source": [
     "cli/jitso/launch.test.ts: 'sonnet-tester with its key launches with the MCP file'",
     "cli/jitso/adapters/claude.ts: buildMcpConfig drops env on purpose"

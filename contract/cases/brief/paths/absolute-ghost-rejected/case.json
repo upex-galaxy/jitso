@@ -1,6 +1,9 @@
 {
   "id": "brief/paths/absolute-ghost-rejected",
   "title": "an absolute cited path that does not exist is rejected",
+  "tags": [
+    "posix"
+  ],
   "source": [
     "cli/jitso/brief.test.ts: checkBrief citedPaths (isAbsolute)"
   ],

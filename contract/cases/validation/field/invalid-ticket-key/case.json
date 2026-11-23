@@ -1,6 +1,9 @@
 {
   "id": "validation/field/invalid-ticket-key",
   "title": "a ticket_key that is not <PROJECT>-<number> is rejected, including a trailing newline",
+  "tags": [
+    "posix"
+  ],
   "source": [
     "cli/jitso/profile.test.ts: 'a field value must match its pattern (no shell syntax in a ticket key)'",
     "cli/jitso/profile.ts: FIELD_PATTERNS.ticket_key"

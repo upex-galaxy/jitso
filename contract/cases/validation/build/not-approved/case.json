@@ -1,6 +1,9 @@
 {
   "id": "validation/build/not-approved",
   "title": "a candidate or a retired build exists but cannot be launched",
+  "tags": [
+    "posix"
+  ],
   "source": [
     "cli/jitso/profile.test.ts: 'a preset that is not approved cannot be launched'"
   ],

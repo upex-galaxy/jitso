@@ -1,6 +1,9 @@
 {
   "id": "launch/registry/two-launches-append-two-lines",
   "title": "two launches in a row append two lines with different ids and each gets its own folder",
+  "tags": [
+    "posix"
+  ],
   "source": [
     "cli/jitso/launch.test.ts: launchForReal appendEvent"
   ],

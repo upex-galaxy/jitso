@@ -1,6 +1,9 @@
 {
   "id": "launch/user-mcp/args-reference-and-escape-travel",
   "title": "args travel when the secret-looking flag takes a ${VAR} reference, when <server>/<flag> is in literal_env, or when the flag name is not secret-looking",
+  "tags": [
+    "posix"
+  ],
   "source": [
     "intended: JITSO v0.2 plan 2.7, args rule: a pure ${VAR} value passes, literal_env <server>/<flag> allows"
   ],

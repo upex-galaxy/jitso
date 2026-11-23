@@ -1,6 +1,9 @@
 {
   "id": "launch/mcp-json/only-command-and-args-are-copied",
   "title": "keys of a repo MCP server other than command and args are not copied",
+  "tags": [
+    "posix"
+  ],
   "source": [
     "cli/jitso/adapters/claude.ts: buildMcpConfig copies command and args by server name"
   ],

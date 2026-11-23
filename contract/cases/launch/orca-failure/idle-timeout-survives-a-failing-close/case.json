@@ -1,6 +1,9 @@
 {
   "id": "launch/orca-failure/idle-timeout-survives-a-failing-close",
   "title": "if closing the stuck terminal also fails, the exit code and the message are unchanged; no launch folder is left behind",
+  "tags": [
+    "posix"
+  ],
   "source": [
     "cli/jitso/launch.test.ts: launchForReal abandon() swallows a close error",
     "intended: owner decision 2026-11-15: a failed launch leaves no launch folder"

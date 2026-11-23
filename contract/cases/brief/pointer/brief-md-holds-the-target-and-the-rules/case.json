@@ -1,6 +1,9 @@
 {
   "id": "brief/pointer/brief-md-holds-the-target-and-the-rules",
   "title": "brief.md holds the card, the target text and the JITSO rules, never the Brief: line, and brief_sha256 is the SHA-256 of the target text",
+  "tags": [
+    "posix"
+  ],
   "source": [
     "intended: docs/decisions.md, Pre-release fixes (pointer brief)"
   ],

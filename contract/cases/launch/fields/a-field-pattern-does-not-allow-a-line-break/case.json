@@ -1,6 +1,9 @@
 {
   "id": "launch/fields/a-field-pattern-does-not-allow-a-line-break",
   "title": "a field whose project pattern would match a line break is still refused: the control character ban holds for every field",
+  "tags": [
+    "posix"
+  ],
   "source": [
     "intended: docs/decisions.md, Pre-release fixes (the fields reach brief.md)"
   ],

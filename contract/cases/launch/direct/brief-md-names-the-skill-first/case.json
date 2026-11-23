@@ -1,6 +1,9 @@
 {
   "id": "launch/direct/brief-md-names-the-skill-first",
   "title": "brief.md carries a 'Load first: <skills>' line between the card and the brief when the build lists skills",
+  "tags": [
+    "posix"
+  ],
   "source": [
     "cli/jitso/launch.test.ts: 'sonnet-tester with its key launches with the MCP file and no tools flag'"
   ],

@@ -1,6 +1,9 @@
 {
   "id": "launch/trust/refusal-is-checked-before-the-idle-wait",
   "title": "the folder check runs before terminal wait: a worker that never idles is still refused at once, exit 2 and not 3",
+  "tags": [
+    "posix"
+  ],
   "source": [
     "intended: owner decision, defect N-22: the folder Orca reports is checked on every launch"
   ],

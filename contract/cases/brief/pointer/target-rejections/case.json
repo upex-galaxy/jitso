@@ -1,6 +1,9 @@
 {
   "id": "brief/pointer/target-rejections",
   "title": "a pointer whose target is missing, a directory, outside the project, not a .md file, or under a protected path is rejected with its own reason before any launch folder or Orca call",
+  "tags": [
+    "posix"
+  ],
   "source": [
     "intended: docs/decisions.md, Pre-release fixes (pointer brief)"
   ],

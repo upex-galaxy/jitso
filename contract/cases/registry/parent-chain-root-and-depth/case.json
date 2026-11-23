@@ -1,6 +1,9 @@
 {
   "id": "registry/parent-chain-root-and-depth",
   "title": "a launch with --parent records the parent, keeps the root of the chain and adds one to the depth",
+  "tags": [
+    "posix"
+  ],
   "source": [
     "cli/jitso/launch.test.ts: parent launches (depth and root)"
   ],

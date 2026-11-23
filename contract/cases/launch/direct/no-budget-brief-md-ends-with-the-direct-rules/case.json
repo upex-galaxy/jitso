@@ -1,6 +1,9 @@
 {
   "id": "launch/direct/no-budget-brief-md-ends-with-the-direct-rules",
   "title": "a real direct launch of a build without a budget ends brief.md with the direct rules that leave out the budget sentence, and its launch event has no budget",
+  "tags": [
+    "posix"
+  ],
   "source": [
     "intended: docs/decisions.md, the v0.1.0 cut (budget is optional; the rules text drops the budget sentence)"
   ],

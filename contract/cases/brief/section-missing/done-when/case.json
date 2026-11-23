@@ -1,6 +1,9 @@
 {
   "id": "brief/section-missing/done-when",
   "title": "a brief without the \"Done when\" section is rejected naming that section, before any orca call",
+  "tags": [
+    "posix"
+  ],
   "source": [
     "cli/jitso/brief.test.ts: 'fails when the \"Done when\" section is missing'"
   ],

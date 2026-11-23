@@ -1,6 +1,9 @@
 {
   "id": "validation/build/unknown",
   "title": "a well-formed build id that is not in the catalog is rejected by name",
+  "tags": [
+    "posix"
+  ],
   "source": [
     "cli/jitso/profile.test.ts: '1. an unknown preset'"
   ],

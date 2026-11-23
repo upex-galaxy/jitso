@@ -1,6 +1,9 @@
 {
   "id": "brief/length/boundary-39",
   "title": "a brief of exactly 39 words is rejected with the exact count",
+  "tags": [
+    "posix"
+  ],
   "source": [
     "cli/jitso/brief.test.ts: 'fails a brief under 40 words and one over 800' (boundary)",
     "intended: defect N-27"

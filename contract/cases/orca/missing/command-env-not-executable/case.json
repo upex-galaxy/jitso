@@ -1,6 +1,9 @@
 {
   "id": "orca/missing/command-env-not-executable",
   "title": "when ORCA_CLI_COMMAND names no executable, launch, close and reap exit 3 with one line naming the variable and its value, call nothing and write nothing",
+  "tags": [
+    "posix"
+  ],
   "source": [
     "intended: a missing Orca is named with an install hint before anything runs"
   ],

@@ -1,6 +1,9 @@
 {
   "id": "launch/orca-failure/error-without-message-or-code",
   "title": "an Orca error with neither message nor code shows 'unknown error'; no launch folder is left behind",
+  "tags": [
+    "posix"
+  ],
   "source": [
     "cli/jitso/orca.ts: String(body.message ?? code ?? 'unknown error')",
     "intended: owner decision 2026-11-15: a failed launch leaves no launch folder"

@@ -1,6 +1,9 @@
 {
   "id": "validation/parent/unknown-launch",
   "title": "a well-formed --parent that no registry line carries is rejected as an unknown parent launch",
+  "tags": [
+    "posix"
+  ],
   "source": [
     "cli/jitso/launch.ts: runLaunch (`unknown parent launch`)"
   ],

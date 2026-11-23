@@ -1,6 +1,9 @@
 {
   "id": "launch/direct/card-txt-equals-stdout-card",
   "title": "card.txt holds exactly the card printed on stdout plus a newline, and the launch folder is named by the card's id",
+  "tags": [
+    "posix"
+  ],
   "source": [
     "cli/jitso/launch.test.ts: launchForReal writes card + '\\n' to card.txt and prints card"
   ],

@@ -1,6 +1,9 @@
 {
   "id": "brief/path/traversal-out-is-rejected",
   "title": "a path that climbs out of .jitso/briefs with .. is rejected",
+  "tags": [
+    "posix"
+  ],
   "source": [
     "cli/jitso/brief.test.ts: 'rejects path traversal out of the allowed folder'",
     "cli/jitso/escape.test.ts: 'a path outside the brief folder is rejected'"

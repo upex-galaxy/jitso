@@ -1,5 +1,8 @@
 {
   "title": "a brief path that climbs out of the brief folder with .. is refused",
+  "tags": [
+    "posix"
+  ],
   "source": [
     "cli/jitso/escape.test.ts: 'path traversal never becomes an argument'"
   ],

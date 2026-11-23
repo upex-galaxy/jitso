@@ -1,6 +1,9 @@
 {
   "id": "launch/fleet/worker-start-error-message-is-reported",
   "title": "the message Orca gives for a failed worker-start is shown after 'orca orchestration worker-start failed:'; no launch folder is left behind",
+  "tags": [
+    "posix"
+  ],
   "source": [
     "cli/jitso/orca.test.ts: 'an ok:false answer throws an OrcaError that carries the code'",
     "intended: owner decision 2026-11-15: a failed launch leaves no launch folder"

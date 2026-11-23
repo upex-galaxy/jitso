@@ -1,6 +1,9 @@
 {
   "id": "brief/path/missing-file-rejected",
   "title": "a brief path that does not exist is rejected",
+  "tags": [
+    "posix"
+  ],
   "source": [
     "cli/jitso/brief.test.ts: 'rejects a missing file, a directory, an empty path and a NUL byte'"
   ],

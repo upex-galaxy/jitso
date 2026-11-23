@@ -1,5 +1,8 @@
 {
   "title": "a .. that stays inside the brief folder is fine: the guard checks the real path, not the spelling",
+  "tags": [
+    "posix"
+  ],
   "source": [
     "cli/jitso/brief.ts resolveBriefPath (real path inside an allowed folder); control for the traversal cases"
   ],

@@ -1,6 +1,9 @@
 {
   "id": "brief/section-missing/all",
   "title": "a brief with no section lists all four missing names in order",
+  "tags": [
+    "posix"
+  ],
   "source": [
     "cli/jitso/launch.test.ts: 'a brief that fails the quality checks is rejected with the failing check named' (text: 'just do it')"
   ],

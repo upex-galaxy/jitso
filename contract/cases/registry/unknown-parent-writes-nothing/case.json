@@ -1,6 +1,9 @@
 {
   "id": "registry/unknown-parent-writes-nothing",
   "title": "a launch whose --parent is not in the registry is rejected with exit 2, calls no orca and writes no event",
+  "tags": [
+    "posix"
+  ],
   "source": [
     "cli/jitso/launch.test.ts: unknown parent launch"
   ],

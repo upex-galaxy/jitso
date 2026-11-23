@@ -1,6 +1,9 @@
 {
   "id": "launch/mcp-json/missing-args-become-an-empty-list",
   "title": "a server without an args key gets args: [] in mcp.json",
+  "tags": [
+    "posix"
+  ],
   "source": [
     "cli/jitso/adapters/claude.ts: args: Array.isArray(server.args) ? ... : []"
   ],

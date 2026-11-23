@@ -1,6 +1,9 @@
 {
   "id": "launch/parent/links-to-a-root-launch",
   "title": "--parent of an existing root launch sets parent to it, root to its id and depth to 1",
+  "tags": [
+    "posix"
+  ],
   "source": [
     "cli/jitso/launch.test.ts: 'a known parent sets root and depth'"
   ],

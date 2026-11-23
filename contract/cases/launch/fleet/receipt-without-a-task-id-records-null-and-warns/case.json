@@ -1,6 +1,9 @@
 {
   "id": "launch/fleet/receipt-without-a-task-id-records-null-and-warns",
   "title": "a worker-start receipt that names no Task id still registers the launch with a null task and a warning on stderr",
+  "tags": [
+    "posix"
+  ],
   "source": [
     "intended: docs/decisions.md, Pre-release fixes (JITSO creates the Orca Task in fleet mode)"
   ],

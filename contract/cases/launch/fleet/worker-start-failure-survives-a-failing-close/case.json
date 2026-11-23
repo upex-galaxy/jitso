@@ -1,6 +1,9 @@
 {
   "id": "launch/fleet/worker-start-failure-survives-a-failing-close",
   "title": "if closing the terminal also fails, the launch still exits 3 with the worker-start error; no launch folder is left behind",
+  "tags": [
+    "posix"
+  ],
   "source": [
     "cli/jitso/launch.test.ts: launchForReal abandon() swallows a close error",
     "intended: owner decision 2026-11-15: a failed launch leaves no launch folder"

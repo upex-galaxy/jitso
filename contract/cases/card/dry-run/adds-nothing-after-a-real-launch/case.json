@@ -1,6 +1,9 @@
 {
   "id": "card/dry-run/adds-nothing-after-a-real-launch",
   "title": "a dry run after a real launch leaves the registry at one line and adds no orca call",
+  "tags": [
+    "posix"
+  ],
   "source": [
     "cli/jitso/launch.test.ts: '--dry-run prints the card and calls no orca, writes no file and no event'"
   ],

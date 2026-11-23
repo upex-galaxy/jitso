@@ -1,6 +1,9 @@
 {
   "id": "brief/language/spanish-rejected-by-default",
   "title": "a Spanish brief is rejected: the brief must be written in English",
+  "tags": [
+    "posix"
+  ],
   "source": [
     "cli/jitso/launch.test.ts: 'default still rejects a Spanish brief'",
     "cli/jitso/brief.test.ts: 'fails a brief written in Spanish'"

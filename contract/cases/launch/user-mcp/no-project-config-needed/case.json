@@ -1,6 +1,9 @@
 {
   "id": "launch/user-mcp/no-project-config-needed",
   "title": "a launch whose servers are all user servers does not read the project's .mcp.json",
+  "tags": [
+    "posix"
+  ],
   "source": [
     "intended: JITSO v0.2 plan 2.7 with defect N-26 (the repo table is read only when the launch names a project server)"
   ],

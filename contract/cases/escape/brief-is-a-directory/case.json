@@ -1,5 +1,8 @@
 {
   "title": "a brief path that is a folder, not a regular file, is refused",
+  "tags": [
+    "posix"
+  ],
   "source": [
     "cli/jitso/brief.ts resolveBriefPath: 'brief path is not a regular file' (no source test; measured on the TS binary)"
   ],

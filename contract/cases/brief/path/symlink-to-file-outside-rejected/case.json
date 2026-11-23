@@ -1,6 +1,9 @@
 {
   "id": "brief/path/symlink-to-file-outside-rejected",
   "title": "a symlink inside .jitso/briefs to a file elsewhere in the project is rejected, even if that file is a valid brief",
+  "tags": [
+    "posix"
+  ],
   "source": [
     "cli/jitso/brief.test.ts: 'rejects a symlink that points to /etc/passwd'"
   ],

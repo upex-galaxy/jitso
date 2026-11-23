@@ -1,6 +1,9 @@
 {
   "id": "reap/unlogged-worker-after-a-real-fleet-launch",
   "title": "after a real fleet launch, a worker of the same run that no launch event explains is listed as an unlogged worker, and nothing is written",
+  "tags": [
+    "posix"
+  ],
   "source": [
     "cli/jitso/reap.test.ts: 'a worker in a known run that no launch event explains is an unlogged_worker rule_break'",
     "intended: docs/decisions.md, the v0.1.0 cut (the unlogged worker is output only)"

@@ -1,6 +1,9 @@
 {
   "id": "registry/lock-removed-after-write",
   "title": "the launches.lock folder is gone after the launch event and after the end event are written",
+  "tags": [
+    "posix"
+  ],
   "source": [
     "cli/jitso/log.test.ts: 'releases the lock after writing'"
   ],

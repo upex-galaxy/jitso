@@ -1,6 +1,9 @@
 {
   "id": "launch/fields/brief-md-and-launch-event-carry-the-fields",
   "title": "a launch with two fields puts a ## Fields block, sorted by name, between the brief text and the JITSO rules, and its launch event has a fields object",
+  "tags": [
+    "posix"
+  ],
   "source": [
     "intended: docs/decisions.md, Pre-release fixes (the fields reach brief.md and the launch event)"
   ],

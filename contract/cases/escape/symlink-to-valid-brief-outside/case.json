@@ -1,5 +1,8 @@
 {
   "title": "a brief symlink whose target is a VALID brief outside the brief folders is refused (the folder guard, not the brief checks, says no)",
+  "tags": [
+    "posix"
+  ],
   "source": [
     "cli/jitso/escape.test.ts: 'a symlink that leaves the brief folder never becomes an argument'"
   ],

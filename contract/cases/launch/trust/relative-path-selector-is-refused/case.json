@@ -1,6 +1,9 @@
 {
   "id": "launch/trust/relative-path-selector-is-refused",
   "title": "a path: selector with a relative path is rejected before any Orca call: a relative path cannot be compared",
+  "tags": [
+    "posix"
+  ],
   "source": [
     "intended: owner decision, defect N-22: the folder Orca reports is checked on every launch"
   ],

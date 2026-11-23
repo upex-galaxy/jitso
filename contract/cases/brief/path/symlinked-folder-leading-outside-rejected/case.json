@@ -1,6 +1,9 @@
 {
   "id": "brief/path/symlinked-folder-leading-outside-rejected",
   "title": "a symlinked subfolder of .jitso/briefs that leads outside is rejected",
+  "tags": [
+    "posix"
+  ],
   "source": [
     "cli/jitso/brief.test.ts: 'rejects a symlinked folder that leads outside'"
   ],

@@ -1,6 +1,9 @@
 {
   "id": "launch/registry/tester-lists-mcp-skills-and-route-scope",
   "title": "the launch line of sonnet-tester records its mcp servers, skills_first, route_scope and budget",
+  "tags": [
+    "posix"
+  ],
   "source": [
     "cli/jitso/launch.test.ts: 'sonnet-tester with its key launches with the MCP file'"
   ],

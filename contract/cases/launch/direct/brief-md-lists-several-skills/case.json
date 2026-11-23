@@ -1,6 +1,9 @@
 {
   "id": "launch/direct/brief-md-lists-several-skills",
   "title": "several skills are joined with a comma and a space on the 'Load first' line",
+  "tags": [
+    "posix"
+  ],
   "source": [
     "cli/jitso/launch.test.ts: launchForReal builds `Load first: ${profile.skillsFirst.join(', ')}`"
   ],

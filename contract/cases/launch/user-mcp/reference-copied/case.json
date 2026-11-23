@@ -1,6 +1,9 @@
 {
   "id": "launch/user-mcp/reference-copied",
   "title": "a user MCP server travels into mcp.json under its plain name with command, args, type and env references as written, next to the project servers",
+  "tags": [
+    "posix"
+  ],
   "source": [
     "intended: JITSO v0.2 plan 2.7 (copy by reference only; ${VAR} expands inside a --mcp-config file, measured in M0-6)"
   ],

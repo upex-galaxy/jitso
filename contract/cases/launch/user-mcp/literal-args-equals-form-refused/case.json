@@ -1,6 +1,9 @@
 {
   "id": "launch/user-mcp/literal-args-equals-form-refused",
   "title": "a --flag=value secret in args is refused naming the flag, never the value; case and leading dashes of the flag name do not matter",
+  "tags": [
+    "posix"
+  ],
   "source": [
     "intended: JITSO v0.2 plan 2.7 (never copy a literal secret into a launch file), extended to args"
   ],

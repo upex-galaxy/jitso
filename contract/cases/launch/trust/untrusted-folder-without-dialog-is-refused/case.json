@@ -1,6 +1,9 @@
 {
   "id": "launch/trust/untrusted-folder-without-dialog-is-refused",
   "title": "an untrusted folder is refused even when no trust dialog shows: no dialog is no pass",
+  "tags": [
+    "posix"
+  ],
   "source": [
     "intended: owner decision, defect N-22: the folder Orca reports is checked on every launch"
   ],

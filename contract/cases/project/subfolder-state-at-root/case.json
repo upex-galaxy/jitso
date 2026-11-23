@@ -1,6 +1,9 @@
 {
   "id": "project/subfolder-state-at-root",
   "title": "a real launch from a sub-folder writes its state to the project root, never to the cwd",
+  "tags": [
+    "posix"
+  ],
   "source": [
     "cli/jitso/root.ts: jitsoDir (the .jitso folder of the primary checkout)",
     "cli/jitso/root.test.ts: 'is the .jitso folder of the primary checkout, also from a worktree'"

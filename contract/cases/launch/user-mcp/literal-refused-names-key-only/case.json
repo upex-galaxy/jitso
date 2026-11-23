@@ -1,6 +1,9 @@
 {
   "id": "launch/user-mcp/literal-refused-names-key-only",
   "title": "a user server with a literal env value is refused by build validate and by launch, naming the key and never the value",
+  "tags": [
+    "posix"
+  ],
   "source": [
     "intended: JITSO v0.2 plan 2.7 (a literal env or headers value refuses the launch and the validation; the key is named, the value never)"
   ],

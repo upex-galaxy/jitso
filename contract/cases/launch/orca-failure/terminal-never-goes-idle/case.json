@@ -1,6 +1,9 @@
 {
   "id": "launch/orca-failure/terminal-never-goes-idle",
   "title": "when the terminal does not reach idle the launch exits 3, closes that terminal and writes no registry line; no launch folder is left behind",
+  "tags": [
+    "posix"
+  ],
   "source": [
     "cli/jitso/launch.test.ts: 'the terminal never goes idle: exit 3 and the terminal is closed'",
     "cli/jitso/orca.test.ts: 'waitIdle is true on ok and false on a timeout answer'",

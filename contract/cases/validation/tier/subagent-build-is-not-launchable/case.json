@@ -1,6 +1,9 @@
 {
   "id": "validation/tier/subagent-build-is-not-launchable",
   "title": "launching a subagent-tier build alone is rejected, naming the build and the tier",
+  "tags": [
+    "posix"
+  ],
   "source": [
     "intended: docs/decisions.md (a subagent-tier build is not launchable alone with jitso launch)"
   ],

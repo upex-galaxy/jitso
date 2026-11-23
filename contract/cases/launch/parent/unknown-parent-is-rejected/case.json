@@ -1,6 +1,9 @@
 {
   "id": "launch/parent/unknown-parent-is-rejected",
   "title": "a well-formed --parent that is not in the registry exits 2 before any orca call and writes nothing",
+  "tags": [
+    "posix"
+  ],
   "source": [
     "cli/jitso/launch.test.ts: 'a known parent sets root and depth; an unknown parent exits 2'"
   ],

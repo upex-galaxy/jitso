@@ -1,5 +1,8 @@
 {
   "title": "a brief symlink to /etc/passwd is refused",
+  "tags": [
+    "posix"
+  ],
   "source": [
     "cli/jitso/escape.test.ts: 'a symlink that leaves the brief folder never becomes an argument' (same target as the source test)"
   ],

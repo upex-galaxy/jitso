@@ -1,5 +1,8 @@
 {
   "title": "a symlink whose real target is another file inside the brief folder is fine",
+  "tags": [
+    "posix"
+  ],
   "source": [
     "cli/jitso/brief.ts resolveBriefPath (real path inside an allowed folder); control for the symlink cases"
   ],

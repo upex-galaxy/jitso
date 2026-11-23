@@ -1,6 +1,9 @@
 {
   "id": "brief/paths/file-shaped-ghosts-still-rejected",
   "title": "a file-shaped cited path that does not exist is still rejected",
+  "tags": [
+    "posix"
+  ],
   "source": [
     "intended: the file-shaped rule keeps the paths check for real file names"
   ],

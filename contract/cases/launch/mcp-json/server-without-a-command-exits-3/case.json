@@ -1,6 +1,9 @@
 {
   "id": "launch/mcp-json/server-without-a-command-exits-3",
   "title": "a repo MCP server whose command is not a string stops the launch with exit 3; no launch folder is left behind",
+  "tags": [
+    "posix"
+  ],
   "source": [
     "cli/jitso/adapters/claude.ts: typeof server.command !== 'string'",
     "intended: owner decision 2026-11-15: a failed launch leaves no launch folder"

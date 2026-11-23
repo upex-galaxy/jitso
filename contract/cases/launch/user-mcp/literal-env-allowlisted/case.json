@@ -1,6 +1,9 @@
 {
   "id": "launch/user-mcp/literal-env-allowlisted",
   "title": "a literal env value travels when literal_env of ~/.jitso/jitso.yaml lists <server>/<KEY>",
+  "tags": [
+    "posix"
+  ],
   "source": [
     "intended: JITSO v0.2 plan 2.7 (literal_env: keys whose literal value the owner declares not secret)"
   ],

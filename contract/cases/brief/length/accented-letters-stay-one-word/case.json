@@ -1,6 +1,9 @@
 {
   "id": "brief/length/accented-letters-stay-one-word",
   "title": "a word with an accented letter counts once: 38 plain words plus 'señal' is 39 words, too short",
+  "tags": [
+    "posix"
+  ],
   "source": [
     "cli/jitso/brief.test.ts: words() = text.toLowerCase().match(/\\\\p{L}+/gu)",
     "intended: defect N-27"

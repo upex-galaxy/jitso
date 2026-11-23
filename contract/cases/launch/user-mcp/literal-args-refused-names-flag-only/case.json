@@ -1,6 +1,9 @@
 {
   "id": "launch/user-mcp/literal-args-refused-names-flag-only",
   "title": "a user server with a literal secret in args (after a secret-looking flag, or as --flag=value) is refused by build validate and by launch, naming the server and the flag and never the value",
+  "tags": [
+    "posix"
+  ],
   "source": [
     "intended: JITSO v0.2 plan 2.7 (never copy a literal secret into a launch file), extended to args"
   ],

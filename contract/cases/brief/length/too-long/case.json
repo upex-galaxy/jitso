@@ -1,6 +1,9 @@
 {
   "id": "brief/length/too-long",
   "title": "a brief well over 800 words is rejected with its word count",
+  "tags": [
+    "posix"
+  ],
   "source": [
     "cli/jitso/brief.test.ts: 'fails a brief under 40 words and one over 800' (GOOD + 'word ' x 800)"
   ],

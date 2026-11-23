@@ -1,6 +1,9 @@
 {
   "id": "launch/trust/blocked-wait-in-an-untrusted-folder-is-refused",
   "title": "a terminal blocked by the trust dialog in a folder outside the repo is refused before any wait, sends no key and closes the terminal",
+  "tags": [
+    "posix"
+  ],
   "source": [
     "intended: found in the first real Orca run, Orca answers a trust dialog as a blocked wait"
   ],

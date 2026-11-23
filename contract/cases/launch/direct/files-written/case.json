@@ -1,6 +1,9 @@
 {
   "id": "launch/direct/files-written",
   "title": "a real launch writes brief.md (card, brief, then the JITSO rules), mcp.json, an executable run.sh and card.txt under .jitso/launches/<id>/ and no core.md",
+  "tags": [
+    "posix"
+  ],
   "source": [
     "cli/jitso/launch.test.ts: 'calls terminal create, wait and the trust read, never worker-start, and writes the artifacts'",
     "intended: docs/architecture.md section 7 (S1): the card grows from five lines to six"

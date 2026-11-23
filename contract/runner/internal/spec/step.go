@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"path/filepath"
 	"regexp"
+	"strings"
 
 	"jitso-contract-runner/internal/expect"
 	"jitso-contract-runner/internal/jsonx"
@@ -144,7 +145,8 @@ func parseGitInit(v any) (string, error) {
 	if path == "" {
 		return "", fmt.Errorf("git_init.path: must not be empty")
 	}
-	if !filepath.IsAbs(path) && !filepath.IsLocal(path) {
+	rooted := strings.HasPrefix(path, "/") || strings.HasPrefix(path, `\\`) // a stand-in path at load time has no drive letter
+	if !filepath.IsAbs(path) && !rooted && !filepath.IsLocal(path) {
 		return "", fmt.Errorf("git_init.path: %q leaves the project dir", path)
 	}
 	return path, nil

@@ -1,6 +1,9 @@
 {
   "id": "launch/user-mcp/unset-variable-warns",
   "title": "a variable a copied user server refers to without a default, unset in jitso's environment, is one stderr warning; the launch goes on",
+  "tags": [
+    "posix"
+  ],
   "source": [
     "intended: JITSO v0.2 plan 2.7 (presence check only: the variable is named, its value is never read out)"
   ],

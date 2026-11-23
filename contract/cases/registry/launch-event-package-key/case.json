@@ -1,6 +1,9 @@
 {
   "id": "registry/launch-event-package-key",
   "title": "the launch event of a launch that carries a package records it under package, and the registry readers keep that line",
+  "tags": [
+    "posix"
+  ],
   "source": [
     "intended: JITSO v0.2 plan 2.3 (the package key; v stays 2, readers ignore keys they do not know)"
   ],

@@ -1,6 +1,9 @@
 {
   "id": "validation/field/missing-required",
   "title": "a build that requires ticket_key and gets no --field is rejected before any orca call",
+  "tags": [
+    "posix"
+  ],
   "source": [
     "cli/jitso/profile.test.ts: '7. a missing required field: the tester without ticket_key'",
     "cli/jitso/launch.test.ts: 'a preset that requires a field and a request without it exit 2 before any orca call'"

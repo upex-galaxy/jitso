@@ -1,6 +1,9 @@
 {
   "id": "launch/registry/flags-hold-model-and-effort",
   "title": "the registry flags list holds the model and effort flags the session was started with",
+  "tags": [
+    "posix"
+  ],
   "source": [
     "cli/jitso/launch.test.ts: launchForReal event.flags = argv.slice(1)"
   ],

@@ -1,6 +1,9 @@
 {
   "id": "launch/package/too-large-is-rejected",
   "title": "a user skill over 500 files is refused on a dry run and on a launch, and nothing is written or started",
+  "tags": [
+    "posix"
+  ],
   "source": [
     "intended: JITSO v0.2 plan 2.3 (at most 5 MiB and 500 regular files per skill)"
   ],

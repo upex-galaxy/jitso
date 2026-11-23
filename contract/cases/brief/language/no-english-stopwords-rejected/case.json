@@ -1,6 +1,9 @@
 {
   "id": "brief/language/no-english-stopwords-rejected",
   "title": "a brief with almost no English stopwords fails the language check even without Spanish words",
+  "tags": [
+    "posix"
+  ],
   "source": [
     "cli/jitso/brief.test.ts: checkBrief language heuristic (english / tokens < 0.1)"
   ],

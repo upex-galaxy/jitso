@@ -1,6 +1,9 @@
 {
   "id": "launch/direct/brief-without-final-newline-gets-one-blank-line",
   "title": "a brief that does not end in a newline is followed by exactly one blank line, then the rules, and the file ends with one newline",
+  "tags": [
+    "posix"
+  ],
   "source": [
     "intended: docs/decisions.md, the v0.1.0 cut, rows 1 and 2: the launch appends JITSO's rules text to the end of brief.md"
   ],

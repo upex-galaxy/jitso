@@ -1,6 +1,9 @@
 {
   "id": "launch/mcp-json/build-without-servers-needs-no-repo-config",
   "title": "a launch that names no MCP server after --mcp-exclude reads no .mcp.json, so a missing or broken file does not stop it",
+  "tags": [
+    "posix"
+  ],
   "source": [
     "intended: defect N-26"
   ],

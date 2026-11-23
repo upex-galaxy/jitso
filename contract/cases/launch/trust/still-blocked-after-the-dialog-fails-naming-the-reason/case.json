@@ -1,6 +1,9 @@
 {
   "id": "launch/trust/still-blocked-after-the-dialog-fails-naming-the-reason",
   "title": "when the second wait after the dialog is still blocked the launch exits 3 naming the reason, closes the terminal and registers nothing",
+  "tags": [
+    "posix"
+  ],
   "source": [
     "intended: found in the first real Orca run, Orca answers a trust dialog as a blocked wait"
   ],

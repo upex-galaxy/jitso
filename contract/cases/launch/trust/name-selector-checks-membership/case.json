@@ -1,6 +1,9 @@
 {
   "id": "launch/trust/name-selector-checks-membership",
   "title": "a selector that names no path (a worktree name) still needs Orca's folder to be a worktree of the repo",
+  "tags": [
+    "posix"
+  ],
   "source": [
     "intended: owner decision, defect N-22: the folder Orca reports is checked on every launch"
   ],

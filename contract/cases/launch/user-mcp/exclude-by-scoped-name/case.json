@@ -1,6 +1,9 @@
 {
   "id": "launch/user-mcp/exclude-by-scoped-name",
   "title": "--mcp-exclude takes a user server by its scoped name, as the build writes it",
+  "tags": [
+    "posix"
+  ],
   "source": [
     "intended: JITSO v0.2 plan 2.2 (--mcp-exclude user:engram works on the scoped name)"
   ],

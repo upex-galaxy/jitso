@@ -1,6 +1,9 @@
 {
   "id": "brief/length/headings-and-path-punctuation-are-not-words",
   "title": "headings add no words and a cited path is one word: a brief of 39 words with two cited paths is rejected as 39",
+  "tags": [
+    "posix"
+  ],
   "source": [
     "intended: defect N-27"
   ],

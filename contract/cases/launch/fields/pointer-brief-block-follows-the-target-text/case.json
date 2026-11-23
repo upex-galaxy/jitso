@@ -1,6 +1,9 @@
 {
   "id": "launch/fields/pointer-brief-block-follows-the-target-text",
   "title": "with a pointer brief the ## Fields block comes after the target text and before the JITSO rules",
+  "tags": [
+    "posix"
+  ],
   "source": [
     "intended: docs/decisions.md, Pre-release fixes (the fields reach brief.md)"
   ],

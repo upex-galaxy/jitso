@@ -1,6 +1,9 @@
 {
   "id": "launch/fleet/brief-md-ends-with-the-fleet-rules",
   "title": "brief.md is the card, the brief as written, a blank line and the fleet JITSO rules with the budget sentence",
+  "tags": [
+    "posix"
+  ],
   "source": [
     "intended: docs/decisions.md, the v0.1.0 cut, rows 1 and 2: the launch appends JITSO's rules text to the end of brief.md"
   ],

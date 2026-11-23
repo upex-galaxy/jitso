@@ -1,6 +1,9 @@
 {
   "id": "launch/orca-failure/terminal-create-without-a-handle",
   "title": "a terminal create answer without a handle is an error, exit 3, nothing else called; no launch folder is left behind",
+  "tags": [
+    "posix"
+  ],
   "source": [
     "cli/jitso/orca.ts: createTerminal throws 'orca terminal create returned no handle'",
     "intended: owner decision 2026-11-15: a failed launch leaves no launch folder"

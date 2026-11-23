@@ -1,6 +1,9 @@
 {
   "id": "brief/paths/several-ghosts-listed-once",
   "title": "several missing paths are listed once each, in order of first citation, joined by a comma and a space",
+  "tags": [
+    "posix"
+  ],
   "source": [
     "cli/jitso/brief.test.ts: checkBrief paths (de-duplicated, joined by ', ')"
   ],

@@ -1,6 +1,9 @@
 {
   "id": "launch/user-mcp/http-with-header-reference",
   "title": "an HTTP user server travels with its type, url, headers that hold a reference, and headersHelper",
+  "tags": [
+    "posix"
+  ],
   "source": [
     "intended: JITSO v0.2 plan 2.7 (Bearer ${API_KEY} is a reference; headersHelper is a command, not a value)"
   ],

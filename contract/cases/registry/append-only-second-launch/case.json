@@ -1,6 +1,9 @@
 {
   "id": "registry/append-only-second-launch",
   "title": "a second launch appends a second line; the first line keeps its launch id and fields",
+  "tags": [
+    "posix"
+  ],
   "source": [
     "cli/jitso/log.test.ts: header (append-only)",
     "cli/jitso/log.test.ts: 'writes one JSON line ending in a newline'"

@@ -1,6 +1,9 @@
 {
   "id": "launch/orca-failure/blocked-by-another-reason-names-it",
   "title": "a wait blocked for a reason other than the trust dialog exits 3 with a message that names the reason, not the idle timeout text, and closes the terminal",
+  "tags": [
+    "posix"
+  ],
   "source": [
     "intended: found in the first real Orca run, Orca answers a trust dialog as a blocked wait"
   ],

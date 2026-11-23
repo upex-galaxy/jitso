@@ -1,6 +1,9 @@
 {
   "id": "registry/lock-busy-fails-the-launch",
   "title": "a lock held by someone else that never frees fails the launch with exit 3, writes no event, closes the terminal it opened and leaves no launch folder",
+  "tags": [
+    "posix"
+  ],
   "source": [
     "cli/jitso/log.test.ts: 'gives up with a clear error when a fresh lock never frees'",
     "intended: owner decision 2026-11-15: a failed launch leaves no launch folder"

@@ -1,6 +1,9 @@
 {
   "id": "brief/section-missing/goal",
   "title": "a brief without the \"Goal\" section is rejected naming that section, before any orca call",
+  "tags": [
+    "posix"
+  ],
   "source": [
     "cli/jitso/brief.test.ts: 'fails when the \"Goal\" section is missing'"
   ],

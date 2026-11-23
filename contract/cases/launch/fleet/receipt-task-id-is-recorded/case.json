@@ -1,6 +1,9 @@
 {
   "id": "launch/fleet/receipt-task-id-is-recorded",
   "title": "the launch event records the Task id that the worker-start receipt names (task id)",
+  "tags": [
+    "posix"
+  ],
   "source": [
     "intended: docs/decisions.md, Pre-release fixes (JITSO creates the Orca Task in fleet mode)"
   ],

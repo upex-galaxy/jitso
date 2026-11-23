@@ -1,6 +1,9 @@
 {
   "id": "brief/section-missing/scope",
   "title": "a brief without the \"Scope\" section is rejected naming that section, before any orca call",
+  "tags": [
+    "posix"
+  ],
   "source": [
     "cli/jitso/brief.test.ts: 'fails when the \"Scope\" section is missing'"
   ],

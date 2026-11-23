@@ -1,6 +1,9 @@
 {
   "id": "launch/registry/records-the-brief-language",
   "title": "the launch line records the --brief-language value that let the brief through",
+  "tags": [
+    "posix"
+  ],
   "source": [
     "cli/jitso/launch.test.ts: '--brief-language es accepts it and the log event records the value'"
   ],

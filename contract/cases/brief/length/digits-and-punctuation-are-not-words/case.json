@@ -1,6 +1,9 @@
 {
   "id": "brief/length/digits-and-punctuation-are-not-words",
   "title": "numbers and punctuation add no words: 39 words plus six numbers is still 39",
+  "tags": [
+    "posix"
+  ],
   "source": [
     "cli/jitso/brief.test.ts: words() = text.toLowerCase().match(/\\\\p{L}+/gu)",
     "intended: defect N-27"

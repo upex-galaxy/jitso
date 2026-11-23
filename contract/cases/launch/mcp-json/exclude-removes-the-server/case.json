@@ -1,6 +1,9 @@
 {
   "id": "launch/mcp-json/exclude-removes-the-server",
   "title": "--mcp-exclude dbhub leaves only openapi in mcp.json and records both lists in the registry",
+  "tags": [
+    "posix"
+  ],
   "source": [
     "cli/jitso/launch.test.ts: '--mcp-exclude removes that server from mcp.json and records it in the event'"
   ],

@@ -1,6 +1,9 @@
 {
   "id": "brief/paths/ghost-path-rejected",
   "title": "a cited path that does not exist is rejected and named",
+  "tags": [
+    "posix"
+  ],
   "source": [
     "cli/jitso/brief.test.ts: 'fails on a cited path that does not exist'"
   ],

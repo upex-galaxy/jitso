@@ -1,6 +1,9 @@
 {
   "id": "launch/fleet/worker-start-failure-closes-the-terminal",
   "title": "when orchestration worker-start answers ok:false the launch exits 3, closes the terminal and writes no registry line; no launch folder is left behind",
+  "tags": [
+    "posix"
+  ],
   "source": [
     "cli/jitso/launch.test.ts: 'a failing worker-start exits 3, closes the terminal and writes no launch event'",
     "intended: owner decision 2026-11-15: a failed launch leaves no launch folder"

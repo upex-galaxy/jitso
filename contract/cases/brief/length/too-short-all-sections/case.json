@@ -1,6 +1,9 @@
 {
   "id": "brief/length/too-short-all-sections",
   "title": "a brief with the four sections but only a few words is too short",
+  "tags": [
+    "posix"
+  ],
   "source": [
     "cli/jitso/brief.test.ts: 'fails a brief under 40 words' ('## Goal\\nx\\n## Scope\\nx...')",
     "intended: defect N-27"
