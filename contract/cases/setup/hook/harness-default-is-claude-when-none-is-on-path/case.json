@@ -1,0 +1,53 @@
+{
+  "id": "setup/hook/harness-default-is-claude-when-none-is-on-path",
+  "title": "without --harness and with no harness program on PATH, setup hook guards Claude Code",
+  "source": [
+    "intended: setup hook for every harness (claude, codex, opencode, pi): one plan, one preview, one confirmation and one backup"
+  ],
+  "intent": "INTENDED behavior. When none of claude, codex, opencode and pi is on PATH the default is claude, the behavior setup hook always had.",
+  "claude": {
+    "missing": true
+  },
+  "steps": [
+    {
+      "run": [
+        "setup",
+        "hook",
+        "--yes"
+      ],
+      "expect": {
+        "exit": 0,
+        "stdout": [
+          "created .claude/settings.json",
+          {
+            "not_contains": ".codex"
+          },
+          {
+            "not_contains": ".pi/"
+          },
+          {
+            "regex": "jitso setup hook: done\\n$"
+          }
+        ],
+        "files": [
+          {
+            "path": ".claude/settings.json",
+            "equals": "{\n  \"hooks\": {\n    \"PreToolUse\": [\n      {\n        \"matcher\": \"Bash\",\n        \"hooks\": [\n          {\n            \"type\": \"command\",\n            \"command\": \"jitso hook guard\"\n          }\n        ]\n      },\n      {\n        \"matcher\": \"mcp__.*orca.*__.*\",\n        \"hooks\": [\n          {\n            \"type\": \"command\",\n            \"command\": \"jitso hook guard\"\n          }\n        ]\n      }\n    ],\n    \"SessionEnd\": [\n      {\n        \"hooks\": [\n          {\n            \"type\": \"command\",\n            \"command\": \"jitso hook guard\"\n          }\n        ]\n      }\n    ]\n  }\n}\n"
+          },
+          {
+            "path": ".codex",
+            "exists": false
+          },
+          {
+            "path": ".opencode",
+            "exists": false
+          },
+          {
+            "path": ".pi",
+            "exists": false
+          }
+        ]
+      }
+    }
+  ]
+}

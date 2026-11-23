@@ -1,0 +1,208 @@
+{
+  "id": "setup/hook/harness-all-is-one-plan",
+  "title": "setup hook --harness all covers the four harnesses in one preview, one confirmation, one done line and one backup, and --remove undoes all of it",
+  "source": [
+    "intended: setup hook for every harness (claude, codex, opencode, pi): one plan, one preview, one confirmation and one backup"
+  ],
+  "intent": "INTENDED behavior. `--harness all` is claude, codex, opencode and pi, in that order, in one plan: a dry run previews all four files and writes nothing; without --yes and without a terminal the run is refused once; with --yes the four files are created under one `done` line; a second run is nothing to do and names the four files; `--remove` deletes the files and the folders it leaves empty, saving the four originals in one backup.",
+  "steps": [
+    {
+      "run": [
+        "setup",
+        "hook",
+        "--harness",
+        "all",
+        "--dry-run"
+      ],
+      "expect": {
+        "exit": 0,
+        "stdout": [
+          "+++ b/.claude/settings.json",
+          "+++ b/.codex/hooks.json",
+          "new file .opencode/plugins/jitso-guard.js (",
+          "new file .pi/extensions/jitso-guard.js (",
+          {
+            "regex": "jitso setup hook: dry run, nothing written\\n$"
+          }
+        ],
+        "files": [
+          {
+            "path": ".claude",
+            "exists": false
+          },
+          {
+            "path": ".codex",
+            "exists": false
+          },
+          {
+            "path": ".opencode",
+            "exists": false
+          },
+          {
+            "path": ".pi",
+            "exists": false
+          }
+        ]
+      }
+    },
+    {
+      "run": [
+        "setup",
+        "hook",
+        "--harness",
+        "all"
+      ],
+      "expect": {
+        "exit": 2,
+        "stderr": [
+          "this changes files"
+        ],
+        "files": [
+          {
+            "path": ".claude",
+            "exists": false
+          },
+          {
+            "path": ".codex",
+            "exists": false
+          },
+          {
+            "path": ".opencode",
+            "exists": false
+          },
+          {
+            "path": ".pi",
+            "exists": false
+          }
+        ]
+      }
+    },
+    {
+      "run": [
+        "setup",
+        "hook",
+        "--harness",
+        "all",
+        "--yes"
+      ],
+      "expect": {
+        "exit": 0,
+        "stdout": [
+          "created .claude/settings.json",
+          "created .codex/hooks.json",
+          "created .opencode/plugins/jitso-guard.js",
+          "created .pi/extensions/jitso-guard.js",
+          "note: Codex runs project hooks only in a trusted project, after you approve them in Codex (/hooks)",
+          "note: commit .claude/settings.json, .codex/hooks.json, .opencode/plugins/jitso-guard.js and .pi/extensions/jitso-guard.js so linked worktrees and other clones get the guard",
+          {
+            "not_regex": "jitso setup hook: done[\\s\\S]*jitso setup hook: done"
+          },
+          {
+            "regex": "jitso setup hook: done\\n$"
+          }
+        ],
+        "files": [
+          {
+            "path": ".claude/settings.json"
+          },
+          {
+            "path": ".codex/hooks.json"
+          },
+          {
+            "path": ".opencode/plugins/jitso-guard.js"
+          },
+          {
+            "path": ".pi/extensions/jitso-guard.js"
+          }
+        ]
+      }
+    },
+    {
+      "run": [
+        "setup",
+        "hook",
+        "--harness",
+        "all",
+        "--yes"
+      ],
+      "expect": {
+        "exit": 0,
+        "stdout": [
+          {
+            "equals": "jitso setup hook: nothing to do (the guard is already registered in .claude/settings.json, .codex/hooks.json, .opencode/plugins/jitso-guard.js and .pi/extensions/jitso-guard.js)\n"
+          }
+        ]
+      }
+    },
+    {
+      "run": [
+        "setup",
+        "hook",
+        "--harness",
+        "all",
+        "--remove",
+        "--yes"
+      ],
+      "expect": {
+        "exit": 0,
+        "stdout": [
+          "removed .claude/settings.json",
+          "removed .codex/hooks.json",
+          "removed .opencode/plugins/jitso-guard.js",
+          "removed .pi/extensions/jitso-guard.js",
+          "backed up .claude/settings.json to ",
+          "backed up .codex/hooks.json to ",
+          "backed up .opencode/plugins/jitso-guard.js to ",
+          "backed up .pi/extensions/jitso-guard.js to ",
+          {
+            "regex": "jitso setup hook: done\\n$"
+          }
+        ],
+        "files": [
+          {
+            "path": ".claude",
+            "exists": false
+          },
+          {
+            "path": ".codex",
+            "exists": false
+          },
+          {
+            "path": ".opencode",
+            "exists": false
+          },
+          {
+            "path": ".pi",
+            "exists": false
+          },
+          {
+            "path": ".jitso/backups",
+            "entries": [
+              {
+                "regex": "^\\.gitignore\\n\\d{8}T\\d{6}Z-[0-9a-f]{4}$"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "run": [
+        "setup",
+        "hook",
+        "--harness",
+        "all",
+        "--remove",
+        "--yes"
+      ],
+      "expect": {
+        "exit": 0,
+        "stdout": [
+          {
+            "equals": "jitso setup hook: nothing to do (no jitso hook entries in .claude/settings.json, .codex/hooks.json, .opencode/plugins/jitso-guard.js and .pi/extensions/jitso-guard.js)\n"
+          }
+        ]
+      }
+    }
+  ]
+}

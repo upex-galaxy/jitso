@@ -5,7 +5,7 @@
     "intended: docs/decisions.md D8 (setup hook, defect N-17): jitso registers its guard in the project's .claude/settings.json without clobbering anything"
   ],
   "defect": "N-17",
-  "intent": "INTENDED behavior (defect N-17, setup hook). `jitso setup --help` and `jitso setup hook --help` (and `-h`) print the usage with the flags `--absolute`, `--remove`, `--dry-run` and `--yes` on stdout, empty stderr, exit 0; nothing is written.",
+  "intent": "INTENDED behavior (defect N-17, setup hook). `jitso setup --help` and `jitso setup hook --help` (and `-h`) print the usage with the flags `--harness`, `--absolute`, `--remove`, `--force`, `--dry-run` and `--yes` on stdout, empty stderr, exit 0; nothing is written.",
   "steps": [
     {
       "run": [
@@ -15,10 +15,12 @@
       "expect": {
         "exit": 0,
         "stdout": [
-          "Usage: jitso setup hook [--scope project|user] [--absolute] [--remove] [--dry-run] [--yes]",
+          "Usage: jitso setup hook [--scope project|user] [--harness <list>] [--absolute] [--remove] [--force] [--dry-run] [--yes]",
           "--scope     project (default): this checkout; user: your own sessions, in every folder",
+          "--harness   claude, codex, opencode, pi as a comma list, or all (default: each one on PATH; claude when none is)",
           "--absolute  write this binary's absolute path instead of the word jitso",
-          "--remove    remove the hook entries jitso added"
+          "--remove    remove the hook entries jitso added",
+          "--force     replace or remove a guard file jitso did not generate (a backup is kept)"
         ],
         "stderr": [
           {
@@ -36,7 +38,7 @@
       "expect": {
         "exit": 0,
         "stdout": [
-          "Usage: jitso setup hook [--scope project|user] [--absolute] [--remove] [--dry-run] [--yes]"
+          "Usage: jitso setup hook [--scope project|user] [--harness <list>] [--absolute] [--remove] [--force] [--dry-run] [--yes]"
         ],
         "stderr": [
           {
@@ -54,7 +56,7 @@
       "expect": {
         "exit": 0,
         "stdout": [
-          "Usage: jitso setup hook [--scope project|user] [--absolute] [--remove] [--dry-run] [--yes]",
+          "Usage: jitso setup hook [--scope project|user] [--harness <list>] [--absolute] [--remove] [--force] [--dry-run] [--yes]",
           "--dry-run   show the changes, write nothing",
           "--yes       apply without asking (needed when stdin is not a terminal)"
         ],

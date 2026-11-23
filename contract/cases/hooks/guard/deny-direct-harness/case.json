@@ -1,11 +1,11 @@
 {
   "id": "hooks/guard/deny-direct-harness",
-  "title": "a Bash segment whose program is claude, codex or opencode is denied, through paths, quotes, wrappers, shells and substitutions",
+  "title": "a Bash segment whose program is claude, codex, opencode or pi is denied, through paths, quotes, wrappers, shells and substitutions",
   "source": [
     "intended: docs/decisions.md A3 (defect N-24): the guard denies a harness started directly"
   ],
   "defect": "N-24",
-  "intent": "INTENDED behavior (defect N-24, owner answer A3). A worker starts only through the launcher, so a Bash segment whose program is claude, codex or opencode is denied: by name or path, in any letter case, with NAME=value words, quotes or a backslash in the word, behind a wrapper (env, command, exec, nohup, time, sudo, nice, timeout, xargs), behind a shell -c or eval, and in a command substitution, a backtick or a subshell. Every invocation is denied, claude --version included. The reason tells the session to start workers through the launcher and ends with (denied: <name>).",
+  "intent": "INTENDED behavior (defect N-24, owner answer A3). A worker starts only through the launcher, so a Bash segment whose program is claude, codex, opencode or pi is denied: by name or path, in any letter case, with NAME=value words, quotes or a backslash in the word, behind a wrapper (env, command, exec, nohup, time, sudo, nice, timeout, xargs), behind a shell -c or eval, and in a command substitution, a backtick or a subshell. Every invocation is denied, claude --version included. The reason tells the session to start workers through the launcher and ends with (denied: <name>).",
   "for_each": {
     "var": "command",
     "values": [
@@ -39,7 +39,13 @@
       "echo x | xargs claude",
       "xargs -I{} claude {}",
       "if true; then claude; fi",
-      "git status && codex"
+      "git status && codex",
+      "pi -p hi",
+      "PI",
+      "/opt/bin/pi --version",
+      "env pi",
+      "sh -c 'pi -p x'",
+      "$(pi)"
     ]
   },
   "steps": [
@@ -58,7 +64,7 @@
         "decision": "deny",
         "reason": [
           {
-            "regex": "^JITSO owns worker launch in this project: a harness starts only through (bun run jitso|jitso) launch --build <id> --brief <file> --mode <mode>, never as a program of its own\\. If the word is text \\(a commit message, a heredoc line\\), put the text in a file and pass the file\\. \\(denied: (claude|codex|opencode)\\)$"
+            "regex": "^JITSO owns worker launch in this project: a harness starts only through (bun run jitso|jitso) launch --build <id> --brief <file> --mode <mode>, never as a program of its own\\. If the word is text \\(a commit message, a heredoc line\\), put the text in a file and pass the file\\. \\(denied: (claude|codex|opencode|pi)\\)$"
           }
         ]
       }

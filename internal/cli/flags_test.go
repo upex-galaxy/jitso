@@ -41,6 +41,16 @@ func TestParseFlags(t *testing.T) {
 		{"scope empty", []string{"--scope", ""}, all, Flags{}, nil, "JITSO REJECTED: --scope must be user or project"},
 		{"scope case matters", []string{"--scope", "User"}, all, Flags{}, nil, "JITSO REJECTED: --scope must be user or project"},
 		{"first problem wins", []string{"--bad", "--scope"}, all, Flags{}, nil, `JITSO REJECTED: unknown argument "--bad"`},
+
+		{"harness list in plan order", []string{"--harness", "pi,claude,pi"}, all | FlagHarness, Flags{Harnesses: []string{"claude", "pi"}}, nil, ""},
+		{"harness all", []string{"--harness", "codex,all"}, all | FlagHarness, Flags{Harnesses: []string{"claude", "codex", "opencode", "pi"}}, nil, ""},
+		{"last harness wins", []string{"--harness", "pi", "--harness", "codex"}, all | FlagHarness, Flags{Harnesses: []string{"codex"}}, nil, ""},
+		{"harness not declared", []string{"--harness", "pi"}, all, Flags{}, nil, `JITSO REJECTED: unknown argument "--harness"`},
+		{"harness without a value", []string{"--harness"}, all | FlagHarness, Flags{}, nil, "JITSO REJECTED: --harness needs a value"},
+		{"harness value starts with --", []string{"--harness", "--yes"}, all | FlagHarness, Flags{}, nil, "JITSO REJECTED: --harness needs a value"},
+		{"harness empty", []string{"--harness", ""}, all | FlagHarness, Flags{}, nil, "JITSO REJECTED: --harness must be a comma list of claude, codex, opencode and pi, or all"},
+		{"harness empty name", []string{"--harness", "claude,,pi"}, all | FlagHarness, Flags{}, nil, "JITSO REJECTED: --harness must be a comma list of claude, codex, opencode and pi, or all"},
+		{"harness unknown", []string{"--harness", "Claude"}, all | FlagHarness, Flags{}, nil, "JITSO REJECTED: --harness must be a comma list of claude, codex, opencode and pi, or all"},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -54,7 +64,7 @@ func TestParseFlags(t *testing.T) {
 			if err != nil {
 				t.Fatal(err)
 			}
-			if got != tt.want || !reflect.DeepEqual(rest, tt.rest) {
+			if !reflect.DeepEqual(got, tt.want) || !reflect.DeepEqual(rest, tt.rest) {
 				t.Errorf("got %+v %q, want %+v %q", got, rest, tt.want, tt.rest)
 			}
 		})

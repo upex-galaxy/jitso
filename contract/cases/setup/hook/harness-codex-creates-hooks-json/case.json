@@ -1,0 +1,62 @@
+{
+  "id": "setup/hook/harness-codex-creates-hooks-json",
+  "title": "setup hook --harness codex writes .codex/hooks.json with the same three JITSO groups as Claude Code and notes the Codex trust step",
+  "source": [
+    "intended: setup hook for every harness (claude, codex, opencode, pi): one plan, one preview, one confirmation and one backup"
+  ],
+  "intent": "INTENDED behavior. Codex reads project hooks from `.codex/hooks.json`, in the schema of Claude Code's `hooks` object, and sends Claude-shaped hook input, so `jitso setup hook --harness codex --yes` writes the canonical file Claude Code gets (PreToolUse `Bash` and `mcp__.*orca.*__.*`, SessionEnd, each `jitso hook guard`). Only the chosen harness is touched (no `.claude`). After the write it notes that Codex runs project hooks only in a trusted project, after the owner approves them in Codex; a second run is nothing to do and prints no note.",
+  "steps": [
+    {
+      "run": [
+        "setup",
+        "hook",
+        "--harness",
+        "codex",
+        "--yes"
+      ],
+      "expect": {
+        "exit": 0,
+        "stdout": [
+          "--- /dev/null",
+          "+++ b/.codex/hooks.json",
+          "created .codex/hooks.json",
+          "note: commit .codex/hooks.json so linked worktrees and other clones get the guard",
+          "note: Codex runs project hooks only in a trusted project, after you approve them in Codex (/hooks)",
+          {
+            "regex": "jitso setup hook: done\\n$"
+          }
+        ],
+        "stderr": [
+          "jitso: warning: jitso is not on PATH, so the hook cannot start until it is (the guard then lets every call through)"
+        ],
+        "files": [
+          {
+            "path": ".codex/hooks.json",
+            "equals": "{\n  \"hooks\": {\n    \"PreToolUse\": [\n      {\n        \"matcher\": \"Bash\",\n        \"hooks\": [\n          {\n            \"type\": \"command\",\n            \"command\": \"jitso hook guard\"\n          }\n        ]\n      },\n      {\n        \"matcher\": \"mcp__.*orca.*__.*\",\n        \"hooks\": [\n          {\n            \"type\": \"command\",\n            \"command\": \"jitso hook guard\"\n          }\n        ]\n      }\n    ],\n    \"SessionEnd\": [\n      {\n        \"hooks\": [\n          {\n            \"type\": \"command\",\n            \"command\": \"jitso hook guard\"\n          }\n        ]\n      }\n    ]\n  }\n}\n"
+          },
+          {
+            "path": ".claude",
+            "exists": false
+          }
+        ]
+      }
+    },
+    {
+      "run": [
+        "setup",
+        "hook",
+        "--harness",
+        "codex",
+        "--yes"
+      ],
+      "expect": {
+        "exit": 0,
+        "stdout": [
+          {
+            "equals": "jitso setup hook: nothing to do (the guard is already registered in .codex/hooks.json)\n"
+          }
+        ]
+      }
+    }
+  ]
+}

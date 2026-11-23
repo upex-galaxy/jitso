@@ -41,7 +41,7 @@ func (d Denial) Reason(packageJSON []byte) string {
 	if d.Verb == VerbBuildSave {
 		return SaveReason(LauncherWord(packageJSON), d.SaveID)
 	}
-	if d.Verb == VerbSetup || d.Verb == VerbInstall {
+	if d.Verb == VerbSetup || d.Verb == VerbInstall || d.Verb == VerbInit {
 		return AdoptionReason(d.Verb)
 	}
 	if directHarnesses[d.Verb] {
@@ -121,14 +121,14 @@ func SaveReason(launcherWord, id string) string {
 
 // AdoptionReason is the deny text for `jitso setup` and `jitso install`: it
 // tells the model that only the owner changes the setup, and names the verb
-// that was denied (VerbSetup or VerbInstall).
+// that was denied (VerbSetup, VerbInstall or VerbInit).
 func AdoptionReason(verb string) string {
 	return "JITSO: only the owner changes the JITSO setup; ask the owner to run it in a terminal (denied: " + verb + ")"
 }
 
 // HarnessReason is the deny text for a harness run as a program of its own
 // (defect N-24): it says a harness starts only through the launcher, and how
-// to get past a word that is only text. name is claude, codex or opencode.
+// to get past a word that is only text. name is claude, codex, opencode or pi.
 func HarnessReason(launchWord, name string) string {
 	return "JITSO owns worker launch in this project: a harness starts only through " + launchWord +
 		" --build <id> --brief <file> --mode <mode>, never as a program of its own." +

@@ -1,0 +1,92 @@
+{
+  "id": "setup/hook/harness-codex-remove-round-trip",
+  "title": "setup hook --harness codex keeps the user's own Codex hooks, hides them in the preview, and --remove gives the original bytes back",
+  "source": [
+    "intended: setup hook for every harness (claude, codex, opencode, pi): one plan, one preview, one confirmation and one backup"
+  ],
+  "intent": "INTENDED behavior. `.codex/hooks.json` is edited with the same order-preserving splice as `.claude/settings.json`: the user's groups stay, the preview prints only the lines jitso writes (a token in a user command never shows), and `--remove` takes out exactly what jitso added, byte for byte, a compact file included.",
+  "project": {
+    "files": {
+      ".codex/hooks.json": "{{seed}}"
+    }
+  },
+  "for_each": {
+    "vars": [
+      "seed"
+    ],
+    "rows": [
+      [
+        "{\n  \"hooks\": {\n    \"Stop\": [\n      {\n        \"hooks\": [\n          {\n            \"type\": \"command\",\n            \"command\": \"./notify.sh TOKEN-CANARY-7\"\n          }\n        ]\n      }\n    ]\n  }\n}\n"
+      ],
+      [
+        "{\"hooks\":{\"PreToolUse\":[{\"matcher\":\"Bash\",\"hooks\":[{\"type\":\"command\",\"command\":\"./check.sh TOKEN-CANARY-7\"}]}]}}\n"
+      ]
+    ],
+    "ids": [
+      "user-stop-hook",
+      "compact-user-bash-hook"
+    ]
+  },
+  "steps": [
+    {
+      "run": [
+        "setup",
+        "hook",
+        "--harness",
+        "codex",
+        "--yes"
+      ],
+      "expect": {
+        "exit": 0,
+        "stdout": [
+          "wrote .codex/hooks.json",
+          "backed up .codex/hooks.json to ",
+          {
+            "not_contains": "TOKEN-CANARY-7"
+          }
+        ],
+        "files": [
+          {
+            "path": ".codex/hooks.json",
+            "contains": [
+              "TOKEN-CANARY-7"
+            ],
+            "regex": [
+              "\"matcher\": ?\"mcp__\\.\\*orca\\.\\*__\\.\\*\"",
+              "\"SessionEnd\": ?\\[",
+              "\"command\": ?\"jitso hook guard\""
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "run": [
+        "setup",
+        "hook",
+        "--harness",
+        "codex",
+        "--remove",
+        "--yes"
+      ],
+      "expect": {
+        "exit": 0,
+        "stdout": [
+          "wrote .codex/hooks.json",
+          {
+            "not_contains": "TOKEN-CANARY-7"
+          },
+          {
+            "regex": "jitso setup hook: done\\n$"
+          }
+        ],
+        "files": [
+          {
+            "path": ".codex/hooks.json",
+            "equals": "{{seed}}"
+          }
+        ]
+      }
+    }
+  ]
+}

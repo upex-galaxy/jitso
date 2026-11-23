@@ -6,10 +6,10 @@ import (
 )
 
 // directHarnesses are the programs a session may not run as a program of its
-// own (defect N-24): the three harnesses jitso launches through the launcher.
-// It is not `harnesses`, which also holds pi for `orca terminal create
-// --command` (an owner point, not part of this rule).
-var directHarnesses = map[string]bool{"claude": true, "codex": true, "opencode": true}
+// own (defect N-24): the four harnesses `jitso setup hook` guards (claude,
+// codex, opencode, pi). It holds the same names as `harnesses`, the agents of
+// `orca terminal create --command`, but the two rules are judged apart.
+var directHarnesses = map[string]bool{"claude": true, "codex": true, "opencode": true, "pi": true}
 
 // maxInnerDepth is how many -c, eval or env -S levels HarnessProgram follows.
 const maxInnerDepth = 8
@@ -162,7 +162,7 @@ func skipWrapper(name string, words []string) (next, cmd []string, lookup bool) 
 
 // HarnessProgram is the harness a segment runs as a program of its own: the
 // program of its words, or of an inner -c, eval or env -S command up to
-// maxInnerDepth levels deep, when it is claude, codex or opencode. name is
+// maxInnerDepth levels deep, when it is claude, codex, opencode or pi. name is
 // that program as Name reads it.
 func HarnessProgram(words []string) (name string, ok bool) {
 	return harnessAt(words, 0)

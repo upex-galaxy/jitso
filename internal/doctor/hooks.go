@@ -1,11 +1,14 @@
 package doctor
 
 import (
+	"encoding/json"
 	"errors"
 	"io/fs"
 	"path/filepath"
+	"regexp"
 	"strings"
 
+	"github.com/upex-galaxy/jitso/internal/guardfiles"
 	"github.com/upex-galaxy/jitso/internal/settingsjson"
 )
 
@@ -16,9 +19,16 @@ const settingsRel = ".claude/settings.json"
 const userSettingsShown = "~/" + settingsRel
 
 // hooks reads what .claude/settings.json says about the guard, and whether the
-// command it registers can start. The file is read from the checkout of the
-// working folder (B4-8); settings.local.json is never opened.
+// command it registers can start, then appends a part for each guard file of
+// another harness found in the checkout (harnessParts). The files are read
+// from the checkout of the working folder (B4-8); settings.local.json is
+// never opened.
 func (c *projectChecks) hooks() Line {
+	return withHarnesses(c.claudeHooks(), c.p, projectHarnessFiles(c.root.Checkout), "")
+}
+
+// claudeHooks is the Claude Code part of the hooks line.
+func (c *projectChecks) claudeHooks() Line {
 	data, err := c.p.ReadFile(filepath.Join(c.root.Checkout, filepath.FromSlash(settingsRel)))
 	if errors.Is(err, fs.ErrNotExist) {
 		return c.unregistered()
@@ -80,10 +90,21 @@ func (c *projectChecks) unregistered() Line {
 }
 
 // checkHooksUser reads ~/.claude/settings.json the way hooks reads the
-// project's file. The bool is true when the guard is fully registered there
-// and the file does not switch every hook off. Not registered is ok: the user
-// scope is optional, and the project line carries the warning.
+// project's file, then appends a part for each guard file of another harness
+// found in the home folder. The bool is true when the Claude Code guard is
+// fully registered there and the file does not switch every hook off. Not
+// registered is ok: the user scope is optional, and the project line carries
+// the warning.
 func checkHooksUser(p Ports) (Line, bool) {
+	line, guarded := claudeHooksUser(p)
+	if p.Home == "" {
+		return line, guarded
+	}
+	return withHarnesses(line, p, userHarnessFiles(p), " --scope user"), guarded
+}
+
+// claudeHooksUser is the Claude Code part of the hooks-user line.
+func claudeHooksUser(p Ports) (Line, bool) {
 	const check = "hooks-user"
 	if p.Home == "" {
 		return Line{OK, check, "HOME is not set, so there is no user settings file"}, false
@@ -123,6 +144,138 @@ func checkHooksUser(p Ports) (Line, bool) {
 		return Line{Warn, check, detail + "; disableAllHooks is true in " + userSettingsShown + ", so Claude Code runs no hook"}, false
 	}
 	return Line{OK, check, detail}, true
+}
+
+// harnessFile is where a harness other than Claude Code keeps the guard
+// `jitso setup hook --harness` writes.
+type harnessFile struct {
+	harness string
+	path    string
+	shown   string
+	// settings is true for a hooks object read like Claude Code's settings
+	// (Codex), false for a generated JavaScript file (OpenCode, Pi).
+	settings bool
+	// kind names a generated file: guard plugin, guard extension.
+	kind string
+}
+
+// projectHarnessFiles are the guard files of Codex, OpenCode and Pi in the checkout.
+func projectHarnessFiles(checkout string) []harnessFile {
+	at := func(rel string) string { return filepath.Join(checkout, filepath.FromSlash(rel)) }
+	return []harnessFile{
+		{"codex", at(".codex/hooks.json"), ".codex/hooks.json", true, ""},
+		{"opencode", at(".opencode/plugins/jitso-guard.js"), ".opencode/plugins/jitso-guard.js", false, "guard plugin"},
+		{"pi", at(".pi/extensions/jitso-guard.js"), ".pi/extensions/jitso-guard.js", false, "guard extension"},
+	}
+}
+
+// userHarnessFiles are the guard files of Codex ($CODEX_HOME, default
+// ~/.codex), OpenCode and Pi in the home folder.
+func userHarnessFiles(p Ports) []harnessFile {
+	at := func(rel string) string { return filepath.Join(p.Home, filepath.FromSlash(rel)) }
+	codex, codexShown := at(".codex/hooks.json"), "~/.codex/hooks.json"
+	if v := p.Getenv("CODEX_HOME"); v != "" {
+		codex, codexShown = filepath.Join(v, "hooks.json"), filepath.Join(v, "hooks.json")
+		if rel, err := filepath.Rel(p.Home, codex); err == nil && !strings.HasPrefix(rel, "..") {
+			codexShown = "~/" + filepath.ToSlash(rel)
+		}
+	}
+	return []harnessFile{
+		{"codex", codex, codexShown, true, ""},
+		{"opencode", at(".config/opencode/plugins/jitso-guard.js"), "~/.config/opencode/plugins/jitso-guard.js", false, "guard plugin"},
+		{"pi", at(".pi/agent/extensions/jitso-guard.js"), "~/.pi/agent/extensions/jitso-guard.js", false, "guard extension"},
+	}
+}
+
+// withHarnesses appends to line one part per harness file found, each
+// `<harness>: <detail>`, and raises the line's status to warn when a part
+// warns. A harness file never fails the line. scopeFlag completes the
+// `run jitso setup hook --harness <h>` advice (" --scope user" or "").
+func withHarnesses(line Line, p Ports, files []harnessFile, scopeFlag string) Line {
+	for _, f := range files {
+		data, err := p.ReadFile(f.path)
+		if errors.Is(err, fs.ErrNotExist) {
+			continue
+		}
+		var detail string
+		var warn bool
+		switch {
+		case err != nil:
+			detail, warn = f.shown+" cannot be read: "+message(err), true
+		case f.settings:
+			detail, warn = settingsPart(p, f, data, scopeFlag)
+		default:
+			detail, warn = generatedPart(p, f, data)
+		}
+		line.Detail += "; " + f.harness + ": " + detail
+		if warn && line.Status == OK {
+			line.Status = Warn
+		}
+	}
+	return line
+}
+
+// settingsPart is the part of a hooks object read like Claude Code's
+// settings: registered on the three slots, partly registered, holding no
+// jitso entry, or a command that cannot start.
+func settingsPart(p Ports, f harnessFile, data []byte, scopeFlag string) (string, bool) {
+	if data == nil {
+		data = []byte{}
+	}
+	st := settingsjson.State(data)
+	if st.Err != nil {
+		return problemText(st.Err, f.shown), true
+	}
+	if st.None() {
+		return "no jitso hook entries in " + f.shown, false
+	}
+	var broken []string
+	for _, cmd := range st.Commands {
+		if why := resolveHook(p, cmd); why != "" {
+			broken = append(broken, why)
+		}
+	}
+	if len(broken) > 0 {
+		return strings.Join(broken, ", "), true
+	}
+	if !st.Registered() {
+		return partial(st, f.shown) + ": run jitso setup hook --harness " + f.harness + scopeFlag, true
+	}
+	return "jitso hook guard is registered on PreToolUse (Bash, orca MCP) and SessionEnd in " + f.shown, false
+}
+
+// generatedPart is the part of a generated guard file: the version of its
+// marker and whether the command it runs can start, or a warning that jitso
+// did not write it.
+func generatedPart(p Ports, f harnessFile, data []byte) (string, bool) {
+	v, ok := guardfiles.MarkerVersion(data)
+	if !ok {
+		return f.shown + " was not written by jitso setup hook (no generated marker)", true
+	}
+	detail := f.kind + " " + f.shown + " generated by jitso " + v
+	if prog, ok := guardProgram(data); ok {
+		if why := resolveProgram(p, prog); why != "" {
+			return detail + ": " + why, true
+		}
+	}
+	return detail, false
+}
+
+// commandLine is the line of a generated file that names the program it runs.
+var commandLine = regexp.MustCompile(`(?m)^const command = ("(?:[^"\\\n]|\\.)*");\r?$`)
+
+// guardProgram is the program a generated guard file runs; ok is false when
+// the file names none jitso can read.
+func guardProgram(data []byte) (string, bool) {
+	m := commandLine.FindSubmatch(data)
+	if m == nil {
+		return "", false
+	}
+	var prog string
+	if json.Unmarshal(m[1], &prog) != nil {
+		return "", false
+	}
+	return prog, true
 }
 
 // partial says which of the three slots the guard is on.
@@ -168,7 +321,11 @@ func (c *projectChecks) untracked(rel string) bool {
 func (c *projectChecks) resolveHook(command string) string { return resolveHook(c.p, command) }
 
 func resolveHook(p Ports, command string) string {
-	word := firstWord(command)
+	return resolveProgram(p, firstWord(command))
+}
+
+// resolveProgram says why the program word cannot start, "" when it can.
+func resolveProgram(p Ports, word string) string {
 	if word == "" {
 		return "the hook command is empty"
 	}

@@ -1,0 +1,63 @@
+{
+  "id": "setup/hook/harness-default-follows-path",
+  "title": "without --harness, setup hook guards every harness whose program is on PATH",
+  "source": [
+    "intended: setup hook for every harness (claude, codex, opencode, pi): one plan, one preview, one confirmation and one backup"
+  ],
+  "intent": "INTENDED behavior. The default set is each of claude, codex, opencode and pi whose program is on PATH. Here the fake claude and a codex and a pi in the sandbox home are on PATH, opencode is not: the plan writes the Claude Code, Codex and Pi files and leaves OpenCode alone.",
+  "home": {
+    "files": {
+      "bin/codex": {
+        "content": "#!/bin/sh\nexit 0\n",
+        "mode": "0755"
+      },
+      "bin/pi": {
+        "content": "#!/bin/sh\nexit 0\n",
+        "mode": "0755"
+      }
+    }
+  },
+  "steps": [
+    {
+      "run": [
+        "setup",
+        "hook",
+        "--yes"
+      ],
+      "env": {
+        "PATH": "{{HOME}}/bin:{{BIN}}:/usr/bin:/bin"
+      },
+      "expect": {
+        "exit": 0,
+        "stdout": [
+          "created .claude/settings.json",
+          "created .codex/hooks.json",
+          "created .pi/extensions/jitso-guard.js",
+          {
+            "not_contains": ".opencode"
+          },
+          {
+            "regex": "jitso setup hook: done\\n$"
+          }
+        ],
+        "files": [
+          {
+            "path": ".claude/settings.json",
+            "equals": "{\n  \"hooks\": {\n    \"PreToolUse\": [\n      {\n        \"matcher\": \"Bash\",\n        \"hooks\": [\n          {\n            \"type\": \"command\",\n            \"command\": \"jitso hook guard\"\n          }\n        ]\n      },\n      {\n        \"matcher\": \"mcp__.*orca.*__.*\",\n        \"hooks\": [\n          {\n            \"type\": \"command\",\n            \"command\": \"jitso hook guard\"\n          }\n        ]\n      }\n    ],\n    \"SessionEnd\": [\n      {\n        \"hooks\": [\n          {\n            \"type\": \"command\",\n            \"command\": \"jitso hook guard\"\n          }\n        ]\n      }\n    ]\n  }\n}\n"
+          },
+          {
+            "path": ".codex/hooks.json",
+            "equals": "{\n  \"hooks\": {\n    \"PreToolUse\": [\n      {\n        \"matcher\": \"Bash\",\n        \"hooks\": [\n          {\n            \"type\": \"command\",\n            \"command\": \"jitso hook guard\"\n          }\n        ]\n      },\n      {\n        \"matcher\": \"mcp__.*orca.*__.*\",\n        \"hooks\": [\n          {\n            \"type\": \"command\",\n            \"command\": \"jitso hook guard\"\n          }\n        ]\n      }\n    ],\n    \"SessionEnd\": [\n      {\n        \"hooks\": [\n          {\n            \"type\": \"command\",\n            \"command\": \"jitso hook guard\"\n          }\n        ]\n      }\n    ]\n  }\n}\n"
+          },
+          {
+            "path": ".pi/extensions/jitso-guard.js"
+          },
+          {
+            "path": ".opencode",
+            "exists": false
+          }
+        ]
+      }
+    }
+  ]
+}

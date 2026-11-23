@@ -1,11 +1,11 @@
 {
   "id": "hooks/guard/deny-adoption-commands",
-  "title": "the guard denies a Bash segment that runs jitso setup or jitso install however the shell reaches it: bare, bun run, the own path, after NAME=value words, after a separator, inside sh -c; the reason says only the owner changes the JITSO setup",
+  "title": "the guard denies a Bash segment that runs jitso setup, jitso install or jitso init however the shell reaches it: bare, bun run, the own path, after NAME=value words, after a separator, inside sh -c; the reason says only the owner changes the JITSO setup",
   "source": [
     "intended: docs/decisions.md D8 and B4-12 (the agent boundary of the adoption commands is the launch guard)"
   ],
   "defect": "N-19",
-  "intent": "INTENDED behavior (defect N-19, adoption guard; docs/decisions.md D8, B4-12). `jitso setup` and `jitso install` change the project's hooks, instruction files and skill files, so only the owner runs them: an agent can type `--yes`, and `setup hook --remove` would switch the guard off while the session runs. The launch guard denies every Bash segment that runs either command, in each form it already recognizes the launcher in: the word `jitso`, `bun run jitso`, this binary's own path, with `NAME=value` words before it, after `&&`, `;` or a newline, and inside a quoted `sh -c`. The reason is `JITSO: only the owner changes the JITSO setup; ask the owner to run it in a terminal (denied: jitso <verb>)` with the verb `setup` or `install`.",
+  "intent": "INTENDED behavior (defect N-19, adoption guard; docs/decisions.md D8, B4-12). `jitso setup` and `jitso install` change the project's hooks, instruction files and skill files, so only the owner runs them: an agent can type `--yes`, and `setup hook --remove` would switch the guard off while the session runs. The launch guard denies every Bash segment that runs either command, in each form it already recognizes the launcher in: the word `jitso`, `bun run jitso`, this binary's own path, with `NAME=value` words before it, after `&&`, `;` or a newline, and inside a quoted `sh -c`. The reason is `JITSO: only the owner changes the JITSO setup; ask the owner to run it in a terminal (denied: jitso <verb>)` with the verb `setup` or `install`. `jitso init` runs all three adoption steps at once, so it is denied the same way with the verb `init`.",
   "for_each": {
     "var": "command",
     "values": [
@@ -15,7 +15,10 @@
       "FOO=1 jitso setup instructions --yes",
       "cd x && jitso install skill --scope project --yes",
       "sh -c 'jitso setup hook --remove'",
-      "sh -c 'jitso setup hook --yes' --dry-run"
+      "sh -c 'jitso setup hook --yes' --dry-run",
+      "jitso init --yes",
+      "bun run jitso init --remove --yes",
+      "cd x && jitso init --project-only --yes"
     ]
   },
   "steps": [
@@ -34,7 +37,7 @@
         "decision": "deny",
         "reason": [
           {
-            "regex": "^JITSO: only the owner changes the JITSO setup; ask the owner to run it in a terminal \\(denied: jitso (setup|install)\\)$"
+            "regex": "^JITSO: only the owner changes the JITSO setup; ask the owner to run it in a terminal \\(denied: jitso (setup|install|init)\\)$"
           }
         ]
       }

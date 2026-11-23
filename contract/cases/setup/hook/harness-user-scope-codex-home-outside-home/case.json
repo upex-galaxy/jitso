@@ -1,0 +1,39 @@
+{
+  "id": "setup/hook/harness-user-scope-codex-home-outside-home",
+  "title": "setup hook --scope user --harness codex refuses a CODEX_HOME outside the home folder",
+  "source": [
+    "intended: setup hook for every harness (claude, codex, opencode, pi): one plan, one preview, one confirmation and one backup"
+  ],
+  "intent": "INTENDED behavior. User scope writes and backs up only under HOME, so a CODEX_HOME outside it is an environment error (exit 3) that names it, and nothing is written.",
+  "steps": [
+    {
+      "run": [
+        "setup",
+        "hook",
+        "--scope",
+        "user",
+        "--harness",
+        "codex",
+        "--yes"
+      ],
+      "cwd": "{{HOME}}",
+      "env": {
+        "CODEX_HOME": "{{PROJECT}}/cx"
+      },
+      "expect": {
+        "exit": 3,
+        "stderr": [
+          "CODEX_HOME",
+          "is not inside HOME",
+          "nothing written"
+        ],
+        "files": [
+          {
+            "path": "{{PROJECT}}/cx",
+            "exists": false
+          }
+        ]
+      }
+    }
+  ]
+}

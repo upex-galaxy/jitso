@@ -11,6 +11,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/upex-galaxy/jitso/internal/fail"
+	"github.com/upex-galaxy/jitso/internal/guardfiles"
 	"github.com/upex-galaxy/jitso/internal/settingsjson"
 )
 
@@ -151,9 +153,12 @@ type readerFunc func(p []byte) (int, error)
 
 func (f readerFunc) Read(p []byte) (int, error) { return f(p) }
 
-// setupPatch replaces the PATH lookup and the git-tracked question for one test.
+// setupPatch replaces the PATH lookups and the git-tracked question for one
+// test. Of the harness programs only claude is on PATH, so the default
+// --harness list is claude.
 func setupPatch(t *testing.T, onPath, tracked bool) {
 	t.Helper()
+	setupHarnessesOnPath(t, harnessClaude)
 	oldLook, oldTracked := setupLookPath, setupGitTracked
 	t.Cleanup(func() { setupLookPath, setupGitTracked = oldLook, oldTracked })
 	setupLookPath = func(file string) (string, error) {
@@ -163,6 +168,22 @@ func setupPatch(t *testing.T, onPath, tracked bool) {
 		return "", errors.New("not found")
 	}
 	setupGitTracked = func(string, string) bool { return tracked }
+}
+
+// setupHarnessesOnPath makes the given harness programs the ones on PATH for
+// one test.
+func setupHarnessesOnPath(t *testing.T, names ...string) {
+	t.Helper()
+	old := setupFindHarness
+	t.Cleanup(func() { setupFindHarness = old })
+	setupFindHarness = func(file string) (string, error) {
+		for _, n := range names {
+			if n == file {
+				return "/usr/local/bin/" + file, nil
+			}
+		}
+		return "", errors.New("not found")
+	}
 }
 
 func setupWrite(t *testing.T, root, rel, text string) {
@@ -183,7 +204,8 @@ func setupRead(root, rel string) (string, bool) {
 
 func TestSetupUsageAnswers(t *testing.T) {
 	root := setupRepo(t)
-	const head = "Usage: jitso setup hook [--scope project|user] [--absolute] [--remove] [--dry-run] [--yes]"
+	setupPatch(t, true, true)
+	const head = "Usage: jitso setup hook [--scope project|user] [--harness <list>] [--absolute] [--remove] [--force] [--dry-run] [--yes]"
 	noValue := "JITSO REJECTED: --scope needs a value\n"
 	badValue := "JITSO REJECTED: --scope must be user or project\n"
 	tests := []struct {
@@ -204,7 +226,11 @@ func TestSetupUsageAnswers(t *testing.T) {
 		{"scope equals", []string{"setup", "hook", "--scope=user"}, 2, "", "JITSO REJECTED: unknown argument \"--scope=user\"\n"},
 		{"a stray word", []string{"setup", "hook", "extra"}, 2, "", "JITSO REJECTED: unknown argument \"extra\"\n"},
 		{"an unknown flag", []string{"setup", "hook", "--bogus"}, 2, "", "JITSO REJECTED: unknown argument \"--bogus\"\n"},
-		{"a flag of another command", []string{"setup", "hook", "--force"}, 2, "", "JITSO REJECTED: unknown argument \"--force\"\n"},
+		{"a flag of another command", []string{"setup", "hook", "--global"}, 2, "", "JITSO REJECTED: unknown argument \"--global\"\n"},
+		{"harness without a value", []string{"setup", "hook", "--harness"}, 2, "", "JITSO REJECTED: --harness needs a value\n"},
+		{"harness with a flag for a value", []string{"setup", "hook", "--harness", "--yes"}, 2, "", "JITSO REJECTED: --harness needs a value\n"},
+		{"harness with an unknown name", []string{"setup", "hook", "--harness", "claude,cursor"}, 2, "", "JITSO REJECTED: --harness must be a comma list of claude, codex, opencode and pi, or all\n"},
+		{"harness with an empty name", []string{"setup", "hook", "--harness", "claude,"}, 2, "", "JITSO REJECTED: --harness must be a comma list of claude, codex, opencode and pi, or all\n"},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -572,5 +598,139 @@ func TestSetupHookUserScopeNeedsHome(t *testing.T) {
 	code, _, errOut := setupRunHome(t, root, "", "", false, "setup", "hook", "--scope", "user", "--yes")
 	if code != 3 || errOut != "jitso: HOME is not set\n" {
 		t.Errorf("exit %d, stderr %q", code, errOut)
+	}
+}
+
+func TestSetupHookDefaultHarnessesFollowPath(t *testing.T) {
+	setupPatch(t, true, true)
+	setupHarnessesOnPath(t, harnessCodex, harnessPi)
+	root := setupRepo(t)
+	code, out, errOut := setupRun(t, root, "", false, "setup", "hook", "--yes")
+	if code != 0 || errOut != "" {
+		t.Fatalf("exit %d\nstdout %q\nstderr %q", code, out, errOut)
+	}
+	for _, rel := range []string{".codex/hooks.json", ".pi/extensions/jitso-guard.js"} {
+		if _, ok := setupRead(root, rel); !ok {
+			t.Errorf("%s was not written", rel)
+		}
+	}
+	for _, rel := range []string{".claude", ".opencode"} {
+		if _, err := os.Stat(filepath.Join(root, rel)); err == nil {
+			t.Errorf("%s was written for a harness that is not on PATH", rel)
+		}
+	}
+	if !strings.Contains(out, setupCodexNote+"\n") {
+		t.Errorf("no Codex note:\n%s", out)
+	}
+
+	setupHarnessesOnPath(t)
+	if got := defaultHarnesses(); len(got) != 1 || got[0] != harnessClaude {
+		t.Errorf("no harness on PATH: %v", got)
+	}
+}
+
+func TestHookPlanCoversEveryHarnessInOnePlan(t *testing.T) {
+	setupPatch(t, true, false)
+	root := setupRepo(t)
+	ctx := &Context{Sys: System{Getwd: func() (string, error) { return root, nil }, Executable: func() (string, error) { return setupBinary(t), nil }}}
+	hs, err := HookPlan(ctx, "", hookHarnesses, false, false, false)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if hs.Scope != "project" || hs.Root != root || hs.BackupsDir != filepath.Join(root, ".jitso", "backups") || !hs.BareCommand || hs.Refusal != "" {
+		t.Errorf("got %+v", hs)
+	}
+	var shown []string
+	for _, c := range hs.Plan.Effective() {
+		shown = append(shown, hs.Display(c.Path))
+	}
+	want := []string{".claude/settings.json", ".codex/hooks.json", ".opencode/plugins/jitso-guard.js", ".pi/extensions/jitso-guard.js"}
+	if strings.Join(shown, " ") != strings.Join(want, " ") {
+		t.Errorf("plan paths %v", shown)
+	}
+	if len(hs.Plan.Notes) != 2 || hs.Plan.Notes[1] != setupCodexNote {
+		t.Errorf("notes %q", hs.Plan.Notes)
+	}
+
+	// The order of the names does not change the plan order; an unknown name is refused.
+	again, err := HookPlan(ctx, "project", []string{harnessPi, harnessClaude}, false, false, false)
+	if err != nil || len(again.Plan.Changes) != 2 || again.Display(again.Plan.Changes[0].Path) != ".claude/settings.json" {
+		t.Errorf("pi,claude: %v %+v", err, again.Plan)
+	}
+	if _, err := HookPlan(ctx, "project", []string{"cursor"}, false, false, false); fail.Code(err) != 2 {
+		t.Errorf("an unknown harness: %v", err)
+	}
+
+	// --absolute writes the real path of the binary into the generated files.
+	hs, err = HookPlan(ctx, "project", []string{harnessOpenCode}, true, false, false)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if hs.BareCommand || !strings.Contains(string(hs.Plan.Changes[0].New), "\nconst command = \""+setupBinary(t)+"\";\n") {
+		t.Errorf("absolute plan:\n%s", hs.Plan.Changes[0].New)
+	}
+}
+
+func TestHookPlanUserScopeCodexHome(t *testing.T) {
+	setupPatch(t, true, false)
+	home, err := filepath.EvalSymlinks(t.TempDir())
+	if err != nil {
+		t.Fatal(err)
+	}
+	env := map[string]string{"HOME": home}
+	ctx := &Context{Sys: System{LookupEnv: func(k string) (string, bool) { v, ok := env[k]; return v, ok }}}
+
+	hs, err := HookPlan(ctx, "user", []string{harnessCodex}, false, false, false)
+	if err != nil || len(hs.Plan.Changes) != 1 || hs.Plan.Changes[0].Path != filepath.Join(home, ".codex", "hooks.json") || len(hs.Plan.Notes) != 0 {
+		t.Fatalf("default CODEX_HOME: %v %+v", err, hs.Plan)
+	}
+	env["CODEX_HOME"] = filepath.Join(home, "cx")
+	hs, err = HookPlan(ctx, "user", []string{harnessCodex}, false, false, false)
+	if err != nil || hs.Plan.Changes[0].Path != filepath.Join(home, "cx", "hooks.json") || hs.Display(hs.Plan.Changes[0].Path) != "~/cx/hooks.json" {
+		t.Fatalf("CODEX_HOME in HOME: %v %+v", err, hs.Plan)
+	}
+	env["CODEX_HOME"] = t.TempDir()
+	if _, err = HookPlan(ctx, "user", []string{harnessCodex}, false, false, false); err == nil || !strings.Contains(err.Error(), "is not inside HOME") {
+		t.Fatalf("CODEX_HOME outside HOME: %v", err)
+	}
+	// CODEX_HOME matters only when codex is chosen.
+	if _, err = HookPlan(ctx, "user", []string{harnessPi}, false, false, false); err != nil {
+		t.Fatal(err)
+	}
+}
+
+func TestSetupHookGeneratedFileRules(t *testing.T) {
+	setupPatch(t, true, true)
+	root := setupRepo(t)
+	const rel = ".opencode/plugins/jitso-guard.js"
+
+	// A hand-written file is refused, with the preview of what --force does.
+	setupWrite(t, root, rel, "// mine\n")
+	code, out, errOut := setupRun(t, root, "", false, "setup", "hook", "--harness", "opencode", "--yes")
+	if code != 2 || !strings.Contains(out, "-// mine\n") || !strings.Contains(errOut, "run again with --force to replace it") {
+		t.Fatalf("exit %d\nstdout %q\nstderr %q", code, out, errOut)
+	}
+	// --force backs it up and replaces it.
+	code, out, errOut = setupRun(t, root, "", false, "setup", "hook", "--harness", "opencode", "--force", "--yes")
+	if code != 0 || !strings.Contains(out, "backed up "+rel+" to ") {
+		t.Fatalf("force: exit %d\nstdout %q\nstderr %q", code, out, errOut)
+	}
+	got, _ := setupRead(root, rel)
+	if _, ok := guardfiles.MarkerVersion([]byte(got)); !ok {
+		t.Fatalf("no marker:\n%s", got)
+	}
+	// An older generated file is upgraded without --force.
+	setupWrite(t, root, rel, "// generated by jitso v0.0.1: jitso setup hook; do not edit\nold\n")
+	code, out, errOut = setupRun(t, root, "", false, "setup", "hook", "--harness", "opencode", "--yes")
+	if code != 0 || !strings.Contains(out, "wrote "+rel+"\n") {
+		t.Fatalf("upgrade: exit %d\nstdout %q\nstderr %q", code, out, errOut)
+	}
+	// --remove deletes it and the folders it leaves empty.
+	code, out, errOut = setupRun(t, root, "", false, "setup", "hook", "--harness", "opencode", "--remove", "--yes")
+	if code != 0 || !strings.Contains(out, "removed "+rel+"\n") {
+		t.Fatalf("remove: exit %d\nstdout %q\nstderr %q", code, out, errOut)
+	}
+	if _, err := os.Stat(filepath.Join(root, ".opencode")); err == nil {
+		t.Error(".opencode is left behind")
 	}
 }

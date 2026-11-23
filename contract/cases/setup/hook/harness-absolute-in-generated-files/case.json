@@ -1,0 +1,78 @@
+{
+  "id": "setup/hook/harness-absolute-in-generated-files",
+  "title": "setup hook --absolute writes this binary's absolute path into the generated OpenCode and Pi files",
+  "source": [
+    "intended: setup hook for every harness (claude, codex, opencode, pi): one plan, one preview, one confirmation and one backup"
+  ],
+  "intent": "INTENDED behavior. With --absolute the generated files start `<real path of this binary>` instead of the word jitso, written as a quoted JavaScript string, and no PATH warning is printed; a plain run then rewrites them back to the word jitso.",
+  "steps": [
+    {
+      "run": [
+        "setup",
+        "hook",
+        "--harness",
+        "opencode,pi",
+        "--absolute",
+        "--yes"
+      ],
+      "expect": {
+        "exit": 0,
+        "stderr": [
+          {
+            "not_contains": "not on PATH"
+          }
+        ],
+        "files": [
+          {
+            "path": ".opencode/plugins/jitso-guard.js",
+            "regex": [
+              "\nconst command = \"/[^\"\\n]+\";\n"
+            ],
+            "not_contains": [
+              "const command = \"jitso\";"
+            ]
+          },
+          {
+            "path": ".pi/extensions/jitso-guard.js",
+            "regex": [
+              "\nconst command = \"/[^\"\\n]+\";\n"
+            ],
+            "not_contains": [
+              "const command = \"jitso\";"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "run": [
+        "setup",
+        "hook",
+        "--harness",
+        "opencode,pi",
+        "--yes"
+      ],
+      "expect": {
+        "exit": 0,
+        "stdout": [
+          "wrote .opencode/plugins/jitso-guard.js",
+          "wrote .pi/extensions/jitso-guard.js"
+        ],
+        "files": [
+          {
+            "path": ".opencode/plugins/jitso-guard.js",
+            "contains": [
+              "const command = \"jitso\";"
+            ]
+          },
+          {
+            "path": ".pi/extensions/jitso-guard.js",
+            "contains": [
+              "const command = \"jitso\";"
+            ]
+          }
+        ]
+      }
+    }
+  ]
+}

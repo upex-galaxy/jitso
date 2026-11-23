@@ -11,7 +11,8 @@
       "jitso version",
       "jitso --version",
       "jitso setup hook --dry-run",
-      "jitso install skill --scope user --dry-run"
+      "jitso install skill --scope user --dry-run",
+      "jitso init --dry-run"
     ]
   },
   "steps": [

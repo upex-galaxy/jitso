@@ -33,7 +33,7 @@ var (
 	// adoption is the words `jitso setup` or `jitso install` as a word of their
 	// own, found like buildSave. The verb is a whole word: `jitso setup-x` is
 	// another command.
-	adoption = regexp.MustCompile(`(?:^|[ /])jitso (setup|install)(?: |$)`)
+	adoption = regexp.MustCompile(`(?:^|[ /])jitso (setup|install|init)(?: |$)`)
 	// buildIDWord is a word that can be a build id.
 	buildIDWord = regexp.MustCompile(`^[a-z][a-z0-9-]{0,63}$`)
 )
@@ -47,6 +47,7 @@ const VerbBuildSave = "jitso build save"
 const (
 	VerbSetup   = "jitso setup"
 	VerbInstall = "jitso install"
+	VerbInit    = "jitso init"
 )
 
 // dryRunFlag is the word that makes an adoption command only read.
@@ -122,12 +123,12 @@ func (l Launcher) BuildSave(segment string) (id string, ok bool) {
 	return "", false
 }
 
-// Adoption reports whether segment runs `jitso setup` or `jitso install`, the
+// Adoption reports whether segment runs `jitso setup`, `jitso install` or `jitso init`, the
 // commands only the owner runs: they change the project's hooks, instruction
 // files and skill files. It finds them like BuildSave (the bare word,
 // `bun run jitso`, a path ending in jitso, this executable's path, after
 // NAME=value words, inside `sh -c '...'`) and judges the text, not the program.
-// verb is VerbSetup or VerbInstall. A segment that runs jitso directly and
+// verb is VerbSetup, VerbInstall or VerbInit (init runs all of them at once). A segment that runs jitso directly and
 // holds the standalone word --dry-run after the command is a dry run, which
 // writes nothing, so it is not an adoption; behind `sh -c` or another
 // wrapper the flag proves nothing and the segment is still denied.
@@ -140,7 +141,7 @@ func (l Launcher) Adoption(segment string) (verb string, ok bool) {
 	} else {
 		words := strings.Split(segment, " ")
 		for i, w := range words {
-			if l.IsOwn != nil && i+1 < len(words) && (words[i+1] == "setup" || words[i+1] == "install") && l.IsOwn(w) {
+			if l.IsOwn != nil && i+1 < len(words) && (words[i+1] == "setup" || words[i+1] == "install" || words[i+1] == "init") && l.IsOwn(w) {
 				verb, rest = "jitso "+words[i+1], strings.Join(words[i+2:], " ")
 				direct = directPrefix(strings.Join(words[:i], " "), false)
 				break
@@ -257,7 +258,7 @@ type Denial struct {
 }
 
 // BashDenial is the denial of the first command of command that launches an
-// agent outside jitso, runs a harness (claude, codex or opencode) as a program
+// agent outside jitso, runs a harness (claude, codex, opencode or pi) as a program
 // of its own, runs `jitso build save`, `jitso setup` or `jitso install`
 // (other than a dry run); the zero Denial when none does. The line is read
 // with the shell lexer (lex): when every command of it is a data command

@@ -129,6 +129,9 @@ var harnessMatrixTests = []struct {
 	{"claude -p hi", "claude"},
 	{"codex exec x", "codex"},
 	{"opencode run x", "opencode"},
+	{"pi -p hi", "pi"},
+	{"env pi", "pi"},
+	{"PI", "pi"},
 	{"./claude", "claude"},
 	{"/usr/local/bin/claude --version", "claude"},
 	{"../x/claude", "claude"},
@@ -195,6 +198,8 @@ var harnessMatrixTests = []struct {
 	{"sh /p/.jitso/launches/L20261116T000000-abcd/run.sh", ""},
 	{"'/p/.jitso/launches/L20261116T000000-abcd/run.sh'", ""},
 	{"claude-code-notes --help", ""},
+	{"which pi", ""},
+	{"pip install x", ""},
 	{"jitso launch --build claude --brief b.md --mode direct", ""},
 	{"git status", ""},
 	// text in a commit message or a heredoc body is data (J41); the old splitter denied these
