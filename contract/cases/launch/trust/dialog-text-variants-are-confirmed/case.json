@@ -1,6 +1,9 @@
 {
   "id": "launch/trust/dialog-text-variants-are-confirmed",
   "title": "the dialog is detected with the word trust in any case, anywhere on the screen",
+  "tags": [
+    "posix"
+  ],
   "source": [
     "cli/jitso/adapters/claude.ts: detect = /trust/i.test(screen) && screen.includes('No, exit')"
   ],

@@ -1,6 +1,9 @@
 {
   "id": "launch/registry/launch-event-fields",
   "title": "the launch line of a direct haiku-explorer launch carries id, lineage, mode, build, harness, model, effort, bypass, mcp, cwd, orca ids, trust state and budget",
+  "tags": [
+    "posix"
+  ],
   "source": [
     "cli/jitso/launch.test.ts: 'writes the launch event, with the trust state, and prints the card'"
   ],

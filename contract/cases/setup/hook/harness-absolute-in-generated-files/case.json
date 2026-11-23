@@ -1,6 +1,9 @@
 {
   "id": "setup/hook/harness-absolute-in-generated-files",
   "title": "setup hook --absolute writes this binary's absolute path into the generated OpenCode and Pi files",
+  "tags": [
+    "posix"
+  ],
   "source": [
     "intended: setup hook for every harness (claude, codex, opencode, pi): one plan, one preview, one confirmation and one backup"
   ],

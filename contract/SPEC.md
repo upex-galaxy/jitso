@@ -42,7 +42,7 @@ contract/
 |---|---|
 | `id`, `title`, `steps` | required; `title` is not empty, `steps` has at least one step |
 | `source` | where the behavior was harvested from (file and test name in the original TypeScript repo) or `intended: <note>` for behavior that does not exist yet |
-| `tags` | lowercase words (`[a-z0-9-]`). `posix` = needs `/bin/sh` (cases that execute `run.sh`); the runner skips tagged cases with `--skip-tag` |
+| `tags` | lowercase words (`[a-z0-9-]`). `posix` = POSIX only: needs `/bin/sh` (cases that execute `run.sh`), or writes POSIX path syntax into an expected value or a `PATH` (a `:` separator, a leading `/`), or goes through `jitso launch`, which does not run on Windows; the runner skips tagged cases with `--skip-tag` |
 | `defect`, `intent` | optional history: a defect id of the port (`docs/decisions.md`, "Defect ids (history)") and prose saying why the case exists. Nothing requires them and no status depends on them |
 | `project.base` | fixture folder name, default `default`. The runner copies it to a fresh temp dir, runs `git init -q` there, and that dir is the cwd of every step unless a step says otherwise |
 | `project.files`, `home.files` | overlay applied after the base and after `git init`, see section 3 |

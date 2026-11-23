@@ -1,6 +1,9 @@
 {
   "id": "close/tokens-from-the-transcript",
   "title": "close sums the last usage of each message in the launch's transcript and its subagent transcripts into the end event and prints one tokens line",
+  "tags": [
+    "posix"
+  ],
   "intent": "the footer never holds a cost under --setting-sources project, so the end event carries the token counts read from the transcript, deduplicated by message id",
   "home": {
     "files": {

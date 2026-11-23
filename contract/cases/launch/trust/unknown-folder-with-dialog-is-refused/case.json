@@ -1,6 +1,9 @@
 {
   "id": "launch/trust/unknown-folder-with-dialog-is-refused",
   "title": "when Orca reports no folder for the terminal and the dialog shows, the launch is refused as 'untrusted folder (unknown)'",
+  "tags": [
+    "posix"
+  ],
   "source": [
     "cli/jitso/trust.test.ts: 'no folder at all is never trusted'",
     "intended: owner decision, defect N-22: the folder Orca reports is checked on every launch"

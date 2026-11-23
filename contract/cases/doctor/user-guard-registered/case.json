@@ -1,6 +1,9 @@
 {
   "id": "doctor/user-guard-registered",
   "title": "after setup hook --scope user, doctor reports hooks-user ok and does not warn about the project's missing registration",
+  "tags": [
+    "posix"
+  ],
   "source": [
     "intended: plan 2.4 doctor half (owner question 8): doctor reports the user-scope guard"
   ],

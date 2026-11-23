@@ -1,6 +1,9 @@
 {
   "id": "registry/launch-event-fields",
   "title": "a real direct launch writes one launch event with the schema v2 core and the launcher fields",
+  "tags": [
+    "posix"
+  ],
   "source": [
     "cli/jitso/log.test.ts: 'accepts one valid event of each kind'",
     "cli/jitso/launch.test.ts: real launch logs the launch event"

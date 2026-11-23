@@ -1,6 +1,9 @@
 {
   "id": "launch/fleet/worktree-is-forwarded-to-both-calls",
   "title": "--worktree is passed to terminal create (before --title) and to orchestration worker-start (last)",
+  "tags": [
+    "posix"
+  ],
   "source": [
     "cli/jitso/launch.test.ts: 'adopts the terminal with worker-start --terminal --worktree'",
     "cli/jitso/orca.test.ts: 'createTerminal passes worktree, title and command'"

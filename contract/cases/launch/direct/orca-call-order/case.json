@@ -1,6 +1,9 @@
 {
   "id": "launch/direct/orca-call-order",
   "title": "a direct launch calls terminal create, terminal wait and one terminal read, in that order, and no orchestration verb",
+  "tags": [
+    "posix"
+  ],
   "source": [
     "cli/jitso/launch.test.ts: 'calls terminal create, wait and the trust read, never worker-start, and writes the artifacts'",
     "cli/jitso/launch.test.ts: '--command is the quoted absolute path of run.sh and the title carries the mark'",

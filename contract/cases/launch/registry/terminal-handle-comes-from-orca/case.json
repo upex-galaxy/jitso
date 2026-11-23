@@ -1,6 +1,9 @@
 {
   "id": "launch/registry/terminal-handle-comes-from-orca",
   "title": "the handle Orca returns is used for every later call and recorded in the registry",
+  "tags": [
+    "posix"
+  ],
   "source": [
     "cli/jitso/orca.test.ts: createTerminal returns the handle"
   ],

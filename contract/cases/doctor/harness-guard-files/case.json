@@ -1,6 +1,9 @@
 {
   "id": "doctor/harness-guard-files",
   "title": "doctor reports each Codex, OpenCode and Pi guard file it finds, in the project and in the home folder",
+  "tags": [
+    "posix"
+  ],
   "source": [
     "intended: setup hook for every harness; doctor reports each harness file found (ok or warn)"
   ],

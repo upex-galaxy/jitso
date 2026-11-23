@@ -1,6 +1,9 @@
 {
   "id": "close/unreadable-transcript-warns",
   "title": "a transcript path that cannot be read gives a null tokens field and one stderr warning, never a failure",
+  "tags": [
+    "posix"
+  ],
   "home": {
     "files": {
       "t/s.jsonl/keep": "x"

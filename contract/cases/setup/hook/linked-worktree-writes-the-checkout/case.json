@@ -1,6 +1,9 @@
 {
   "id": "setup/hook/linked-worktree-writes-the-checkout",
   "title": "from a linked worktree the settings file goes to that worktree, while the backups go to the primary checkout's .jitso",
+  "tags": [
+    "posix"
+  ],
   "source": [
     "intended: docs/decisions.md D8 (setup hook, defect N-17): jitso registers its guard in the project's .claude/settings.json without clobbering anything"
   ],

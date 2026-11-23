@@ -1,6 +1,9 @@
 {
   "id": "doctor/registry-names-v1-lines",
   "title": "doctor counts the registry lines written at schema v1 apart from the other invalid lines, so an upgrade shows what the new log ignores",
+  "tags": [
+    "posix"
+  ],
   "source": [
     "intended: docs/decisions.md registry v2 decision (defect N-31)"
   ],

@@ -1,6 +1,9 @@
 {
   "id": "setup/hook/absolute-flag",
   "title": "setup hook --absolute writes the quoted real path of the binary instead of the word jitso, and is idempotent",
+  "tags": [
+    "posix"
+  ],
   "source": [
     "intended: docs/decisions.md D8 (setup hook, defect N-17): jitso registers its guard in the project's .claude/settings.json without clobbering anything"
   ],

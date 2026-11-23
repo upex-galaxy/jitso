@@ -1,6 +1,9 @@
 {
   "id": "close/normal-close",
   "title": "closing a launch saves the screen footer, writes an end event with source jitso_close, closes that one terminal and checks the list",
+  "tags": [
+    "posix"
+  ],
   "source": [
     "cli/jitso/close.test.ts: 'reads the screen into footer.txt, writes the end event, closes that one terminal'",
     "cli/jitso/close.test.ts: 'never uses the worktree-wide close'"

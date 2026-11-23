@@ -160,9 +160,9 @@ func MCPConfig(names []string, repoServers map[string]any, userServers map[strin
 // NewSessionID is a random version 4 UUID read from rand.
 func (Adapter) NewSessionID(rand io.Reader) (string, error) { return harness.NewUUID(rand) }
 
-var projectDirChars = regexp.MustCompile(`[/.]`)
+var projectDirChars = regexp.MustCompile(`[^A-Za-z0-9]`)
 
-// TranscriptPath is <home>/.claude/projects/<cwd with / and . as ->/<session>.jsonl.
+// TranscriptPath is <home>/.claude/projects/<cwd with every character outside A-Za-z0-9 as -/<session>.jsonl.
 func (Adapter) TranscriptPath(cwd, session, home string) string {
 	return filepath.Join(home, ".claude", "projects", projectDirChars.ReplaceAllString(cwd, "-"), session+".jsonl")
 }

@@ -1,6 +1,9 @@
 {
   "id": "launch/trust/dialog-in-a-repo-worktree-is-confirmed",
   "title": "a trust dialog in the project folder gets arrow down then Enter, in that order, and the registry says handled",
+  "tags": [
+    "posix"
+  ],
   "source": [
     "cli/jitso/trust.test.ts: 'a screen with the dialog gets arrow down then Enter, in that order, and reports handled'",
     "cli/jitso/launch.test.ts: 'dialog in a worktree of the primary repo: arrow down then Enter, event says handled'"

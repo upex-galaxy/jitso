@@ -1,6 +1,9 @@
 {
   "id": "doctor/user-hook-partial-warns",
   "title": "doctor warns when the user file has the guard on some slots only",
+  "tags": [
+    "posix"
+  ],
   "source": [
     "intended: plan 2.4 doctor half (owner question 8): doctor reports the user-scope guard"
   ],

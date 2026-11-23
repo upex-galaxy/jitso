@@ -1,6 +1,9 @@
 {
   "id": "doctor/partial-hook-registration-warns",
   "title": "a settings file with the guard on only some of the slots is a warning that names the missing slot, not a failure",
+  "tags": [
+    "posix"
+  ],
   "source": [
     "intended: the doctor spec (defect N-20)"
   ],

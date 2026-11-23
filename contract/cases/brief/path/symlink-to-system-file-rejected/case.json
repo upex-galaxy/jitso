@@ -1,6 +1,9 @@
 {
   "id": "brief/path/symlink-to-system-file-rejected",
   "title": "a symlink inside .jitso/briefs that points to a system file is rejected",
+  "tags": [
+    "posix"
+  ],
   "source": [
     "cli/jitso/brief.test.ts: 'rejects a symlink that points to /etc/passwd'",
     "cli/jitso/escape.test.ts: 'a symlink that leaves the brief folder never becomes an argument'"

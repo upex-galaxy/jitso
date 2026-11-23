@@ -1,6 +1,9 @@
 {
   "id": "launch/trust/blocked-wait-answers-the-dialog-and-waits-again",
   "title": "when Orca answers the idle wait as blocked by the trust dialog (exit 1, ok true), the launch confirms the dialog in a repo worktree, waits once more and succeeds with trust_dialog handled",
+  "tags": [
+    "posix"
+  ],
   "source": [
     "intended: found in the first real Orca run, Orca answers a trust dialog as a blocked wait"
   ],

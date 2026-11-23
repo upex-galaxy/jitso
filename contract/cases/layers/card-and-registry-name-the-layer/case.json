@@ -1,6 +1,9 @@
 {
   "id": "layers/card-and-registry-name-the-layer",
   "title": "a launch of a saved build prints no layer suffix on the card, and the registry line records the layer repo, the real file and the SHA-256 of its bytes",
+  "tags": [
+    "posix"
+  ],
   "source": [
     "intended: builds come from the repo's jitso/builds folder and from drafts (docs/decisions.md, The v0.1.0 cut)"
   ],

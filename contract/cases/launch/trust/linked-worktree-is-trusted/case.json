@@ -1,6 +1,9 @@
 {
   "id": "launch/trust/linked-worktree-is-trusted",
   "title": "a dialog in a linked git worktree of the project gets the confirm keys",
+  "tags": [
+    "posix"
+  ],
   "source": [
     "cli/jitso/trust.test.ts: 'the primary checkout and a linked worktree are trusted'"
   ],

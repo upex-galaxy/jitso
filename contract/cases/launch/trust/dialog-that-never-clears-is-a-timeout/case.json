@@ -1,6 +1,9 @@
 {
   "id": "launch/trust/dialog-that-never-clears-is-a-timeout",
   "title": "a dialog that stays on screen is recorded as timeout after about ten seconds, the launch still succeeds and a warning says the trust dialog did not clear",
+  "tags": [
+    "posix"
+  ],
   "source": [
     "cli/jitso/trust.test.ts: 'a dialog that never goes away leaves \"timeout\" after 10 s and does not block'",
     "cli/jitso/launch.test.ts: 'a dialog that never clears records timeout and still launches'",

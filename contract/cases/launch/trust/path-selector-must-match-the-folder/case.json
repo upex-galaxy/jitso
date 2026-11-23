@@ -1,6 +1,9 @@
 {
   "id": "launch/trust/path-selector-must-match-the-folder",
   "title": "Orca putting the terminal in another worktree than the one a path: selector names is refused",
+  "tags": [
+    "posix"
+  ],
   "source": [
     "intended: owner decision, defect N-22: the folder Orca reports is checked on every launch"
   ],

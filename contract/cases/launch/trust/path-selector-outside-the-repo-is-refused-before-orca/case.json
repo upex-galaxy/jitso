@@ -1,6 +1,9 @@
 {
   "id": "launch/trust/path-selector-outside-the-repo-is-refused-before-orca",
   "title": "a path: selector naming a folder that is not a worktree of the repo is rejected before any Orca call",
+  "tags": [
+    "posix"
+  ],
   "source": [
     "intended: owner decision, defect N-22: the folder Orca reports is checked on every launch"
   ],

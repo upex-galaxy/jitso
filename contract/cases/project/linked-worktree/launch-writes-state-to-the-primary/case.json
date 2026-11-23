@@ -1,6 +1,9 @@
 {
   "id": "project/linked-worktree/launch-writes-state-to-the-primary",
   "title": "a real launch run from inside a linked worktree writes the launch folder and the registry to the PRIMARY checkout, never to the worktree",
+  "tags": [
+    "posix"
+  ],
   "source": [
     "cli/jitso/root.test.ts: 'is the .jitso folder of the primary checkout, also from a worktree'"
   ],

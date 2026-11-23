@@ -1,6 +1,9 @@
 {
   "id": "launch/trust/path-selector-matching-the-folder-launches",
   "title": "a path: selector of a linked worktree that Orca honours launches: the folder check does not over-refuse",
+  "tags": [
+    "posix"
+  ],
   "source": [
     "intended: N-22 over-refusal guard: a path selector that Orca honours is not refused"
   ],

@@ -1,6 +1,9 @@
 {
   "id": "launch/fleet/adopts-the-terminal-with-worker-start",
   "title": "a fleet launch calls orchestration worker-start with --run, the launch folder's brief.md as --spec-file and --terminal right after the trust read",
+  "tags": [
+    "posix"
+  ],
   "source": [
     "cli/jitso/launch.test.ts: 'adopts the terminal with worker-start --terminal --worktree and carries no prompt in argv'",
     "cli/jitso/launch.test.ts: 'a conductor launched in fleet mode never gets a raw orca launch verb'"

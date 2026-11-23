@@ -1,6 +1,9 @@
 {
   "id": "launch/direct/terminal-title-and-command-shape",
   "title": "the terminal title is '[jitso:<id>] <build>' and --command is the quoted absolute path of run.sh",
+  "tags": [
+    "posix"
+  ],
   "source": [
     "cli/jitso/launch.test.ts: '--command is the quoted absolute path of run.sh and the title carries the mark'"
   ],

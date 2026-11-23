@@ -1,6 +1,9 @@
 {
   "id": "close/non-claude-launch-counts-no-tokens",
   "title": "close counts tokens only for a Claude Code launch: a launch of another harness ends with tokens null, no tokens line and no warning, even when its transcript_path names a readable file",
+  "tags": [
+    "posix"
+  ],
   "source": [
     "intended: adapters lane (token counting reads the Claude Code transcript format only)"
   ],

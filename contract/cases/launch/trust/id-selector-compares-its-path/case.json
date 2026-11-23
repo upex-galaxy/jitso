@@ -1,6 +1,9 @@
 {
   "id": "launch/trust/id-selector-compares-its-path",
   "title": "an id:<id>::<path> selector names a path like path: does, and the folder Orca reports must equal it",
+  "tags": [
+    "posix"
+  ],
   "source": [
     "intended: owner decision, defect N-22: the folder Orca reports is checked on every launch"
   ],

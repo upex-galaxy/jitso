@@ -1,6 +1,9 @@
 {
   "id": "launch/trust/folders-next-to-the-repo-are-not-trusted",
   "title": "a prefix lookalike of the project folder or a subfolder of it is not a trusted folder: only the exact worktree folders are",
+  "tags": [
+    "posix"
+  ],
   "source": [
     "cli/jitso/trust.test.ts: 'any other folder is not trusted, nor is a subfolder prefix lookalike'",
     "intended: owner decision, defect N-22: the folder Orca reports is checked on every launch"

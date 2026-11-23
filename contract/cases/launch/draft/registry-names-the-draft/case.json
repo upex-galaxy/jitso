@@ -1,6 +1,9 @@
 {
   "id": "launch/draft/registry-names-the-draft",
   "title": "a real launch of a draft records build_layer draft, the real file and the SHA-256 of the draft's bytes, and card.txt carries (draft)",
+  "tags": [
+    "posix"
+  ],
   "source": [
     "intended: docs/decisions.md D7 and the drafts rows of the other decisions (a just-in-time build is a draft kept in .jitso/drafts/ and validated by code)"
   ],

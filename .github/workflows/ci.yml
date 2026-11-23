@@ -37,11 +37,6 @@ jobs:
     name: verify (${{ matrix.os }})
     runs-on: ${{ matrix.os }}
     timeout-minutes: 30
-    # Windows is informational until its unit tests pass there (POSIX paths in
-    # tests, CRLF checkouts of embedded files, file modes): a red Windows job
-    # is reported but does not fail the run or block a release. Remove this
-    # line when the Windows job is green.
-    continue-on-error: ${{ matrix.os == 'windows-2025' }}
     permissions:
       contents: read
     strategy:
@@ -80,18 +75,19 @@ jobs:
 
       - name: Build the runner and the binary
         run: |
-          (cd contract/runner && go build -o "$RUNNER_TEMP/jitso-contract" .)
-          go build -o "$RUNNER_TEMP/jitso" ./cmd/jitso
+          exe=""
+          if [ "$RUNNER_OS" = Windows ]; then exe=.exe; fi
+          (cd contract/runner && go build -o "$RUNNER_TEMP/jitso-contract$exe" .)
+          go build -o "$RUNNER_TEMP/jitso$exe" ./cmd/jitso
 
-      # Not on Windows: the runner's sandbox is POSIX-only (it builds PATH with
-      # ':' and installs the fake orca and claude without .exe), so the suite
-      # cannot run there until the runner is ported. Windows is verified by the
-      # steps above: tests, vet and both builds.
+      # On Windows the cases tagged posix are skipped (they need /bin/sh, run
+      # jitso launch, or write POSIX paths: contract/SPEC.md, section 2).
       - name: Contract suite
-        if: runner.os != 'Windows'
         working-directory: contract
         run: |
-          "$RUNNER_TEMP/jitso-contract" --impl bin --bin "$RUNNER_TEMP/jitso" --jobs 4
+          exe=""; skip=""
+          if [ "$RUNNER_OS" = Windows ]; then exe=.exe; skip="--skip-tag posix"; fi
+          "$RUNNER_TEMP/jitso-contract$exe" --impl bin --bin "$RUNNER_TEMP/jitso$exe" --jobs 4 $skip
 
       - name: Cross-build every release target
         if: runner.os == 'Linux'

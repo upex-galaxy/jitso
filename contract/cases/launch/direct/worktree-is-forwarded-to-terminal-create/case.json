@@ -1,6 +1,9 @@
 {
   "id": "launch/direct/worktree-is-forwarded-to-terminal-create",
   "title": "--worktree in direct mode goes to terminal create only, and the registry records it",
+  "tags": [
+    "posix"
+  ],
   "source": [
     "cli/jitso/orca.test.ts: 'createTerminal passes worktree, title and command'"
   ],

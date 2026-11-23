@@ -1,6 +1,9 @@
 {
   "id": "launch/fleet/worker-start-spec-file-is-the-launch-brief-md",
   "title": "the spec file of worker-start is the brief.md of the launch folder, which holds the card, the brief and the JITSO rules, and worker-start gets no --task",
+  "tags": [
+    "posix"
+  ],
   "source": [
     "intended: docs/decisions.md, Pre-release fixes (JITSO creates the Orca Task in fleet mode)"
   ],
