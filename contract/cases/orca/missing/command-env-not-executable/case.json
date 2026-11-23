@@ -1,0 +1,153 @@
+{
+  "id": "orca/missing/command-env-not-executable",
+  "title": "when ORCA_CLI_COMMAND names no executable, launch, close and reap exit 3 with one line naming the variable and its value, call nothing and write nothing",
+  "source": [
+    "intended: a missing Orca is named with an install hint before anything runs"
+  ],
+  "intent": "Same check as orca/missing/not-on-path, with the program named by ORCA_CLI_COMMAND: the line names the variable and its value instead of the install link.",
+  "project": {
+    "files": {
+      ".jitso/briefs/brief.md": {
+        "from": "brief.md"
+      },
+      ".jitso/launches.jsonl": "{\"v\":2,\"event\":\"launch\",\"id\":\"L20261113T142233-a3f9\",\"parent\":null,\"root\":\"L20261113T142233-a3f9\",\"depth\":0,\"ts\":\"2026-11-13T14:22:33.000Z\",\"mode\":\"direct\",\"build\":\"haiku-explorer\",\"orca\":{\"run\":null,\"task\":null,\"terminal\":\"term_fake\",\"title\":\"t [jitso:L20261113T142233-a3f9]\"}}\n"
+    }
+  },
+  "steps": [
+    {
+      "run": [
+        "launch",
+        "--build",
+        "haiku-explorer",
+        "--brief",
+        "{{PROJECT}}/.jitso/briefs/brief.md",
+        "--mode",
+        "direct"
+      ],
+      "env": {
+        "ORCA_CLI_COMMAND": "{{BIN}}/no-orca"
+      },
+      "expect": {
+        "exit": 3,
+        "stdout": [
+          {
+            "empty": true
+          }
+        ],
+        "stderr": [
+          {
+            "equals": "jitso: ORCA_CLI_COMMAND is set to {{BIN}}/no-orca, which is not an executable on PATH. Point it at the orca program or unset it, then run jitso doctor.\n"
+          }
+        ],
+        "orca_calls": {
+          "empty": true
+        },
+        "registry": {
+          "count": 1
+        },
+        "files": [
+          {
+            "path": ".jitso/launches",
+            "exists": false
+          }
+        ]
+      }
+    },
+    {
+      "run": [
+        "close",
+        "L20261113T142233-a3f9"
+      ],
+      "env": {
+        "ORCA_CLI_COMMAND": "{{BIN}}/no-orca"
+      },
+      "expect": {
+        "exit": 3,
+        "stdout": [
+          {
+            "empty": true
+          }
+        ],
+        "stderr": [
+          {
+            "equals": "jitso: ORCA_CLI_COMMAND is set to {{BIN}}/no-orca, which is not an executable on PATH. Point it at the orca program or unset it, then run jitso doctor.\n"
+          }
+        ],
+        "orca_calls": {
+          "empty": true
+        },
+        "registry": {
+          "count": 1
+        },
+        "files": [
+          {
+            "path": ".jitso/launches",
+            "exists": false
+          }
+        ]
+      }
+    },
+    {
+      "run": [
+        "reap"
+      ],
+      "env": {
+        "ORCA_CLI_COMMAND": "{{BIN}}/no-orca"
+      },
+      "expect": {
+        "exit": 3,
+        "stdout": [
+          {
+            "empty": true
+          }
+        ],
+        "stderr": [
+          {
+            "equals": "jitso: ORCA_CLI_COMMAND is set to {{BIN}}/no-orca, which is not an executable on PATH. Point it at the orca program or unset it, then run jitso doctor.\n"
+          }
+        ],
+        "orca_calls": {
+          "empty": true
+        },
+        "registry": {
+          "count": 1
+        },
+        "files": [
+          {
+            "path": ".jitso/launches",
+            "exists": false
+          }
+        ]
+      }
+    },
+    {
+      "run": [
+        "launch",
+        "--build",
+        "haiku-explorer",
+        "--brief",
+        "{{PROJECT}}/.jitso/briefs/brief.md",
+        "--mode",
+        "direct",
+        "--dry-run"
+      ],
+      "env": {
+        "ORCA_CLI_COMMAND": "{{BIN}}/no-orca"
+      },
+      "expect": {
+        "exit": 0,
+        "stdout": [
+          {
+            "contains": "haiku-explorer"
+          }
+        ],
+        "orca_calls": {
+          "empty": true
+        },
+        "registry": {
+          "count": 1
+        }
+      }
+    }
+  ]
+}

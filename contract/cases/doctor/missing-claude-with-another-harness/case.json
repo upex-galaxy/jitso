@@ -1,0 +1,22 @@
+{
+  "id": "doctor/missing-claude-with-another-harness",
+  "title": "no claude on PATH is a warning, not a failure, when codex, opencode or pi is there",
+  "source": [
+    "intended: harness adapters for codex, opencode and pi (v0.3); found by review of INSTALL.md, whose doctor step failed on a machine without Claude Code"
+  ],
+  "intent": "INTENDED behavior. A build may name `harness: codex`, `opencode` or `pi`, so a machine without Claude Code can launch workers. With no `claude` on PATH and another harness there, doctor prints `warn claude: claude is not on PATH; builds with harness: claude cannot launch here (found: <names>)` and does not fail on it. With no harness at all it still fails (doctor/missing-claude).",
+  "claude": { "missing": true },
+  "home": { "files": { "harness/codex": { "symlink": "{{BIN}}/opencode-missing" }, "harness/pi": { "content": "#!/bin/sh\nexit 0\n", "mode": "0755" } } },
+  "steps": [
+    {
+      "run": ["doctor"],
+      "env": { "PATH": "{{BIN}}:{{HOME}}/harness:/usr/bin:/bin" },
+      "expect": {
+        "stdout": [
+          { "regex": "(?m)^warn claude: claude is not on PATH; builds with harness: claude cannot launch here \\(found: pi\\)$" },
+          { "not_regex": "(?m)^fail claude" }
+        ]
+      }
+    }
+  ]
+}

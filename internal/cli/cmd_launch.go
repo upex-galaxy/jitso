@@ -9,8 +9,9 @@ import (
 )
 
 // cmd_launch.go is `jitso launch`. The arguments are parsed and checked first
-// (pure, no project needed), then the project and its catalog are resolved
-// (exit 3 outside a git checkout), and only then is the brief read. `launch
+// (pure, no project needed), then a real launch checks that orca is on PATH
+// (exit 3), then the project and its catalog are resolved (exit 3 outside a
+// git checkout), and only then is the brief read. `launch
 // --help` or `-h` as the first word prints the usage and needs none of that.
 func init() {
 	Register(Command{
@@ -50,6 +51,12 @@ func runLaunch(ctx *Context, argv []string) error {
 	}
 	if err := args.Check(); err != nil {
 		return err
+	}
+	// A dry run calls no Orca, so only a real launch needs it.
+	if !args.DryRun {
+		if err := ctx.OrcaInstalled(); err != nil {
+			return err
+		}
 	}
 	root, err := ctx.Project()
 	if err != nil {

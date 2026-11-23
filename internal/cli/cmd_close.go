@@ -17,7 +17,8 @@ func lifecycleNow(ctx *Context) func() time.Time {
 
 // close saves the footer of a launch's terminal, ends the launch in the
 // registry and closes that one terminal (internal/closeout). The arguments are
-// checked before the project is resolved, so a bad id is exit 2 anywhere.
+// checked before the project is resolved, so a bad id is exit 2 anywhere; then
+// orca must be on PATH (exit 3) before anything is read or written.
 func init() {
 	Register(Command{
 		Name:    "close",
@@ -26,6 +27,9 @@ func init() {
 		Run: func(ctx *Context, args []string) error {
 			id, err := closeout.ParseArgs(args)
 			if err != nil {
+				return err
+			}
+			if err := ctx.OrcaInstalled(); err != nil {
 				return err
 			}
 			root, err := ctx.Project()

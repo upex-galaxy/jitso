@@ -3,7 +3,8 @@ package cli
 import "github.com/upex-galaxy/jitso/internal/reap"
 
 // reap ends the launches whose terminal is gone and lists the workers no
-// launch explains (internal/reap); the list is output only.
+// launch explains (internal/reap); the list is output only. orca must be on
+// PATH (exit 3) before the registry is read.
 func init() {
 	Register(Command{
 		Name:    "reap",
@@ -12,6 +13,9 @@ func init() {
 		Run: func(ctx *Context, args []string) error {
 			runs, err := reap.ParseArgs(args)
 			if err != nil {
+				return err
+			}
+			if err := ctx.OrcaInstalled(); err != nil {
 				return err
 			}
 			if _, err := ctx.Project(); err != nil {

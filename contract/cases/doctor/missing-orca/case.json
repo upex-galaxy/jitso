@@ -1,0 +1,52 @@
+{
+  "id": "doctor/missing-orca",
+  "title": "no orca on PATH fails the orca check with the install link; an ORCA_CLI_COMMAND that names no executable is named",
+  "source": [
+    "intended: the doctor orca failure carries the install hint"
+  ],
+  "tags": [
+    "posix"
+  ],
+  "intent": "With no orca on PATH (minimal system PATH, ORCA_CLI_COMMAND empty) doctor prints `fail orca: orca is not on PATH; install Orca from https://github.com/stablyai/orca and open it once` and exits 3. With ORCA_CLI_COMMAND set to a missing program it names the variable and the value. Doctor never runs orca.",
+  "steps": [
+    {
+      "run": [
+        "doctor"
+      ],
+      "env": {
+        "ORCA_CLI_COMMAND": "",
+        "PATH": "/usr/bin:/bin"
+      },
+      "expect": {
+        "exit": 3,
+        "stdout": [
+          {
+            "regex": "(?m)^fail orca: orca is not on PATH; install Orca from https://github\\.com/stablyai/orca and open it once$"
+          }
+        ],
+        "orca_calls": {
+          "empty": true
+        }
+      }
+    },
+    {
+      "run": [
+        "doctor"
+      ],
+      "env": {
+        "ORCA_CLI_COMMAND": "{{BIN}}/no-orca"
+      },
+      "expect": {
+        "exit": 3,
+        "stdout": [
+          {
+            "regex": "(?m)^fail orca: ORCA_CLI_COMMAND is set to \\Q{{BIN}}\\E/no-orca, which is not an executable on PATH$"
+          }
+        ],
+        "orca_calls": {
+          "empty": true
+        }
+      }
+    }
+  ]
+}

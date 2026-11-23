@@ -68,3 +68,22 @@ func ExecRunner(program string) Runner {
 		return res
 	}
 }
+
+// InstallURL is where Orca is installed from.
+const InstallURL = "https://github.com/stablyai/orca"
+
+// Installed checks that the orca program can start, without running it: the
+// program of Command(lookupEnv) is looked up with lookPath (exec.LookPath).
+// When it is not found the error is one line saying what is missing and what
+// to do: the install link for the default program, the variable and its value
+// when CommandEnv names the program.
+func Installed(lookupEnv func(string) (string, bool), lookPath func(string) (string, error)) error {
+	program := Command(lookupEnv)
+	if _, err := lookPath(program); err == nil {
+		return nil
+	}
+	if program != DefaultCommand {
+		return &Error{Message: CommandEnv + " is set to " + program + ", which is not an executable on PATH. Point it at the orca program or unset it, then run jitso doctor."}
+	}
+	return &Error{Message: "Orca is not installed (orca is not on PATH). jitso opens and tracks each worker in an Orca terminal: install Orca from " + InstallURL + ", open it once, then run jitso doctor."}
+}

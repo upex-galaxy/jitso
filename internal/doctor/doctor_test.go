@@ -140,7 +140,7 @@ func TestCheckOrca(t *testing.T) {
 	boom := func(string, string, ...string) Result { t.Error("orca must not run"); return Result{} }
 
 	want(t, checkOrca(Ports{LookPath: lookup(map[string]string{"orca": "/usr/bin/orca"}), Getenv: env(nil), Run: boom}), OK, "orca", "/usr/bin/orca")
-	want(t, checkOrca(Ports{LookPath: lookup(nil), Getenv: env(nil), Run: boom}), Fail, "orca", "orca is not on PATH")
+	want(t, checkOrca(Ports{LookPath: lookup(nil), Getenv: env(nil), Run: boom}), Fail, "orca", "orca is not on PATH; install Orca from https://github.com/stablyai/orca and open it once")
 	set := env(map[string]string{"ORCA_CLI_COMMAND": "/x/fake-orca"})
 	got := checkOrca(Ports{LookPath: lookup(map[string]string{"/x/fake-orca": "/x/fake-orca"}), Getenv: set, Run: boom})
 	want(t, got, OK, "orca", "/x/fake-orca (from ORCA_CLI_COMMAND)")
@@ -159,6 +159,17 @@ func TestCheckClaude(t *testing.T) {
 	want(t, checkClaude(run(Result{Exit: 1, Stdout: "x"})), OK, "claude", "version unknown")
 	want(t, checkClaude(run(Result{Err: errors.New("it did not answer within 5s")})), OK, "claude", "version unknown")
 	want(t, checkClaude(Ports{LookPath: lookup(nil)}), Fail, "claude", "claude is not on PATH")
+	only := func(names ...string) func(string) (string, error) {
+		return func(n string) (string, error) {
+			for _, x := range names {
+				if x == n {
+					return "/bin/" + n, nil
+				}
+			}
+			return "", errors.New("not found")
+		}
+	}
+	want(t, checkClaude(Ports{LookPath: only("opencode", "pi")}), Warn, "claude", "claude is not on PATH; builds with harness: claude cannot launch here (found: opencode, pi)")
 }
 
 func TestCheckProject(t *testing.T) {

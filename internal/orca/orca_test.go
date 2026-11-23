@@ -144,6 +144,34 @@ func TestCommand(t *testing.T) {
 	}
 }
 
+func TestInstalled(t *testing.T) {
+	env := func(m map[string]string) func(string) (string, bool) {
+		return func(k string) (string, bool) { v, ok := m[k]; return v, ok }
+	}
+	found := func(name string) (string, error) { return "/bin/" + name, nil }
+	var looked []string
+	missing := func(name string) (string, error) {
+		looked = append(looked, name)
+		return "", errors.New("not found")
+	}
+	if err := Installed(env(nil), found); err != nil {
+		t.Errorf("found: %v", err)
+	}
+	err := Installed(env(map[string]string{CommandEnv: ""}), missing)
+	want := "Orca is not installed (orca is not on PATH). jitso opens and tracks each worker in an Orca terminal: install Orca from https://github.com/stablyai/orca, open it once, then run jitso doctor."
+	if err == nil || err.Error() != want {
+		t.Errorf("default: got %v, want %q", err, want)
+	}
+	err = Installed(env(map[string]string{CommandEnv: "/opt/no-orca"}), missing)
+	want = "ORCA_CLI_COMMAND is set to /opt/no-orca, which is not an executable on PATH. Point it at the orca program or unset it, then run jitso doctor."
+	if err == nil || err.Error() != want {
+		t.Errorf("env: got %v, want %q", err, want)
+	}
+	if !reflect.DeepEqual(looked, []string{"orca", "/opt/no-orca"}) {
+		t.Errorf("looked up %v", looked)
+	}
+}
+
 func TestExecRunner(t *testing.T) {
 	if runtime.GOOS == "windows" {
 		t.Skip("needs /bin/sh")

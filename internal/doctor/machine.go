@@ -3,6 +3,7 @@ package doctor
 import (
 	"fmt"
 	"path/filepath"
+	"strings"
 
 	"github.com/upex-galaxy/jitso/internal/orca"
 	"github.com/upex-galaxy/jitso/internal/project"
@@ -88,16 +89,28 @@ func checkOrca(p Ports) Line {
 		if from != "" {
 			return Line{Fail, "orca", fmt.Sprintf("%s is set to %s, which is not an executable on PATH", orca.CommandEnv, name)}
 		}
-		return Line{Fail, "orca", "orca is not on PATH"}
+		return Line{Fail, "orca", "orca is not on PATH; install Orca from " + orca.InstallURL + " and open it once"}
 	}
 	return Line{OK, "orca", found + from}
 }
 
 // checkClaude finds claude and asks its version. A program that answers with
-// nothing, fails or hangs is still a claude that is there.
+// nothing, fails or hangs is still a claude that is there. Without claude it
+// fails only when no other harness (codex, opencode, pi) is on PATH either.
 func checkClaude(p Ports) Line {
 	found, err := p.LookPath("claude")
 	if err != nil {
+		// A build may run in another harness: without claude, the machine
+		// can still launch those builds.
+		var others []string
+		for _, h := range []string{"codex", "opencode", "pi"} {
+			if _, err := p.LookPath(h); err == nil {
+				others = append(others, h)
+			}
+		}
+		if len(others) > 0 {
+			return Line{Warn, "claude", "claude is not on PATH; builds with harness: claude cannot launch here (found: " + strings.Join(others, ", ") + ")"}
+		}
 		return Line{Fail, "claude", "claude is not on PATH"}
 	}
 	res := p.Run("", found, "--version")

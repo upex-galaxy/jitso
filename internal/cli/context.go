@@ -3,6 +3,7 @@ package cli
 import (
 	"io"
 	"os"
+	"os/exec"
 	"time"
 
 	"github.com/upex-galaxy/jitso/internal/catalog"
@@ -146,11 +147,22 @@ func (c *Context) Registry() (*registry.FileStore, error) {
 func (c *Context) Orca() *orca.Client {
 	run := c.Sys.Orca
 	if run == nil {
-		lookup := c.Sys.LookupEnv
-		if lookup == nil {
-			lookup = os.LookupEnv
-		}
-		run = orca.ExecRunner(orca.Command(lookup))
+		run = orca.ExecRunner(orca.Command(c.lookupEnv()))
 	}
 	return orca.NewClient(run)
+}
+
+// OrcaInstalled checks that the orca program is on PATH (orca.Installed),
+// without running it. A command that calls Orca checks it before it writes
+// anything or makes its first call.
+func (c *Context) OrcaInstalled() error {
+	return orca.Installed(c.lookupEnv(), exec.LookPath)
+}
+
+// lookupEnv is the context's LookupEnv, os.LookupEnv when unset.
+func (c *Context) lookupEnv() func(string) (string, bool) {
+	if c.Sys.LookupEnv == nil {
+		return os.LookupEnv
+	}
+	return c.Sys.LookupEnv
 }
