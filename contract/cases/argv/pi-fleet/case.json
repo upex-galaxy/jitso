@@ -1,0 +1,118 @@
+{
+  "title": "a pi conductor in fleet mode: no first prompt, no tool list, and each skill of the launch package reaches pi as one --skill folder",
+  "source": [
+    "intended: adapters lane (pi 1.6 measured: --skill <folder> lists that skill in the session)"
+  ],
+  "tags": [
+    "posix"
+  ],
+  "project": {
+    "files": {
+      ".jitso/briefs/brief.md": {
+        "from": "brief.md"
+      },
+      "jitso/jitso.yaml": {
+        "from": "jitso.yaml"
+      },
+      "jitso/builds/pi-conductor.yaml": {
+        "from": "pi-conductor.yaml"
+      }
+    }
+  },
+  "orca": {
+    "responses": {
+      "orchestration worker-start": {
+        "taskId": "task_1"
+      }
+    }
+  },
+  "home": {
+    "files": {
+      "bin/pi": {
+        "symlink": "{{BIN}}/claude"
+      }
+    }
+  },
+  "steps": [
+    {
+      "run": [
+        "launch",
+        "--build",
+        "pi-conductor",
+        "--brief",
+        "{{PROJECT}}/.jitso/briefs/brief.md",
+        "--mode",
+        "fleet",
+        "--run",
+        "run_1a2b"
+      ],
+      "capture": {
+        "LAUNCH_ID": {
+          "from": "stdout",
+          "regex": "JITSO (L\\d{8}T\\d{6}-[0-9a-f]{4})"
+        }
+      },
+      "expect": {
+        "exit": 0,
+        "stderr": [
+          {
+            "empty": true
+          }
+        ],
+        "registry": {
+          "count": 1,
+          "events": [
+            {
+              "at": 0,
+              "event": "launch",
+              "fields": {
+                "harness": "pi",
+                "package.jitso_skill": true,
+                "package.flag": "skill"
+              }
+            }
+          ]
+        },
+        "files": [
+          {
+            "path": ".jitso/launches/{{LAUNCH_ID}}",
+            "entries": [
+              {
+                "equals": "brief.md\ncard.txt\nmcp.json\npi\npkg\nrun.sh"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "exec": "run_sh",
+      "launch": "{{LAUNCH_ID}}",
+      "env": {
+        "PATH": "{{HOME}}/bin:{{BIN}}:/usr/bin:/bin"
+      },
+      "expect": {
+        "exit": 0,
+        "claude": {
+          "program": "pi",
+          "argv": [
+            "--model",
+            "anthropic/claude-haiku-5-5",
+            "--thinking",
+            "medium",
+            "--no-mcp",
+            "--session-id",
+            {
+              "regex": "^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+            },
+            "--skill",
+            "{{PROJECT}}/.jitso/launches/{{LAUNCH_ID}}/pkg/.claude/skills/jitso",
+            "-e",
+            "{{PROJECT}}/.jitso/launches/{{LAUNCH_ID}}/pi/jitso-guard.js"
+          ]
+        }
+      }
+    }
+  ],
+  "id": "argv/pi-fleet"
+}

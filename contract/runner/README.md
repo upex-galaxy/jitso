@@ -2,7 +2,7 @@
 
 Runs the cases under `contract/cases/` against one `jitso` binary. The case format is `../SPEC.md`; that file wins when this README and the code disagree.
 
-Go standard library only, no cgo. The same binary is also the fake `orca` and the fake `claude`: each sandbox gets a symlink (then a hard link, then a copy) of it under those names in `bin/`, and `main` dispatches on `os.Args[0]`.
+Go standard library only, no cgo. The same binary is also the fake `orca` and the fake `claude`: each sandbox gets a symlink (then a hard link, then a copy) of it under those names in `bin/`, and `main` dispatches on `os.Args[0]`. Started as `codex`, `opencode` or `pi` (a link a case makes to `bin/claude`), it is the fake of that harness and writes the same dump.
 
 ## Build and run
 
@@ -40,7 +40,7 @@ Self checks: `go vet ./... && gofmt -l . && go test ./...`.
 | `internal/engine` | one case run: sandbox build, the `Step` kinds (`run`, `hook`, `exec`, `write`, `git_worktree`), captures, the `PASS`/`FAIL` outcome |
 | `internal/sandbox` | the temp root, the from-scratch environment, file copies |
 | `internal/impl` | the `Implementation` interface and the `bin` adapter |
-| `internal/fakes` | the fake `orca` (stateless, replays its own call log) and the fake `claude` |
+| `internal/fakes` | the fake `orca` (stateless, replays its own call log) and the fake `claude` (also the fake `codex`, `opencode` and `pi`) |
 | `internal/report` | the text reporter |
 
 A case is validated at load time by building every expansion with stub values, so an unknown key, a bad regex or an unknown placeholder is a `LOAD` error naming the case, never a failure in the middle of a run.

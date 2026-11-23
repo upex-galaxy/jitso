@@ -1,0 +1,18 @@
+# A pi build of the adapter cases.
+id: pi-worker
+version: 1
+status: approved
+role: operator
+type: explorer
+work_kind: repo-exploration
+description: Read-only search of the repo that returns file paths and line numbers.
+harness: pi
+model: anthropic/claude-haiku-5-5
+effort: low
+mode_default: direct
+route_scope: [none]
+requires: []
+agents_md: exclude
+skills_first: []
+tools: [read, bash]
+mcp: []

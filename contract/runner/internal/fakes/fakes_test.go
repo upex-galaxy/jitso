@@ -149,11 +149,27 @@ func TestFakeClaude(t *testing.T) {
 	}
 	wd, _ := os.Getwd()
 	real, _ := filepath.EvalSymlinks(wd)
-	if !reflect.DeepEqual(d.Argv, []string{"--model", "m", "it's"}) || d.Env["HOME"] != "/h" || d.Cwd != real {
+	if !reflect.DeepEqual(d.Argv, []string{"--model", "m", "it's"}) || d.Env["HOME"] != "/h" || d.Cwd != real || d.Program != "claude" {
 		t.Errorf("dump: %+v", d)
 	}
 	if code := Claude(nil, nil, &errb); code != 1 {
 		t.Error("without the dump variable the fake must refuse")
+	}
+}
+
+func TestFakeHarnessRecordsItsProgram(t *testing.T) {
+	dump := filepath.Join(t.TempDir(), "dump.json")
+	var errb bytes.Buffer
+	if code := Harness("codex", []string{"-m", "x"}, []string{EnvClaudeDump + "=" + dump}, &errb); code != 0 {
+		t.Fatalf("exit %d, stderr %q", code, errb.String())
+	}
+	var d expect.ClaudeDump
+	data, _ := os.ReadFile(dump)
+	if err := json.Unmarshal(data, &d); err != nil {
+		t.Fatal(err)
+	}
+	if d.Program != "codex" || !reflect.DeepEqual(d.Argv, []string{"-m", "x"}) {
+		t.Errorf("dump: %+v", d)
 	}
 }
 

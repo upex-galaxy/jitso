@@ -1,0 +1,62 @@
+{
+  "id": "close/non-claude-launch-counts-no-tokens",
+  "title": "close counts tokens only for a Claude Code launch: a launch of another harness ends with tokens null, no tokens line and no warning, even when its transcript_path names a readable file",
+  "source": [
+    "intended: adapters lane (token counting reads the Claude Code transcript format only)"
+  ],
+  "intent": "The transcript here is in the Claude Code format and would sum to tokens for a claude launch (close/tokens-from-the-transcript). A codex, opencode or pi transcript has another format, so close does not read it.",
+  "for_each": {
+    "var": "harness",
+    "values": [
+      "codex",
+      "opencode",
+      "pi"
+    ]
+  },
+  "home": {
+    "files": {
+      "t/s.jsonl": {
+        "from": "transcript.jsonl"
+      }
+    }
+  },
+  "project": {
+    "files": {
+      ".jitso/launches.jsonl": "{\"v\":2,\"event\":\"launch\",\"id\":\"L20261113T142233-a3f9\",\"parent\":null,\"root\":\"L20261113T142233-a3f9\",\"depth\":0,\"ts\":\"2026-11-13T14:22:33.000Z\",\"mode\":\"direct\",\"build\":\"pi-worker\",\"harness\":\"{{harness}}\",\"transcript_path\":\"{{HOME}}/t/s.jsonl\",\"orca\":{\"run\":null,\"task\":null,\"terminal\":\"term_fake\",\"title\":\"t [jitso:L20261113T142233-a3f9]\"}}\n"
+    }
+  },
+  "steps": [
+    {
+      "run": [
+        "close",
+        "L20261113T142233-a3f9"
+      ],
+      "expect": {
+        "exit": 0,
+        "stdout": [
+          {
+            "equals": "jitso: closed L20261113T142233-a3f9 (terminal term_fake)\n"
+          }
+        ],
+        "stderr": [
+          {
+            "empty": true
+          }
+        ],
+        "registry": {
+          "count": 2,
+          "events": [
+            {
+              "at": 1,
+              "event": "end",
+              "fields": {
+                "source": "jitso_close",
+                "tokens": null
+              }
+            }
+          ]
+        }
+      }
+    }
+  ]
+}

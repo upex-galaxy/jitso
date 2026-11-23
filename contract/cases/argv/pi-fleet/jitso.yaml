@@ -1,0 +1,29 @@
+# Allowlists of the default fixture plus the models, efforts and tools of the
+# codex, opencode and pi builds of these cases.
+version: 1
+
+models:
+  - claude-haiku-5-5
+  - claude-sonnet-5-5
+  - claude-opus-5-5
+  - gpt-5.5
+  - opencode/deepseek-v4.1-flash-free
+  - anthropic/claude-haiku-5-5
+
+efforts: [low, medium, high]
+
+mcp: [dbhub, openapi]
+
+skills:
+  - sprint-testing
+  - shift-left-testing
+  - test-automation
+  - framework-development
+  - exploratory-testing
+  - orca-orchestration
+
+tools: [Read, Glob, Grep, Bash, Write, Edit, read, bash]
+
+fields:
+  ticket_key: '^[A-Z][A-Z0-9]*-[0-9]+$'
+  env: '^[a-z][a-z0-9_-]*$'

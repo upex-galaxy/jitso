@@ -1,0 +1,156 @@
+{
+  "title": "an opencode build in direct mode: run.sh points OPENCODE_CONFIG_DIR at the launch's own config (model#effort, the build's server, the guard plugin) and starts a standalone TUI with a fixed session id and the first prompt",
+  "source": [
+    "intended: adapters lane (opencode 2.3.2 measured: OPENCODE_CONFIG_DIR replaces the user config folder and loads its plugins, --standalone makes the TUI read this environment, --session creates a session of that id, an id must start with ses)"
+  ],
+  "tags": [
+    "posix"
+  ],
+  "project": {
+    "files": {
+      ".jitso/briefs/brief.md": {
+        "from": "brief.md"
+      },
+      "jitso/jitso.yaml": {
+        "from": "jitso.yaml"
+      },
+      "jitso/builds/opencode-worker.yaml": {
+        "from": "opencode-worker.yaml"
+      }
+    }
+  },
+  "home": {
+    "files": {
+      "bin/opencode": {
+        "symlink": "{{BIN}}/claude"
+      }
+    }
+  },
+  "steps": [
+    {
+      "run": [
+        "launch",
+        "--build",
+        "opencode-worker",
+        "--brief",
+        "{{PROJECT}}/.jitso/briefs/brief.md",
+        "--mode",
+        "direct"
+      ],
+      "capture": {
+        "LAUNCH_ID": {
+          "from": "stdout",
+          "regex": "JITSO (L\\d{8}T\\d{6}-[0-9a-f]{4})"
+        }
+      },
+      "expect": {
+        "exit": 0,
+        "stderr": [
+          {
+            "empty": true
+          }
+        ],
+        "registry": {
+          "count": 1,
+          "events": [
+            {
+              "at": 0,
+              "event": "launch",
+              "fields": {
+                "harness": "opencode",
+                "session_id": {
+                  "regex": "^ses_[0-9a-f]{32}$"
+                },
+                "transcript_path": null,
+                "package.guard": true,
+                "package.flag": "none"
+              }
+            }
+          ]
+        },
+        "files": [
+          {
+            "path": ".jitso/launches/{{LAUNCH_ID}}",
+            "entries": [
+              {
+                "equals": "brief.md\ncard.txt\nmcp.json\nopencode\nrun.sh"
+              }
+            ]
+          },
+          {
+            "path": ".jitso/launches/{{LAUNCH_ID}}/opencode/opencode.json",
+            "json": [
+              {
+                "path": "",
+                "keys_exact": [
+                  "model",
+                  "mcp"
+                ]
+              },
+              {
+                "path": "model",
+                "equals": "opencode/deepseek-v4.1-flash-free#high"
+              },
+              {
+                "path": "mcp",
+                "equals": {
+                  "servers": {
+                    "dbhub": {
+                      "type": "local",
+                      "command": [
+                        "fixture-dbhub",
+                        "--transport",
+                        "stdio"
+                      ]
+                    }
+                  }
+                }
+              }
+            ],
+            "not_contains": [
+              "fixture-secret-must-never-travel"
+            ]
+          },
+          {
+            "path": ".jitso/launches/{{LAUNCH_ID}}/opencode/plugins/jitso-guard.js",
+            "contains": [
+              "{{JITSO}}"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "exec": "run_sh",
+      "launch": "{{LAUNCH_ID}}",
+      "env": {
+        "PATH": "{{HOME}}/bin:{{BIN}}:/usr/bin:/bin"
+      },
+      "expect": {
+        "exit": 0,
+        "claude": {
+          "program": "opencode",
+          "argv": [
+            "--standalone",
+            "--auto",
+            "--session",
+            {
+              "regex": "^ses_[0-9a-f]{32}$"
+            },
+            "--prompt",
+            {
+              "regex": "^Read {{PROJECT}}/\\.jitso/launches/{{LAUNCH_ID}}/brief\\.md and follow it exactly\\.\\nROUTE-SCOPE: none$"
+            }
+          ],
+          "env": {
+            "OPENCODE_CONFIG_DIR": "{{PROJECT}}/.jitso/launches/{{LAUNCH_ID}}/opencode",
+            "OPENCODE_DISABLE_PROJECT_CONFIG": {
+              "absent": true
+            }
+          }
+        }
+      }
+    }
+  ],
+  "id": "argv/opencode-direct"
+}

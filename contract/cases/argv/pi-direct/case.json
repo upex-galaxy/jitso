@@ -1,0 +1,134 @@
+{
+  "title": "a pi build in direct mode: run.sh starts pi with model, thinking level, no MCP, a fixed session id, no context files, the tool list, the guard extension and the first prompt",
+  "source": [
+    "intended: adapters lane (pi 1.6 measured: --session-id creates a session of that id, -e loads an extension whose tool_call handler blocks, --no-context-files keeps AGENTS.md out)"
+  ],
+  "tags": [
+    "posix"
+  ],
+  "project": {
+    "files": {
+      ".jitso/briefs/brief.md": {
+        "from": "brief.md"
+      },
+      "jitso/jitso.yaml": {
+        "from": "jitso.yaml"
+      },
+      "jitso/builds/pi-worker.yaml": {
+        "from": "pi-worker.yaml"
+      }
+    }
+  },
+  "home": {
+    "files": {
+      "bin/pi": {
+        "symlink": "{{BIN}}/claude"
+      }
+    }
+  },
+  "steps": [
+    {
+      "run": [
+        "launch",
+        "--build",
+        "pi-worker",
+        "--brief",
+        "{{PROJECT}}/.jitso/briefs/brief.md",
+        "--mode",
+        "direct"
+      ],
+      "capture": {
+        "LAUNCH_ID": {
+          "from": "stdout",
+          "regex": "JITSO (L\\d{8}T\\d{6}-[0-9a-f]{4})"
+        }
+      },
+      "expect": {
+        "exit": 0,
+        "stderr": [
+          {
+            "empty": true
+          }
+        ],
+        "registry": {
+          "count": 1,
+          "events": [
+            {
+              "at": 0,
+              "event": "launch",
+              "fields": {
+                "harness": "pi",
+                "session_id": {
+                  "regex": "^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+                },
+                "transcript_path": null,
+                "package.guard": true,
+                "package.flag": "none"
+              }
+            }
+          ]
+        },
+        "files": [
+          {
+            "path": ".jitso/launches/{{LAUNCH_ID}}",
+            "entries": [
+              {
+                "equals": "brief.md\ncard.txt\nmcp.json\npi\nrun.sh"
+              }
+            ]
+          },
+          {
+            "path": ".jitso/launches/{{LAUNCH_ID}}/pi/jitso-guard.js",
+            "contains": [
+              "{{JITSO}}"
+            ]
+          },
+          {
+            "path": ".jitso/launches/{{LAUNCH_ID}}/mcp.json",
+            "json": [
+              {
+                "path": "",
+                "equals": {
+                  "mcpServers": {}
+                }
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "exec": "run_sh",
+      "launch": "{{LAUNCH_ID}}",
+      "env": {
+        "PATH": "{{HOME}}/bin:{{BIN}}:/usr/bin:/bin"
+      },
+      "expect": {
+        "exit": 0,
+        "claude": {
+          "program": "pi",
+          "argv": [
+            "--model",
+            "anthropic/claude-haiku-5-5",
+            "--thinking",
+            "low",
+            "--no-mcp",
+            "--session-id",
+            {
+              "regex": "^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+            },
+            "--no-context-files",
+            "--tools",
+            "read,bash",
+            "-e",
+            "{{PROJECT}}/.jitso/launches/{{LAUNCH_ID}}/pi/jitso-guard.js",
+            {
+              "regex": "^Read {{PROJECT}}/\\.jitso/launches/{{LAUNCH_ID}}/brief\\.md and follow it exactly\\.\\nROUTE-SCOPE: none$"
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "id": "argv/pi-direct"
+}

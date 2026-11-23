@@ -1,6 +1,8 @@
 // Command jitso-contract-runner executes the JITSO contract cases (contract/SPEC.md) against
 // one `jitso` binary. The same binary is also the fake `orca` and the fake `claude`: the
 // runner links itself into each sandbox under those names and dispatches on os.Args[0].
+// Started as codex, opencode or pi (a case links {{BIN}}/claude under that name), it is
+// the fake of that harness, which writes the same dump.
 package main
 
 import (
@@ -27,6 +29,8 @@ func main() {
 		os.Exit(fakes.Orca(os.Args[1:], os.Getenv, os.Stdout, os.Stderr))
 	case "claude":
 		os.Exit(fakes.Claude(os.Args[1:], os.Environ(), os.Stderr))
+	case "codex", "opencode", "pi":
+		os.Exit(fakes.Harness(strings.TrimSuffix(filepath.Base(os.Args[0]), ".exe"), os.Args[1:], os.Environ(), os.Stderr))
 	}
 	os.Exit(run(os.Args[1:], os.Stdout, os.Stderr))
 }

@@ -1,12 +1,15 @@
 // Package harness is the per-harness adapter interface and the launch spec
-// types. Claude Code is the first adapter (package harness/claude); another
-// harness is another package under harness/ implementing Adapter. The launch
-// code talks only to this interface, so it never names a harness flag.
+// types. Each harness is one package under harness/ implementing Adapter:
+// claude (Claude Code), codex, opencode and pi. The launch code talks only to
+// this interface, so it never names a harness flag.
 package harness
 
 import (
+	"fmt"
 	"io"
+	"strings"
 
+	"github.com/upex-galaxy/jitso/internal/jsconv"
 	"github.com/upex-galaxy/jitso/internal/jsonx"
 )
 
@@ -28,6 +31,38 @@ type Adapter interface {
 	Readiness() string
 	// TrustDialog is how the harness shows its trust-this-folder dialog.
 	TrustDialog() TrustDialog
+	// Support is what the harness can honor. A build that asks for more is
+	// rejected by launch and reported by build validate: an adapter never
+	// drops a field it cannot honor.
+	Support() Support
+}
+
+// Support is what one harness can give a session.
+type Support struct {
+	// Subagents: the session can get the build's subagents.
+	Subagents bool
+	// Tools: the session's tools can be limited to the build's list.
+	Tools bool
+	// AgentsMDExclude: agents_md: exclude can keep the instruction files out.
+	AgentsMDExclude bool
+	// MCP: the session can get MCP servers; false means it gets none, so a
+	// build must name none.
+	MCP bool
+	// UserMCP: a user:<name> server can travel.
+	UserMCP bool
+	// PackageFlag is how the launch package folder reaches the session, as
+	// the package.flag of the launch event: add-dir, skill or config. "" means
+	// the harness cannot load skills from it: a user:<name> skill is
+	// rejected, and the jitso skill is left to the session's own
+	// .agents/skills.
+	PackageFlag string
+	// ProjectGuard: the harness reads the guard a project registers in
+	// .claude/settings.json, so a launch carries the guard only when the
+	// project lacks it. False: every launch carries it.
+	ProjectGuard bool
+	// Note is one line printed on stdout right after the card of every
+	// launch of this harness (a dry run too), "" for none.
+	Note string
 }
 
 // SpecInput is what an adapter needs for one launch. Paths are absolute.
@@ -57,9 +92,19 @@ type SpecInput struct {
 	// PackageDir is the folder of what travels with the launch, whose
 	// .claude/skills the session loads; "" when nothing travels.
 	PackageDir string
+	// PackageSkills are the names of the skills written under
+	// PackageDir/.claude/skills, in order.
+	PackageSkills []string
 	// GuardCommand is the guard hook command the session's settings carry,
 	// "" when the project registers the guard itself.
 	GuardCommand string
+	// GuardBinary is the absolute path of the binary GuardCommand runs, for
+	// the harnesses that run the guard from a generated plugin file; "" when
+	// no guard travels.
+	GuardBinary string
+	// LaunchDir is the launch folder, .jitso/launches/<id>; Files of the Spec
+	// are written under it.
+	LaunchDir string
 }
 
 // Subagent is one helper a session may call, from a subagent-tier build.
@@ -82,6 +127,16 @@ type Spec struct {
 	Env []EnvVar
 	// MCPConfig is the strict MCP file contents.
 	MCPConfig MCPConfig
+	// Files are extra files the launch writes under its folder before the
+	// session starts (a harness config, a guard plugin), in order.
+	Files []File
+}
+
+// File is one extra file of a launch folder.
+type File struct {
+	// Name is the path under the launch folder, with / separators.
+	Name string
+	Data []byte
 }
 
 // EnvVar is one exported variable.
@@ -131,4 +186,47 @@ type TrustDialog struct {
 	Detect func(screen string) bool
 	// ConfirmKeys are raw key strings, sent in order, that confirm trust.
 	ConfirmKeys []string
+}
+
+// CopyServers copies command and args of each named project server from the
+// repo's table. env and every other key are dropped on purpose. A name the
+// table does not define, or one without a string command, is an error. A
+// user:<name> server is written as its copied definition, under its plain
+// name.
+func CopyServers(names []string, repoServers map[string]any, userServers map[string]jsonx.Object) (MCPConfig, error) {
+	cfg := MCPConfig{Servers: []MCPServer{}}
+	for _, name := range names {
+		if def, ok := userServers[name]; ok {
+			_, plain, _ := strings.Cut(name, ":")
+			cfg.Servers = append(cfg.Servers, MCPServer{Name: plain, Def: def})
+			continue
+		}
+		server, _ := repoServers[name].(map[string]any)
+		command, ok := server["command"].(string)
+		if !ok {
+			return MCPConfig{}, fmt.Errorf(`MCP server "%s" is not in the repo MCP config`, name)
+		}
+		args := []string{}
+		if list, ok := server["args"].([]any); ok {
+			args = jsconv.Strings(list)
+		}
+		cfg.Servers = append(cfg.Servers, MCPServer{Name: name, Command: command, Args: args})
+	}
+	return cfg, nil
+}
+
+// NoTrustDialog is the dialog of a harness that never shows one.
+func NoTrustDialog() TrustDialog {
+	return TrustDialog{Detect: func(string) bool { return false }}
+}
+
+// NewUUID is a random version 4 UUID read from rand.
+func NewUUID(rand io.Reader) (string, error) {
+	var b [16]byte
+	if _, err := io.ReadFull(rand, b[:]); err != nil {
+		return "", err
+	}
+	b[6] = b[6]&0x0f | 0x40
+	b[8] = b[8]&0x3f | 0x80
+	return fmt.Sprintf("%x-%x-%x-%x-%x", b[0:4], b[4:6], b[6:8], b[8:10], b[10:16]), nil
 }

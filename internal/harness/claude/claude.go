@@ -9,14 +9,12 @@
 package claude
 
 import (
-	"fmt"
 	"io"
 	"path/filepath"
 	"regexp"
 	"strings"
 
 	"github.com/upex-galaxy/jitso/internal/harness"
-	"github.com/upex-galaxy/jitso/internal/jsconv"
 	"github.com/upex-galaxy/jitso/internal/jsonx"
 	"github.com/upex-galaxy/jitso/internal/settingsjson"
 )
@@ -53,6 +51,11 @@ func (Adapter) Binary() string { return "claude" }
 
 // Readiness is "tui-idle".
 func (Adapter) Readiness() string { return "tui-idle" }
+
+// Support is everything: Claude Code honors every field of a build.
+func (Adapter) Support() harness.Support {
+	return harness.Support{Subagents: true, Tools: true, AgentsMDExclude: true, MCP: true, UserMCP: true, PackageFlag: "add-dir", ProjectGuard: true}
+}
 
 // Spec builds the argv and the strict MCP file of one launch.
 func (a Adapter) Spec(in harness.SpecInput) (harness.Spec, error) {
@@ -149,43 +152,13 @@ func Argv(in harness.SpecInput) ([]string, error) {
 	return argv, nil
 }
 
-// MCPConfig copies command and args of each named project server from the
-// repo's table. env and every other key are dropped on purpose. A name the
-// table does not define, or one without a string command, is an error. A
-// user:<name> server is written as its copied definition, under its plain
-// name.
+// MCPConfig is harness.CopyServers: the strict MCP file of a launch.
 func MCPConfig(names []string, repoServers map[string]any, userServers map[string]jsonx.Object) (harness.MCPConfig, error) {
-	cfg := harness.MCPConfig{Servers: []harness.MCPServer{}}
-	for _, name := range names {
-		if def, ok := userServers[name]; ok {
-			_, plain, _ := strings.Cut(name, ":")
-			cfg.Servers = append(cfg.Servers, harness.MCPServer{Name: plain, Def: def})
-			continue
-		}
-		server, _ := repoServers[name].(map[string]any)
-		command, ok := server["command"].(string)
-		if !ok {
-			return harness.MCPConfig{}, fmt.Errorf(`MCP server "%s" is not in the repo MCP config`, name)
-		}
-		args := []string{}
-		if list, ok := server["args"].([]any); ok {
-			args = jsconv.Strings(list)
-		}
-		cfg.Servers = append(cfg.Servers, harness.MCPServer{Name: name, Command: command, Args: args})
-	}
-	return cfg, nil
+	return harness.CopyServers(names, repoServers, userServers)
 }
 
 // NewSessionID is a random version 4 UUID read from rand.
-func (Adapter) NewSessionID(rand io.Reader) (string, error) {
-	var b [16]byte
-	if _, err := io.ReadFull(rand, b[:]); err != nil {
-		return "", err
-	}
-	b[6] = b[6]&0x0f | 0x40
-	b[8] = b[8]&0x3f | 0x80
-	return fmt.Sprintf("%x-%x-%x-%x-%x", b[0:4], b[4:6], b[6:8], b[8:10], b[10:16]), nil
-}
+func (Adapter) NewSessionID(rand io.Reader) (string, error) { return harness.NewUUID(rand) }
 
 var projectDirChars = regexp.MustCompile(`[/.]`)
 

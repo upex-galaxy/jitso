@@ -1,0 +1,17 @@
+# A opencode build of the adapter cases.
+id: opencode-worker
+version: 1
+status: approved
+role: operator
+type: explorer
+work_kind: repo-exploration
+description: Read-only search of the repo that returns file paths and line numbers.
+harness: opencode
+model: opencode/deepseek-v4.1-flash-free
+effort: high
+mode_default: direct
+route_scope: [none]
+requires: []
+agents_md: full
+skills_first: []
+mcp: [dbhub]

@@ -106,13 +106,28 @@ Key: R required, O optional (validated when present), U optional and unused by t
 | `tools` | list, each in `tools`; absent means the harness default (a subagent inherits its parent's) | O | O | `tool "<t>" is not in the allowlist` |
 | `route_scope` | list of instruction-section ids, or `[none]`; absent or empty means none (the card prints `ROUTE-SCOPE: none`) | O | U | `route_scope id "<id>" is not an instruction section` |
 | `budget` | mapping with `tokens` and `usd_list_cap` | O | U | none: a build without a budget validates and launches |
-| `harness` | a harness with an adapter (`Adapters` in `internal/launch`) | L | U | validate: `harness "<h>" has no adapter`; launch: `no adapter for harness "<h>"` (exit 2) |
+| `harness` | a harness with an adapter (`Adapters` in `internal/launch`): `claude`, `codex`, `opencode`, `pi`; a field the harness cannot honor is a problem (table below) | L | U | validate: `harness "<h>" has no adapter`; launch: `no adapter for harness "<h>"` (exit 2) |
 | `skills_first` | list, each in `skills`, or `user:<name>` in the user allowlist, or `jitso` (JITSO's own skill, no entry needed) | O | E | `skill "<s>" is not in the allowlist`; `skills_first must be empty in a subagent-tier build` |
 | `mcp` | list, each in `mcp`, or `user:<name>` in the user allowlist; a launch reads the project's `.mcp.json` only when it still names a server after `--mcp-exclude` | O | E | `mcp "<m>" is not in the allowlist`; `mcp must be empty in a subagent-tier build` |
 | `requires` | list of field names the launch must supply; each matches `^[a-z][a-z_]*$` | O | E | `required field "<f>" is not a field name`; `requires must be empty in a subagent-tier build` |
 | `subagents` | list of kebab-case names, each a subagent-tier build | O | E | `subagents must be a list of kebab-case names`; `subagent "<s>" is not a subagent-tier build`; `a subagent-tier build cannot list subagents` |
 | listed subagent status | each listed subagent is `approved`; a draft worker may also list drafts | L | n/a | launch: `JITSO REJECTED: build "<w>" lists subagent "<s>", which is <status>, not approved`; validate: `subagent "<s>" is <status>, not approved` |
 | `version`, `role`, `type`, `work_kind`, `mode_default`, `agents_md` | free text, printed on the card and in the summary; `agents_md: exclude` launches `claude` with `CLAUDE_CODE_DISABLE_CLAUDE_MDS=1` | O | U | none |
+
+### What each harness honors
+
+An adapter never drops a field it cannot honor: `jitso build validate` reports it and `jitso launch` rejects it (exit 2, `JITSO REJECTED: <problems joined by "; ">`). The source of truth is `Support()` of each package under `internal/harness/` and `launch.SupportProblems`.
+
+| Field | claude | codex | opencode | pi | Problem text |
+|---|---|---|---|---|---|
+| `subagents` | `--agents` | no | no | no | `harness "<h>" cannot give a session subagents` |
+| `tools` | `--tools=` | no | no | `--tools` / `--no-tools` | `harness "<h>" cannot limit the tools of a session` |
+| `agents_md: exclude` | `CLAUDE_CODE_DISABLE_CLAUDE_MDS=1` | `-c project_doc_max_bytes=0` | no | `--no-context-files` | `harness "<h>" cannot keep AGENTS.md out of a session` |
+| `mcp` (project servers) | strict `--mcp-config` | `-c mcp_servers.<n>=...`, added to the owner's Codex servers (a note after the card says so) | `mcp.servers` of the launch's config folder | no server at all (`--no-mcp`) | pi: `harness "pi" cannot give a session MCP servers` |
+| `mcp` `user:<n>` | yes | no | no | no | `harness "<h>" cannot give a session the user mcp server "user:<n>"` |
+| `skills_first` `user:<n>` | `--add-dir` package | no | `skills` of the launch's config | one `--skill` per skill | `harness "<h>" cannot load the user skill "user:<n>" from the launch package` |
+| jitso skill (conductor) | in the package | from the session's own `.agents/skills` (`jitso install skill`) | in the package | in the package | none |
+| effort | `--effort` | `-c model_reasoning_effort=` | the model variant `<model>#<effort>` | `--thinking` | none |
 
 A subagent-tier build is never launched alone, or listed: a worker or conductor lists it by name in `subagents`, and its `description`, `prompt`, `model` and `tools` reach `claude` as an `--agents` entry. Worker and conductor builds are validated identically; the tier changes how a build is used, not what a valid launch needs.
 

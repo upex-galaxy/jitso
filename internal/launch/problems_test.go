@@ -55,6 +55,10 @@ func TestProblems(t *testing.T) {
 		"no-harness.yaml":  worker(t, "no-harness", map[string]string{"harness:": ""}),
 		"lists-cand.yaml":  worker(t, "lists-cand", map[string]string{"mcp:": "subagents: [cand, plan]\nmcp: []"}),
 		"every-rule.yaml":  worker(t, "every-rule", map[string]string{"harness:": "harness: other", "mcp:": "subagents: [cand]\nmcp: []"}),
+		"pi-fine.yaml":     worker(t, "pi-fine", map[string]string{"harness:": "harness: pi"}),
+		"pi-asks.yaml":     worker(t, "pi-asks", map[string]string{"harness:": "harness: pi", "mcp:": "subagents: [cand]\nmcp: [dbhub]"}),
+		"codex-asks.yaml":  worker(t, "codex-asks", map[string]string{"harness:": "harness: codex"}),
+		"opencode-ok.yaml": worker(t, "opencode-ok", map[string]string{"harness:": "harness: opencode", "agents_md:": "agents_md: full", "tools:": ""}),
 	}
 	for name, text := range builds {
 		if err := os.WriteFile(filepath.Join(root, "jitso", "builds", name), []byte(text), 0o644); err != nil {
@@ -84,6 +88,15 @@ func TestProblems(t *testing.T) {
 			`harness "other" has no adapter`,
 			`subagent "cand" is candidate, not approved`,
 		}},
+		{"pi-fine", nil}, // pi honors tools and agents_md: exclude
+		// the support lines come before the subagent status lines
+		{"pi-asks", []string{
+			`harness "pi" cannot give a session subagents`,
+			`harness "pi" cannot give a session MCP servers`,
+			`subagent "cand" is candidate, not approved`,
+		}},
+		{"codex-asks", []string{`harness "codex" cannot limit the tools of a session`}},
+		{"opencode-ok", nil},
 	}
 	for _, tt := range tests {
 		t.Run(tt.id, func(t *testing.T) {

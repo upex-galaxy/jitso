@@ -1,0 +1,140 @@
+{
+  "title": "an opencode conductor in fleet mode: no first prompt, and the launch package's skills folder reaches opencode through the skills key of its config",
+  "source": [
+    "intended: adapters lane (opencode 2.3.2 measured: the config key skills lists extra folders to discover skills from)"
+  ],
+  "tags": [
+    "posix"
+  ],
+  "project": {
+    "files": {
+      ".jitso/briefs/brief.md": {
+        "from": "brief.md"
+      },
+      "jitso/jitso.yaml": {
+        "from": "jitso.yaml"
+      },
+      "jitso/builds/opencode-conductor.yaml": {
+        "from": "opencode-conductor.yaml"
+      }
+    }
+  },
+  "orca": {
+    "responses": {
+      "orchestration worker-start": {
+        "taskId": "task_1"
+      }
+    }
+  },
+  "home": {
+    "files": {
+      "bin/opencode": {
+        "symlink": "{{BIN}}/claude"
+      }
+    }
+  },
+  "steps": [
+    {
+      "run": [
+        "launch",
+        "--build",
+        "opencode-conductor",
+        "--brief",
+        "{{PROJECT}}/.jitso/briefs/brief.md",
+        "--mode",
+        "fleet",
+        "--run",
+        "run_1a2b"
+      ],
+      "capture": {
+        "LAUNCH_ID": {
+          "from": "stdout",
+          "regex": "JITSO (L\\d{8}T\\d{6}-[0-9a-f]{4})"
+        }
+      },
+      "expect": {
+        "exit": 0,
+        "stderr": [
+          {
+            "empty": true
+          }
+        ],
+        "registry": {
+          "count": 1,
+          "events": [
+            {
+              "at": 0,
+              "event": "launch",
+              "fields": {
+                "harness": "opencode",
+                "package.jitso_skill": true,
+                "package.flag": "config",
+                "package.guard": true
+              }
+            }
+          ]
+        },
+        "files": [
+          {
+            "path": ".jitso/launches/{{LAUNCH_ID}}",
+            "entries": [
+              {
+                "equals": "brief.md\ncard.txt\nmcp.json\nopencode\npkg\nrun.sh"
+              }
+            ]
+          },
+          {
+            "path": ".jitso/launches/{{LAUNCH_ID}}/pkg/.claude/skills/jitso/SKILL.md"
+          },
+          {
+            "path": ".jitso/launches/{{LAUNCH_ID}}/opencode/opencode.json",
+            "json": [
+              {
+                "path": "",
+                "keys_exact": [
+                  "model",
+                  "skills"
+                ]
+              },
+              {
+                "path": "model",
+                "equals": "opencode/deepseek-v4.1-flash-free#low"
+              },
+              {
+                "path": "skills",
+                "equals": [
+                  "{{PROJECT}}/.jitso/launches/{{LAUNCH_ID}}/pkg/.claude/skills"
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "exec": "run_sh",
+      "launch": "{{LAUNCH_ID}}",
+      "env": {
+        "PATH": "{{HOME}}/bin:{{BIN}}:/usr/bin:/bin"
+      },
+      "expect": {
+        "exit": 0,
+        "claude": {
+          "program": "opencode",
+          "argv": [
+            "--standalone",
+            "--auto",
+            "--session",
+            {
+              "regex": "^ses_[0-9a-f]{32}$"
+            }
+          ],
+          "env": {
+            "OPENCODE_CONFIG_DIR": "{{PROJECT}}/.jitso/launches/{{LAUNCH_ID}}/opencode"
+          }
+        }
+      }
+    }
+  ],
+  "id": "argv/opencode-fleet"
+}

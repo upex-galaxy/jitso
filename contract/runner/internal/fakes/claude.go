@@ -14,6 +14,12 @@ import (
 // Claude is the fake `claude`: it writes its argv, real cwd and whole environment to
 // JITSO_CONTRACT_CLAUDE_DUMP and exits 0, printing nothing. It starts nothing.
 func Claude(args []string, environ []string, stderr io.Writer) int {
+	return Harness("claude", args, environ, stderr)
+}
+
+// Harness is the fake of one harness program (claude, codex, opencode or pi): the dump
+// of the fake claude, with program set to the name it was started as (SPEC 5.2).
+func Harness(program string, args []string, environ []string, stderr io.Writer) int {
 	env := map[string]string{}
 	for _, kv := range environ {
 		if k, v, ok := strings.Cut(kv, "="); ok {
@@ -22,7 +28,7 @@ func Claude(args []string, environ []string, stderr io.Writer) int {
 	}
 	path := env[EnvClaudeDump]
 	if path == "" {
-		fmt.Fprintf(stderr, "fake claude: %s is not set\n", EnvClaudeDump)
+		fmt.Fprintf(stderr, "fake %s: %s is not set\n", program, EnvClaudeDump)
 		return 1
 	}
 	cwd, err := os.Getwd()
@@ -34,13 +40,13 @@ func Claude(args []string, environ []string, stderr io.Writer) int {
 	if args == nil {
 		args = []string{}
 	}
-	data, err := json.Marshal(expect.ClaudeDump{Argv: args, Cwd: cwd, Env: env})
+	data, err := json.Marshal(expect.ClaudeDump{Program: program, Argv: args, Cwd: cwd, Env: env})
 	if err != nil {
-		fmt.Fprintln(stderr, "fake claude:", err)
+		fmt.Fprintln(stderr, "fake "+program+":", err)
 		return 1
 	}
 	if err := os.WriteFile(path, data, 0o644); err != nil {
-		fmt.Fprintln(stderr, "fake claude:", err)
+		fmt.Fprintln(stderr, "fake "+program+":", err)
 		return 1
 	}
 	return claudeExit(env[EnvScenario])

@@ -134,7 +134,9 @@ Call log: one JSON line per call, `{"argv":["terminal","create","--title","..."]
 
 ### 5.2 Fake `claude`
 
-An executable named `claude` in `{{BIN}}`. It writes `{"argv":[...],"cwd":"...","env":{...}}` (full argv without the program name, the cwd as a real path, the whole environment) as JSON to `JITSO_CONTRACT_CLAUDE_DUMP` and exits `0`. It starts nothing. Its output on stdout and stderr is empty. A later run overwrites the dump, and the runner deletes it before every `run` and `exec` step, so a `claude` check sees only what its own step started.
+An executable named `claude` in `{{BIN}}`. It writes `{"program":"claude","argv":[...],"cwd":"...","env":{...}}` (the name it was started as, full argv without the program name, the cwd as a real path, the whole environment) as JSON to `JITSO_CONTRACT_CLAUDE_DUMP` and exits `0`. It starts nothing. Its output on stdout and stderr is empty. A later run overwrites the dump, and the runner deletes it before every `run` and `exec` step, so a `claude` check sees only what its own step started.
+
+The same fake answers as another harness when it is started under that name: a link named `codex`, `opencode` or `pi` to `{{BIN}}/claude` (a `home.files` symlink, with that folder put first on the step's `PATH`) writes the same dump with `program` set to that name. The runner puts no such link on `PATH` itself, so a case that does not make one has no `codex`, `opencode` or `pi`.
 
 The case field `claude` sets two knobs, both optional, which exclude each other:
 
@@ -306,7 +308,7 @@ Reads `.jitso/launches.jsonl` (one JSON event per line). A missing file is zero 
 ### 7.5 Claude dump checks
 
 ```json
-{ "ran": true, "argv": ["--dangerously-skip-permissions", "--model", "claude-sonnet-5-5"], "argv_contains": ["--agents"],
+{ "ran": true, "program": "claude", "argv": ["--dangerously-skip-permissions", "--model", "claude-sonnet-5-5"], "argv_contains": ["--agents"],
   "argv_not_contains": ["--evil"], "last_arg": [{"regex": "ROUTE-SCOPE:"}], "cwd": "{{HOME}}/work",
   "env": { "CLAUDE_CODE_DISABLE_CLAUDE_MDS": "1", "JITSO_X": {"absent": true} },
   "arg_after": { "--model": "claude-haiku-5-5", "--session-id": { "regex": "^[0-9a-f]{8}-[0-9a-f]{4}-" } },
@@ -314,7 +316,7 @@ Reads `.jitso/launches.jsonl` (one JSON event per line). A missing file is zero 
   "json_arg_after": { "--agents": [ { "path": "plan.description", "regex": ".+" } ] } }
 ```
 
-`ran: false` means the dump file does not exist, and takes no other check; any other check requires that the fake ran in this step (section 5.2). `argv` compares the whole list element by element, each element an argument pattern (a literal string is exact, an object is a text matcher of section 7.1). `argv_contains` and `argv_not_contains` test whole elements (an element equal to the string), not substrings. `last_arg` is a list of text matchers on the last element. `argv_count` maps an element to the exact number of times it occurs as a whole element (`0` forbids it). `arg_after` maps a flag to an argument pattern that the argument after its first occurrence must match. `json_arg_after` parses the argument that follows a flag as JSON and applies the `json` checks of section 7.2 to it. `env` values: a string (exact), `{"absent": true}`, or `{"regex": "re"}`.
+`ran: false` means the dump file does not exist, and takes no other check; `program` is the exact name the fake was started as (`claude`, `codex`, `opencode` or `pi`); any other check requires that the fake ran in this step (section 5.2). `argv` compares the whole list element by element, each element an argument pattern (a literal string is exact, an object is a text matcher of section 7.1). `argv_contains` and `argv_not_contains` test whole elements (an element equal to the string), not substrings. `last_arg` is a list of text matchers on the last element. `argv_count` maps an element to the exact number of times it occurs as a whole element (`0` forbids it). `arg_after` maps a flag to an argument pattern that the argument after its first occurrence must match. `json_arg_after` parses the argument that follows a flag as JSON and applies the `json` checks of section 7.2 to it. `env` values: a string (exact), `{"absent": true}`, or `{"regex": "re"}`.
 
 ## 8. Reporting
 

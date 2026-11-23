@@ -123,9 +123,14 @@ func tokensLine(t *usage.Totals) string {
 
 // readTokens sums the launch's transcript and every subagent transcript next
 // to it. It returns nil when the launch has no transcript (silently, a launch
-// run before a session id existed never has one) or when it cannot be read
-// (with one warning): tokens never fail a close.
+// run before a session id existed never has one), when the launch is of a
+// harness other than Claude Code (silently: only the Claude Code transcript
+// format is read; a line without a harness is a Claude Code launch) or when
+// it cannot be read (with one warning): tokens never fail a close.
 func readTokens(l *registry.Launch, d Deps) (*usage.Totals, error) {
+	if h, ok := l.Launch.String("harness"); ok && h != "" && h != "claude" {
+		return nil, nil
+	}
 	path, ok := l.Launch.String("transcript_path")
 	if !ok || path == "" {
 		return nil, nil

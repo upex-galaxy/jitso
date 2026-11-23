@@ -1,0 +1,17 @@
+# A codex build of the adapter cases.
+id: codex-worker
+version: 1
+status: approved
+role: operator
+type: explorer
+work_kind: repo-exploration
+description: Read-only search of the repo that returns file paths and line numbers.
+harness: codex
+model: gpt-5.5
+effort: high
+mode_default: direct
+route_scope: [none]
+requires: []
+agents_md: exclude
+skills_first: []
+mcp: [dbhub]

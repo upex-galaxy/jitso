@@ -281,6 +281,7 @@ func TestRunTokens(t *testing.T) {
 		name    string
 		files   map[string]string
 		dir     string
+		harness string
 		tokens  string
 		line    string
 		warning bool
@@ -293,6 +294,10 @@ func TestRunTokens(t *testing.T) {
 		},
 		{name: "absent transcript is silent", tokens: "null"},
 		{name: "a folder is unreadable", dir: "s.jsonl", tokens: "null", warning: true},
+		{name: "a claude launch counts", files: map[string]string{"s.jsonl": use("a", 1, 2)}, harness: "claude",
+			tokens: `{"input":1,"cache_write":0,"cache_read":0,"output":2,"messages":1,"subagent_files":0}`,
+			line:   "tokens: input 1, cache write 0, cache read 0, output 2 (1 messages, 0 subagent transcripts)"},
+		{name: "another harness counts nothing, silently", files: map[string]string{"s.jsonl": use("a", 1, 2)}, harness: "pi", tokens: "null"},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -311,7 +316,11 @@ func TestRunTokens(t *testing.T) {
 					t.Fatal(err)
 				}
 			}
-			reg := launchLine(`,"transcript_path":"`+filepath.Join(home, "s.jsonl")+`"`, `{"terminal":"term_a"}`, "2026-11-13T14:22:33.000Z")
+			extra := `,"transcript_path":"` + filepath.Join(home, "s.jsonl") + `"`
+			if tt.harness != "" {
+				extra += `,"harness":"` + tt.harness + `"`
+			}
+			reg := launchLine(extra, `{"terminal":"term_a"}`, "2026-11-13T14:22:33.000Z")
 			d, store := setup(t, reg, &fakeOrca{})
 			var warned []string
 			d.Warn = func(s string) { warned = append(warned, s) }

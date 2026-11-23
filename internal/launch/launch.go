@@ -4,6 +4,7 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"strings"
 	"time"
 
 	"github.com/upex-galaxy/jitso/internal/brief"
@@ -12,6 +13,9 @@ import (
 	"github.com/upex-galaxy/jitso/internal/fail"
 	"github.com/upex-galaxy/jitso/internal/harness"
 	"github.com/upex-galaxy/jitso/internal/harness/claude"
+	"github.com/upex-galaxy/jitso/internal/harness/codex"
+	"github.com/upex-galaxy/jitso/internal/harness/opencode"
+	"github.com/upex-galaxy/jitso/internal/harness/pi"
 	"github.com/upex-galaxy/jitso/internal/jsconv"
 	"github.com/upex-galaxy/jitso/internal/jsonx"
 	"github.com/upex-galaxy/jitso/internal/orca"
@@ -32,7 +36,12 @@ type Orca interface {
 }
 
 // Adapters are the harnesses a build's harness field may name.
-var Adapters = map[string]harness.Adapter{claude.Adapter{}.ID(): claude.Adapter{}}
+var Adapters = map[string]harness.Adapter{
+	claude.Adapter{}.ID():   claude.Adapter{},
+	codex.Adapter{}.ID():    codex.Adapter{},
+	opencode.Adapter{}.ID(): opencode.Adapter{},
+	pi.Adapter{}.ID():       pi.Adapter{},
+}
 
 // Deps is everything a launch reads, writes or calls.
 type Deps struct {
@@ -75,7 +84,10 @@ func Run(a Args, d Deps) error {
 	if !ok {
 		return fail.Rejectedf(`no adapter for harness "%s"`, harnessName)
 	}
-	carried, err := planPackage(p.Build, d.Catalog.Config.User, d.Root.Checkout, d.Executable)
+	if problems := SupportProblems(p.Build, adapter); len(problems) > 0 {
+		return fail.Rejected(strings.Join(problems, "; "))
+	}
+	carried, err := planPackage(p.Build, d.Catalog.Config.User, d.Root.Checkout, d.Executable, adapter.Support())
 	if err != nil {
 		return err
 	}
@@ -131,6 +143,9 @@ func Run(a Args, d Deps) error {
 	}
 	if a.DryRun {
 		d.Out(cardText)
+		if note := adapter.Support().Note; note != "" {
+			d.Out(note)
+		}
 		d.Out(DryRunLine)
 		return nil
 	}
@@ -273,6 +288,9 @@ func execute(p prepared, d Deps) (err error) {
 	registered = true
 
 	d.Out(p.card)
+	if note := p.adapter.Support().Note; note != "" {
+		d.Out(note)
+	}
 	if outcome == trust.Timeout {
 		d.Warn("jitso: the trust dialog of terminal " + term.Handle + " did not clear in 10 s; the launch is registered")
 	}

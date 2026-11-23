@@ -10,9 +10,11 @@ import (
 
 // ClaudeDump is what the fake claude writes (SPEC 5.2).
 type ClaudeDump struct {
-	Argv []string          `json:"argv"`
-	Cwd  string            `json:"cwd"`
-	Env  map[string]string `json:"env"`
+	// Program is the name the fake was started as: claude, codex, opencode or pi.
+	Program string            `json:"program"`
+	Argv    []string          `json:"argv"`
+	Cwd     string            `json:"cwd"`
+	Env     map[string]string `json:"env"`
 }
 
 // claude (SPEC 7.5): checks on the fake claude dump left by this step.
@@ -24,6 +26,7 @@ func init() {
 
 type claudeCheck struct {
 	ran          *bool
+	program      *string
 	argv         []TextMatcher
 	hasArgv      bool
 	contains     []string
@@ -41,7 +44,7 @@ func parseClaudeCheck(v any, what string) (Check, error) {
 	if err != nil {
 		return nil, err
 	}
-	if err := jsonx.Keys(obj, what, "ran", "argv", "argv_contains", "argv_not_contains", "argv_count", "last_arg", "cwd", "env", "arg_after", "json_arg_after"); err != nil {
+	if err := jsonx.Keys(obj, what, "ran", "program", "argv", "argv_contains", "argv_not_contains", "argv_count", "last_arg", "cwd", "env", "arg_after", "json_arg_after"); err != nil {
 		return nil, err
 	}
 	cc := claudeCheck{env: map[string]ValueMatcher{}, argAfter: map[string]TextMatcher{}, argvCount: map[string]int{}, jsonArgAfter: map[string][]JSONCheck{}}
@@ -51,6 +54,13 @@ func parseClaudeCheck(v any, what string) (Check, error) {
 			return nil, err
 		}
 		cc.ran = &b
+	}
+	if raw, ok := obj["program"]; ok {
+		s, err := jsonx.String(raw, what+".program")
+		if err != nil {
+			return nil, err
+		}
+		cc.program = &s
 	}
 	if raw, ok := obj["argv"]; ok {
 		if cc.argv, err = parseArgvPattern(raw, what+".argv"); err != nil {
@@ -166,6 +176,9 @@ func (cc claudeCheck) Eval(obs *Observation) []Failure {
 func (cc claudeCheck) evalDump(d ClaudeDump) []Failure {
 	var out []Failure
 	argvText := jsonx.Compact(d.Argv)
+	if cc.program != nil && d.Program != *cc.program {
+		out = append(out, Failure{What: "claude program", Expected: *cc.program, Actual: d.Program})
+	}
 	if cc.hasArgv {
 		if miss := matchArgv(cc.argv, d.Argv); miss != "" {
 			out = append(out, Failure{What: "claude argv", Expected: miss, Actual: argvText})

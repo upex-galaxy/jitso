@@ -1,0 +1,159 @@
+{
+  "title": "a build that asks a harness for what it cannot honor is rejected at launch and reported by build validate, with a text that names the harness",
+  "source": [
+    "intended: adapters lane (an adapter never fakes a capability: codex has no subagents, tool allowlist or package skills; opencode no subagents, tool allowlist or AGENTS.md switch that keeps the project skills; pi no subagents and no launch MCP set; no adapter but claude carries user MCP servers)"
+  ],
+  "for_each": {
+    "vars": [
+      "harness",
+      "model",
+      "extra",
+      "problem"
+    ],
+    "ids": [
+      "codex-subagents",
+      "codex-tools",
+      "codex-user-skill",
+      "codex-user-mcp",
+      "opencode-subagents",
+      "opencode-tools",
+      "opencode-agents-md",
+      "opencode-user-mcp",
+      "pi-subagents",
+      "pi-mcp",
+      "pi-user-mcp"
+    ],
+    "rows": [
+      [
+        "codex",
+        "gpt-5.5",
+        "subagents: [plan]\n",
+        "harness \"codex\" cannot give a session subagents"
+      ],
+      [
+        "codex",
+        "gpt-5.5",
+        "tools: [Read]\n",
+        "harness \"codex\" cannot limit the tools of a session"
+      ],
+      [
+        "codex",
+        "gpt-5.5",
+        "skills_first: [user:humanizer]\n",
+        "harness \"codex\" cannot load the user skill \"user:humanizer\" from the launch package"
+      ],
+      [
+        "codex",
+        "gpt-5.5",
+        "mcp: [user:engram]\n",
+        "harness \"codex\" cannot give a session the user mcp server \"user:engram\""
+      ],
+      [
+        "opencode",
+        "opencode/deepseek-v4.1-flash-free",
+        "subagents: [plan]\n",
+        "harness \"opencode\" cannot give a session subagents"
+      ],
+      [
+        "opencode",
+        "opencode/deepseek-v4.1-flash-free",
+        "tools: [read]\n",
+        "harness \"opencode\" cannot limit the tools of a session"
+      ],
+      [
+        "opencode",
+        "opencode/deepseek-v4.1-flash-free",
+        "agents_md: exclude\n",
+        "harness \"opencode\" cannot keep AGENTS.md out of a session"
+      ],
+      [
+        "opencode",
+        "opencode/deepseek-v4.1-flash-free",
+        "mcp: [user:engram]\n",
+        "harness \"opencode\" cannot give a session the user mcp server \"user:engram\""
+      ],
+      [
+        "pi",
+        "anthropic/claude-haiku-5-5",
+        "subagents: [plan]\n",
+        "harness \"pi\" cannot give a session subagents"
+      ],
+      [
+        "pi",
+        "anthropic/claude-haiku-5-5",
+        "mcp: [dbhub]\n",
+        "harness \"pi\" cannot give a session MCP servers"
+      ],
+      [
+        "pi",
+        "anthropic/claude-haiku-5-5",
+        "mcp: [user:engram]\n",
+        "harness \"pi\" cannot give a session MCP servers"
+      ]
+    ]
+  },
+  "project": {
+    "files": {
+      ".jitso/briefs/brief.md": {
+        "from": "brief.md"
+      },
+      "jitso/jitso.yaml": {
+        "from": "jitso.yaml"
+      },
+      "jitso/builds/h-worker.yaml": "# A build that asks its harness for what it cannot honor.\nid: h-worker\nversion: 1\nstatus: approved\nrole: operator\ntype: explorer\ndescription: Read-only search of the repo.\nharness: {{harness}}\nmodel: {{model}}\neffort: low\nroute_scope: [none]\n{{extra}}"
+    }
+  },
+  "home": {
+    "files": {
+      ".jitso/jitso.yaml": "version: 1\nskills: [humanizer]\nmcp: [engram]\n",
+      ".claude/skills/humanizer/SKILL.md": "---\nname: humanizer\ndescription: A user skill of the adapter cases.\n---\n\nWrite plainly.\n",
+      ".claude.json": "{\n  \"mcpServers\": {\n    \"engram\": {\n      \"command\": \"engram-cmd\",\n      \"args\": [\"mcp\"]\n    }\n  }\n}\n"
+    }
+  },
+  "steps": [
+    {
+      "run": [
+        "build",
+        "validate",
+        "h-worker"
+      ],
+      "expect": {
+        "exit": 2,
+        "stdout": [
+          {
+            "equals": "invalid h-worker repo jitso/builds/h-worker.yaml\n  {{problem}}\nchecked 1 builds: 0 ok, 1 invalid\n"
+          }
+        ]
+      }
+    },
+    {
+      "run": [
+        "launch",
+        "--build",
+        "h-worker",
+        "--brief",
+        "{{PROJECT}}/.jitso/briefs/brief.md",
+        "--mode",
+        "direct",
+        "--dry-run"
+      ],
+      "expect": {
+        "exit": 2,
+        "stdout": [
+          {
+            "empty": true
+          }
+        ],
+        "stderr": [
+          {
+            "equals": "JITSO REJECTED: {{problem}}\n"
+          }
+        ],
+        "orca_calls": {
+          "empty": true
+        }
+      }
+    }
+  ],
+  "id": "launch/harness/unsupported-fields-are-rejected"
+}

@@ -67,7 +67,12 @@ func writeFolder(p prepared, d Deps, dir string) (folder, error) {
 	if in.PackageDir, err = p.pkg.write(dir); err != nil {
 		return folder{}, err
 	}
+	if in.PackageDir != "" {
+		in.PackageSkills = p.pkg.skillNames()
+	}
 	in.GuardCommand = p.pkg.GuardCommand
+	in.GuardBinary = p.pkg.GuardBinary
+	in.LaunchDir = dir
 	spec, err := p.adapter.Spec(in)
 	if err != nil {
 		return folder{}, err
@@ -89,8 +94,15 @@ func writeFolder(p prepared, d Deps, dir string) (folder, error) {
 		{f.brief, BriefFile(p.card, SessionSkillNames(b.SkillsFirst), p.briefText, FieldsBlock(p.profile.Fields), card.Rules(string(p.args.Mode), b.Budget.Set))},
 		{in.MCPConfigPath, string(mcpJSON) + "\n"},
 		{filepath.Join(dir, FileCard), p.card + "\n"},
-		{runSh, script},
 	}
+	for _, f := range spec.Files {
+		path := filepath.Join(dir, filepath.FromSlash(f.Name))
+		if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
+			return folder{}, err
+		}
+		writes = append(writes, struct{ path, text string }{path, string(f.Data)})
+	}
+	writes = append(writes, struct{ path, text string }{runSh, script})
 	for _, w := range writes {
 		if err := os.WriteFile(w.path, []byte(w.text), 0o644); err != nil {
 			return folder{}, err
