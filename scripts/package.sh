@@ -9,7 +9,7 @@
 # Archives hold one folder jitso-<os>-<arch>/ with the binary, LICENSE and
 # README.md: jitso-<os>-<arch>.tar.gz (darwin, linux), jitso-<os>-<arch>.zip
 # (windows). checksums.txt has one line per asset, in the format of
-# sha256sum, and covers the archives and install.sh.
+# sha256sum, and covers the archives, install.sh and install.ps1.
 set -eu
 
 usage="usage: scripts/package.sh <version> <out dir> [<os>/<arch> ...]"
@@ -63,10 +63,10 @@ for t in $targets; do
     tar -C "$stage" -czf "$out/$name.tar.gz" "$name"
   fi
 done
-cp "$root/scripts/install.sh" "$out/install.sh"
+cp "$root/scripts/install.sh" "$root/scripts/install.ps1" "$out/"
 rm -rf "$stage"
 cd "$out"
-# Only the assets of this run: the archives of the requested targets, then install.sh.
+# Only the assets of this run: the archives of the requested targets, then the install scripts.
 set --
 for t in $targets; do
   os=${t%/*}
@@ -77,7 +77,7 @@ for t in $targets; do
     set -- "$@" "jitso-$os-$arch.tar.gz"
   fi
 done
-set -- "$@" install.sh
+set -- "$@" install.sh install.ps1
 if command -v sha256sum >/dev/null 2>&1; then
   sha256sum "$@" > checksums.txt
 elif command -v shasum >/dev/null 2>&1; then

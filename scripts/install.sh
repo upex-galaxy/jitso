@@ -54,7 +54,7 @@ case "$os" in
   Darwin|darwin) os=darwin ;;
   Linux|linux) os=linux ;;
   MINGW*|MSYS*|CYGWIN*|Windows_NT|windows)
-    die "Windows is not supported by this script. Download jitso-windows-amd64.zip (or jitso-windows-arm64.zip) and checksums.txt from $releases, check the SHA-256, and put jitso.exe on your PATH. jitso launch needs /bin/sh and does not run on Windows." ;;
+    die "Windows is not supported by this script. In PowerShell, download install.ps1 from $releases (latest/download/install.ps1), read it, and run it: .\\install.ps1. jitso launch needs /bin/sh and does not run on Windows." ;;
   *) die "unsupported operating system: $os (supported: darwin, linux)" ;;
 esac
 arch=${JITSO_ARCH:-$(uname -m)}

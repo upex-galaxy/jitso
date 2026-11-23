@@ -3,10 +3,20 @@ package cli
 import (
 	"crypto/rand"
 	"os"
+	"runtime"
 	"time"
 
+	"github.com/upex-galaxy/jitso/internal/fail"
 	"github.com/upex-galaxy/jitso/internal/launch"
 )
+
+// launchGOOS is runtime.GOOS; a test sets it to look at another system.
+var launchGOOS = runtime.GOOS
+
+// launchWindows is the one line a real launch prints on Windows. docs/decisions.md
+// records why: a launch writes run.sh and starts it through /bin/sh in an Orca
+// terminal, and nothing proves another way works there.
+const launchWindows = "jitso launch does not run on Windows: it starts each worker through /bin/sh in an Orca terminal. Run it on macOS, Linux or WSL; --dry-run, build, doctor, init and the other commands work here."
 
 // cmd_launch.go is `jitso launch`. The arguments are parsed and checked first
 // (pure, no project needed), then a real launch checks that orca is on PATH
@@ -54,6 +64,9 @@ func runLaunch(ctx *Context, argv []string) error {
 	}
 	// A dry run calls no Orca, so only a real launch needs it.
 	if !args.DryRun {
+		if launchGOOS == "windows" {
+			return fail.Env(launchWindows)
+		}
 		if err := ctx.OrcaInstalled(); err != nil {
 			return err
 		}
