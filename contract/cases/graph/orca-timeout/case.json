@@ -1,0 +1,56 @@
+{
+  "id": "graph/orca-timeout",
+  "title": "an Orca call that does not answer is given up after 10 s: graph --json prints the rest of the snapshot with a notice that says so and exits 3",
+  "source": [
+    "intended: docs/decisions.md, release 2 of the communication plan"
+  ],
+  "intent": "A hung orca must not freeze the view. Only graph gives its Orca calls a time limit; launch, close and reap wait as before.",
+  "project": {
+    "files": {
+      ".jitso/launches.jsonl": {
+        "from": "launches.jsonl"
+      }
+    }
+  },
+  "orca": {
+    "listed": [
+      "term_a",
+      "term_e",
+      "term_x"
+    ],
+    "delay_ms": {
+      "orchestration inbox": 40000
+    }
+  },
+  "steps": [
+    {
+      "run": [
+        "graph",
+        "--json"
+      ],
+      "expect": {
+        "exit": 3,
+        "stdout": [
+          {
+            "contains": "\"orca\": true,\n  \"notices\": [\n    \"Orca did not answer in time (orchestration inbox): only the synapses recorded with jitso link are shown.\"\n  ],"
+          },
+          {
+            "contains": "\"from\": \"L20261125T100300-e5e5\",\n      \"to\": \"term_x\",\n      \"direction\": \"one-way\",\n      \"forward\": 2,"
+          }
+        ],
+        "stderr": [
+          {
+            "equals": "jitso: orca orchestration inbox did not answer within 10 s\n"
+          }
+        ],
+        "orca_calls": {
+          "verbs": [
+            "terminal list",
+            "orchestration inbox"
+          ]
+        },
+        "elapsed_ms_lt": 30000
+      }
+    }
+  ]
+}

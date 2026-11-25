@@ -1,0 +1,85 @@
+{
+  "id": "link/no-orca",
+  "title": "with no orca on PATH link still records what the registry alone resolves; a reference that needs Orca is exit 3 with the install line and writes nothing",
+  "source": [
+    "intended: docs/decisions.md, release 2 of the communication plan; orca/missing/not-on-path for the exit code and the text"
+  ],
+  "tags": [
+    "posix"
+  ],
+  "project": {
+    "files": {
+      ".jitso/launches.jsonl": {
+        "from": "launches.jsonl"
+      }
+    }
+  },
+  "steps": [
+    {
+      "run": [
+        "link",
+        "L20261125T100000-a1a1",
+        "[jitso:L20261125T100100-b2b2] haiku-explorer"
+      ],
+      "env": {
+        "ORCA_CLI_COMMAND": "",
+        "PATH": "/usr/bin:/bin"
+      },
+      "expect": {
+        "exit": 0,
+        "stdout": [
+          {
+            "equals": "jitso link: L20261125T100000-a1a1 -> L20261125T100100-b2b2 recorded\n"
+          }
+        ],
+        "stderr": [
+          {
+            "empty": true
+          }
+        ],
+        "orca_calls": {
+          "empty": true
+        },
+        "registry": {
+          "count": 3
+        }
+      }
+    },
+    {
+      "run": [
+        "link",
+        "L20261125T100000-a1a1",
+        "term_x"
+      ],
+      "env": {
+        "ORCA_CLI_COMMAND": "",
+        "PATH": "/usr/bin:/bin"
+      },
+      "expect": {
+        "exit": 3,
+        "stdout": [
+          {
+            "empty": true
+          }
+        ],
+        "stderr": [
+          {
+            "equals": "jitso: Orca is not installed (orca is not on PATH). jitso opens and tracks each worker in an Orca terminal: install Orca from https://github.com/stablyai/orca, open it once, then run jitso doctor.\n"
+          }
+        ],
+        "orca_calls": {
+          "empty": true
+        },
+        "registry": {
+          "count": 3
+        },
+        "files": [
+          {
+            "path": ".jitso/launches.lock",
+            "exists": false
+          }
+        ]
+      }
+    }
+  ]
+}

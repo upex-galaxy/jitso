@@ -31,6 +31,9 @@ type System struct {
 	Rand io.Reader
 	// Orca runs the orca program.
 	Orca orca.Runner
+	// OrcaWithin is a runner that gives up on a call after a limit
+	// (orca.ExecRunnerTimeout); when nil, Orca is used.
+	OrcaWithin func(limit time.Duration) orca.Runner
 	// StdinIsTerminal reports whether standard input is a terminal
 	// (tty.IsTerminal(os.Stdin)); nil means it is not. A command that asks
 	// a person a question asks only when it is true.
@@ -148,6 +151,21 @@ func (c *Context) Orca() *orca.Client {
 	run := c.Sys.Orca
 	if run == nil {
 		run = orca.ExecRunner(orca.Command(c.lookupEnv()))
+	}
+	return orca.NewClient(run)
+}
+
+// OrcaWithin is a client whose calls are given up after limit, for the command
+// that must stay responsive.
+func (c *Context) OrcaWithin(limit time.Duration) *orca.Client {
+	var run orca.Runner
+	switch {
+	case c.Sys.OrcaWithin != nil:
+		run = c.Sys.OrcaWithin(limit)
+	case c.Sys.Orca != nil:
+		run = c.Sys.Orca
+	default:
+		run = orca.ExecRunnerTimeout(orca.Command(c.lookupEnv()), limit)
 	}
 	return orca.NewClient(run)
 }

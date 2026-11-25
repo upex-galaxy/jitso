@@ -1,0 +1,64 @@
+{
+  "id": "graph/inbox-failure",
+  "title": "when the Orca inbox fails graph --json prints the nodes and the recorded links with a notice, names the failed call without Orca's text and exits 3",
+  "source": [
+    "intended: docs/decisions.md, release 2 of the communication plan"
+  ],
+  "intent": "The inbox is the one call whose answer holds message content, so its failure line carries the error code alone, never the message or the output of Orca.",
+  "project": {
+    "files": {
+      ".jitso/launches.jsonl": {
+        "from": "launches.jsonl"
+      }
+    }
+  },
+  "orca": {
+    "listed": [
+      "term_a",
+      "term_e",
+      "term_x"
+    ],
+    "errors": {
+      "orchestration inbox": {
+        "code": "fake_failure",
+        "message": "LEAK-BODY"
+      }
+    }
+  },
+  "steps": [
+    {
+      "run": [
+        "graph",
+        "--json"
+      ],
+      "expect": {
+        "exit": 3,
+        "stdout": [
+          {
+            "contains": "\"orca\": true,\n  \"notices\": [\n    \"Orca messages could not be read: only the synapses recorded with jitso link are shown.\"\n  ],"
+          },
+          {
+            "contains": "\"from\": \"L20261125T100300-e5e5\",\n      \"to\": \"term_x\",\n      \"direction\": \"one-way\",\n      \"forward\": 2,"
+          },
+          {
+            "not_contains": "LEAK"
+          }
+        ],
+        "stderr": [
+          {
+            "equals": "jitso: orca orchestration inbox failed (fake_failure)\n"
+          }
+        ],
+        "orca_calls": {
+          "verbs": [
+            "terminal list",
+            "orchestration inbox"
+          ]
+        },
+        "registry": {
+          "count": 12
+        }
+      }
+    }
+  ]
+}

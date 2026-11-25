@@ -1,0 +1,48 @@
+{
+  "id": "graph/terminal-list-failure",
+  "title": "when the terminal list fails graph --json shows the registry alone with a notice, does not read the inbox and exits 3",
+  "source": [
+    "intended: docs/decisions.md, release 2 of the communication plan"
+  ],
+  "project": {
+    "files": {
+      ".jitso/launches.jsonl": {
+        "from": "launches.jsonl"
+      }
+    }
+  },
+  "orca": {
+    "fail_on": [
+      "terminal list"
+    ]
+  },
+  "steps": [
+    {
+      "run": [
+        "graph",
+        "--json"
+      ],
+      "expect": {
+        "exit": 3,
+        "stdout": [
+          {
+            "contains": "\"orca\": false,\n  \"notices\": [\n    \"Orca did not list its terminals: only the registry is shown, and Orca messages are not read.\"\n  ],"
+          },
+          {
+            "contains": "\"state\": \"unknown\""
+          }
+        ],
+        "stderr": [
+          {
+            "equals": "jitso: orca terminal list failed: terminal list failed\n"
+          }
+        ],
+        "orca_calls": {
+          "verbs": [
+            "terminal list"
+          ]
+        }
+      }
+    }
+  ]
+}

@@ -38,6 +38,9 @@ func NewClient(run Runner) *Client { return &Client{run: run} }
 func (c *Client) Call(args []string) (map[string]any, error) {
 	out := c.run(args)
 	verb := strings.Join(args[:min(2, len(args))], " ")
+	if out.Status == StatusTimeout {
+		return nil, timedOut(verb, out)
+	}
 	var parsed any
 	if err := json.Unmarshal([]byte(out.Stdout), &parsed); err != nil {
 		return nil, &Error{Message: "orca " + verb + " gave no JSON (exit " + status(out.Status) + "): " + clip(strings.TrimSpace(out.Stderr), 200)}
@@ -62,6 +65,11 @@ func (c *Client) Call(args []string) (map[string]any, error) {
 		result = map[string]any{}
 	}
 	return result, nil
+}
+
+// timedOut is the error of a call the runner gave up on.
+func timedOut(verb string, out Result) error {
+	return &Error{Code: CodeTimeout, Message: "orca " + verb + " " + out.Stderr}
 }
 
 func status(s int) string {

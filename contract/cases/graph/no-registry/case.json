@@ -1,0 +1,81 @@
+{
+  "id": "graph/no-registry",
+  "title": "in a repository with no JITSO registry there is no project fleet, even for a terminal in the checkout, and graph writes nothing; once the registry exists that terminal is of the project",
+  "source": [
+    "intended: docs/decisions.md, release 2 of the communication plan"
+  ],
+  "intent": "A repository that has never launched anything has no fleet to show. The registry is read on every snapshot, so the first launch brings the project view back.",
+  "orca": {
+    "responses": {
+      "terminal list": {
+        "terminals": [
+          {
+            "handle": "term_p",
+            "worktreePath": "{{PROJECT}}",
+            "title": "owner"
+          }
+        ]
+      }
+    }
+  },
+  "steps": [
+    {
+      "run": [
+        "graph",
+        "--json"
+      ],
+      "expect": {
+        "exit": 0,
+        "stdout": [
+          {
+            "contains": "\"project_empty\": \"No project fleet: this repository has no JITSO registry (.jitso/launches.jsonl).\",\n"
+          },
+          {
+            "regex": "(?s)\"key\": \"term_p\",.*?\"folder\": \"project\",.*?\"project\": false"
+          }
+        ],
+        "stderr": [
+          {
+            "empty": true
+          }
+        ],
+        "files": [
+          {
+            "path": ".jitso",
+            "exists": false
+          }
+        ]
+      }
+    },
+    {
+      "write": {
+        "project": {
+          ".jitso/launches.jsonl": ""
+        }
+      }
+    },
+    {
+      "run": [
+        "graph",
+        "--json"
+      ],
+      "expect": {
+        "exit": 0,
+        "stdout": [
+          {
+            "contains": "\"project_empty\": null,\n"
+          },
+          {
+            "regex": "(?s)\"key\": \"term_p\",.*?\"project\": true"
+          }
+        ],
+        "files": [
+          {
+            "path": ".jitso/launches.lock",
+            "exists": false
+          }
+        ]
+      }
+    }
+  ]
+}

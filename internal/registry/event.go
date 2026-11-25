@@ -6,11 +6,15 @@
 // rewritten. Every write is one line under the launches.lock folder (mkdir is
 // atomic), so concurrent writers never interleave.
 //
-// Writers build one of the typed records (LaunchEvent, EndEvent). Readers get
-// Event values: the decoded JSON object of a valid line, read through tolerant
-// accessors, because lines may be written by other versions or by hand and
-// carry fields of any type. An event of any other kind (an older binary wrote
-// analyzed and rule_break lines) is an invalid line and is skipped.
+// A link event is not part of a launch: it says that one session talked to
+// another (jitso link). The fold leaves it out and Links reads it.
+//
+// Writers build one of the typed records (LaunchEvent, EndEvent, LinkEvent).
+// Readers get Event values: the decoded JSON object of a valid line, read
+// through tolerant accessors, because lines may be written by other versions or
+// by hand and carry fields of any type. An event of any other kind (an older
+// binary wrote analyzed and rule_break lines) is an invalid line and is
+// skipped.
 package registry
 
 import (
@@ -23,6 +27,7 @@ import (
 const (
 	KindLaunch = "launch"
 	KindEnd    = "end"
+	KindLink   = "link"
 )
 
 // Version is the schema version of every line a writer appends and the only one
@@ -48,8 +53,34 @@ func IsLaunchID(s string) bool { return launchIDPattern.MatchString(s) }
 // objects map[string]any, lists []any).
 type Event map[string]any
 
-// Kind is the event field: launch or end.
+// Kind is the event field: launch, end or link.
 func (e Event) Kind() string { s, _ := e["event"].(string); return s }
+
+// Link is one link event: the session on each side, by launch id and terminal
+// handle ("" for what the line does not name), and when it was recorded.
+type Link struct {
+	FromID, FromHandle string
+	ToID, ToHandle     string
+	TS                 string
+}
+
+// Links are the link events among events, in file order.
+func Links(events []Event) []Link {
+	var links []Link
+	for _, e := range events {
+		if e.Kind() != KindLink {
+			continue
+		}
+		var l Link
+		l.FromID, _ = e.String("from.id")
+		l.FromHandle, _ = e.String("from.handle")
+		l.ToID, _ = e.String("to.id")
+		l.ToHandle, _ = e.String("to.handle")
+		l.TS, _ = e.String("ts")
+		links = append(links, l)
+	}
+	return links
+}
 
 // ID is the id field, "" when it is null or not a string.
 func (e Event) ID() string { s, _ := e["id"].(string); return s }

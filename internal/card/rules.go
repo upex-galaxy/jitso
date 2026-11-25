@@ -3,11 +3,12 @@ package card
 import "strings"
 
 // Communication is the three lines about reaching another session that close
-// every rules text: how to find a peer, how to send, how to answer. The text
-// is fixed and the same in both modes.
+// every rules text: how to find a peer, how to send (and, after a SendMessage,
+// which leaves no trace jitso can read, how to record it), how to answer. The
+// text is fixed and the same in both modes.
 var Communication = []string{
 	"Find another session with `jitso fleet` (read only); your own row is the one with your launch id.",
-	"Between two Claude Code sessions use `SendMessage` to the session name; otherwise use `orca orchestration send --to <handle> --from <your handle> --subject <s> --body <b>`.",
+	"Between two Claude Code sessions use `SendMessage` to the session name, then run `jitso link <your launch id> <peer>`; otherwise use `orca orchestration send --to <handle> --from <your handle> --subject <s> --body <b>`.",
 	"Put your own handle and session name in every message, so the peer can answer with `orca orchestration reply --id <msg_id> --body <b>`.",
 }
 

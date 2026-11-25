@@ -1,0 +1,266 @@
+{
+  "id": "graph/synapses",
+  "title": "a synapse joins two sessions that talked, from Orca messages and recorded links: one-way or two-way with the count of each direction and the last time, run: and dispatch: addresses resolved to terminals, and never any message content",
+  "source": [
+    "intended: docs/decisions.md, release 2 of the communication plan; orca orchestration inbox, run-list and worker-list --help for the call shapes"
+  ],
+  "intent": "A message to run:<id> belongs to the terminal that coordinates the run (run-list), and a dispatch:<id> address to the terminal of that worker (worker-list --run, asked only when the other end is a session of the snapshot). A heartbeat is no talk; a message to oneself, to a session that is not shown or from an address that does not resolve makes no edge; a link to a closed launch that is not shown makes none. Only direction, count and last time leave the message store: subject, body and payload appear in no output and no file.",
+  "project": {
+    "files": {
+      ".jitso/launches.jsonl": {
+        "from": "launches.jsonl"
+      }
+    }
+  },
+  "orca": {
+    "responses": {
+      "terminal list": {
+        "terminals": [
+          {
+            "handle": "term_a",
+            "worktreePath": "{{PROJECT}}",
+            "title": "conductor"
+          },
+          {
+            "handle": "term_b",
+            "worktreePath": "{{PROJECT}}",
+            "title": "explorer"
+          },
+          {
+            "handle": "term_e",
+            "worktreePath": "{{PROJECT}}",
+            "title": "codex"
+          },
+          {
+            "handle": "term_x",
+            "worktreePath": "/work/other",
+            "title": "reviewer"
+          },
+          {
+            "handle": "term_y",
+            "worktreePath": "/work/other",
+            "title": "zsh"
+          }
+        ]
+      },
+      "orchestration inbox": {
+        "count": 9,
+        "messages": [
+          {
+            "id": "msg_9",
+            "sequence": 9,
+            "type": "status",
+            "from_handle": "dispatch:ctx_7",
+            "to_handle": "term_unlisted",
+            "run_id": "run_2",
+            "created_at": "2026-11-25T10:40:00Z",
+            "subject": "LEAK-SUBJECT",
+            "body": "LEAK-BODY",
+            "payload": "LEAK-PAYLOAD"
+          },
+          {
+            "id": "msg_8",
+            "sequence": 8,
+            "type": "question",
+            "from_handle": "dispatch:ctx_unknown",
+            "to_handle": "run:run_1",
+            "run_id": "run_1",
+            "created_at": "2026-11-25T10:39:00Z",
+            "subject": "LEAK-SUBJECT",
+            "body": "LEAK-BODY",
+            "payload": "LEAK-PAYLOAD"
+          },
+          {
+            "id": "msg_7",
+            "sequence": 7,
+            "type": "status",
+            "from_handle": "term_a",
+            "to_handle": "run:run_1",
+            "run_id": "run_1",
+            "created_at": "2026-11-25T10:38:00Z",
+            "subject": "LEAK-SUBJECT",
+            "body": "LEAK-BODY",
+            "payload": "LEAK-PAYLOAD"
+          },
+          {
+            "id": "msg_6",
+            "sequence": 6,
+            "type": "escalation",
+            "from_handle": "term_unlisted",
+            "to_handle": "term_a",
+            "run_id": null,
+            "created_at": "2026-11-25T10:37:00Z",
+            "subject": "LEAK-SUBJECT",
+            "body": "LEAK-BODY",
+            "payload": "LEAK-PAYLOAD"
+          },
+          {
+            "id": "msg_5",
+            "sequence": 5,
+            "type": "heartbeat",
+            "from_handle": "term_e",
+            "to_handle": "run:run_1",
+            "run_id": "run_1",
+            "created_at": "2026-11-25T10:36:00Z",
+            "subject": "LEAK-SUBJECT",
+            "body": "LEAK-BODY",
+            "payload": "LEAK-PAYLOAD"
+          },
+          {
+            "id": "msg_4",
+            "sequence": 4,
+            "type": "question",
+            "from_handle": "term_x",
+            "to_handle": "term_y",
+            "run_id": null,
+            "created_at": "2026-11-25T10:31:00Z",
+            "thread_id": "LEAK-THREAD",
+            "subject": "LEAK-SUBJECT",
+            "body": "LEAK-BODY",
+            "payload": "LEAK-PAYLOAD"
+          },
+          {
+            "id": "msg_3",
+            "sequence": 3,
+            "type": "status",
+            "from_handle": "term_x",
+            "to_handle": "term_y",
+            "run_id": null,
+            "created_at": "2026-11-25T10:30:00Z",
+            "subject": "LEAK-SUBJECT",
+            "body": "LEAK-BODY",
+            "payload": "LEAK-PAYLOAD"
+          },
+          {
+            "id": "msg_2",
+            "sequence": 2,
+            "type": "status",
+            "from_handle": "run:run_1",
+            "to_handle": "dispatch:ctx_1",
+            "run_id": "run_1",
+            "created_at": "2026-11-25T10:25:00Z",
+            "subject": "LEAK-SUBJECT",
+            "body": "LEAK-BODY",
+            "payload": "LEAK-PAYLOAD"
+          },
+          {
+            "id": "msg_1",
+            "sequence": 1,
+            "type": "worker_done",
+            "from_handle": "term_b",
+            "to_handle": "run:run_1",
+            "run_id": "run_1",
+            "created_at": "2026-11-25T10:20:00Z",
+            "subject": "LEAK-SUBJECT",
+            "body": "LEAK-BODY",
+            "payload": "LEAK-PAYLOAD"
+          }
+        ]
+      },
+      "orchestration run-list": {
+        "runs": [
+          {
+            "id": "run_1",
+            "coordinator_handle": "term_a",
+            "objective": "fixture"
+          },
+          {
+            "id": "run_2",
+            "coordinator_handle": null,
+            "objective": "fixture"
+          }
+        ],
+        "nextCursor": null
+      },
+      "orchestration worker-list": {
+        "workers": [
+          {
+            "dispatchId": "ctx_1",
+            "runId": "run_1",
+            "agentTerminalHandle": "term_b"
+          }
+        ],
+        "page": {
+          "hasMore": false,
+          "nextCursor": null
+        }
+      }
+    }
+  },
+  "steps": [
+    {
+      "run": [
+        "graph",
+        "--json"
+      ],
+      "expect": {
+        "exit": 0,
+        "stdout": [
+          {
+            "contains": "\n  \"synapses\": [\n    {\n      \"from\": \"L20261125T100000-a1a1\",\n      \"to\": \"L20261125T100100-b2b2\",\n      \"direction\": \"two-way\",\n      \"forward\": 1,\n      \"back\": 1,\n      \"last\": \"2026-11-25T10:25:00.000Z\"\n    },\n    {\n      \"from\": \"L20261125T100200-c3c3\",\n      \"to\": \"L20261125T100000-a1a1\",\n      \"direction\": \"one-way\",\n      \"forward\": 1,\n      \"back\": 0,\n      \"last\": \"2026-11-25T11:10:00.000Z\"\n    },\n    {\n      \"from\": \"L20261125T100300-e5e5\",\n      \"to\": \"term_x\",\n      \"direction\": \"one-way\",\n      \"forward\": 2,\n      \"back\": 0,\n      \"last\": \"2026-11-25T11:05:00.000Z\"\n    },\n    {\n      \"from\": \"term_x\",\n      \"to\": \"term_y\",\n      \"direction\": \"one-way\",\n      \"forward\": 2,\n      \"back\": 0,\n      \"last\": \"2026-11-25T10:31:00.000Z\"\n    }\n  ]\n}\n"
+          },
+          {
+            "not_contains": "LEAK"
+          },
+          {
+            "not_contains": "term_unlisted"
+          }
+        ],
+        "stderr": [
+          {
+            "empty": true
+          }
+        ],
+        "orca_calls": {
+          "verbs": [
+            "terminal list",
+            "orchestration inbox",
+            "orchestration run-list",
+            "orchestration worker-list"
+          ],
+          "calls": [
+            {
+              "at": 2,
+              "argv": [
+                "orchestration",
+                "run-list",
+                "--full"
+              ]
+            },
+            {
+              "at": 3,
+              "argv": [
+                "orchestration",
+                "worker-list",
+                "--run",
+                "run_1",
+                "--limit",
+                "100",
+                "--full"
+              ]
+            }
+          ]
+        },
+        "registry": {
+          "count": 12
+        },
+        "files": [
+          {
+            "path": ".jitso/launches.jsonl",
+            "not_contains": [
+              "LEAK"
+            ]
+          },
+          {
+            "path": ".jitso",
+            "entries": [
+              {
+                "equals": "launches.jsonl"
+              }
+            ]
+          }
+        ]
+      }
+    }
+  ]
+}

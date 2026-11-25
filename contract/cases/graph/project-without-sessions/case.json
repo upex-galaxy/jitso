@@ -1,0 +1,55 @@
+{
+  "id": "graph/project-without-sessions",
+  "title": "a project whose launches have all ended and with no terminal in its checkouts says in project_empty that it has no session open",
+  "source": [
+    "intended: docs/decisions.md, release 2 of the communication plan"
+  ],
+  "intent": "The page reads project_empty to open on every Orca session instead of an empty sky, and to say why.",
+  "project": {
+    "files": {
+      ".jitso/launches.jsonl": {
+        "from": "launches.jsonl"
+      }
+    }
+  },
+  "orca": {
+    "responses": {
+      "terminal list": {
+        "terminals": [
+          {
+            "handle": "term_y",
+            "worktreePath": "/work/other",
+            "title": "elsewhere"
+          }
+        ]
+      }
+    }
+  },
+  "steps": [
+    {
+      "run": [
+        "graph",
+        "--json"
+      ],
+      "expect": {
+        "exit": 0,
+        "stdout": [
+          {
+            "contains": "\"project_empty\": \"No project fleet: no session of this project is open.\",\n"
+          },
+          {
+            "regex": "(?s)\"key\": \"term_y\",.*?\"folder\": \"other\",.*?\"project\": false"
+          },
+          {
+            "not_contains": "d4d4"
+          }
+        ],
+        "stderr": [
+          {
+            "empty": true
+          }
+        ]
+      }
+    }
+  ]
+}

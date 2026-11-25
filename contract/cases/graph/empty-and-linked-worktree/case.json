@@ -1,0 +1,66 @@
+{
+  "id": "graph/empty-and-linked-worktree",
+  "title": "a terminal in a linked worktree belongs to the project, graph works from inside one, and with an empty registry it prints empty edge lists and writes nothing",
+  "source": [
+    "intended: docs/decisions.md, release 2 of the communication plan"
+  ],
+  "project": {
+    "files": {
+      ".jitso/launches.jsonl": ""
+    }
+  },
+  "orca": {
+    "responses": {
+      "terminal list": {
+        "terminals": [
+          {
+            "handle": "term_w",
+            "worktreePath": "{{WORKTREE_side}}",
+            "title": "side"
+          }
+        ]
+      }
+    }
+  },
+  "steps": [
+    {
+      "git_worktree": {
+        "name": "side"
+      }
+    },
+    {
+      "run": [
+        "graph",
+        "--json"
+      ],
+      "cwd": "{{WORKTREE_side}}",
+      "expect": {
+        "exit": 0,
+        "stdout": [
+          {
+            "regex": "(?s)\"key\": \"term_w\",.*?\"project\": true\\n    \\}\\n  \\],\\n  \"hierarchy\": \\[\\],\\n  \"synapses\": \\[\\]\\n\\}\\n$"
+          }
+        ],
+        "stderr": [
+          {
+            "empty": true
+          }
+        ],
+        "files": [
+          {
+            "path": ".jitso",
+            "entries": [
+              {
+                "equals": "launches.jsonl"
+              }
+            ]
+          },
+          {
+            "path": ".jitso/launches.jsonl",
+            "equals": ""
+          }
+        ]
+      }
+    }
+  ]
+}

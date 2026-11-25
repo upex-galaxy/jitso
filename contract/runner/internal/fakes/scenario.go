@@ -31,6 +31,9 @@ type Scenario struct {
 	Responses map[string]json.RawMessage `json:"responses"`
 	// CloseKeepsListed keeps a closed handle in `terminal list`.
 	CloseKeepsListed bool `json:"close_keeps_listed"`
+	// DelayMS is how long the fake waits before it answers a verb, after it
+	// logged the call.
+	DelayMS map[string]int `json:"delay_ms"`
 	// Claude holds the fake claude knobs, from the case field `claude`.
 	Claude ClaudeScenario `json:"claude"`
 }
@@ -86,7 +89,7 @@ func ParseScenario(v any, project string) (Scenario, error) {
 	if err != nil {
 		return sc, err
 	}
-	if err := jsonx.Keys(obj, "orca", "handle", "cwd", "screens", "wait_times_out", "wait_blocked", "fail_on", "errors", "listed", "responses", "close_keeps_listed"); err != nil {
+	if err := jsonx.Keys(obj, "orca", "handle", "cwd", "screens", "wait_times_out", "wait_blocked", "fail_on", "errors", "listed", "responses", "close_keeps_listed", "delay_ms"); err != nil {
 		return sc, err
 	}
 	if raw, ok := obj["handle"]; ok {
@@ -126,6 +129,23 @@ func ParseScenario(v any, project string) (Scenario, error) {
 	if raw, ok := obj["close_keeps_listed"]; ok {
 		if sc.CloseKeepsListed, err = jsonx.Bool(raw, "orca.close_keeps_listed"); err != nil {
 			return sc, err
+		}
+	}
+	if raw, ok := obj["delay_ms"]; ok {
+		delays, err := jsonx.Object(raw, "orca.delay_ms")
+		if err != nil {
+			return sc, err
+		}
+		sc.DelayMS = map[string]int{}
+		for verb, item := range delays {
+			ms, err := jsonx.Int(item, "orca.delay_ms."+verb)
+			if err != nil {
+				return sc, err
+			}
+			if ms < 0 {
+				return sc, fmt.Errorf("orca.delay_ms.%s: want 0 or more, got %d", verb, ms)
+			}
+			sc.DelayMS[verb] = ms
 		}
 	}
 	if raw, ok := obj["fail_on"]; ok {

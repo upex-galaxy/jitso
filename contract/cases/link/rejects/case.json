@@ -1,0 +1,242 @@
+{
+  "id": "link/rejects",
+  "title": "link rejects (exit 2) an unknown or ambiguous reference, two references to the same session and a wrong argument count, and writes nothing; --help prints the usage",
+  "source": [
+    "intended: docs/decisions.md, release 2 of the communication plan"
+  ],
+  "intent": "A wrong synapse is worse than a missing one: a reference that names no session or more than one session is an error that says what to use instead. The arguments are checked before the registry or Orca is touched.",
+  "project": {
+    "files": {
+      ".jitso/launches.jsonl": {
+        "from": "launches.jsonl"
+      }
+    }
+  },
+  "orca": {
+    "responses": {
+      "terminal list": {
+        "terminals": [
+          {
+            "handle": "term_a",
+            "worktreePath": "/work/repo",
+            "title": "conductor tab"
+          },
+          {
+            "handle": "term_x",
+            "worktreePath": "/work/other",
+            "title": "zsh"
+          },
+          {
+            "handle": "term_y",
+            "worktreePath": "/work/other",
+            "title": "zsh"
+          }
+        ]
+      }
+    }
+  },
+  "steps": [
+    {
+      "run": [
+        "link"
+      ],
+      "expect": {
+        "exit": 2,
+        "stdout": [
+          {
+            "empty": true
+          }
+        ],
+        "stderr": [
+          {
+            "equals": "JITSO REJECTED: usage: jitso link <from> <to>\n"
+          }
+        ],
+        "orca_calls": {
+          "empty": true
+        }
+      }
+    },
+    {
+      "run": [
+        "link",
+        "term_a"
+      ],
+      "expect": {
+        "exit": 2,
+        "stderr": [
+          {
+            "equals": "JITSO REJECTED: usage: jitso link <from> <to>\n"
+          }
+        ],
+        "orca_calls": {
+          "empty": true
+        }
+      }
+    },
+    {
+      "run": [
+        "link",
+        "term_a",
+        "term_x",
+        "term_y"
+      ],
+      "expect": {
+        "exit": 2,
+        "stderr": [
+          {
+            "equals": "JITSO REJECTED: usage: jitso link <from> <to>\n"
+          }
+        ],
+        "orca_calls": {
+          "empty": true
+        }
+      }
+    },
+    {
+      "run": [
+        "link",
+        "term_a",
+        ""
+      ],
+      "expect": {
+        "exit": 2,
+        "stderr": [
+          {
+            "equals": "JITSO REJECTED: usage: jitso link <from> <to>\n"
+          }
+        ],
+        "orca_calls": {
+          "empty": true
+        }
+      }
+    },
+    {
+      "run": [
+        "link",
+        "--json",
+        "term_a",
+        "term_x"
+      ],
+      "expect": {
+        "exit": 2,
+        "stderr": [
+          {
+            "equals": "JITSO REJECTED: usage: jitso link <from> <to>\n"
+          }
+        ],
+        "orca_calls": {
+          "empty": true
+        }
+      }
+    },
+    {
+      "run": [
+        "link",
+        "--help"
+      ],
+      "expect": {
+        "exit": 0,
+        "stdout": [
+          {
+            "contains": "usage: jitso link <from> <to>"
+          }
+        ],
+        "stderr": [
+          {
+            "empty": true
+          }
+        ],
+        "orca_calls": {
+          "empty": true
+        },
+        "registry": {
+          "count": 1
+        }
+      }
+    },
+    {
+      "run": [
+        "link",
+        "L20261125T100000-a1a1",
+        "nobody"
+      ],
+      "expect": {
+        "exit": 2,
+        "stdout": [
+          {
+            "empty": true
+          }
+        ],
+        "stderr": [
+          {
+            "equals": "JITSO REJECTED: unknown session \"nobody\": give a launch id, a terminal handle or a session title (see jitso fleet)\n"
+          }
+        ],
+        "registry": {
+          "count": 1
+        }
+      }
+    },
+    {
+      "run": [
+        "link",
+        "zsh",
+        "L20261125T100000-a1a1"
+      ],
+      "expect": {
+        "exit": 2,
+        "stderr": [
+          {
+            "equals": "JITSO REJECTED: \"zsh\" names 2 sessions (term_x, term_y): use a terminal handle or a launch id\n"
+          }
+        ],
+        "registry": {
+          "count": 1
+        }
+      }
+    },
+    {
+      "run": [
+        "link",
+        "L20261125T100000-a1a1",
+        "conductor tab"
+      ],
+      "expect": {
+        "exit": 2,
+        "stderr": [
+          {
+            "equals": "JITSO REJECTED: \"L20261125T100000-a1a1\" and \"conductor tab\" are the same session\n"
+          }
+        ],
+        "registry": {
+          "count": 1
+        }
+      }
+    },
+    {
+      "run": [
+        "link",
+        "term_a",
+        "L20261125T100000-a1a1"
+      ],
+      "expect": {
+        "exit": 2,
+        "stderr": [
+          {
+            "equals": "JITSO REJECTED: \"term_a\" and \"L20261125T100000-a1a1\" are the same session\n"
+          }
+        ],
+        "registry": {
+          "count": 1
+        },
+        "files": [
+          {
+            "path": ".jitso/launches.lock",
+            "exists": false
+          }
+        ]
+      }
+    }
+  ]
+}

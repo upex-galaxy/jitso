@@ -1,0 +1,123 @@
+{
+  "id": "graph/json-nodes-and-hierarchy",
+  "title": "graph --json prints one snapshot: a node per open launch and per unlaunched terminal, a closed launch only as an ancestor, hierarchy edges from parent to child, and no synapse between sessions that never talked",
+  "source": [
+    "intended: docs/decisions.md, release 2 of the communication plan"
+  ],
+  "intent": "The nodes carry the state of jitso fleet plus the session name (the title the launch gave) apart from the tab title Orca shows now, the folder name of its worktree, and a project flag: every launch, and a terminal in a checkout of this project. Without a message or a recorded link there is no synapse at all.",
+  "project": {
+    "files": {
+      ".jitso/launches.jsonl": {
+        "from": "launches.jsonl"
+      }
+    }
+  },
+  "orca": {
+    "responses": {
+      "terminal list": {
+        "terminals": [
+          {
+            "handle": "term_a",
+            "worktreeId": "uuid-1::{{PROJECT}}",
+            "worktreePath": "{{PROJECT}}",
+            "branch": "main",
+            "title": "✳ conducting"
+          },
+          {
+            "handle": "term_b",
+            "worktreePath": "{{PROJECT}}",
+            "branch": "main",
+            "title": "[jitso:L20261125T100100-b2b2] haiku-explorer"
+          },
+          {
+            "handle": "term_e",
+            "worktreePath": "{{PROJECT}}",
+            "branch": "main",
+            "title": "codex"
+          },
+          {
+            "handle": "term_x",
+            "worktreePath": "{{PROJECT}}",
+            "branch": "main",
+            "title": "reviewer session"
+          },
+          {
+            "handle": "term_y",
+            "worktreePath": "/work/other",
+            "branch": "feature",
+            "title": "zsh"
+          }
+        ]
+      }
+    }
+  },
+  "steps": [
+    {
+      "run": [
+        "graph",
+        "--json"
+      ],
+      "expect": {
+        "exit": 0,
+        "stdout": [
+          {
+            "regex": "^\\{\\n  \"orca\": true,\\n  \"notices\": \\[\\],\\n  \"project_empty\": null,\\n  \"nodes\": \\[\\n    \\{\\n      \"key\": \"L20261125T090000-d4d4\",\\n"
+          },
+          {
+            "regex": "(?s)\"key\": \"L20261125T090000-d4d4\",.*?\"state\": \"closed\",\\n +\"listed\": false,.*?\"key\": \"L20261125T100000-a1a1\",.*?\"key\": \"L20261125T100100-b2b2\",.*?\"key\": \"L20261125T100200-c3c3\",.*?\"key\": \"L20261125T100300-e5e5\",.*?\"key\": \"term_x\",.*?\"key\": \"term_y\","
+          },
+          {
+            "regex": "(?s)\"key\": \"L20261125T100000-a1a1\",\\n +\"id\": \"L20261125T100000-a1a1\",\\n +\"name\": \"\\[jitso:L20261125T100000-a1a1\\] sonnet-conductor\",\\n +\"title\": \"✳ conducting\",\\n +\"handle\": \"term_a\",\\n +\"role\": \"conductor\",\\n +\"type\": \"conductor\",\\n +\"build\": \"sonnet-conductor\",\\n +\"harness\": \"claude\",\\n +\"mode\": \"direct\",\\n +\"state\": \"live\",\\n +\"listed\": true,\\n +\"worktree\": \"[^\"]+\",\\n +\"folder\": \"project\",\\n +\"branch\": \"main\",\\n +\"parent\": null,\\n +\"project\": true\\n"
+          },
+          {
+            "regex": "(?s)\"key\": \"L20261125T100200-c3c3\",\\n +\"id\": \"L20261125T100200-c3c3\",\\n +\"name\": \"\\[jitso:L20261125T100200-c3c3\\] pi-worker\",\\n +\"title\": null,\\n +\"handle\": \"term_c\",\\n +\"role\": \"operator\",\\n +\"type\": \"worker\",\\n +\"build\": \"pi-worker\",\\n +\"harness\": \"pi\",\\n +\"mode\": \"fleet\",\\n +\"state\": \"gone\",\\n +\"listed\": false,\\n +\"worktree\": null,\\n +\"folder\": null,\\n +\"branch\": null,\\n +\"parent\": \"L20261125T100000-a1a1\",\\n +\"project\": true\\n"
+          },
+          {
+            "regex": "(?s)\"key\": \"term_x\",\\n +\"id\": null,\\n +\"name\": \"reviewer session\",\\n +\"title\": \"reviewer session\",\\n +\"handle\": \"term_x\",\\n +\"role\": null,\\n +\"type\": null,\\n +\"build\": null,\\n +\"harness\": null,\\n +\"mode\": null,\\n +\"state\": \"unlaunched\",\\n +\"listed\": true,\\n +\"worktree\": \"[^\"]+\",\\n +\"folder\": \"project\",\\n +\"branch\": \"main\",\\n +\"parent\": null,\\n +\"project\": true\\n"
+          },
+          {
+            "regex": "(?s)\"key\": \"term_y\",.*?\"worktree\": \"/work/other\",\\n +\"folder\": \"other\",\\n +\"branch\": \"feature\",\\n +\"parent\": null,\\n +\"project\": false\\n"
+          },
+          {
+            "not_contains": "f6f6"
+          },
+          {
+            "contains": "\n  \"hierarchy\": [\n    {\n      \"parent\": \"L20261125T100000-a1a1\",\n      \"child\": \"L20261125T100100-b2b2\"\n    },\n    {\n      \"parent\": \"L20261125T100000-a1a1\",\n      \"child\": \"L20261125T100200-c3c3\"\n    },\n    {\n      \"parent\": \"L20261125T090000-d4d4\",\n      \"child\": \"L20261125T100300-e5e5\"\n    }\n  ],\n  \"synapses\": []\n}\n"
+          }
+        ],
+        "stderr": [
+          {
+            "empty": true
+          }
+        ],
+        "orca_calls": {
+          "verbs": [
+            "terminal list",
+            "orchestration inbox"
+          ],
+          "calls": [
+            {
+              "at": 1,
+              "argv": [
+                "orchestration",
+                "inbox",
+                "--limit",
+                "5000",
+                "--full"
+              ]
+            }
+          ]
+        },
+        "registry": {
+          "count": 8
+        },
+        "files": [
+          {
+            "path": ".jitso/launches.lock",
+            "exists": false
+          }
+        ]
+      }
+    }
+  ]
+}

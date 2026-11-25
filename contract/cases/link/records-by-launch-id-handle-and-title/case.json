@@ -1,0 +1,217 @@
+{
+  "id": "link/records-by-launch-id-handle-and-title",
+  "title": "link appends one link event per call, naming each side by launch id and terminal handle; two launch ids or recorded handles need no Orca call, a title is looked up in Orca's terminal list",
+  "source": [
+    "intended: docs/decisions.md, release 2 of the communication plan"
+  ],
+  "intent": "A synapse is recorded actively because the native SendMessage of Claude Code leaves no trace JITSO can read. Each side may be a launch id, a terminal handle or a unique session title. The event is append-only and holds ids and handles only: no title and no message text.",
+  "project": {
+    "files": {
+      ".jitso/launches.jsonl": {
+        "from": "launches.jsonl"
+      }
+    }
+  },
+  "orca": {
+    "responses": {
+      "terminal list": {
+        "terminals": [
+          {
+            "handle": "term_a",
+            "worktreePath": "/work/repo",
+            "title": "✳ conducting"
+          },
+          {
+            "handle": "term_b",
+            "worktreePath": "/work/repo",
+            "title": "[jitso:L20261125T100100-b2b2] haiku-explorer"
+          },
+          {
+            "handle": "term_x",
+            "worktreePath": "/work/other",
+            "title": "reviewer session"
+          }
+        ]
+      }
+    }
+  },
+  "steps": [
+    {
+      "run": [
+        "link",
+        "L20261125T100000-a1a1",
+        "L20261125T100100-b2b2"
+      ],
+      "expect": {
+        "exit": 0,
+        "stdout": [
+          {
+            "equals": "jitso link: L20261125T100000-a1a1 -> L20261125T100100-b2b2 recorded\n"
+          }
+        ],
+        "stderr": [
+          {
+            "empty": true
+          }
+        ],
+        "orca_calls": {
+          "empty": true
+        },
+        "registry": {
+          "count": 3,
+          "events": [
+            {
+              "at": 2,
+              "event": "link",
+              "fields": {
+                "v": 2,
+                "ts": {
+                  "regex": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+                },
+                "from.id": "L20261125T100000-a1a1",
+                "from.handle": "term_a",
+                "to.id": "L20261125T100100-b2b2",
+                "to.handle": "term_b",
+                "id": {
+                  "absent": true
+                }
+              }
+            }
+          ]
+        },
+        "files": [
+          {
+            "path": ".jitso/launches.lock",
+            "exists": false
+          }
+        ]
+      }
+    },
+    {
+      "run": [
+        "link",
+        "term_b",
+        "term_a"
+      ],
+      "expect": {
+        "exit": 0,
+        "stdout": [
+          {
+            "equals": "jitso link: L20261125T100100-b2b2 -> L20261125T100000-a1a1 recorded\n"
+          }
+        ],
+        "orca_calls": {
+          "empty": true
+        },
+        "registry": {
+          "count": 4,
+          "events": [
+            {
+              "at": 3,
+              "event": "link",
+              "fields": {
+                "from.id": "L20261125T100100-b2b2",
+                "from.handle": "term_b",
+                "to.id": "L20261125T100000-a1a1",
+                "to.handle": "term_a"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "run": [
+        "link",
+        "L20261125T100100-b2b2",
+        "reviewer session"
+      ],
+      "expect": {
+        "exit": 0,
+        "stdout": [
+          {
+            "equals": "jitso link: L20261125T100100-b2b2 -> term_x recorded\n"
+          }
+        ],
+        "stderr": [
+          {
+            "empty": true
+          }
+        ],
+        "orca_calls": {
+          "verbs": [
+            "terminal list"
+          ]
+        },
+        "registry": {
+          "count": 5,
+          "events": [
+            {
+              "at": 4,
+              "event": "link",
+              "fields": {
+                "to.id": null,
+                "to.handle": "term_x"
+              }
+            }
+          ]
+        },
+        "files": [
+          {
+            "path": ".jitso/launches.jsonl",
+            "not_contains": [
+              "reviewer session"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "run": [
+        "link",
+        "✳ conducting",
+        "[jitso:L20261125T100100-b2b2] haiku-explorer"
+      ],
+      "expect": {
+        "exit": 0,
+        "stdout": [
+          {
+            "equals": "jitso link: L20261125T100000-a1a1 -> L20261125T100100-b2b2 recorded\n"
+          }
+        ],
+        "registry": {
+          "count": 6
+        }
+      }
+    },
+    {
+      "run": [
+        "link",
+        "term_x",
+        "[jitso:L20261125T100000-a1a1] sonnet-conductor"
+      ],
+      "expect": {
+        "exit": 0,
+        "stdout": [
+          {
+            "equals": "jitso link: term_x -> L20261125T100000-a1a1 recorded\n"
+          }
+        ],
+        "registry": {
+          "count": 7,
+          "events": [
+            {
+              "at": 6,
+              "event": "link",
+              "fields": {
+                "from.id": null,
+                "from.handle": "term_x",
+                "to.handle": "term_a"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ]
+}

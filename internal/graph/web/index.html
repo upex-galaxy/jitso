@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="jitso-token" content="__JITSO_TOKEN__">
+<title>jitso graph</title>
+<link rel="icon" href="data:,">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<canvas id="sky" tabindex="0" aria-label="Constellation of sessions. Drag to pan, scroll to zoom, click a star for its details, or use the search box."></canvas>
+
+<header class="bar">
+  <h1>jitso <span>constellation</span></h1>
+  <div class="scope" role="group" aria-label="Which sessions to show">
+    <button type="button" id="scope-project" data-scope="project" aria-pressed="true">This project's fleet</button>
+    <button type="button" id="scope-all" data-scope="all" aria-pressed="false">All Orca sessions</button>
+  </div>
+  <div class="search">
+    <input id="search" type="search" placeholder="Search a session" autocomplete="off" spellcheck="false" aria-label="Search a session" aria-controls="results">
+    <ul id="results" hidden></ul>
+  </div>
+  <button type="button" id="fit" title="Fit every star in view (key 0)">Fit</button>
+  <p id="counts" aria-live="polite"></p>
+</header>
+
+<div id="notices" role="status"></div>
+<p id="empty" hidden></p>
+
+<aside id="details" hidden aria-label="Session details">
+  <button type="button" id="close" aria-label="Close the details">&#215;</button>
+  <h2 id="d-title"></h2>
+  <p id="d-state" class="state"></p>
+  <button type="button" id="go">Go to session</button>
+  <p id="go-status" role="status"></p>
+  <dl id="d-facts"></dl>
+  <section id="d-links"></section>
+</aside>
+
+<div id="legend" aria-label="Legend">
+  <ul>
+    <li><i class="star live"></i>live</li>
+    <li><i class="star lead"></i>conductor</li>
+    <li><i class="star unlaunched"></i>unlaunched</li>
+    <li><i class="star gone"></i>gone</li>
+    <li><i class="star unknown"></i>unknown</li>
+    <li><i class="star closed"></i>closed</li>
+  </ul>
+  <ul>
+    <li><i class="edge hierarchy"></i>parent to child</li>
+    <li><i class="edge oneway"></i>one-way synapse</li>
+    <li><i class="edge twoway"></i>two-way synapse</li>
+  </ul>
+</div>
+
+<script src="app.js" defer></script>
+</body>
+</html>

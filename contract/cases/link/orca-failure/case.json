@@ -1,0 +1,49 @@
+{
+  "id": "link/orca-failure",
+  "title": "a terminal list that fails while a reference needs it is exit 3 and writes nothing",
+  "source": [
+    "intended: docs/decisions.md, release 2 of the communication plan"
+  ],
+  "project": {
+    "files": {
+      ".jitso/launches.jsonl": {
+        "from": "launches.jsonl"
+      }
+    }
+  },
+  "orca": {
+    "fail_on": [
+      "terminal list"
+    ]
+  },
+  "steps": [
+    {
+      "run": [
+        "link",
+        "L20261125T100000-a1a1",
+        "some title"
+      ],
+      "expect": {
+        "exit": 3,
+        "stdout": [
+          {
+            "empty": true
+          }
+        ],
+        "stderr": [
+          {
+            "equals": "jitso: orca terminal list failed: terminal list failed\n"
+          }
+        ],
+        "orca_calls": {
+          "verbs": [
+            "terminal list"
+          ]
+        },
+        "registry": {
+          "count": 1
+        }
+      }
+    }
+  ]
+}

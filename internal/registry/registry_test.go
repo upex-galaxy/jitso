@@ -96,7 +96,7 @@ func TestAppendNoHTMLEscape(t *testing.T) {
 func TestValidateRejectsRetiredKinds(t *testing.T) {
 	for _, kind := range []string{"analyzed", "rule_break"} {
 		problems := Validate(map[string]any{"v": 2.0, "event": kind, "ts": ts})
-		if len(problems) != 1 || problems[0] != "event must be one of launch|end" {
+		if len(problems) != 1 || problems[0] != "event must be one of launch|end|link" {
 			t.Errorf("%s: %v", kind, problems)
 		}
 	}

@@ -1,0 +1,131 @@
+{
+  "id": "link/readers-tolerate-link-lines",
+  "title": "a link line is a valid registry line that fleet, reap, close, the SessionEnd hook and doctor read past: no launch is added, changed or counted as invalid",
+  "source": [
+    "intended: docs/decisions.md, release 2 of the communication plan (a new event kind, link)"
+  ],
+  "intent": "The log gains a third event kind. Every reader folds launches and end events as before, and doctor does not report a link line as a skipped invalid line.",
+  "tags": [
+    "posix"
+  ],
+  "project": {
+    "files": {
+      ".jitso/launches.jsonl": {
+        "from": "launches.jsonl"
+      }
+    }
+  },
+  "orca": {
+    "listed": [
+      "term_a",
+      "term_b"
+    ]
+  },
+  "steps": [
+    {
+      "run": [
+        "doctor"
+      ],
+      "expect": {
+        "stdout": [
+          {
+            "regex": "(?m)^ok +registry: \\.jitso/launches\\.jsonl: 3 launches, 3 running$"
+          }
+        ]
+      }
+    },
+    {
+      "run": [
+        "fleet"
+      ],
+      "expect": {
+        "exit": 0,
+        "stdout": [
+          {
+            "regex": "(?m)^jitso fleet: 2 live, 1 gone$"
+          }
+        ],
+        "registry": {
+          "count": 5
+        }
+      }
+    },
+    {
+      "run": [
+        "reap"
+      ],
+      "expect": {
+        "exit": 0,
+        "stdout": [
+          {
+            "contains": "jitso reap: 1 launch(es) marked ended, 0 unlogged worker(s)"
+          }
+        ],
+        "registry": {
+          "count": 6,
+          "events": [
+            {
+              "at": 5,
+              "event": "end",
+              "fields": {
+                "id": "L20261125T100200-c3c3",
+                "source": "reap"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "run": [
+        "close",
+        "L20261125T100100-b2b2"
+      ],
+      "expect": {
+        "exit": 0,
+        "stdout": [
+          {
+            "contains": "jitso: closed L20261125T100100-b2b2 (terminal term_b)"
+          }
+        ],
+        "registry": {
+          "count": 7,
+          "events": [
+            {
+              "at": 6,
+              "event": "end",
+              "fields": {
+                "id": "L20261125T100100-b2b2",
+                "source": "jitso_close"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "hook": "guard",
+      "input": {
+        "hook_event_name": "SessionEnd",
+        "session_id": "sess-a",
+        "cwd": "{{PROJECT}}"
+      },
+      "expect": {
+        "exit": 0,
+        "registry": {
+          "count": 8,
+          "events": [
+            {
+              "at": 7,
+              "event": "end",
+              "fields": {
+                "id": "L20261125T100000-a1a1",
+                "source": "session_end_hook"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ]
+}

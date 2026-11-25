@@ -1,0 +1,101 @@
+{
+  "id": "graph/arguments",
+  "title": "an unknown flag, a positional word, a repeated flag, a bad port or --port with --json is a usage rejection (exit 2) before Orca is touched; --help prints the usage",
+  "source": [
+    "intended: docs/decisions.md, release 2 of the communication plan; the same shape as the argument check of fleet"
+  ],
+  "for_each": {
+    "vars": [
+      "first",
+      "second",
+      "third"
+    ],
+    "rows": [
+      ["--bogus", "--json", "--json"],
+      ["--json", "extra", "--json"],
+      ["--json", "--json", "--json"],
+      ["--port", "abc", "--port"],
+      ["--port", "70000", "--port"],
+      ["--port", "-1", "--port"],
+      ["--port", "+80", "--port"],
+      ["--json", "--port", "4711"],
+      ["--port", "4711", "--json"]
+    ],
+    "ids": [
+      "unknown-flag",
+      "positional",
+      "repeated",
+      "port-not-a-number",
+      "port-too-large",
+      "port-negative",
+      "port-signed",
+      "json-with-port",
+      "port-with-json"
+    ]
+  },
+  "steps": [
+    {
+      "run": [
+        "graph",
+        "{{first}}",
+        "{{second}}",
+        "{{third}}"
+      ],
+      "expect": {
+        "exit": 2,
+        "stdout": [
+          {
+            "empty": true
+          }
+        ],
+        "stderr": [
+          {
+            "equals": "JITSO REJECTED: usage: jitso graph [--json] [--port <n>]\n"
+          }
+        ],
+        "orca_calls": {
+          "empty": true
+        }
+      }
+    },
+    {
+      "run": [
+        "graph",
+        "--port"
+      ],
+      "expect": {
+        "exit": 2,
+        "stderr": [
+          {
+            "equals": "JITSO REJECTED: usage: jitso graph [--json] [--port <n>]\n"
+          }
+        ],
+        "orca_calls": {
+          "empty": true
+        }
+      }
+    },
+    {
+      "run": [
+        "graph",
+        "--help"
+      ],
+      "expect": {
+        "exit": 0,
+        "stdout": [
+          {
+            "contains": "usage: jitso graph [--json] [--port <n>]"
+          }
+        ],
+        "stderr": [
+          {
+            "empty": true
+          }
+        ],
+        "orca_calls": {
+          "empty": true
+        }
+      }
+    }
+  ]
+}

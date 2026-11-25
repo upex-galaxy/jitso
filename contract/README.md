@@ -68,7 +68,7 @@ nested or parent folders, or other versions; re-measure when Claude Code is upgr
 
 Orca's own behavior, the real Claude Code TUI, and
 white-box details of the Go code (function names, types). Cases that execute a
-generated `run.sh` need `/bin/sh` and carry the tag `posix`. A case also cannot run as another OS: the host binary always reports the host's `GOOS`, so the Windows branch of `doctor` (N-20 `shell`) is a Go unit test.
+generated `run.sh` need `/bin/sh` and carry the tag `posix`. A case cannot talk to a server that stays up, so the contract pins `jitso graph --json`, and the server of `jitso graph` (the Host check, the token, the switch) and its page are Go tests of `internal/graph`. A case also cannot run as another OS: the host binary always reports the host's `GOOS`, so the Windows branch of `doctor` (N-20 `shell`) is a Go unit test.
 
 ## Adding a case
 

@@ -59,8 +59,14 @@ func Validate(v any) []string {
 		if !isOneOf(Outcomes, e["outcome_reported"]) {
 			add("outcome_reported must be one of " + strings.Join(Outcomes, "|"))
 		}
+	case KindLink:
+		for _, side := range []string{"from", "to"} {
+			if !isLinkEnd(e[side]) {
+				add(side + " must name a safe id, a terminal handle or both")
+			}
+		}
 	default:
-		add("event must be one of launch|end")
+		add("event must be one of launch|end|link")
 	}
 	return problems
 }
@@ -68,6 +74,24 @@ func Validate(v any) []string {
 func isID(v any) bool {
 	s, ok := v.(string)
 	return ok && safeID.MatchString(s)
+}
+
+// isLinkEnd reports whether v is one side of a link: an object whose id is
+// absent, null or a safe id and whose handle is absent, null or a non-empty
+// string, with at least one of the two set.
+func isLinkEnd(v any) bool {
+	end, ok := v.(map[string]any)
+	if !ok {
+		return false
+	}
+	id, handle := end["id"], end["handle"]
+	if id != nil && !isID(id) {
+		return false
+	}
+	if s, isString := handle.(string); handle != nil && (!isString || s == "") {
+		return false
+	}
+	return id != nil || handle != nil
 }
 
 func isOneOf(list []string, v any) bool {

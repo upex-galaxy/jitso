@@ -1,0 +1,1 @@
+{"v":2,"event":"launch","id":"L20261125T100000-a1a1","parent":null,"root":"L20261125T100000-a1a1","depth":0,"ts":"2026-11-25T10:00:00.000Z","mode":"direct","role":"conductor","type":"conductor","build":"sonnet-conductor","harness":"claude","orca":{"run":null,"task":null,"terminal":"term_a","title":"[jitso:L20261125T100000-a1a1] sonnet-conductor"}}

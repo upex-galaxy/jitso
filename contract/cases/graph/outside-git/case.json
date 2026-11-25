@@ -1,0 +1,105 @@
+{
+  "id": "graph/outside-git",
+  "title": "outside a git checkout graph --json shows what Orca knows: every terminal, its folder name and the synapses, no project session, the reason in project_empty, and it writes nothing",
+  "source": [
+    "intended: docs/decisions.md, release 2 of the communication plan (the all-sessions view from anywhere)"
+  ],
+  "intent": "The view of every Orca session does not belong to a project, so it runs from any folder. Each node names the last element of its worktree path as folder, whatever separator the path uses and with or without a trailing one; a terminal with no worktree has none.",
+  "orca": {
+    "responses": {
+      "terminal list": {
+        "terminals": [
+          {
+            "handle": "term_a",
+            "worktreePath": "/work/repos/alpha",
+            "branch": "main",
+            "title": "agent a"
+          },
+          {
+            "handle": "term_b",
+            "worktreePath": "/work/repos/beta/",
+            "title": ""
+          },
+          {
+            "handle": "term_c",
+            "worktreeId": "uuid-3::C:\\work\\gamma",
+            "title": "agent c"
+          },
+          {
+            "handle": "term_d"
+          }
+        ]
+      },
+      "orchestration inbox": {
+        "messages": [
+          {
+            "type": "status",
+            "from_handle": "term_a",
+            "to_handle": "term_b",
+            "created_at": "2026-11-25T10:00:00Z",
+            "body": "LEAK-BODY"
+          }
+        ]
+      }
+    }
+  },
+  "steps": [
+    {
+      "run": [
+        "graph",
+        "--json"
+      ],
+      "cwd": "{{HOME}}",
+      "expect": {
+        "exit": 0,
+        "stdout": [
+          {
+            "contains": "\"orca\": true,\n  \"notices\": [],\n  \"project_empty\": \"No project fleet: this folder is not inside a git checkout.\",\n"
+          },
+          {
+            "regex": "(?s)\"key\": \"term_a\",.*?\"worktree\": \"/work/repos/alpha\",\\n +\"folder\": \"alpha\","
+          },
+          {
+            "regex": "(?s)\"key\": \"term_b\",\\n +\"id\": null,\\n +\"name\": null,\\n +\"title\": null,.*?\"worktree\": \"/work/repos/beta/\",\\n +\"folder\": \"beta\","
+          },
+          {
+            "regex": "(?s)\"key\": \"term_c\",.*?\"folder\": \"gamma\","
+          },
+          {
+            "regex": "(?s)\"key\": \"term_d\",.*?\"worktree\": null,\\n +\"folder\": null,"
+          },
+          {
+            "not_contains": "\"project\": true"
+          },
+          {
+            "contains": "\n  \"hierarchy\": [],\n  \"synapses\": [\n    {\n      \"from\": \"term_a\",\n      \"to\": \"term_b\",\n      \"direction\": \"one-way\",\n"
+          },
+          {
+            "not_contains": "LEAK"
+          }
+        ],
+        "stderr": [
+          {
+            "empty": true
+          }
+        ],
+        "orca_calls": {
+          "verbs": [
+            "terminal list",
+            "orchestration inbox"
+          ]
+        },
+        "files": [
+          {
+            "path": "{{HOME}}/.jitso",
+            "exists": false
+          },
+          {
+            "path": ".jitso",
+            "exists": false
+          }
+        ]
+      }
+    }
+  ]
+}

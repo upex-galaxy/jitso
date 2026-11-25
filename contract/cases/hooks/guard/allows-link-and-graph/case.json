@@ -1,0 +1,44 @@
+{
+  "id": "hooks/guard/allows-link-and-graph",
+  "title": "the guard stays silent for jitso link and jitso graph in every form: one appends a link line, the other only reads and serves on 127.0.0.1",
+  "source": [
+    "intended: docs/decisions.md, release 2 of the communication plan (a launched session records its synapses itself)"
+  ],
+  "intent": "The rules of brief.md tell a launched session to run jitso link, so the guard it carries must let it through, quoted session titles included.",
+  "for_each": {
+    "var": "command",
+    "values": [
+      "jitso link L20261125T100000-a1a1 L20261125T100100-b2b2",
+      "jitso link L20261125T100000-a1a1 term_x",
+      "jitso link L20261125T100000-a1a1 '[jitso:L20261125T100100-b2b2] haiku-explorer'",
+      "jitso link L20261125T100000-a1a1 'claude code reviewer'",
+      "bun run jitso link L20261125T100000-a1a1 term_x",
+      "jitso link --help",
+      "jitso graph",
+      "jitso graph --json",
+      "jitso graph --port 4711"
+    ]
+  },
+  "steps": [
+    {
+      "hook": "guard",
+      "input": {
+        "hook_event_name": "PreToolUse",
+        "tool_name": "Bash",
+        "tool_input": {
+          "command": "{{command}}"
+        },
+        "cwd": "{{PROJECT}}"
+      },
+      "expect": {
+        "exit": 0,
+        "decision": "none",
+        "stdout": [
+          {
+            "empty": true
+          }
+        ]
+      }
+    }
+  ]
+}

@@ -1,0 +1,63 @@
+{
+  "id": "graph/no-orca",
+  "title": "with no orca on PATH graph --json still prints the registry snapshot with its recorded links and a notice, writes nothing and exits 3",
+  "source": [
+    "intended: docs/decisions.md, release 2 of the communication plan; fleet/no-orca for the exit code and the text"
+  ],
+  "tags": [
+    "posix"
+  ],
+  "project": {
+    "files": {
+      ".jitso/launches.jsonl": {
+        "from": "launches.jsonl"
+      }
+    }
+  },
+  "steps": [
+    {
+      "run": [
+        "graph",
+        "--json"
+      ],
+      "env": {
+        "ORCA_CLI_COMMAND": "",
+        "PATH": "/usr/bin:/bin"
+      },
+      "expect": {
+        "exit": 3,
+        "stdout": [
+          {
+            "contains": "\"orca\": false,\n  \"notices\": [\n    \"Orca is not installed: only the registry is shown, and Orca messages are not read.\"\n  ],"
+          },
+          {
+            "regex": "(?s)\"key\": \"L20261125T100000-a1a1\",.*?\"state\": \"unknown\",\\n +\"listed\": false,\\n +\"worktree\": null,\\n +\"folder\": null,\\n +\"branch\": null,\\n +\"parent\": null,\\n +\"project\": true"
+          },
+          {
+            "not_contains": "unlaunched"
+          },
+          {
+            "contains": "\n  \"synapses\": [\n    {\n      \"from\": \"L20261125T100200-c3c3\",\n      \"to\": \"L20261125T100000-a1a1\",\n      \"direction\": \"one-way\",\n      \"forward\": 1,\n      \"back\": 0,\n      \"last\": \"2026-11-25T11:10:00.000Z\"\n    }\n  ]\n}\n"
+          }
+        ],
+        "stderr": [
+          {
+            "equals": "jitso: Orca is not installed (orca is not on PATH). jitso opens and tracks each worker in an Orca terminal: install Orca from https://github.com/stablyai/orca, open it once, then run jitso doctor.\n"
+          }
+        ],
+        "orca_calls": {
+          "empty": true
+        },
+        "registry": {
+          "count": 12
+        },
+        "files": [
+          {
+            "path": ".jitso/launches.lock",
+            "exists": false
+          }
+        ]
+      }
+    }
+  ]
+}

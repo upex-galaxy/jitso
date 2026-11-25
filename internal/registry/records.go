@@ -6,7 +6,8 @@ import (
 	"github.com/upex-galaxy/jitso/internal/usage"
 )
 
-// Record is an event a writer appends: one of *LaunchEvent or *EndEvent. Append sets V and Event itself.
+// Record is an event a writer appends: one of *LaunchEvent, *EndEvent or
+// *LinkEvent. Append sets V and Event itself.
 type Record interface {
 	kind() string
 	stamp()
@@ -142,3 +143,23 @@ func (t Tokens) MarshalJSON() ([]byte, error) {
 
 func (*EndEvent) kind() string { return KindEnd }
 func (e *EndEvent) stamp()     { e.V, e.Event = Version, KindEnd }
+
+// LinkEvent says that the session From sent something to the session To
+// (jitso link). It holds who, never what: no title and no message text.
+type LinkEvent struct {
+	V     int     `json:"v"`
+	Event string  `json:"event"`
+	TS    string  `json:"ts"`
+	From  LinkEnd `json:"from"`
+	To    LinkEnd `json:"to"`
+}
+
+// LinkEnd names one side of a link: its launch id, its Orca terminal handle or
+// both. A side that is not known is null; at least one is set.
+type LinkEnd struct {
+	ID     *string `json:"id"`
+	Handle *string `json:"handle"`
+}
+
+func (*LinkEvent) kind() string { return KindLink }
+func (e *LinkEvent) stamp()     { e.V, e.Event = Version, KindLink }

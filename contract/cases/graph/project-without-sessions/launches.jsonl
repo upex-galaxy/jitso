@@ -1,0 +1,2 @@
+{"v":2,"event":"launch","id":"L20261125T090000-d4d4","parent":null,"root":"L20261125T090000-d4d4","depth":0,"ts":"2026-11-25T09:00:00.000Z","mode":"direct","role":"conductor","type":"conductor","build":"sonnet-conductor","harness":"claude","orca":{"run":null,"task":null,"terminal":"term_d","title":"[jitso:L20261125T090000-d4d4] sonnet-conductor"}}
+{"v":2,"event":"end","id":"L20261125T090000-d4d4","ts":"2026-11-25T09:30:00.000Z","source":"jitso_close","outcome_reported":"succeeded","footer_path":null,"duration_s":1800}

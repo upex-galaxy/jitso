@@ -6,6 +6,7 @@ import (
 	"io"
 	"os"
 	"strings"
+	"time"
 
 	"jitso-contract-runner/internal/expect"
 )
@@ -37,6 +38,8 @@ func Orca(args []string, getenv func(string) string, stdout, stderr io.Writer) i
 		fmt.Fprintln(stderr, "fake orca:", err)
 		return answer(stdout, false, map[string]string{"code": "fake_log", "message": err.Error()})
 	}
+	// The call is already in the log, so a caller that gives up has made it.
+	time.Sleep(time.Duration(sc.DelayMS[expect.Verb(args)]) * time.Millisecond)
 	ok, body := respond(sc, args, previous)
 	return answer(stdout, ok, body)
 }

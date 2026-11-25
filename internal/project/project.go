@@ -61,6 +61,23 @@ func checkout(dir string) (Root, bool) {
 	return r, true
 }
 
+// Checkouts are the checkout folders of the project: the primary one and every
+// worktree `git worktree list --porcelain` reports for it. When git fails, the
+// primary alone.
+func Checkouts(r Root) []string {
+	dirs := []string{r.Primary}
+	out, err := exec.Command("git", "-C", r.Primary, "worktree", "list", "--porcelain").Output()
+	if err != nil {
+		return dirs
+	}
+	for _, line := range strings.Split(string(out), "\n") {
+		if dir, ok := strings.CutPrefix(strings.TrimSuffix(line, "\r"), "worktree "); ok {
+			dirs = append(dirs, dir)
+		}
+	}
+	return dirs
+}
+
 // Real is the path with every symlink resolved, or the path itself when it
 // cannot be resolved (it does not exist).
 func Real(path string) string {

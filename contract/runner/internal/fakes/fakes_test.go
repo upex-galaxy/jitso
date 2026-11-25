@@ -7,6 +7,7 @@ import (
 	"path/filepath"
 	"reflect"
 	"testing"
+	"time"
 
 	"jitso-contract-runner/internal/expect"
 	"jitso-contract-runner/internal/jsonx"
@@ -179,6 +180,21 @@ func TestFakeOrcaCloseKeepsListed(t *testing.T) {
 	_, msg := r.call("terminal", "list")
 	if !reflect.DeepEqual(msg["result"], map[string]any{"terminals": []any{map[string]any{"handle": "term_fake"}}}) {
 		t.Errorf("close_keeps_listed: %v", msg)
+	}
+}
+
+func TestFakeOrcaDelay(t *testing.T) {
+	r := newRig(t, `{"delay_ms":{"terminal list":60}}`)
+	start := time.Now()
+	r.call("terminal", "wait")
+	if code, msg := r.call("terminal", "list"); code != 0 || msg["ok"] != true || time.Since(start) < 60*time.Millisecond {
+		t.Errorf("a delayed verb answers after its delay: %d %v after %v", code, msg, time.Since(start))
+	}
+	for _, bad := range []string{`{"delay_ms":[]}`, `{"delay_ms":{"terminal list":"1"}}`, `{"delay_ms":{"terminal list":-1}}`} {
+		tree, _ := jsonx.Decode([]byte(bad))
+		if _, err := ParseScenario(tree, "/proj"); err == nil {
+			t.Errorf("%s was accepted", bad)
+		}
 	}
 }
 

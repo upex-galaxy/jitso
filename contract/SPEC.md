@@ -127,6 +127,7 @@ Scenario (`orca` field of the case, all keys optional):
 | `listed` | `[<handle>]`, whether or not `terminal create` ran | handles `terminal list` reports, minus every handle a previous `terminal close --terminal <h>` closed |
 | `responses` | `{}` | `{ "<verb>": <result object> }`: replaces the `result` of a verb that does not fail |
 | `close_keeps_listed` | `false` | `true`: `terminal close` still answers `{}`, but the closed handle stays in `terminal list` (a terminal Orca failed to close) |
+| `delay_ms` | `{}` | `{ "<verb>": <milliseconds> }`: the fake waits that long before it answers the verb. The call is logged before the wait, so a caller that gives up has made it |
 
 Default answers: `terminal create` returns `{terminal:{handle,worktreeId}}`; `terminal wait` returns `{wait:{handle,condition:"tui-idle",satisfied:true,status:"running",exitCode:null,blockedReason:null}}` (with `wait_times_out`, the `fake_failure` error of `fail_on`; with `wait_blocked`, the blocked answer above); `terminal read` returns `{terminal:{tail:[<screen lines>]}}` (the screen split on `\n`); `terminal list` returns `{terminals:[{handle},...]}`; `terminal close` returns `{}` and removes the handle from `listed` (unless `close_keeps_listed`); every other verb returns `{state:"ready"}`. Precedence: `errors`, then `fail_on` and `wait_times_out`, then `responses`, then `wait_blocked`, then the default.
 
