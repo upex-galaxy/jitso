@@ -27,7 +27,12 @@ Two prefixes tell you whose problem it is. `JITSO REJECTED: <reason>` (exit 2) m
 | `brief file is outside the allowed folders` | move the brief to `.jitso/briefs/` of the project |
 | `unknown parent launch <id>` | `--parent` names an id that is not in `.jitso/launches.jsonl` |
 | `unknown launch <id>` (close) | the id is not in this project's log. Check the primary checkout's `.jitso/launches.jsonl` |
-| `usage: jitso close <launch_id>`, `usage: jitso reap [--run <run_id>]...`, `usage: jitso fleet [--json] [--all]` | the arguments are wrong. These commands have no `--help` (`jitso fleet --help` is the one exception: it prints its usage line) |
+| `usage: jitso close <launch_id>`, `usage: jitso reap [--run <run_id>]...`, `usage: jitso fleet [--json] [--all]`, `usage: jitso link <from> <to>`, `usage: jitso graph [--json] [--port <n>]` | the arguments are wrong. `close` and `reap` have no `--help`; `fleet`, `link` and `graph` print their usage line for it |
+| `unknown session "<ref>": give a launch id, a terminal handle or a session title (see jitso fleet)` | `link` found no session by that word. Take the id or the handle from `jitso fleet` |
+| `"<ref>" names <n> sessions (...): use a terminal handle or a launch id` | the title is shared. Use one of the ids or handles the line lists |
+| `"<from>" and "<to>" are the same session` | a synapse joins two sessions. Check which side is the peer |
+| `cannot listen on 127.0.0.1 port <n>: ...` (exit 3, `graph`) | the port is taken. Drop `--port` or name another |
+| `orca <verb> did not answer within 10 s` (exit 3, `graph --json`; a notice on the page) | Orca is busy or hung. Check the Orca app; `graph` printed what it could |
 | `untrusted folder <path>: a launch runs only in a worktree of this repo; the terminal was closed` | Orca opened the terminal in a folder that is not a worktree of this repo, or reported none (`(unknown)`). The folder is checked on every launch, with or without the trust dialog. Check `--worktree` |
 | `untrusted folder <path>: --worktree asked for <path>; the terminal was closed` | `--worktree` names a path and Orca opened the terminal somewhere else. Name the worktree you want, or drop the flag |
 | `--worktree <selector> must name an absolute path`, `--worktree <selector> names <path>, which is not a worktree of this repo` | a `path:` or `id:<id>::<path>` selector was rejected before anything was written or Orca was called. Use an absolute path of a worktree of this repo |

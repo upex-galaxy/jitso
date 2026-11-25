@@ -6,10 +6,11 @@ Everything JITSO knows about a launch is in `.jitso/launches.jsonl`, an append-o
 |---|---|---|
 | `launch` | `jitso launch` | build, layer, file and hash, model, effort, flags, package, brief path and hash (the hash of a pointer brief is the hash of its target card), session id, transcript path, Orca terminal, run and task |
 | `end` | `close`, `reap` or the SessionEnd hook (`source` says which) | when the launch ended and how long it ran |
+| `link` | `jitso link` | `from` and `to`, each a launch id and an Orca handle (`null` when unknown), and when. It belongs to no launch |
 
 The launch event keeps the Orca ids under `orca`: `orca.run`, `orca.task`, `orca.terminal` and `orca.title`. There is no top-level `task`, `terminal` or `dispatch` key, and the dispatch id is not recorded: read it from `orca orchestration worker-list`.
 
-The log is schema v2 (`"v": 2` on every line) and the build id is the key `build` of a launch line. Only `launch` and `end` lines exist. A line an older jitso wrote (`"v": 1`, with `preset`, or an `analyzed` or `rule_break` event) is skipped as invalid: close every running launch with the old version before upgrading, and `jitso doctor` counts the skipped v1 lines.
+The log is schema v2 (`"v": 2` on every line) and the build id is the key `build` of a launch line. Only `launch`, `end` and `link` lines exist; a jitso from before `link` skips those lines and its `doctor` counts them as invalid. A line an older jitso wrote (`"v": 1`, with `preset`, or an `analyzed` or `rule_break` event) is skipped as invalid: close every running launch with the old version before upgrading, and `jitso doctor` counts the skipped v1 lines.
 
 The launch event also carries `package` when something travelled with the launch: the skills copied in (`name`, `scope`, `sha256` of the copied tree), whether the guard and the jitso skill travelled (`guard`, `jitso_skill`) and how the folder reached the harness (`flag`: `add-dir`, or `none`). The key is absent when nothing travelled.
 
@@ -65,6 +66,32 @@ jitso fleet: 1 live, 1 unlaunched
 | `unlaunched` | a listed terminal that no launch explains, by handle or by the `[jitso:<id>]` mark in its title |
 
 Orca lists every terminal it manages, shells included, so an `unlaunched` row is a terminal to look at, not proof of an agent session. Your own row is the one whose id is in your card. The title is also the name of a Claude Code or Pi session (they start with `--name`); Codex and OpenCode have no launch flag for a name, so address those by handle. `--json` prints `{"orca": <bool>, "sessions": [...]}`, with `null` for what is not known. A truncated terminal list is exit 3 and prints nothing. With no `orca` on PATH the registry rows still print, with state `unknown`, and the command exits 3 with the install line.
+
+## `jitso link <from> <to>`
+
+Records that one session talked to another, from the first to the second. Run it after a Claude Code `SendMessage`, which leaves no trace jitso can read. An Orca message needs no link: `jitso graph` reads it from the inbox, and a link would count it twice.
+
+```
+jitso link: L20261124T100000-a1a1 -> term_x recorded
+```
+
+Each side is a launch id, an Orca terminal handle or an exact session title (the title the launch gave, or the tab title Orca shows now). Launch ids and recorded handles need no Orca call. A title, or a handle the log does not hold, asks Orca for the terminal list; without Orca only what the log holds resolves, and the rest is exit 3 with the install line. Rejected (exit 2), with nothing written: an unknown reference, a title that names several sessions (the text lists them), two references to one session.
+
+## `jitso graph [--json] [--port <n>]`
+
+Read only. Without `--json` it serves a page on `127.0.0.1` (a free port unless `--port` names one), prints the URL and runs until Ctrl-C; it opens no browser. It is the human's view: give them the command, and do not leave it running in your own session. `jitso graph --json` prints one snapshot and exits:
+
+| Key | Holds |
+|---|---|
+| `orca`, `notices` | whether the terminals could be listed, and what is missing from the snapshot |
+| `project_empty` | why no node is of a project (not a git checkout, no registry, no session open), else `null` |
+| `nodes` | one per session: `key`, `id`, `name`, `title`, `handle`, `role`, `type`, `build`, `harness`, `mode`, `state`, `listed`, `worktree`, `folder` (the last element of the worktree path), `branch`, `parent`, `project`. A closed launch appears only when a running one descends from it |
+| `hierarchy` | `parent` and `child` keys |
+| `synapses` | `from`, `to`, `direction` (`one-way` or `two-way`), `forward`, `back` (the count of each direction) and `last` |
+
+Synapses add the `link` lines of this project's log to the messages of Orca's orchestration inbox, of which only sender, recipient, type, run and time are read. A missing or failing Orca still prints the snapshot, from the log, and exits 3. So does a call Orca has not answered after 10 seconds; the notice names it.
+
+It runs from any folder. Outside a git checkout, or in a repository with no `.jitso/launches.jsonl`, there is no project fleet: the snapshot holds the Orca sessions and their synapses, `project_empty` says why, nothing is written and the page opens on every session.
 
 ## SessionEnd
 

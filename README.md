@@ -28,7 +28,7 @@ It installs the `jitso` skill for every harness, writes the JITSO block into `AG
 
 | Part | State |
 |---|---|
-| CLI: `launch`, `close`, `reap`, `fleet`, `build` (`list`, `validate`, `new`, `draft`, `save`, `discard`), `arsenal`, `init`, `install skill`, `setup hook`, `setup instructions`, `doctor`, `version` and the hook (`hook guard`) | in Go; the contract suite runs it against fakes of Orca and Claude Code. The attended real Orca run is required before `v1.0.0`. The command list is `jitso --help` |
+| CLI: `launch`, `close`, `reap`, `fleet`, `link`, `graph`, `build` (`list`, `validate`, `new`, `draft`, `save`, `discard`), `arsenal`, `init`, `install skill`, `setup hook`, `setup instructions`, `doctor`, `version` and the hook (`hook guard`) | in Go; the contract suite runs it against fakes of Orca and Claude Code. The attended real Orca run is required before `v1.0.0`. The command list is `jitso --help` |
 | Release order | released first, then tested end to end from an install of that release; the attended real Orca run gates `v1.0.0`. Every outward step waits for the owner ([`docs/decisions.md`](docs/decisions.md), section "Release order and the conductor skill") |
 | Conductor skill | the user-level skill `agent-orchestration` (repo `agentic-user-skills`) is the conductor doctrine. It runs on Orca by default and uses a `jitso` mode only when the `jitso` binary is on PATH and the project has `jitso/jitso.yaml`. JITSO becomes its default path only after it is published and has passed an attended real run |
 | Build schema, validators, rules text, templates | in this repo: [`docs/build-schema.md`](docs/build-schema.md) is the schema, `jitso build validate` is the validator, JITSO's short rules text is appended to the end of every launched session's `brief.md` (`internal/card`), and the build templates ship inside the binary. JITSO still ships no builds |
@@ -52,6 +52,19 @@ It installs the `jitso` skill for every harness, writes the JITSO block into `AG
 - Refused for now: claude.ai connectors (`cloud:`), servers that use OAuth, and any literal secret value of a user server.
 - `jitso install skill --scope project`, `jitso setup hook` and `jitso setup instructions` stay available for a project that wants the files in its own checkout. [`docs/build-schema.md`](docs/build-schema.md) has the user allowlist and its texts.
 
+## See who talks to whom
+
+`jitso graph` serves a live picture of the sessions on `127.0.0.1`, prints its URL and runs until Ctrl-C. Open the URL in a browser.
+
+- Each session is a star: the launches of the project and every other terminal Orca lists, with the states of `jitso fleet`.
+- A dashed line goes from a parent launch to a child. A synapse joins two sessions that talked, drawn as one arrow when it went one way and as a double line when it went both ways. Sessions that never talked have none.
+- Synapses come from the messages of Orca's orchestration inbox (direction, count and time, never the content) and from `jitso link <from> <to>`, which a session runs after a Claude Code `SendMessage`, because that leaves no trace to read.
+- The page switches between this project's fleet and every Orca session, searches, shows the details of a star and can switch Orca to its terminal.
+- Each star names the folder it lives in. Outside a project (no git checkout, or no launch registry yet) the page opens on every Orca session and says why.
+- `jitso graph --json` prints one snapshot and exits. Without Orca both show the registry alone and say so, and an `orca` call that does not answer is given up with a notice.
+
+The server answers only to `127.0.0.1` and `localhost`, and a switch needs a token that changes on every run. Any other user or process of your machine that can connect to the port can read the page, so do not run it on a shared machine.
+
 ## Build and test
 
 Needs Go. From the repo root:
@@ -74,7 +87,7 @@ cd contract/runner && go build -o /tmp/jitso-contract . && cd ..
 
 | Path | What it is |
 |---|---|
-| `cmd/jitso`, `internal/` | the CLI; `internal/skill` holds the usage skill the binary ships |
+| `cmd/jitso`, `internal/` | the CLI; `internal/skill` holds the usage skill the binary ships and `internal/graph/web` the page of `jitso graph` |
 | `contract/` | the contract: case format, cases, fixtures, runner |
 | `docs/architecture.md` | the design and the port milestones |
 | `docs/build-schema.md` | the schema of a build, where builds live, drafts and validators |
