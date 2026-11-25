@@ -1,6 +1,6 @@
 ---
 name: jitso
-description: Use when launching, delegating to or supervising another agent session (a worker, conductor or subagent) in a project that has jitso/jitso.yaml, when writing a brief for one, reading a JITSO launch card, or running jitso launch, close, reap, build list, build validate or build draft. Also use for a JITSO REJECTED message, for a hook denial that names worker-start, start_worker, terminal create, build save, setup or install, and whenever the words worker, conductor, subagent, build, card, brief, route scope or fleet come up. Load it before spawning any agent session, even if the user never says JITSO, because in these projects only jitso launch may start one.
+description: Use when launching, delegating to or supervising another agent session (a worker, conductor or subagent) in a project that has jitso/jitso.yaml, when writing a brief for one, reading a JITSO launch card, or running jitso launch, close, reap, fleet, build list, build validate or build draft. Also use for a JITSO REJECTED message, for a hook denial that names worker-start, start_worker, terminal create, build save, setup or install, and whenever the words worker, conductor, subagent, build, card, brief, route scope or fleet come up. Load it before spawning any agent session, even if the user never says JITSO, because in these projects only jitso launch may start one.
 metadata:
   kind: workflow
 ---
@@ -51,6 +51,10 @@ Headings `Goal`, `Scope`, `Done when`, `Report format`. English. Within the word
 - `jitso reap` ends launches whose terminal is gone and lists workers no launch explains.
 - When a session ends, the SessionEnd hook writes its end event too. Details: `references/lifecycle.md`.
 
+## Find the other sessions
+
+`jitso fleet` is read only: it lists the live sessions of the project, one row each with launch id, role/type, harness, state, Orca handle, parent and title. The title is also the name of the session (`[jitso:<id>] <build>`), so a peer can be addressed by it. `--all` adds closed launches, `--json` prints an object for a program. A row marked `unlaunched` is a terminal no launch explains; `gone` is a launch whose terminal Orca no longer lists. Without Orca it still prints the registry rows, with state `unknown`, and exits 3. Details: `references/lifecycle.md`.
+
 ## Builds and drafts
 
 `jitso build list`, `jitso build validate [<id>]` and `jitso build list --drafts` are read-only. When no build fits, propose one with `jitso build draft <file.yaml|->` and tell the human. A draft launches like any build, but only the owner turns it into an approved build. Where builds live and the draft flow: `references/builds.md`.
@@ -61,7 +65,7 @@ When no build fits, ask what a build may name here: `jitso arsenal` prints one l
 
 ## The rules at the end of brief.md
 
-Every launch appends JITSO's rules to the end of `brief.md`, after your brief. They say: start other sessions only with the card's `launch:` line; when the build has a budget, the card's budget is your ceiling, so near it stop and report; load the card's skills before any other work; a direct session may ask the human, a fleet worker never does and sends its questions and its final report to the session that launched it; leave `jitso/`, `.jitso/` and `~/.jitso/` alone except your own draft in `.jitso/drafts/`, and never run `jitso build save`. Read the end of your `brief.md` to see the exact text.
+Every launch appends JITSO's rules to the end of `brief.md`, after your brief. They say: start other sessions only with the card's `launch:` line; when the build has a budget, the card's budget is your ceiling, so near it stop and report; load the card's skills before any other work; a direct session may ask the human, a fleet worker never does and sends its questions and its final report to the session that launched it; leave `jitso/`, `.jitso/` and `~/.jitso/` alone except your own draft in `.jitso/drafts/`, and never run `jitso build save`. Three more lines say how to reach another session: find it with `jitso fleet`, use `SendMessage` to its session name when both sessions are Claude Code and `orca orchestration send --to <handle>` otherwise, put your own handle and name in every message, and answer with `orca orchestration reply`. Read the end of your `brief.md` to see the exact text.
 
 ## Never run these
 
@@ -80,5 +84,5 @@ Every launch appends JITSO's rules to the end of `brief.md`, after your brief. T
 | `references/briefs.md` | writing a brief, or a brief was rejected |
 | `references/card.md` | reading or explaining a card |
 | `references/builds.md` | choosing, validating or drafting a build, composing one from `jitso arsenal`, `user:` names |
-| `references/lifecycle.md` | closing, reaping, the registry |
+| `references/lifecycle.md` | closing, reaping, listing the sessions (`jitso fleet`), the registry |
 | `references/troubleshooting.md` | any `JITSO REJECTED`, exit 3, hook denial or doctor line |

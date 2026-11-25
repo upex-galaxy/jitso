@@ -45,6 +45,27 @@ jitso reap: 0 launch(es) marked ended, 0 unlogged worker(s)
 
 Orca has no verb that lists every run, so a run the log never heard of is audited only when you name it with `--run <run>`. Run `reap` at the end of a fleet, after the workers report.
 
+## `jitso fleet [--json] [--all]`
+
+Read only: it writes nothing to the log and makes one Orca call, `terminal list`. It joins the launches of the log with the terminals Orca lists, to answer who else is running here and how to reach them.
+
+```
+ID                     ROLE/TYPE            HARNESS  STATE       HANDLE     PARENT                 TITLE
+L20261124T100000-a1a1  conductor/conductor  claude   live        term_a     -                      [jitso:L20261124T100000-a1a1] sonnet-conductor
+-                      -                    -        unlaunched  term_x     -                      zsh
+jitso fleet: 1 live, 1 unlaunched
+```
+
+| State | Meaning |
+|---|---|
+| `live` | the launch has no end event and its terminal is listed |
+| `gone` | no end event, terminal not listed (`jitso reap` ends it) |
+| `unknown` | no end event, and Orca could not be asked |
+| `closed` | the launch has an end event; shown only with `--all` |
+| `unlaunched` | a listed terminal that no launch explains, by handle or by the `[jitso:<id>]` mark in its title |
+
+Orca lists every terminal it manages, shells included, so an `unlaunched` row is a terminal to look at, not proof of an agent session. Your own row is the one whose id is in your card. The title is also the name of a Claude Code or Pi session (they start with `--name`); Codex and OpenCode have no launch flag for a name, so address those by handle. `--json` prints `{"orca": <bool>, "sessions": [...]}`, with `null` for what is not known. A truncated terminal list is exit 3 and prints nothing. With no `orca` on PATH the registry rows still print, with state `unknown`, and the command exits 3 with the install line.
+
 ## SessionEnd
 
 When the guard hook is registered (a launch carries it in its `--settings`, or the owner ran `jitso setup hook`), the hook's SessionEnd entry writes the `end` event of the closing session's launch with source `session_end_hook`. A registry problem there is swallowed so a session can always close.
