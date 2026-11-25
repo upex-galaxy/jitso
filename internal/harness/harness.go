@@ -70,6 +70,11 @@ type SpecInput struct {
 	Model     string
 	Effort    string
 	SessionID string
+	// Name is the display name of the session, the same text as the Orca
+	// terminal title. An adapter passes it only when its harness has a launch
+	// flag for a session name (claude and pi do; codex and opencode have none
+	// for their interactive session); "" passes nothing.
+	Name string
 	// MCPConfigPath is the strict MCP file written for this launch.
 	MCPConfigPath string
 	// MCPNames are the servers the session gets, in order.

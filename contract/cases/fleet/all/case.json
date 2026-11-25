@@ -1,0 +1,94 @@
+{
+  "id": "fleet/all",
+  "title": "fleet --all also shows the launches that have an end event, with state closed",
+  "source": [
+    "intended: docs/decisions.md, release 1 of the communication plan"
+  ],
+  "intent": "A closed launch is shown only with --all, in launch order, whether or not its terminal is still listed.",
+  "project": {
+    "files": {
+      ".jitso/launches.jsonl": {
+        "from": "launches.jsonl"
+      }
+    }
+  },
+  "orca": {
+    "responses": {
+      "terminal list": {
+        "terminals": [
+          {
+            "handle": "term_a",
+            "worktreeId": "uuid-1::/work/repo",
+            "worktreePath": "/work/repo",
+            "branch": "main",
+            "title": "[jitso:L20261124T100000-a1a1] sonnet-conductor",
+            "connected": true,
+            "writable": true
+          },
+          {
+            "handle": "term_b",
+            "worktreeId": "uuid-1::/work/repo",
+            "worktreePath": "/work/repo",
+            "branch": "main",
+            "title": "[jitso:L20261124T100100-b2b2] haiku-explorer",
+            "connected": true,
+            "writable": true
+          },
+          {
+            "handle": "term_d",
+            "worktreeId": "uuid-1::/work/repo",
+            "worktreePath": "/work/repo",
+            "branch": "main",
+            "title": "[jitso:L20261124T090000-d4d4] sonnet-tester",
+            "connected": true,
+            "writable": true
+          },
+          {
+            "handle": "term_x",
+            "worktreeId": "uuid-2::/work/other",
+            "worktreePath": "/work/other",
+            "branch": "feature",
+            "title": "zsh",
+            "connected": true,
+            "writable": true
+          }
+        ]
+      }
+    }
+  },
+  "steps": [
+    {
+      "run": [
+        "fleet",
+        "--all"
+      ],
+      "expect": {
+        "exit": 0,
+        "stdout": [
+          {
+            "regex": "(?m)^L20261124T090000-d4d4 +operator/tester +claude +closed +term_d +- +\\[jitso:L20261124T090000-d4d4\\] sonnet-tester$"
+          },
+          {
+            "regex": "(?m)^L20261124T100000-a1a1 +conductor/conductor +claude +live +term_a +- +"
+          },
+          {
+            "regex": "(?m)^jitso fleet: 2 live, 1 gone, 1 closed, 1 unlaunched$"
+          }
+        ],
+        "stderr": [
+          {
+            "empty": true
+          }
+        ],
+        "orca_calls": {
+          "verbs": [
+            "terminal list"
+          ]
+        },
+        "registry": {
+          "count": 5
+        }
+      }
+    }
+  ]
+}

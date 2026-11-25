@@ -1,0 +1,54 @@
+{
+  "id": "launch/fleet/brief-md-ends-with-the-communication-rules",
+  "title": "the JITSO rules of brief.md end with three communication lines: find a peer with jitso fleet, SendMessage between Claude Code sessions or orca orchestration send otherwise, and reply with orca orchestration reply",
+  "source": [
+    "intended: docs/decisions.md, release 1 of the communication plan; orca orchestration send --help and reply --help (send needs --subject, reply needs --id and --body)"
+  ],
+  "intent": "Every launched session reads the same short rule on how to reach another session. The text is fixed, the same in direct and fleet mode, and the whole rules section stays under eight lines (heading, three rules, three communication lines).",
+  "tags": [
+    "posix"
+  ],
+  "project": {
+    "files": {
+      ".jitso/briefs/brief.md": {
+        "from": "brief.md"
+      }
+    }
+  },
+  "steps": [
+    {
+      "run": [
+        "launch",
+        "--build",
+        "haiku-explorer",
+        "--brief",
+        "{{PROJECT}}/.jitso/briefs/brief.md",
+        "--mode",
+        "fleet",
+        "--run",
+        "run_1a2b"
+      ],
+      "capture": {
+        "LAUNCH_ID": {
+          "from": "stdout",
+          "regex": "JITSO (L\\d{8}T\\d{6}-[0-9a-f]{4})",
+          "group": 1
+        }
+      },
+      "expect": {
+        "exit": 0,
+        "files": [
+          {
+            "path": ".jitso/launches/{{LAUNCH_ID}}/brief.md",
+            "contains": [
+              "never run `jitso build save`.\nFind another session with `jitso fleet` (read only); your own row is the one with your launch id.\nBetween two Claude Code sessions use `SendMessage` to the session name; otherwise use `orca orchestration send --to <handle> --from <your handle> --subject <s> --body <b>`.\nPut your own handle and session name in every message, so the peer can answer with `orca orchestration reply --id <msg_id> --body <b>`.\n"
+            ],
+            "regex": [
+              "(?s)\\n\\n## JITSO rules\\n(?:[^\\n]+\\n){6}$"
+            ]
+          }
+        ]
+      }
+    }
+  ]
+}

@@ -1,0 +1,55 @@
+{
+  "id": "fleet/truncated-terminal-list-is-exit-3",
+  "title": "a terminal list Orca reports as truncated is exit 3 and nothing is printed",
+  "source": [
+    "intended: docs/decisions.md, Pre-release fixes (a truncated list is refused)"
+  ],
+  "project": {
+    "files": {
+      ".jitso/launches.jsonl": {
+        "from": "launches.jsonl"
+      }
+    }
+  },
+  "orca": {
+    "responses": {
+      "terminal list": {
+        "terminals": [
+          {
+            "handle": "term_other"
+          }
+        ],
+        "truncated": true,
+        "totalCount": 2001
+      }
+    }
+  },
+  "steps": [
+    {
+      "run": [
+        "fleet"
+      ],
+      "expect": {
+        "exit": 3,
+        "stdout": [
+          {
+            "empty": true
+          }
+        ],
+        "stderr": [
+          {
+            "contains": "orca terminal list is truncated"
+          }
+        ],
+        "orca_calls": {
+          "verbs": [
+            "terminal list"
+          ]
+        },
+        "registry": {
+          "count": 5
+        }
+      }
+    }
+  ]
+}

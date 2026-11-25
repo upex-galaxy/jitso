@@ -3,6 +3,7 @@ package pi
 import (
 	"path/filepath"
 	"reflect"
+	"slices"
 	"strings"
 	"testing"
 
@@ -35,6 +36,18 @@ func TestArgv(t *testing.T) {
 				t.Errorf("got  %q\nwant %q", got, want)
 			}
 		})
+	}
+}
+
+func TestArgvName(t *testing.T) {
+	in := harness.SpecInput{Model: "m", Effort: "low", SessionID: "sid", Name: "[jitso:L1] build one"}
+	want := []string{"pi", "--model", "m", "--thinking", "low", "--no-mcp", "--session-id", "sid", "--name", "[jitso:L1] build one"}
+	if got := Argv(in); !reflect.DeepEqual(got, want) {
+		t.Errorf("got  %q\nwant %q", got, want)
+	}
+	in.Name = ""
+	if got := Argv(in); slices.Contains(got, "--name") {
+		t.Errorf("an empty name still passed --name: %q", got)
 	}
 }
 

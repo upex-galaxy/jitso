@@ -1,0 +1,69 @@
+{
+  "id": "fleet/no-orca",
+  "title": "with no orca on PATH fleet still prints the registry rows with state unknown, says on stderr that Orca is missing, writes nothing and exits 3",
+  "source": [
+    "intended: docs/decisions.md, release 1 of the communication plan; orca/missing/not-on-path for the exit code and the text"
+  ],
+  "intent": "The registry alone cannot say which launches are alive, so every launch without an end event is unknown and no terminal can be flagged unlaunched. The exit code and the stderr line are the ones of every command that needs Orca; the rows are the part of the answer the registry can give.",
+  "tags": [
+    "posix"
+  ],
+  "project": {
+    "files": {
+      ".jitso/launches.jsonl": {
+        "from": "launches.jsonl"
+      }
+    }
+  },
+  "steps": [
+    {
+      "run": [
+        "fleet"
+      ],
+      "env": {
+        "ORCA_CLI_COMMAND": "",
+        "PATH": "/usr/bin:/bin"
+      },
+      "expect": {
+        "exit": 3,
+        "stdout": [
+          {
+            "regex": "(?m)^ID +ROLE/TYPE +HARNESS +STATE +HANDLE +PARENT +TITLE$"
+          },
+          {
+            "regex": "(?m)^L20261124T100000-a1a1 +conductor/conductor +claude +unknown +term_a +- +"
+          },
+          {
+            "regex": "(?m)^L20261124T100200-c3c3 +operator/worker +pi +unknown +term_c +"
+          },
+          {
+            "regex": "(?m)^jitso fleet: 3 unknown$"
+          },
+          {
+            "not_contains": "d4d4"
+          },
+          {
+            "not_contains": "unlaunched"
+          }
+        ],
+        "stderr": [
+          {
+            "equals": "jitso: Orca is not installed (orca is not on PATH). jitso opens and tracks each worker in an Orca terminal: install Orca from https://github.com/stablyai/orca, open it once, then run jitso doctor.\n"
+          }
+        ],
+        "orca_calls": {
+          "empty": true
+        },
+        "registry": {
+          "count": 5
+        },
+        "files": [
+          {
+            "path": ".jitso/launches.lock",
+            "exists": false
+          }
+        ]
+      }
+    }
+  ]
+}

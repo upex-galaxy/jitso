@@ -1,0 +1,52 @@
+{
+  "id": "fleet/empty-registry",
+  "title": "with no registry and no terminal fleet prints only the summary line, calls the terminal list once and writes nothing",
+  "source": [
+    "intended: docs/decisions.md, release 1 of the communication plan"
+  ],
+  "orca": {
+    "responses": {
+      "terminal list": {
+        "terminals": []
+      }
+    }
+  },
+  "steps": [
+    {
+      "run": [
+        "fleet"
+      ],
+      "expect": {
+        "exit": 0,
+        "stdout": [
+          {
+            "equals": "jitso fleet: no sessions\n"
+          }
+        ],
+        "stderr": [
+          {
+            "empty": true
+          }
+        ],
+        "orca_calls": {
+          "verbs": [
+            "terminal list"
+          ]
+        },
+        "registry": {
+          "count": 0
+        },
+        "files": [
+          {
+            "path": ".jitso/launches.jsonl",
+            "exists": false
+          },
+          {
+            "path": ".jitso/launches.lock",
+            "exists": false
+          }
+        ]
+      }
+    }
+  ]
+}

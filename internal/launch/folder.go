@@ -48,7 +48,15 @@ func writeFolder(p prepared, d Deps, dir string) (folder, error) {
 		return folder{}, err
 	}
 	b := p.profile.Build
+	mark, err := shell.TerminalTitle(p.id)
+	if err != nil {
+		return folder{}, err
+	}
+	// The harness session is named like the terminal tab, so a peer found by
+	// the title can be addressed by that name.
+	f.title = mark + " " + b.ID
 	in := harness.SpecInput{
+		Name:          f.title,
 		Model:         p.profile.Model,
 		Effort:        p.profile.Effort,
 		SessionID:     f.sessionID,
@@ -112,11 +120,6 @@ func writeFolder(p prepared, d Deps, dir string) (folder, error) {
 		return folder{}, err
 	}
 
-	mark, err := shell.TerminalTitle(p.id)
-	if err != nil {
-		return folder{}, err
-	}
-	f.title = mark + " " + b.ID
 	if f.command, err = shell.CommandFor(runSh); err != nil {
 		return folder{}, err
 	}

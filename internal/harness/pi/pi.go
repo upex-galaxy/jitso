@@ -53,6 +53,9 @@ func (Adapter) Spec(in harness.SpecInput) (harness.Spec, error) {
 // Argv is the pi argv for in, program first.
 func Argv(in harness.SpecInput) []string {
 	argv := []string{"pi", "--model", in.Model, "--thinking", in.Effort, "--no-mcp", "--session-id", in.SessionID}
+	if in.Name != "" {
+		argv = append(argv, "--name", in.Name)
+	}
 	if in.AgentsMD == "exclude" {
 		argv = append(argv, "--no-context-files")
 	}

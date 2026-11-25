@@ -46,7 +46,7 @@
               "event": "launch",
               "fields": {
                 "flags": {
-                  "regex": "^\\[\"--dangerously-skip-permissions\",\"--setting-sources\",\"project\",\"--settings\",\"\\{\\\\\"skipDangerousModePermissionPrompt\\\\\":true,\\\\\"promptSuggestionEnabled\\\\\":false\\}\",\"--strict-mcp-config\",\"--mcp-config\",\"{{PROJECT}}/.jitso/launches/{{LAUNCH_ID}}/mcp\\.json\",\"--model\",\"claude-haiku-5-5\",\"--effort\",\"low\",\"--session-id\",\"[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\",\"--tools=Read,Glob,Grep,Bash\"\\]$"
+                  "regex": "^\\[\"--dangerously-skip-permissions\",\"--setting-sources\",\"project\",\"--settings\",\"\\{\\\\\"skipDangerousModePermissionPrompt\\\\\":true,\\\\\"promptSuggestionEnabled\\\\\":false\\}\",\"--strict-mcp-config\",\"--mcp-config\",\"{{PROJECT}}/.jitso/launches/{{LAUNCH_ID}}/mcp\\.json\",\"--model\",\"claude-haiku-5-5\",\"--effort\",\"low\",\"--session-id\",\"[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\",\"--name\",\"\\[jitso:{{LAUNCH_ID}}\\] haiku-explorer\",\"--tools=Read,Glob,Grep,Bash\"\\]$"
                 },
                 "session_id": {
                   "regex": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"

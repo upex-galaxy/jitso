@@ -1,0 +1,38 @@
+{
+  "id": "hooks/guard/allows-fleet",
+  "title": "the guard stays silent for jitso fleet in every form: it only reads the registry and the terminal list",
+  "source": [
+    "intended: docs/decisions.md, release 1 of the communication plan (fleet is read only)"
+  ],
+  "for_each": {
+    "var": "command",
+    "values": [
+      "jitso fleet",
+      "jitso fleet --json",
+      "jitso fleet --all",
+      "jitso fleet --json --all"
+    ]
+  },
+  "steps": [
+    {
+      "hook": "guard",
+      "input": {
+        "hook_event_name": "PreToolUse",
+        "tool_name": "Bash",
+        "tool_input": {
+          "command": "{{command}}"
+        },
+        "cwd": "{{PROJECT}}"
+      },
+      "expect": {
+        "exit": 0,
+        "decision": "none",
+        "stdout": [
+          {
+            "empty": true
+          }
+        ]
+      }
+    }
+  ]
+}

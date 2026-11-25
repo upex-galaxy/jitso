@@ -1,0 +1,94 @@
+{
+  "id": "launch/name/claude-name-is-the-terminal-title",
+  "title": "claude starts with --name equal to the Orca terminal title ('[jitso:<id>] <build>'), and the registry flags carry it",
+  "source": [
+    "intended: docs/decisions.md, release 1 of the communication plan; claude --help: -n, --name <name> sets the display name of the session, which native messaging addresses"
+  ],
+  "intent": "The title of the terminal tab and the name of the harness session are the same text, so a peer found in `jitso fleet` can be addressed by the name its row shows. The name is one argv word: it holds spaces and brackets and is never shell text.",
+  "tags": [
+    "posix"
+  ],
+  "project": {
+    "files": {
+      ".jitso/briefs/brief.md": {
+        "from": "brief.md"
+      }
+    }
+  },
+  "steps": [
+    {
+      "run": [
+        "launch",
+        "--build",
+        "haiku-explorer",
+        "--brief",
+        "{{PROJECT}}/.jitso/briefs/brief.md",
+        "--mode",
+        "fleet",
+        "--run",
+        "run_1a2b"
+      ],
+      "capture": {
+        "LAUNCH_ID": {
+          "from": "stdout",
+          "regex": "JITSO (L\\d{8}T\\d{6}-[0-9a-f]{4})",
+          "group": 1
+        }
+      },
+      "expect": {
+        "exit": 0,
+        "orca_calls": {
+          "calls": [
+            {
+              "at": 0,
+              "argv": [
+                "terminal",
+                "create",
+                "--title",
+                "[jitso:{{LAUNCH_ID}}] haiku-explorer",
+                "--command",
+                {
+                  "regex": "run\\.sh'$"
+                }
+              ]
+            }
+          ]
+        },
+        "registry": {
+          "count": 1,
+          "events": [
+            {
+              "at": 0,
+              "event": "launch",
+              "fields": {
+                "orca.title": "[jitso:{{LAUNCH_ID}}] haiku-explorer",
+                "flags": {
+                  "regex": "\"--name\",\"\\[jitso:{{LAUNCH_ID}}\\] haiku-explorer\""
+                }
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "exec": "run_sh",
+      "launch": "{{LAUNCH_ID}}",
+      "expect": {
+        "exit": 0,
+        "claude": {
+          "ran": true,
+          "arg_after": {
+            "--session-id": {
+              "regex": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+            },
+            "--name": "[jitso:{{LAUNCH_ID}}] haiku-explorer"
+          },
+          "argv_count": {
+            "--name": 1
+          }
+        }
+      }
+    }
+  ]
+}

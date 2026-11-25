@@ -1,0 +1,106 @@
+{
+  "id": "fleet/json",
+  "title": "fleet --json prints one object: orca true and the sessions in the same order, with null for what is unknown",
+  "source": [
+    "intended: docs/decisions.md, release 1 of the communication plan"
+  ],
+  "intent": "The JSON form carries what the text form shows plus mode, worktree, branch and the launch time. A launch gone from Orca has null worktree and branch; an unlaunched terminal has null launch fields. The output is indented by two spaces.",
+  "project": {
+    "files": {
+      ".jitso/launches.jsonl": {
+        "from": "launches.jsonl"
+      }
+    }
+  },
+  "orca": {
+    "responses": {
+      "terminal list": {
+        "terminals": [
+          {
+            "handle": "term_a",
+            "worktreeId": "uuid-1::/work/repo",
+            "worktreePath": "/work/repo",
+            "branch": "main",
+            "title": "[jitso:L20261124T100000-a1a1] sonnet-conductor",
+            "connected": true,
+            "writable": true
+          },
+          {
+            "handle": "term_b",
+            "worktreeId": "uuid-1::/work/repo",
+            "worktreePath": "/work/repo",
+            "branch": "main",
+            "title": "[jitso:L20261124T100100-b2b2] haiku-explorer",
+            "connected": true,
+            "writable": true
+          },
+          {
+            "handle": "term_d",
+            "worktreeId": "uuid-1::/work/repo",
+            "worktreePath": "/work/repo",
+            "branch": "main",
+            "title": "[jitso:L20261124T090000-d4d4] sonnet-tester",
+            "connected": true,
+            "writable": true
+          },
+          {
+            "handle": "term_x",
+            "worktreeId": "uuid-2::/work/other",
+            "worktreePath": "/work/other",
+            "branch": "feature",
+            "title": "zsh",
+            "connected": true,
+            "writable": true
+          }
+        ]
+      }
+    }
+  },
+  "steps": [
+    {
+      "run": [
+        "fleet",
+        "--json"
+      ],
+      "expect": {
+        "exit": 0,
+        "stdout": [
+          {
+            "regex": "^\\{\\n  \"orca\": true,\\n  \"sessions\": \\[\\n    \\{\\n"
+          },
+          {
+            "regex": "(?s)\"id\": \"L20261124T100000-a1a1\",\n +\"parent\": null,\n +\"role\": \"conductor\",\n +\"type\": \"conductor\",\n +\"build\": \"sonnet-conductor\",\n +\"harness\": \"claude\",\n +\"mode\": \"direct\",\n +\"state\": \"live\",\n +\"handle\": \"term_a\",\n +\"title\": \"\\[jitso:L20261124T100000-a1a1\\] sonnet-conductor\",\n +\"worktree\": \"/work/repo\",\n +\"branch\": \"main\",\n +\"ts\": \"2026-11-24T10:00:00.000Z\"\n"
+          },
+          {
+            "regex": "(?s)\"id\": \"L20261124T100100-b2b2\",\n +\"parent\": \"L20261124T100000-a1a1\",\n +\"role\": \"operator\",\n +\"type\": \"explorer\",\n +\"build\": \"haiku-explorer\",\n +\"harness\": \"claude\",\n +\"mode\": \"fleet\",\n +\"state\": \"live\",\n +\"handle\": \"term_b\",\n +\"title\": \"\\[jitso:L20261124T100100-b2b2\\] haiku-explorer\",\n +\"worktree\": \"/work/repo\",\n +\"branch\": \"main\",\n +\"ts\": \"2026-11-24T10:01:00.000Z\"\n"
+          },
+          {
+            "regex": "(?s)\"id\": \"L20261124T100200-c3c3\",\n +\"parent\": \"L20261124T100000-a1a1\",\n +\"role\": \"operator\",\n +\"type\": \"worker\",\n +\"build\": \"pi-worker\",\n +\"harness\": \"pi\",\n +\"mode\": \"fleet\",\n +\"state\": \"gone\",\n +\"handle\": \"term_c\",\n +\"title\": \"\\[jitso:L20261124T100200-c3c3\\] pi-worker\",\n +\"worktree\": null,\n +\"branch\": null,\n +\"ts\": \"2026-11-24T10:02:00.000Z\"\n"
+          },
+          {
+            "regex": "(?s)\"id\": null,\n +\"parent\": null,\n +\"role\": null,\n +\"type\": null,\n +\"build\": null,\n +\"harness\": null,\n +\"mode\": null,\n +\"state\": \"unlaunched\",\n +\"handle\": \"term_x\",\n +\"title\": \"zsh\",\n +\"worktree\": \"/work/other\",\n +\"branch\": \"feature\",\n +\"ts\": null\n"
+          },
+          {
+            "not_contains": "d4d4"
+          },
+          {
+            "regex": "\\n  \\]\\n\\}\\n$"
+          }
+        ],
+        "stderr": [
+          {
+            "empty": true
+          }
+        ],
+        "orca_calls": {
+          "verbs": [
+            "terminal list"
+          ]
+        },
+        "registry": {
+          "count": 5
+        }
+      }
+    }
+  ]
+}

@@ -194,6 +194,32 @@ const ListLimit = 1000
 // it reports. A reply that is still truncated is an error: a partial list
 // would make a live terminal look gone.
 func (c *Client) ListHandles() ([]string, error) {
+	terminals, err := c.ListTerminals()
+	if err != nil {
+		return nil, err
+	}
+	handles := make([]string, len(terminals))
+	for i, t := range terminals {
+		handles[i] = t.Handle
+	}
+	return handles, nil
+}
+
+// TerminalInfo is one row of `terminal list`: the fields of it jitso reads.
+// Anything Orca left out is "".
+type TerminalInfo struct {
+	Handle string
+	Title  string
+	// Worktree is the folder of the terminal's worktree (worktreePath, else
+	// the path part of worktreeId).
+	Worktree string
+	Branch   string
+}
+
+// ListTerminals runs `terminal list --limit <ListLimit>` and returns the
+// terminals it reports that have a string handle, in Orca's order. A reply that is
+// still truncated is an error, for the reason ListHandles gives.
+func (c *Client) ListTerminals() ([]TerminalInfo, error) {
 	res, err := c.Call([]string{"terminal", "list", "--limit", strconv.Itoa(ListLimit)})
 	if err != nil {
 		return nil, err
@@ -202,12 +228,22 @@ func (c *Client) ListHandles() ([]string, error) {
 		return nil, &Error{Message: "orca terminal list is truncated: it did not return every terminal, so nothing was decided from it"}
 	}
 	list, _ := res["terminals"].([]any)
-	handles := []string{}
-	for _, t := range list {
-		m, _ := t.(map[string]any)
-		if h, ok := m["handle"].(string); ok {
-			handles = append(handles, h)
+	terminals := []TerminalInfo{}
+	for _, item := range list {
+		m, _ := item.(map[string]any)
+		handle, ok := m["handle"].(string)
+		if !ok {
+			continue
 		}
+		t := TerminalInfo{Handle: handle}
+		t.Title, _ = m["title"].(string)
+		t.Branch, _ = m["branch"].(string)
+		if path, ok := m["worktreePath"].(string); ok {
+			t.Worktree = path
+		} else if id, ok := m["worktreeId"].(string); ok {
+			t.Worktree, _ = WorktreePath(id)
+		}
+		terminals = append(terminals, t)
 	}
-	return handles, nil
+	return terminals, nil
 }

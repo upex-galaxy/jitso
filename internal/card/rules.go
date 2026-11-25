@@ -2,8 +2,18 @@ package card
 
 import "strings"
 
+// Communication is the three lines about reaching another session that close
+// every rules text: how to find a peer, how to send, how to answer. The text
+// is fixed and the same in both modes.
+var Communication = []string{
+	"Find another session with `jitso fleet` (read only); your own row is the one with your launch id.",
+	"Between two Claude Code sessions use `SendMessage` to the session name; otherwise use `orca orchestration send --to <handle> --from <your handle> --subject <s> --body <b>`.",
+	"Put your own handle and session name in every message, so the peer can answer with `orca orchestration reply --id <msg_id> --body <b>`.",
+}
+
 // Rules is the JITSO rules text a launch appends to the end of brief.md: a
-// heading and three lines, joined with "\n", without a trailing newline. mode
+// heading, three rules and the three Communication lines, joined with "\n",
+// without a trailing newline. mode
 // "direct" gives the direct text (the session may ask the human); any other
 // value gives the fleet text (the session reports to the session that
 // launched it). hasBudget adds the sentence that names the card's budget as
@@ -19,10 +29,11 @@ func Rules(mode string, hasBudget bool) string {
 	} else {
 		skills += "Never ask a human: send your questions and your final report (a count of done, failed, open) to the session that launched you."
 	}
-	return strings.Join([]string{
+	lines := []string{
 		"## JITSO rules",
 		launch,
 		skills,
 		"Leave `jitso/`, `.jitso/` and `~/.jitso/` alone except your own draft in `.jitso/drafts/`, and never run `jitso build save`.",
-	}, "\n")
+	}
+	return strings.Join(append(lines, Communication...), "\n")
 }

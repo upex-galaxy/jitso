@@ -134,6 +134,9 @@ func Argv(in harness.SpecInput) ([]string, error) {
 		"--effort", in.Effort,
 		"--session-id", in.SessionID,
 	)
+	if in.Name != "" {
+		argv = append(argv, "--name", in.Name)
+	}
 	if len(in.Subagents) > 0 {
 		agents, err := AgentsJSON(in.Subagents)
 		if err != nil {

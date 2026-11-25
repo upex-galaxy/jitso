@@ -5,11 +5,30 @@ import (
 	"path/filepath"
 	"reflect"
 	"regexp"
+	"slices"
 	"testing"
 
 	"github.com/upex-galaxy/jitso/internal/harness"
 	"github.com/upex-galaxy/jitso/internal/jsonx"
 )
+
+func TestArgvName(t *testing.T) {
+	in := harness.SpecInput{Model: "m", Effort: "low", SessionID: "sid", MCPConfigPath: "/l/mcp.json", Name: "[jitso:L1] build one", Tools: []string{"Read"}, ToolsSet: true}
+	got, err := Argv(in)
+	if err != nil {
+		t.Fatal(err)
+	}
+	// The name is one word right after the session id, before the tool list.
+	at := slices.Index(got, "--session-id")
+	if at < 0 || !slices.Equal(got[at+2:at+4], []string{"--name", "[jitso:L1] build one"}) || got[at+4] != "--tools=Read" {
+		t.Errorf("got %q", got)
+	}
+	in.Name = ""
+	got, _ = Argv(in)
+	if slices.Contains(got, "--name") {
+		t.Errorf("an empty name still passed --name: %q", got)
+	}
+}
 
 func TestArgv(t *testing.T) {
 	base := harness.SpecInput{Model: "claude-haiku-5-5", Effort: "low", SessionID: "sid", MCPConfigPath: "/l/mcp.json"}

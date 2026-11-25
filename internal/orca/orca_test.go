@@ -112,6 +112,30 @@ func TestTerminalVerbs(t *testing.T) {
 	}
 }
 
+func TestListTerminals(t *testing.T) {
+	body := `{"ok":true,"result":{"terminals":[` +
+		`{"handle":"term_1","title":"[jitso:L1] p","worktreeId":"u1::/w/a","worktreePath":"/w/b","branch":"main"},` +
+		`{"handle":"term_2","worktreeId":"u2::/w/c"},` +
+		`{"title":"no handle"},` +
+		`{"handle":7}]}}`
+	s := &script{answers: map[string]Result{"terminal list": {0, body, ""}}}
+	got, err := NewClient(s.run).ListTerminals()
+	if err != nil {
+		t.Fatal(err)
+	}
+	want := []TerminalInfo{
+		{Handle: "term_1", Title: "[jitso:L1] p", Worktree: "/w/b", Branch: "main"},
+		{Handle: "term_2", Worktree: "/w/c"},
+	}
+	if !reflect.DeepEqual(got, want) {
+		t.Errorf("got %+v\nwant %+v", got, want)
+	}
+	partial := &script{answers: map[string]Result{"terminal list": {0, `{"ok":true,"result":{"terminals":[],"truncated":true}}`, ""}}}
+	if _, err := NewClient(partial.run).ListTerminals(); err == nil || !strings.Contains(err.Error(), "truncated") {
+		t.Errorf("a truncated list must be refused: %v", err)
+	}
+}
+
 func TestCreateTerminalWithoutHandle(t *testing.T) {
 	s := &script{answers: map[string]Result{"terminal create": {0, `{"ok":true,"result":{}}`, ""}}}
 	_, err := NewClient(s.run).CreateTerminal("", "t", "c")
