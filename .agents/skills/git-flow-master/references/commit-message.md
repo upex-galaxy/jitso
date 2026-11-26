@@ -14,9 +14,10 @@ Conventional commit subject, English, imperative, at most about 72 characters, n
 | `refactor` | same behavior, different code |
 | `docs` | docs, skills, `AGENTS.md` |
 | `build` | toolchain, cross-compile, release scripts |
+| `ci` | the workflows under `.github/workflows/` |
 | `chore` | `.gitignore` and other housekeeping |
 
-Scopes in use: `contract`, `runner`, `cli`, `hooks`, `agents` (skills and `AGENTS.md`), `docs`. A breaking change adds `!` after the scope and a `BREAKING CHANGE:` paragraph.
+The scope names the area changed: a command, a package, `contract`, `docs`, or `agents` for the repo skills and `AGENTS.md`. `git log --format=%s` shows the ones in use. Leave it out when a change spans areas. A breaking change adds `!` after the type or scope and a `BREAKING CHANGE:` paragraph.
 
 The body says why, in plain sentences, wrapped near 72 columns. The two trailers close the message after one blank line.
 
