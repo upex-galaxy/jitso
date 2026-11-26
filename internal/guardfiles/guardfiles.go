@@ -64,7 +64,7 @@ const command = %COMMAND%;
 function guard(input, cwd) {
   let res;
   try {
-    res = spawnSync(command, ["hook", "guard"], { input: JSON.stringify(input), encoding: "utf8", cwd, timeout: 30000 });
+    res = spawnSync(command, ["hook", "guard"], { input: JSON.stringify(input), encoding: "utf8", cwd, timeout: 30000%OPTION% });
   } catch {
     return undefined;
   }
@@ -137,8 +137,14 @@ export default function (pi) {
 `
 
 // generate is the marker, the shared part with command as argv[0], and body.
-func generate(command, version, body string) []byte {
-	return []byte(marker(version) + strings.Replace(runGuard, "%COMMAND%", jsString(command), 1) + body)
+// A home that is not "" is set as JITSO_PROJECT in the guard's environment.
+func generate(command, version, home, body string) []byte {
+	option := ""
+	if home != "" {
+		option = ", env: { ...process.env, JITSO_PROJECT: " + jsString(home) + " }"
+	}
+	shared := strings.NewReplacer("%COMMAND%", jsString(command), "%OPTION%", option).Replace(runGuard)
+	return []byte(marker(version) + shared + body)
 }
 
 // OpenCode is the OpenCode 2 plugin (`.opencode/plugins/jitso-guard.js`):
@@ -148,16 +154,18 @@ func generate(command, version, body string) []byte {
 // guard runs in ctx.location.directory, the session's project folder; a deny
 // throws an Error with the reason. command is the program the plugin starts
 // (argv[0], "jitso" or an absolute path) with the arguments hook guard;
-// version is the jitso version for the marker line.
-func OpenCode(command string, version string) []byte {
-	return generate(command, version, openCodeBody)
+// version is the jitso version for the marker line. home, when not "", is the
+// JITSO_PROJECT the guard runs with: the file of a launch into another
+// repository.
+func OpenCode(command, version, home string) []byte {
+	return generate(command, version, home, openCodeBody)
 }
 
 // Pi is the Pi extension (`.pi/extensions/jitso-guard.js`): `export default
 // function (pi)` with a tool_call handler (bash is sent as "Bash", other tool
 // names as they are; a deny returns { block: true, reason }) and a
 // session_shutdown handler that sends a SessionEnd input and ignores the
-// answer. command and version are as for OpenCode.
-func Pi(command string, version string) []byte {
-	return generate(command, version, piBody)
+// answer. command, version and home are as for OpenCode.
+func Pi(command, version, home string) []byte {
+	return generate(command, version, home, piBody)
 }

@@ -39,7 +39,7 @@ func runBuildValidate(ctx *Context, args []string) error {
 		}
 		id = a
 	}
-	root, err := ctx.Project()
+	root, err := ctx.HomeProject()
 	if err != nil {
 		return err
 	}

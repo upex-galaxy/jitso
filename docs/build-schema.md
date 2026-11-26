@@ -31,7 +31,7 @@ No build is read from outside the project: not a parent folder, not `$HOME/.jits
 | `repo` | the catalog is validated as a whole: one invalid file is exit 3 for every command that loads it, `build <file> is invalid: <problems>` |
 | `draft` | the file is skipped: `jitso build list` warns on stderr, `jitso launch --build <id>` is rejected (exit 2) with the problems, every other command is silent |
 
-Every build is validated against the launching project: its `jitso/jitso.yaml`, its instruction sections and its subagent names, resolved with the same lookup.
+Every build is validated against the launching project: its `jitso/jitso.yaml`, its instruction sections and its subagent names, resolved with the same lookup. A launch into another repository is checked differently ("Another repository").
 
 ### Statuses
 
@@ -81,6 +81,19 @@ A project without this file has every allowlist open: `launch`, the `build` comm
 A launch that gives a bad value is `JITSO REJECTED: field <name> has an invalid value`.
 
 Route-scope ids are not in this file: they are the `id:` line of each `.agents/instructions/agent-*.md` file.
+
+## Another repository
+
+`jitso launch --repo <path>` (or a `--worktree path:<folder>` of another repository), `jitso arsenal --repo <path>` and `jitso build draft --repo <path>` check builds against a second repository, the target (`catalog.ScanTarget`). The launching project is the home.
+
+| Checked against | Items |
+|---|---|
+| home | the build files and drafts, `models` and `efforts` of its `jitso/jitso.yaml`, its `fields` patterns, subagent builds |
+| target | `skills_first` (its skill folders), `mcp` (its `.mcp.json`), `route_scope` (its `.agents/instructions/`), and the `skills`, `mcp` and `tools` lists of its own `jitso/jitso.yaml`, all open when it has no file |
+
+The home's `skills`, `mcp` and `tools` lists do not apply to the target. The home catalog must still be valid on its own first; against the target only the launched build and its subagents must be valid, and another invalid file there fails nothing. A saved build therefore has to be valid at home too; a build that names what only the target holds is a draft, kept by `jitso build draft --repo`, which prints `drafted <id>: .jitso/drafts/<id>.yaml (launch it with --build <id> --repo <target>)`. An invalid `jitso/jitso.yaml` of the target is exit 3, `jitso: target <path>: jitso/jitso.yaml is invalid: <problems>`.
+
+A `--repo` value is an absolute path with no control character, at most 1024 bytes (`JITSO REJECTED: invalid value for --repo`), inside a git checkout (`JITSO REJECTED: --repo <path> is not inside a git checkout`); no value is `JITSO REJECTED: --repo needs a value`. A path of the home repository changes nothing.
 
 ## `~/.jitso/jitso.yaml`: the user allowlist
 
@@ -180,7 +193,7 @@ A draft is a build that is not saved yet: the file `<primary>/.jitso/drafts/<id>
 | Aspect | Rule |
 |---|---|
 | folder | `.jitso/drafts/` of the primary checkout, even from a linked worktree. It holds its own `.gitignore` with the single line `*`, created when missing and never rewritten, so a draft is never committed |
-| input of `jitso build draft` | a path ending in `.yaml` or `.yml`, or `-` for standard input; at most 64 KiB; anything else is `JITSO REJECTED: a draft is a .yaml file (or - for stdin) of at most 64 KiB`. A file that cannot be read is `JITSO REJECTED: cannot read <path>: <reason>`; a second word or a flag is `JITSO REJECTED: unknown argument "<x>"` |
+| input of `jitso build draft` | a path ending in `.yaml` or `.yml`, or `-` for standard input, and an optional `--repo <path>` ("Another repository"); at most 64 KiB; anything else is `JITSO REJECTED: a draft is a .yaml file (or - for stdin) of at most 64 KiB`. A file that cannot be read is `JITSO REJECTED: cannot read <path>: <reason>`; a second word or a flag is `JITSO REJECTED: unknown argument "<x>"` |
 | checks | the rules of this page for the draft layer (`status` `draft` or absent), the launch rules marked L (a harness needs an adapter, a listed subagent must exist), and an id of at most 64 characters (`id must be at most 64 characters`). A problem is `JITSO REJECTED: draft <path or stdin> is invalid: <problems joined by "; ">`, and nothing is written |
 | id | an id no saved build has: `JITSO REJECTED: build "<id>" already exists (<layer> <path>): a draft needs an id no build has`. An id that already has a draft is replaced |
 | written | the input bytes, unchanged, as `.jitso/drafts/<id>.yaml`; stdout is `drafted <id>: .jitso/drafts/<id>.yaml (launch it with --build <id>; keep it with jitso build save <id>)` |

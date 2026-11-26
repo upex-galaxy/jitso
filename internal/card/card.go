@@ -25,6 +25,10 @@ type Input struct {
 	Build string
 	// BuildVersion is "" for a build with no version.
 	BuildVersion string
+	// Target and Home are the repository the worker goes into and the one
+	// that launched it, both "" unless they differ.
+	Target string
+	Home   string
 	// Layer is where the build file lives: repo or draft. The header names it
 	// for a draft; "" and repo print nothing.
 	Layer       string
@@ -43,9 +47,11 @@ type Input struct {
 	BudgetUSD    float64
 }
 
-// Render is the card text, six lines without a trailing newline:
+// Render is the card text, six lines without a trailing newline, plus the
+// target line after the header of a launch into another repository:
 //
 //	JITSO <id> | <role>/<type> | mode <mode> (<who it asks>) | build <build> v<version>[ (<layer>)]
+//	[target <target> | home <home>]
 //	model <model> effort <effort> | bypass | MCP <list> | skill <list>
 //	subagents <names or unrestricted>
 //	ROUTE-SCOPE: <ids>
@@ -78,8 +84,12 @@ func Render(in Input) string {
 	if in.BuildVersion != "" {
 		header += " v" + in.BuildVersion
 	}
+	header += layer
+	if in.Target != "" {
+		header += "\ntarget " + in.Target + " | home " + in.Home
+	}
 	return strings.Join([]string{
-		header + layer,
+		header,
 		"model " + in.Model + " effort " + in.Effort + " | bypass | MCP " + list(in.MCP) + " | skill " + list(in.SkillsFirst),
 		"subagents " + subagents(in.Subagents),
 		ScopeLine(in.RouteScope),

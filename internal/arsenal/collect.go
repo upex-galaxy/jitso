@@ -1,6 +1,7 @@
 package arsenal
 
 import (
+	"fmt"
 	"io/fs"
 	"os"
 	"path"
@@ -20,8 +21,16 @@ const (
 	openName = "(open)"
 )
 
+// Target is another repository a launch may go into: its primary checkout.
+type Target struct {
+	FS   fs.FS
+	Path string
+}
+
 // Collect reads the inventory of the project whose primary checkout is
-// fsys (at the real path primary) and of the user folder home. Only an invalid
+// fsys (at the real path primary) and of the user folder home. With a target
+// it is what a build launched into that repository may name
+// (catalog.ScanTarget), and the first line says so. Only an invalid
 // jitso/jitso.yaml, or an unreadable instructions folder, is an error; an
 // invalid user file is one line of the inventory.
 //
@@ -29,8 +38,17 @@ const (
 // name (open), and lists what exists in its place: nothing for models, efforts
 // and tools, which are free text, and the skill folders and servers a build
 // may name for skills and mcp. An open list leaves no candidate.
-func Collect(fsys fs.FS, primary, home string) (Inventory, error) {
-	res, err := catalog.Scan(fsys, primary)
+func Collect(fsys fs.FS, primary, home string, target *Target) (Inventory, error) {
+	// items is the repository whose skills and servers a build names.
+	items := fsys
+	var res *catalog.Result
+	var err error
+	if target == nil {
+		res, err = catalog.Scan(fsys, primary)
+	} else {
+		items = target.FS
+		res, err = catalog.ScanTarget(fsys, primary, "", target.FS)
+	}
 	if err != nil {
 		return Inventory{}, err
 	}
@@ -41,6 +59,9 @@ func Collect(fsys fs.FS, primary, home string) (Inventory, error) {
 	user := cfg.User
 	userKnown := user.Err == nil && home != ""
 	var inv Inventory
+	if target != nil {
+		inv.Header = fmt.Sprintf("%-8s %s (skills, mcp, tools and routes; models, efforts, fields and subagents of %s)", "target", target.Path, primary)
+	}
 	add := func(kind, name, detail string) { inv.Allowed = append(inv.Allowed, Item{kind, name, detail}) }
 	candidate := func(kind, name, detail string) { inv.Candidates = append(inv.Candidates, Item{kind, name, detail}) }
 	open := func(kind, what, key, file string) { add(kind, openName, what+": no "+key+" list in "+file) }
@@ -63,7 +84,7 @@ func Collect(fsys fs.FS, primary, home string) (Inventory, error) {
 		skills = without(cfg.ProjectSkillDirs, func(s string) bool { return s == catalog.JitsoSkill })
 	}
 	for _, s := range skills {
-		add("skill", s, projectSkillSummary(fsys, s))
+		add("skill", s, projectSkillSummary(items, s))
 	}
 	if !slices.Contains(cfg.Skills, catalog.JitsoSkill) {
 		add("skill", catalog.JitsoSkill, "built in; travels with conductor builds and builds that name it")
@@ -117,7 +138,7 @@ func Collect(fsys fs.FS, primary, home string) (Inventory, error) {
 	}
 
 	if !catalog.Open(cfg.Skills) {
-		for _, s := range dirNames(fsys, ".agents/skills") {
+		for _, s := range dirNames(items, ".agents/skills") {
 			if !slices.Contains(cfg.Skills, s) && s != catalog.JitsoSkill {
 				candidate("skill", s, editProject)
 			}

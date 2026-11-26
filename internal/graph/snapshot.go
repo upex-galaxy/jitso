@@ -72,6 +72,9 @@ type Node struct {
 	// session lives.
 	Folder Text `json:"folder"`
 	Branch Text `json:"branch"`
+	// Repo is the repository of a launch into another repository than this
+	// project's; the key is left out of every other node.
+	Repo   Text `json:"repo,omitempty"`
 	Parent Text `json:"parent"`
 	// Project is true for a launch of this project and for a terminal in one
 	// of its checkouts.
@@ -188,6 +191,9 @@ func newBuilder(launches []registry.Launch, terminals []orca.TerminalInfo, orcaK
 			l := byID[r.ID]
 			if title, _ := l.Launch.String("orca.title"); title != "" {
 				n.Name = Text(title)
+			}
+			if path, _ := l.Launch.String("repo_path"); path != "" {
+				n.Repo = Text(r.Repo)
 			}
 		}
 		if t, ok := listed[r.Handle]; ok {

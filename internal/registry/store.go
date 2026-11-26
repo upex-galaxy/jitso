@@ -79,14 +79,52 @@ func (s *FileStore) Append(r Record) error {
 	if err != nil {
 		return err
 	}
-	if err := os.MkdirAll(s.Dir, 0o755); err != nil {
+	unlock, err := s.lock()
+	if err != nil {
 		return err
+	}
+	defer unlock()
+	return s.write(line)
+}
+
+// AppendFrom appends the record next makes from the registry text, read and
+// written under one hold of the lock, so two writers cannot both decide that
+// the same line is missing. A nil record appends nothing.
+func (s *FileStore) AppendFrom(next func(registryText []byte) Record) error {
+	unlock, err := s.lock()
+	if err != nil {
+		return err
+	}
+	defer unlock()
+	data, err := os.ReadFile(s.Path())
+	if err != nil && !errors.Is(err, fs.ErrNotExist) {
+		return err
+	}
+	r := next(data)
+	if r == nil {
+		return nil
+	}
+	line, err := Encode(r)
+	if err != nil {
+		return err
+	}
+	return s.write(line)
+}
+
+// lock takes the registry lock, creating the folder, and returns its release.
+func (s *FileStore) lock() (func(), error) {
+	if err := os.MkdirAll(s.Dir, 0o755); err != nil {
+		return nil, err
 	}
 	lock := filepath.Join(s.Dir, LockName)
 	if err := s.acquire(lock); err != nil {
-		return err
+		return nil, err
 	}
-	defer os.RemoveAll(lock)
+	return func() { os.RemoveAll(lock) }, nil
+}
+
+// write appends one line; the caller holds the lock.
+func (s *FileStore) write(line []byte) error {
 	f, err := os.OpenFile(s.Path(), os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0o644)
 	if err != nil {
 		return err

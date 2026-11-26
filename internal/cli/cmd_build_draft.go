@@ -12,6 +12,8 @@ import (
 	"github.com/upex-galaxy/jitso/internal/drafts"
 	"github.com/upex-galaxy/jitso/internal/fail"
 	"github.com/upex-galaxy/jitso/internal/launch"
+	"github.com/upex-galaxy/jitso/internal/project"
+	"github.com/upex-galaxy/jitso/internal/shell"
 )
 
 // build draft checks a build and keeps it as a draft: the bytes of the input,
@@ -24,6 +26,8 @@ import (
 //
 //	build draft <file.yaml|.yml>   a file, at most 64 KiB
 //	build draft -                  standard input, at most 64 KiB
+//	build draft ... --repo <path>  checked for a launch into that repository
+//	                               (catalog.ScanTarget); kept here all the same
 //
 // Exit 0 when kept, 2 for a bad argument, an unreadable or oversized input, an
 // invalid draft or a saved id, 3 for the environment (outside git, an invalid
@@ -32,35 +36,45 @@ func init() {
 	RegisterSubcommand(Subcommand{
 		Name:  "draft",
 		Order: 40,
-		Usage: "draft <file.yaml|->            check a build and keep it as a draft in .jitso/drafts/",
+		Usage: "draft <file.yaml|->            check a build and keep it as a draft (--repo <path>: for a launch into that repository)",
 		Run:   runBuildDraft,
 	})
 }
 
-// draftSource is the one argument of build draft: a path, or drafts.Stdin.
-func draftSource(args []string) (string, error) {
-	source, have := "", false
-	for _, a := range args {
+// draftArgs are the arguments of build draft: one source, a path or
+// drafts.Stdin, and the --repo value, nil when not given (the last one wins).
+func draftArgs(args []string) (source string, repo *string, err error) {
+	have := false
+	for i := 0; i < len(args); i++ {
+		a := args[i]
+		if a == "--repo" {
+			if i+1 >= len(args) || strings.HasPrefix(args[i+1], "--") {
+				return "", nil, fail.Rejected("--repo needs a value")
+			}
+			i++
+			repo = &args[i]
+			continue
+		}
 		if have || (a != drafts.Stdin && strings.HasPrefix(a, "-")) {
-			return "", fail.Rejectedf(`unknown argument "%s"`, a)
+			return "", nil, fail.Rejectedf(`unknown argument "%s"`, a)
 		}
 		source, have = a, true
 	}
 	if !have {
-		return "", fail.Rejected(drafts.InputRule)
+		return "", nil, fail.Rejected(drafts.InputRule)
 	}
 	if _, err := drafts.CheckInput(source); err != nil {
-		return "", fail.Rejected(err.Error())
+		return "", nil, fail.Rejected(err.Error())
 	}
-	return source, nil
+	return source, repo, nil
 }
 
 func runBuildDraft(ctx *Context, args []string) error {
-	source, err := draftSource(args)
+	source, repo, err := draftArgs(args)
 	if err != nil {
 		return err
 	}
-	root, err := ctx.Project()
+	root, err := ctx.HomeProject()
 	if err != nil {
 		return err
 	}
@@ -71,6 +85,20 @@ func runBuildDraft(ctx *Context, args []string) error {
 	res, err := ctx.Scan()
 	if err != nil {
 		return err
+	}
+	// The repository the draft is checked for, "" for this one.
+	target := ""
+	if repo != nil {
+		r, err := launch.ResolveRepo(*repo)
+		if err != nil {
+			return err
+		}
+		if !project.SameDir(r.Primary, root.Primary) {
+			target = r.Primary
+			if res, err = ctx.TargetScan(target); err != nil {
+				return err
+			}
+		}
 	}
 	data, name, err := readDraftInput(ctx, source)
 	if err != nil {
@@ -94,7 +122,20 @@ func runBuildDraft(ctx *Context, args []string) error {
 	if err := drafts.Put(root.Primary, f.ID, data); err != nil {
 		return err
 	}
-	ctx.Println("drafted " + f.ID + ": " + catalog.DraftsDir + "/" + f.ID + drafts.ExtensionYAML + " (launch it with --build " + f.ID + "; keep it with jitso build save " + f.ID + ")")
+	next := "launch it with --build " + f.ID + "; keep it with jitso build save " + f.ID
+	if target != "" {
+		// It names what the target holds, so it stays a draft here.
+		word := target
+		if strings.ContainsAny(word, " '\"") {
+			quoted, err := shell.Quote(word)
+			if err != nil {
+				return err
+			}
+			word = quoted
+		}
+		next = "launch it with --build " + f.ID + " --repo " + word
+	}
+	ctx.Println("drafted " + f.ID + ": " + catalog.DraftsDir + "/" + f.ID + drafts.ExtensionYAML + " (" + next + ")")
 	return nil
 }
 

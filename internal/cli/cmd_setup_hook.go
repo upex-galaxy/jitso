@@ -262,9 +262,9 @@ func HookPlan(ctx *Context, scope string, harnesses []string, absolute, remove, 
 		case harnessClaude, harnessCodex:
 			err = b.settings(f)
 		case harnessOpenCode:
-			err = b.generated(f, guardfiles.OpenCode(program, version.Current()))
+			err = b.generated(f, guardfiles.OpenCode(program, version.Current(), ""))
 		case harnessPi:
-			err = b.generated(f, guardfiles.Pi(program, version.Current()))
+			err = b.generated(f, guardfiles.Pi(program, version.Current(), ""))
 		}
 		if err != nil {
 			return hs, err

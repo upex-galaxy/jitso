@@ -1,0 +1,121 @@
+{
+  "id": "launch/repo/unregistered-target-exits-3",
+  "title": "a target Orca has not registered is refused with exit 3 before anything is written, with the line that registers it",
+  "tags": [
+    "posix"
+  ],
+  "source": [
+    "intended: docs/decisions.md, Only launches are blocked, and launches into other repositories"
+  ],
+  "intent": "Orca opens no terminal for a path it has not registered. JITSO never registers a repository itself; the caller runs the printed line. A dry run reports it the same way.",
+  "project": {
+    "files": {
+      ".jitso/briefs/brief.md": "## Goal\n\nFind where the sync entry point of this project is defined and explain in a few sentences how it is wired to the rest of the code.\n\n## Scope\n\nRead only. Look at `src/sync.ts` and `docs/guide.md` and nothing outside the repo. Do not change any file.\n\n## Done when\n\nYou can name the file and the line that defines the entry point, and you have checked it by reading the file.\n\n## Report format\n\nOne short paragraph with the file path, the line number and a one line summary of what it does.\n"
+    }
+  },
+  "home": {
+    "files": {
+      "target/readme.txt": "a repository Orca does not know\n"
+    }
+  },
+  "orca": {
+    "responses": {
+      "repo list": {
+        "repos": [
+          {
+            "id": "r0",
+            "path": "{{PROJECT}}"
+          },
+          {
+            "id": "r1",
+            "path": "{{HOME}}/gone"
+          }
+        ]
+      }
+    }
+  },
+  "steps": [
+    {
+      "git_init": {
+        "path": "{{HOME}}/target"
+      }
+    },
+    {
+      "run": [
+        "launch",
+        "--build",
+        "haiku-explorer",
+        "--brief",
+        "{{PROJECT}}/.jitso/briefs/brief.md",
+        "--mode",
+        "direct",
+        "--repo",
+        "{{HOME}}/target"
+      ],
+      "expect": {
+        "exit": 3,
+        "stdout": [
+          {
+            "empty": true
+          }
+        ],
+        "stderr": [
+          {
+            "equals": "jitso: {{HOME}}/target is not registered in Orca, so Orca opens no terminal there. Register it with: orca repo add --path {{HOME}}/target\n"
+          }
+        ],
+        "orca_calls": {
+          "verbs": [
+            "repo list"
+          ]
+        },
+        "registry": {
+          "count": 0
+        },
+        "files": [
+          {
+            "path": ".jitso/launches",
+            "exists": false
+          }
+        ]
+      }
+    },
+    {
+      "run": [
+        "launch",
+        "--build",
+        "haiku-explorer",
+        "--brief",
+        "{{PROJECT}}/.jitso/briefs/brief.md",
+        "--mode",
+        "direct",
+        "--repo",
+        "{{HOME}}/target",
+        "--dry-run"
+      ],
+      "expect": {
+        "exit": 3,
+        "stdout": [
+          {
+            "empty": true
+          }
+        ],
+        "stderr": [
+          "orca repo add --path {{HOME}}/target"
+        ],
+        "orca_calls": {
+          "verbs": [
+            "repo list",
+            "repo list"
+          ]
+        },
+        "files": [
+          {
+            "path": ".jitso/launches",
+            "exists": false
+          }
+        ]
+      }
+    }
+  ]
+}

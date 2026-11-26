@@ -11,7 +11,7 @@ import (
 	"github.com/upex-galaxy/jitso/internal/fail"
 )
 
-func TestDraftSource(t *testing.T) {
+func TestDraftArgs(t *testing.T) {
 	const rule = "JITSO REJECTED: a draft is a .yaml file (or - for stdin) of at most 64 KiB"
 	tests := []struct {
 		name string
@@ -32,10 +32,10 @@ func TestDraftSource(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := draftSource(tt.args)
+			got, _, err := draftArgs(tt.args)
 			if tt.ok {
 				if err != nil || got != tt.want {
-					t.Errorf("draftSource = %q, %v; want %q", got, err, tt.want)
+					t.Errorf("draftArgs = %q, %v; want %q", got, err, tt.want)
 				}
 				return
 			}

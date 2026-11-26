@@ -4,6 +4,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"sync"
 	"testing"
 	"time"
 
@@ -56,13 +57,43 @@ func TestEndedBy(t *testing.T) {
 	}
 }
 
+// TestEndLaunchTwoHooksWriteOnce runs several SessionEnd hooks of one session
+// at once, as a harness does with the launch's guard and a registered one.
+func TestEndLaunchTwoHooksWriteOnce(t *testing.T) {
+	now := time.Date(2026, 11, 13, 14, 30, 0, 0, time.UTC)
+	for range 20 {
+		store := registry.NewFileStore(t.TempDir())
+		if err := os.WriteFile(store.Path(), []byte(launchLine+"\n"), 0o644); err != nil {
+			t.Fatal(err)
+		}
+		var wg sync.WaitGroup
+		for range 4 {
+			wg.Add(1)
+			go func() {
+				defer wg.Done()
+				if err := EndLaunch(store, "sess-1", now); err != nil {
+					t.Error(err)
+				}
+			}()
+		}
+		wg.Wait()
+		data, err := os.ReadFile(store.Path())
+		if err != nil {
+			t.Fatal(err)
+		}
+		if got := strings.Count(string(data), `"event":"end"`); got != 1 {
+			t.Fatalf("%d end events, want one: %q", got, data)
+		}
+	}
+}
+
 func TestEndLaunchWritesOneLineAndNoLock(t *testing.T) {
 	dir := t.TempDir()
 	store := registry.NewFileStore(dir)
 	file := store.Path()
 	now := time.Date(2026, 11, 13, 14, 30, 0, 0, time.UTC)
 
-	if err := EndLaunch(store, file, "sess-1", now); err != nil {
+	if err := EndLaunch(store, "sess-1", now); err != nil {
 		t.Fatalf("no registry: %v", err)
 	}
 	if _, err := os.Stat(file); !os.IsNotExist(err) {
@@ -72,7 +103,7 @@ func TestEndLaunchWritesOneLineAndNoLock(t *testing.T) {
 		t.Fatal(err)
 	}
 	for range 2 {
-		if err := EndLaunch(store, file, "sess-1", now); err != nil {
+		if err := EndLaunch(store, "sess-1", now); err != nil {
 			t.Fatal(err)
 		}
 	}

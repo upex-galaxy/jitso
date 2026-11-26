@@ -1,0 +1,75 @@
+{
+  "id": "launch/repo/trust-check-uses-the-target",
+  "title": "on a launch into another repository the folder Orca reports must be a worktree of the target",
+  "tags": [
+    "posix"
+  ],
+  "source": [
+    "intended: docs/decisions.md, Only launches are blocked, and launches into other repositories"
+  ],
+  "intent": "The caller's own folder is as foreign to this launch as any other: the terminal is closed and nothing is recorded.",
+  "project": {
+    "files": {
+      ".jitso/briefs/brief.md": "## Goal\n\nFind where the sync entry point of this project is defined and explain in a few sentences how it is wired to the rest of the code.\n\n## Scope\n\nRead only. Look at `src/sync.ts` and `docs/guide.md` and nothing outside the repo. Do not change any file.\n\n## Done when\n\nYou can name the file and the line that defines the entry point, and you have checked it by reading the file.\n\n## Report format\n\nOne short paragraph with the file path, the line number and a one line summary of what it does.\n"
+    }
+  },
+  "home": {
+    "files": {
+      "target/readme.txt": "target\n"
+    }
+  },
+  "orca": {
+    "responses": {
+      "repo list": {
+        "repos": [
+          {
+            "id": "r0",
+            "path": "{{HOME}}/target"
+          }
+        ]
+      }
+    },
+    "cwd": "{{PROJECT}}",
+    "screens": [
+      "Is this a project you created or one you trust?\n 1. Yes, I trust this folder\n 2. No, exit"
+    ]
+  },
+  "steps": [
+    {
+      "git_init": {
+        "path": "{{HOME}}/target"
+      }
+    },
+    {
+      "run": [
+        "launch",
+        "--build",
+        "haiku-explorer",
+        "--brief",
+        "{{PROJECT}}/.jitso/briefs/brief.md",
+        "--mode",
+        "direct",
+        "--repo",
+        "{{HOME}}/target"
+      ],
+      "expect": {
+        "exit": 2,
+        "stderr": [
+          {
+            "equals": "JITSO REJECTED: untrusted folder {{PROJECT}}: a launch runs only in a worktree of {{HOME}}/target; the terminal was closed\n"
+          }
+        ],
+        "orca_calls": {
+          "verbs": [
+            "repo list",
+            "terminal create",
+            "terminal close"
+          ]
+        },
+        "registry": {
+          "count": 0
+        }
+      }
+    }
+  ]
+}

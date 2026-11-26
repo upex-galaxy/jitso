@@ -21,8 +21,13 @@ import (
 // IdleTimeoutMS is how long a new terminal may take to reach readiness.
 const IdleTimeoutMS = 90_000
 
-// DryRunLine is the line a dry run prints after the card.
-const DryRunLine = "dry run: nothing was written and Orca was not called"
+// DryRunLine is the line a dry run prints after the card, and DryRunAskedLine
+// the one of a launch into another repository, which asks Orca whether it has
+// that repository registered.
+const (
+	DryRunLine      = "dry run: nothing was written and Orca was not called"
+	DryRunAskedLine = "dry run: nothing was written; Orca was only asked for its repository list"
+)
 
 // The files of a launch folder, .jitso/launches/<id>/.
 const (
@@ -182,12 +187,15 @@ type Lineage struct {
 
 // EventInput is everything the launch event records.
 type EventInput struct {
-	ID        string
-	Args      Args
-	Profile   profile.Profile
-	MCP       []string
-	Lineage   Lineage
-	Repo      string
+	ID      string
+	Args    Args
+	Profile profile.Profile
+	MCP     []string
+	Lineage Lineage
+	Repo    string
+	// RepoPath and Home are set on a launch into another repository only.
+	RepoPath  string
+	Home      string
 	Harness   string
 	Argv      []string
 	Prompted  bool
@@ -228,6 +236,8 @@ func Event(in EventInput) *registry.LaunchEvent {
 		Depth:          in.Lineage.Depth,
 		TS:             jsonx.Time(in.Now),
 		Repo:           in.Repo,
+		RepoPath:       in.RepoPath,
+		Home:           in.Home,
 		Worktree:       worktree,
 		Cwd:            nonEmpty(in.Cwd),
 		Mode:           in.Args.Mode,

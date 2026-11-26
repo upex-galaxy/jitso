@@ -45,6 +45,9 @@ type Package struct {
 	// GuardBinary is the absolute path of the binary GuardCommand runs, ""
 	// when no guard travels.
 	GuardBinary string
+	// Home is the home repository of a launch into another repository: its
+	// guard and run.sh carry it as JITSO_PROJECT. "" otherwise.
+	Home string
 	// Flag is how the package folder reaches the harness (the package.flag
 	// of a launch that writes one): harness.Support.PackageFlag.
 	Flag string
@@ -88,9 +91,12 @@ func (p Package) Ref() *registry.Package {
 // harness loads no skill from the package (it then reads the jitso skill from
 // its own .agents/skills); and the guard, unless the harness reads the
 // project's guard and the checkout's .claude/settings.json registers it on
-// all three slots. A skill over the size a launch carries is a rejection.
-func planPackage(b *catalog.Build, user catalog.User, checkout string, executable func() (string, error), support harness.Support) (Package, error) {
-	pkg := Package{Flag: support.PackageFlag}
+// all three slots. checkout is that of the repository the worker goes into.
+// With a home (a launch into another repository) the guard always travels and
+// sets JITSO_PROJECT to it. A skill over the size a launch carries is a
+// rejection.
+func planPackage(b *catalog.Build, user catalog.User, checkout, home string, executable func() (string, error), support harness.Support) (Package, error) {
+	pkg := Package{Flag: support.PackageFlag, Home: home}
 	carriesJitso := false
 	for _, item := range b.SkillsFirst {
 		name, ok := catalog.UserName(item)
@@ -113,7 +119,7 @@ func planPackage(b *catalog.Build, user catalog.User, checkout string, executabl
 		pkg.JitsoSkill = true
 	}
 	registered := false
-	if support.ProjectGuard {
+	if support.ProjectGuard && home == "" {
 		doc, err := os.ReadFile(filepath.Join(checkout, ".claude", "settings.json"))
 		if err != nil {
 			doc = nil
@@ -131,6 +137,13 @@ func planPackage(b *catalog.Build, user catalog.User, checkout string, executabl
 		}
 		pkg.GuardCommand = quoted + " hook guard"
 		pkg.GuardBinary = self
+		if home != "" {
+			word, err := shell.Quote(home)
+			if err != nil {
+				return Package{}, fail.Envf("cannot write the project's path into a command: %v", err)
+			}
+			pkg.GuardCommand = project.HomeEnv + "=" + word + " " + pkg.GuardCommand
+		}
 	}
 	return pkg, nil
 }

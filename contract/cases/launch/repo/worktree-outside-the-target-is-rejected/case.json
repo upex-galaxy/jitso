@@ -1,0 +1,100 @@
+{
+  "id": "launch/repo/worktree-outside-the-target-is-rejected",
+  "title": "--repo with a --worktree that is not a worktree of that repository is rejected before any Orca call",
+  "tags": [
+    "posix"
+  ],
+  "source": [
+    "intended: docs/decisions.md, Only launches are blocked, and launches into other repositories"
+  ],
+  "intent": "The two flags would send the worker to two places.",
+  "for_each": {
+    "vars": [
+      "folder"
+    ],
+    "ids": [
+      "third-repository",
+      "the-caller"
+    ],
+    "rows": [
+      [
+        "{{HOME}}/third"
+      ],
+      [
+        "{{PROJECT}}"
+      ]
+    ]
+  },
+  "project": {
+    "files": {
+      ".jitso/briefs/brief.md": "## Goal\n\nFind where the sync entry point of this project is defined and explain in a few sentences how it is wired to the rest of the code.\n\n## Scope\n\nRead only. Look at `src/sync.ts` and `docs/guide.md` and nothing outside the repo. Do not change any file.\n\n## Done when\n\nYou can name the file and the line that defines the entry point, and you have checked it by reading the file.\n\n## Report format\n\nOne short paragraph with the file path, the line number and a one line summary of what it does.\n"
+    }
+  },
+  "home": {
+    "files": {
+      "target/readme.txt": "target\n",
+      "third/readme.txt": "third\n"
+    }
+  },
+  "orca": {
+    "responses": {
+      "repo list": {
+        "repos": [
+          {
+            "id": "r0",
+            "path": "{{PROJECT}}"
+          },
+          {
+            "id": "r1",
+            "path": "{{HOME}}/target"
+          }
+        ]
+      }
+    },
+    "cwd": "{{HOME}}/target"
+  },
+  "steps": [
+    {
+      "git_init": {
+        "path": "{{HOME}}/target"
+      }
+    },
+    {
+      "git_init": {
+        "path": "{{HOME}}/third"
+      }
+    },
+    {
+      "run": [
+        "launch",
+        "--build",
+        "haiku-explorer",
+        "--brief",
+        "{{PROJECT}}/.jitso/briefs/brief.md",
+        "--mode",
+        "direct",
+        "--repo",
+        "{{HOME}}/target",
+        "--worktree",
+        "path:{{folder}}"
+      ],
+      "expect": {
+        "exit": 2,
+        "stderr": [
+          {
+            "equals": "JITSO REJECTED: --worktree path:{{folder}} names {{folder}}, which is not a worktree of {{HOME}}/target\n"
+          }
+        ],
+        "orca_calls": {
+          "empty": true
+        },
+        "files": [
+          {
+            "path": ".jitso/launches",
+            "exists": false
+          }
+        ]
+      }
+    }
+  ]
+}

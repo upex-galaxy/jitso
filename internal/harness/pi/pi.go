@@ -45,7 +45,7 @@ func (Adapter) Spec(in harness.SpecInput) (harness.Spec, error) {
 	}
 	spec := harness.Spec{Argv: Argv(in), MCPConfig: mcp}
 	if in.GuardBinary != "" {
-		spec.Files = []harness.File{{Name: GuardFile, Data: guardfiles.Pi(in.GuardBinary, version.Current())}}
+		spec.Files = []harness.File{{Name: GuardFile, Data: guardfiles.Pi(in.GuardBinary, version.Current(), in.GuardHome)}}
 	}
 	return spec, nil
 }

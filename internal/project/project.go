@@ -1,5 +1,6 @@
 // Package project finds the project a command works on: the git primary
-// checkout of the working directory (docs/architecture.md section 6). It also
+// checkout of the working directory (docs/architecture.md section 6), or, for
+// the commands that work on a fleet, the one JITSO_PROJECT names. It also
 // names the fixed folders jitso uses (the state folder, the user folder) and
 // the real path of the running executable.
 package project
@@ -24,6 +25,56 @@ type Root struct {
 	Checkout string
 	// Linked is true when Checkout is a linked worktree of Primary.
 	Linked bool
+	// Away is true when the project is the one JITSO_PROJECT names and the
+	// working directory is not in it.
+	Away bool
+}
+
+// HomeEnv names the variable a launch into another repository exports: the
+// home repository, whose builds and registry the session's jitso calls and
+// its guard work on.
+const HomeEnv = "JITSO_PROJECT"
+
+// FromEnv is the home repository a HomeEnv value names: its primary checkout.
+// ok is false for a value that is empty, relative or not inside a git
+// checkout, which is ignored.
+func FromEnv(value string) (Root, bool) {
+	if !filepath.IsAbs(value) {
+		return Root{}, false
+	}
+	r, ok := checkout(Real(value))
+	if !ok {
+		return Root{}, false
+	}
+	return Root{Primary: r.Primary, Checkout: r.Primary}, true
+}
+
+// ResolveHome is the project of the commands that work on a fleet: the one
+// env (the HomeEnv value) names when it is valid, else that of cwd. Inside
+// that repository the checkout stays the one of cwd; anywhere else it is the
+// primary one and Away is true.
+func ResolveHome(cwd, env string) (Root, error) {
+	home, ok := FromEnv(env)
+	if !ok {
+		return Resolve(cwd)
+	}
+	if here, err := Resolve(cwd); err == nil && SameDir(here.Primary, home.Primary) {
+		return here, nil
+	}
+	home.Away = true
+	return home, nil
+}
+
+// SameDir reports whether two paths are one folder on disk, so a symlink,
+// another separator or another letter case still matches; folders that cannot
+// be read are compared by their cleaned paths.
+func SameDir(a, b string) bool {
+	if filepath.Clean(a) == filepath.Clean(b) {
+		return true
+	}
+	x, errA := os.Stat(a)
+	y, errB := os.Stat(b)
+	return errA == nil && errB == nil && os.SameFile(x, y)
 }
 
 // StateDir is the .jitso/ folder of the primary checkout.

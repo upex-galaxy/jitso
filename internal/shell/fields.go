@@ -1,8 +1,10 @@
 package shell
 
 import (
+	"path/filepath"
 	"regexp"
 	"strings"
+	"unicode"
 )
 
 // The character classes are spelled out instead of using (?i): Go folds case
@@ -24,11 +26,28 @@ var launchFields = map[string]*regexp.Regexp{
 	"mcp-exclude": regexp.MustCompile(`^[A-Za-z0-9][A-Za-z0-9_:-]{0,63}$`),
 }
 
+// MaxRepoBytes is the longest --repo path.
+const MaxRepoBytes = 1024
+
+// checkRepo is the rule of --repo, the one launcher field that is a path of
+// this machine: absolute, at most MaxRepoBytes bytes and no control
+// character. Spaces are allowed: the path never reaches a shell as text.
+func checkRepo(value string) bool {
+	return filepath.IsAbs(value) && len(value) <= MaxRepoBytes && !strings.ContainsFunc(value, unicode.IsControl)
+}
+
 // CheckLaunchField returns "" when value is acceptable for the launcher field
 // name (without its "--"), otherwise the reason it is not:
 // `unknown launcher field "<name>"` or `invalid value for --<name>`.
-// A value holding ".." is always invalid.
+// A value holding ".." is always invalid, except in repo, whose path is
+// cleaned.
 func CheckLaunchField(name, value string) string {
+	if name == "repo" {
+		if !checkRepo(value) {
+			return "invalid value for --repo"
+		}
+		return ""
+	}
 	pattern, ok := launchFields[name]
 	if !ok {
 		return `unknown launcher field "` + name + `"`

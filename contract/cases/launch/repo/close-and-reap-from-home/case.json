@@ -1,0 +1,150 @@
+{
+  "id": "launch/repo/close-and-reap-from-home",
+  "title": "close, from inside the target with JITSO_PROJECT, and reap, from the caller, end a cross-repository launch in the caller's registry",
+  "tags": [
+    "posix"
+  ],
+  "source": [
+    "intended: docs/decisions.md, Only launches are blocked, and launches into other repositories"
+  ],
+  "intent": "The footer goes into the caller's launch folder.",
+  "project": {
+    "files": {
+      ".jitso/briefs/brief.md": "## Goal\n\nFind where the sync entry point of this project is defined and explain in a few sentences how it is wired to the rest of the code.\n\n## Scope\n\nRead only. Look at `src/sync.ts` and `docs/guide.md` and nothing outside the repo. Do not change any file.\n\n## Done when\n\nYou can name the file and the line that defines the entry point, and you have checked it by reading the file.\n\n## Report format\n\nOne short paragraph with the file path, the line number and a one line summary of what it does.\n"
+    }
+  },
+  "home": {
+    "files": {
+      "target/readme.txt": "target\n"
+    }
+  },
+  "orca": {
+    "responses": {
+      "repo list": {
+        "repos": [
+          {
+            "id": "r0",
+            "path": "{{PROJECT}}"
+          },
+          {
+            "id": "r1",
+            "path": "{{HOME}}/target"
+          }
+        ]
+      }
+    },
+    "cwd": "{{HOME}}/target"
+  },
+  "steps": [
+    {
+      "git_init": {
+        "path": "{{HOME}}/target"
+      }
+    },
+    {
+      "run": [
+        "launch",
+        "--build",
+        "haiku-explorer",
+        "--brief",
+        "{{PROJECT}}/.jitso/briefs/brief.md",
+        "--mode",
+        "direct",
+        "--repo",
+        "{{HOME}}/target"
+      ],
+      "capture": {
+        "LAUNCH_ID": {
+          "from": "stdout",
+          "regex": "JITSO (L\\d{8}T\\d{6}-[0-9a-f]{4})",
+          "group": 1
+        }
+      },
+      "expect": {
+        "exit": 0
+      }
+    },
+    {
+      "run": [
+        "close",
+        "{{LAUNCH_ID}}"
+      ],
+      "cwd": "{{HOME}}/target",
+      "env": {
+        "JITSO_PROJECT": "{{PROJECT}}"
+      },
+      "expect": {
+        "exit": 0,
+        "registry": {
+          "count": 2,
+          "events": [
+            {
+              "at": 1,
+              "event": "end",
+              "fields": {
+                "id": "{{LAUNCH_ID}}",
+                "source": "jitso_close"
+              }
+            }
+          ]
+        },
+        "files": [
+          {
+            "path": ".jitso/launches/{{LAUNCH_ID}}/footer.txt"
+          },
+          {
+            "path": "{{HOME}}/target/.jitso",
+            "exists": false
+          }
+        ]
+      }
+    },
+    {
+      "run": [
+        "launch",
+        "--build",
+        "haiku-explorer",
+        "--brief",
+        "{{PROJECT}}/.jitso/briefs/brief.md",
+        "--mode",
+        "direct",
+        "--repo",
+        "{{HOME}}/target"
+      ],
+      "capture": {
+        "SECOND": {
+          "from": "stdout",
+          "regex": "JITSO (L\\d{8}T\\d{6}-[0-9a-f]{4})",
+          "group": 1
+        }
+      },
+      "expect": {
+        "exit": 0
+      }
+    },
+    {
+      "run": [
+        "reap"
+      ],
+      "expect": {
+        "exit": 0,
+        "stdout": [
+          "1 launch(es) marked ended"
+        ],
+        "registry": {
+          "count": 4,
+          "events": [
+            {
+              "at": 3,
+              "event": "end",
+              "fields": {
+                "id": "{{SECOND}}",
+                "source": "reap"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ]
+}

@@ -1,0 +1,59 @@
+{
+  "id": "launch/repo/link-from-inside-the-target",
+  "title": "jitso link run in the target with JITSO_PROJECT records the link in the caller's registry",
+  "source": [
+    "intended: docs/decisions.md, Only launches are blocked, and launches into other repositories"
+  ],
+  "intent": "A worker links to its peers from where it works.",
+  "project": {
+    "files": {
+      ".jitso/briefs/brief.md": "## Goal\n\nFind where the sync entry point of this project is defined and explain in a few sentences how it is wired to the rest of the code.\n\n## Scope\n\nRead only. Look at `src/sync.ts` and `docs/guide.md` and nothing outside the repo. Do not change any file.\n\n## Done when\n\nYou can name the file and the line that defines the entry point, and you have checked it by reading the file.\n\n## Report format\n\nOne short paragraph with the file path, the line number and a one line summary of what it does.\n",
+      ".jitso/launches.jsonl": "{\"v\": 2, \"event\": \"launch\", \"id\": \"L20261113T142233-a3f9\", \"parent\": null, \"root\": \"L20261113T000000-0000\", \"depth\": 2, \"ts\": \"2026-11-13T14:22:33.000Z\", \"mode\": \"fleet\", \"build\": \"haiku-explorer\", \"session_id\": \"sess-parent\", \"orca\": {\"terminal\": \"term_p\"}}\n{\"v\": 2, \"event\": \"launch\", \"id\": \"L20261113T150000-b4a0\", \"parent\": null, \"root\": \"L20261113T000000-0000\", \"depth\": 2, \"ts\": \"2026-11-13T14:22:33.000Z\", \"mode\": \"fleet\", \"build\": \"haiku-explorer\", \"session_id\": \"sess-parent\", \"orca\": {\"terminal\": \"term_c\"}}\n"
+    }
+  },
+  "home": {
+    "files": {
+      "target/readme.txt": "target\n"
+    }
+  },
+  "steps": [
+    {
+      "git_init": {
+        "path": "{{HOME}}/target"
+      }
+    },
+    {
+      "run": [
+        "link",
+        "L20261113T142233-a3f9",
+        "term_c"
+      ],
+      "cwd": "{{HOME}}/target",
+      "env": {
+        "JITSO_PROJECT": "{{PROJECT}}"
+      },
+      "expect": {
+        "exit": 0,
+        "registry": {
+          "count": 3,
+          "events": [
+            {
+              "at": 2,
+              "event": "link",
+              "fields": {
+                "from.id": "L20261113T142233-a3f9",
+                "to.id": "L20261113T150000-b4a0"
+              }
+            }
+          ]
+        },
+        "files": [
+          {
+            "path": "{{HOME}}/target/.jitso",
+            "exists": false
+          }
+        ]
+      }
+    }
+  ]
+}

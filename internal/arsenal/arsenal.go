@@ -21,6 +21,8 @@ type Item struct {
 
 // Inventory is everything one arsenal prints.
 type Inventory struct {
+	// Header is a line printed before the items, "" for none.
+	Header string
 	// Allowed are the items a build may name, in print order, with a line for
 	// each open allowlist.
 	Allowed []Item
@@ -40,7 +42,10 @@ func (inv Inventory) Lines(all bool) []string {
 			width = n
 		}
 	}
-	lines := make([]string, 0, len(items))
+	lines := make([]string, 0, len(items)+1)
+	if inv.Header != "" {
+		lines = append(lines, inv.Header)
+	}
 	for _, it := range items {
 		line := fmt.Sprintf("%-8s %s", it.Kind, it.Name)
 		if it.Detail != "" {

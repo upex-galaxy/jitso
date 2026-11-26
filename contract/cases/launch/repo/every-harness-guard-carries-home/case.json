@@ -1,0 +1,117 @@
+{
+  "id": "launch/repo/every-harness-guard-carries-home",
+  "title": "codex inline hooks and the opencode and pi guard files carry JITSO_PROJECT on a launch into another repository",
+  "tags": [
+    "posix"
+  ],
+  "source": [
+    "intended: docs/decisions.md, Only launches are blocked, and launches into other repositories"
+  ],
+  "intent": "Each harness runs the guard its own way, and each way must tell it which registry is the caller's.",
+  "for_each": {
+    "vars": [
+      "harness",
+      "model",
+      "file",
+      "needle"
+    ],
+    "ids": [
+      "codex",
+      "opencode",
+      "pi"
+    ],
+    "rows": [
+      [
+        "codex",
+        "gpt-5.5",
+        "run.sh",
+        "command=\"JITSO_PROJECT='\\''{{PROJECT}}'\\'' "
+      ],
+      [
+        "opencode",
+        "opencode/some-model",
+        "opencode/plugins/jitso-guard.js",
+        "env: { ...process.env, JITSO_PROJECT: \"{{PROJECT}}\" }"
+      ],
+      [
+        "pi",
+        "anthropic/claude-haiku-5-5",
+        "pi/jitso-guard.js",
+        "env: { ...process.env, JITSO_PROJECT: \"{{PROJECT}}\" }"
+      ]
+    ]
+  },
+  "project": {
+    "files": {
+      ".jitso/briefs/brief.md": "## Goal\n\nFind where the sync entry point of this project is defined and explain in a few sentences how it is wired to the rest of the code.\n\n## Scope\n\nRead only. Look at `src/sync.ts` and `docs/guide.md` and nothing outside the repo. Do not change any file.\n\n## Done when\n\nYou can name the file and the line that defines the entry point, and you have checked it by reading the file.\n\n## Report format\n\nOne short paragraph with the file path, the line number and a one line summary of what it does.\n",
+      "jitso/jitso.yaml": "# JITSO allowlists (ADR-0027). A build, and any override a launch asks for,\n# may name only what is listed here. `cli/jitso/catalog.test.ts` asserts that every\n# entry exists in this repo: skills under `.agents/skills/`, MCP servers in\n# `.mcp.json`, Sonnet/Opus ids in `.agents/project.yaml` (`orchestration:`).\n# Models are full ids, never aliases.\nversion: 1\n\nmodels:\n  - claude-haiku-5-5\n  - \"{{model}}\"\n  - claude-sonnet-5-5\n  - claude-opus-5-5\n\nefforts: [low, medium, high]\n\nmcp: [dbhub, openapi]\n\nskills:\n  - sprint-testing\n  - shift-left-testing\n  - test-automation\n  - framework-development\n  - exploratory-testing\n  - orca-orchestration\n\ntools: [Read, Glob, Grep, Bash, Write, Edit]\n\n# Patterns of the fields a build may require, each matched against the whole value.\nfields:\n  ticket_key: '^[A-Z][A-Z0-9]*-[0-9]+$'\n  env: '^[a-z][a-z0-9_-]*$'\n",
+      "jitso/builds/h-worker.yaml": "id: h-worker\nstatus: approved\nharness: {{harness}}\nmodel: {{model}}\neffort: low\nroute_scope: [none]\n"
+    }
+  },
+  "home": {
+    "files": {
+      "target/readme.txt": "target\n"
+    }
+  },
+  "orca": {
+    "responses": {
+      "repo list": {
+        "repos": [
+          {
+            "id": "r0",
+            "path": "{{PROJECT}}"
+          },
+          {
+            "id": "r1",
+            "path": "{{HOME}}/target"
+          }
+        ]
+      }
+    },
+    "cwd": "{{HOME}}/target"
+  },
+  "steps": [
+    {
+      "git_init": {
+        "path": "{{HOME}}/target"
+      }
+    },
+    {
+      "run": [
+        "launch",
+        "--build",
+        "h-worker",
+        "--brief",
+        "{{PROJECT}}/.jitso/briefs/brief.md",
+        "--mode",
+        "direct",
+        "--repo",
+        "{{HOME}}/target"
+      ],
+      "capture": {
+        "LAUNCH_ID": {
+          "from": "stdout",
+          "regex": "JITSO (L\\d{8}T\\d{6}-[0-9a-f]{4})",
+          "group": 1
+        }
+      },
+      "expect": {
+        "exit": 0,
+        "files": [
+          {
+            "path": ".jitso/launches/{{LAUNCH_ID}}/{{file}}",
+            "contains": [
+              "{{needle}}"
+            ]
+          },
+          {
+            "path": ".jitso/launches/{{LAUNCH_ID}}/run.sh",
+            "contains": [
+              "export JITSO_PROJECT='{{PROJECT}}'\n"
+            ]
+          }
+        ]
+      }
+    }
+  ]
+}

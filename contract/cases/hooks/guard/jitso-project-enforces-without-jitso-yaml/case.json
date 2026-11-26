@@ -1,0 +1,99 @@
+{
+  "id": "hooks/guard/jitso-project-enforces-without-jitso-yaml",
+  "title": "with JITSO_PROJECT naming a git checkout the guard denies in a folder that has no jitso/jitso.yaml; without it, or with a bad value, it stays silent",
+  "source": [
+    "intended: docs/decisions.md, Only launches are blocked, and launches into other repositories"
+  ],
+  "intent": "A worker sent into a repository that never adopted JITSO is still guarded.",
+  "project": {
+    "files": {
+      ".jitso/briefs/brief.md": "## Goal\n\nFind where the sync entry point of this project is defined and explain in a few sentences how it is wired to the rest of the code.\n\n## Scope\n\nRead only. Look at `src/sync.ts` and `docs/guide.md` and nothing outside the repo. Do not change any file.\n\n## Done when\n\nYou can name the file and the line that defines the entry point, and you have checked it by reading the file.\n\n## Report format\n\nOne short paragraph with the file path, the line number and a one line summary of what it does.\n"
+    }
+  },
+  "home": {
+    "files": {
+      "target/readme.txt": "target\n"
+    }
+  },
+  "steps": [
+    {
+      "git_init": {
+        "path": "{{HOME}}/target"
+      }
+    },
+    {
+      "hook": "guard",
+      "input": {
+        "hook_event_name": "PreToolUse",
+        "tool_name": "Bash",
+        "tool_input": {
+          "command": "claude -p hello"
+        }
+      },
+      "env": {
+        "CLAUDE_PROJECT_DIR": "{{HOME}}/target",
+        "JITSO_PROJECT": "{{PROJECT}}"
+      },
+      "expect": {
+        "exit": 0,
+        "decision": "deny",
+        "reason": [
+          "(denied: claude)"
+        ]
+      }
+    },
+    {
+      "hook": "guard",
+      "input": {
+        "hook_event_name": "PreToolUse",
+        "tool_name": "Bash",
+        "tool_input": {
+          "command": "claude -p hello"
+        }
+      },
+      "env": {
+        "CLAUDE_PROJECT_DIR": "",
+        "JITSO_PROJECT": "{{PROJECT}}"
+      },
+      "expect": {
+        "exit": 0,
+        "decision": "deny"
+      }
+    },
+    {
+      "hook": "guard",
+      "input": {
+        "hook_event_name": "PreToolUse",
+        "tool_name": "Bash",
+        "tool_input": {
+          "command": "claude -p hello"
+        }
+      },
+      "env": {
+        "CLAUDE_PROJECT_DIR": "{{HOME}}/target"
+      },
+      "expect": {
+        "exit": 0,
+        "decision": "none"
+      }
+    },
+    {
+      "hook": "guard",
+      "input": {
+        "hook_event_name": "PreToolUse",
+        "tool_name": "Bash",
+        "tool_input": {
+          "command": "claude -p hello"
+        }
+      },
+      "env": {
+        "CLAUDE_PROJECT_DIR": "{{HOME}}/target",
+        "JITSO_PROJECT": "{{HOME}}/gone"
+      },
+      "expect": {
+        "exit": 0,
+        "decision": "none"
+      }
+    }
+  ]
+}

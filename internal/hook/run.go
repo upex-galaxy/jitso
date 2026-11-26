@@ -72,12 +72,15 @@ func (d Deps) own() (isOwn func(string) bool) {
 	}
 }
 
-// RunGuard is `jitso hook guard`: in a project that has jitso/jitso.yaml it
-// denies the ways of starting an agent that skip the launch registry, and
-// nothing else, and on SessionEnd it ends the launch of the closing session. It
-// fails open: input it cannot read, or a project without a catalog, prints
-// nothing.
+// RunGuard is `jitso hook guard`: in a project that has jitso/jitso.yaml, or
+// in any folder when JITSO_PROJECT names a git checkout (a session launched
+// into another repository), it denies the ways of starting an agent that skip
+// the launch registry, and nothing else, and on SessionEnd it ends the launch
+// of the closing session, in the registry of JITSO_PROJECT when it is set. It
+// fails open: input it cannot read, or a project without a catalog and no
+// JITSO_PROJECT, prints nothing.
 func RunGuard(d Deps) {
+	home, launched := project.FromEnv(d.Getenv(project.HomeEnv))
 	dir := d.Getenv("CLAUDE_PROJECT_DIR")
 	if dir == "" {
 		cwd, err := d.getwd()
@@ -85,19 +88,28 @@ func RunGuard(d Deps) {
 			return
 		}
 		root, err := project.Resolve(cwd)
-		if err != nil {
+		switch {
+		case err == nil:
+			dir = root.Primary
+		case launched:
+			dir = home.Primary
+		default:
 			return
 		}
-		dir = root.Primary
 	}
-	if _, err := os.Stat(filepath.Join(dir, "jitso", "jitso.yaml")); err != nil {
-		return
+	if !launched {
+		if _, err := os.Stat(filepath.Join(dir, "jitso", "jitso.yaml")); err != nil {
+			return
+		}
 	}
 	input, ok := d.readInput()
 	if !ok {
 		return
 	}
 	if input["hook_event_name"] == "SessionEnd" {
+		if launched {
+			dir = home.Primary
+		}
 		d.endSession(dir, input["session_id"])
 		return
 	}
@@ -129,5 +141,5 @@ func (d Deps) endSession(dir string, sessionID any) {
 	if d.Sleep != nil {
 		store.Sleep = d.Sleep
 	}
-	_ = EndLaunch(store, store.Path(), id, d.now())
+	_ = EndLaunch(store, id, d.now())
 }

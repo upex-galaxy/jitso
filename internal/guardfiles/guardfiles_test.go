@@ -6,9 +6,9 @@ import (
 )
 
 func TestGeneratedFilesCarryTheMarker(t *testing.T) {
-	for name, gen := range map[string]func(string, string) []byte{"OpenCode": OpenCode, "Pi": Pi} {
+	for name, gen := range map[string]func(string, string, string) []byte{"OpenCode": OpenCode, "Pi": Pi} {
 		t.Run(name, func(t *testing.T) {
-			out := gen("jitso", "v1.2.3")
+			out := gen("jitso", "v1.2.3", "")
 			v, ok := MarkerVersion(out)
 			if !ok || v != "v1.2.3" {
 				t.Fatalf("MarkerVersion = %q, %v; want v1.2.3, true", v, ok)
@@ -24,7 +24,7 @@ func TestGeneratedFilesCarryTheMarker(t *testing.T) {
 }
 
 func TestCommandIsAJavaScriptString(t *testing.T) {
-	out := string(OpenCode(`/Users/a b/it's "x"\jitso`, "dev"))
+	out := string(OpenCode(`/Users/a b/it's "x"\jitso`, "dev", ""))
 	want := `const command = "/Users/a b/it's \"x\"\\jitso";`
 	if !strings.Contains(out, want) {
 		t.Fatalf("want %s in:\n%s", want, out)
@@ -32,7 +32,7 @@ func TestCommandIsAJavaScriptString(t *testing.T) {
 }
 
 func TestTheFormsEachHarnessRuns(t *testing.T) {
-	oc := string(OpenCode("jitso", "dev"))
+	oc := string(OpenCode("jitso", "dev", ""))
 	for _, s := range []string{`ctx.tool.hook("execute.before"`, `export default { id: "jitso-guard", setup };`, `throw new Error(reason)`} {
 		if !strings.Contains(oc, s) {
 			t.Errorf("OpenCode lacks %s", s)
@@ -41,7 +41,7 @@ func TestTheFormsEachHarnessRuns(t *testing.T) {
 	if strings.Contains(oc, "tool.execute.before") {
 		t.Error("OpenCode has the v1 form, which OpenCode 2 never runs")
 	}
-	pi := string(Pi("jitso", "dev"))
+	pi := string(Pi("jitso", "dev", ""))
 	for _, s := range []string{`export default function (pi) {`, `pi.on("tool_call"`, `pi.on("session_shutdown"`, `return { block: true, reason };`} {
 		if !strings.Contains(pi, s) {
 			t.Errorf("Pi lacks %s", s)

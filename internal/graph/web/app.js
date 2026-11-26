@@ -61,6 +61,8 @@
     const add = (text, color) => more.push({ text: cut(text, 34), color });
     if (n.id !== null) {
       if (n.folder) add(n.folder, FOLDER);
+      // Only a launch into another repository carries repo.
+      if (n.repo && n.repo !== n.folder) add(n.repo, FOLDER);
       const kind = [n.role, n.type].filter(Boolean).filter((v, i, a) => a.indexOf(v) === i).join("/");
       const parts = [kind, n.id.slice(-4), n.state === "live" ? "" : n.state].filter(Boolean);
       add(parts.join(" · "), n.state === "gone" || n.state === "unknown" ? COLOR[n.state] : DIM);
@@ -645,7 +647,7 @@
   }
 
   function matches(n, q) {
-    return [n.name, n.title, n.folder, n.handle, n.id, n.build, n.role, n.type, n.harness, n.state, n.worktree, n.branch]
+    return [n.name, n.title, n.folder, n.repo, n.handle, n.id, n.build, n.role, n.type, n.harness, n.state, n.worktree, n.branch]
       .some((v) => v && v.toLowerCase().includes(q));
   }
 
@@ -804,6 +806,7 @@
     fact("Build", n.build);
     fact("Harness", n.harness);
     fact("Mode", n.mode);
+    fact("Repository", n.repo || null);
     fact("Folder", n.folder);
     fact("Worktree", n.worktree);
     fact("Branch", n.branch);

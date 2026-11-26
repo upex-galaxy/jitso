@@ -1,0 +1,132 @@
+{
+  "id": "launch/repo/nested-launch-from-the-target-writes-home",
+  "title": "a jitso launch from inside the target, with JITSO_PROJECT set, uses the caller's builds and registry and opens in the home repository unless --repo says otherwise",
+  "tags": [
+    "posix"
+  ],
+  "source": [
+    "intended: docs/decisions.md, Only launches are blocked, and launches into other repositories"
+  ],
+  "intent": "The worker's cwd is the target but its fleet is the caller's. Without --repo the target is the home repository, so the terminal opens at path:<home> and the launch is an ordinary one; with --repo it goes back into the target.",
+  "project": {
+    "files": {
+      ".jitso/briefs/brief.md": "## Goal\n\nFind where the sync entry point of this project is defined and explain in a few sentences how it is wired to the rest of the code.\n\n## Scope\n\nRead only. Look at `src/sync.ts` and `docs/guide.md` and nothing outside the repo. Do not change any file.\n\n## Done when\n\nYou can name the file and the line that defines the entry point, and you have checked it by reading the file.\n\n## Report format\n\nOne short paragraph with the file path, the line number and a one line summary of what it does.\n"
+    }
+  },
+  "home": {
+    "files": {
+      "target/readme.txt": "target\n"
+    }
+  },
+  "orca": {
+    "responses": {
+      "repo list": {
+        "repos": [
+          {
+            "id": "r0",
+            "path": "{{HOME}}/target"
+          }
+        ]
+      }
+    }
+  },
+  "steps": [
+    {
+      "git_init": {
+        "path": "{{HOME}}/target"
+      }
+    },
+    {
+      "run": [
+        "launch",
+        "--build",
+        "haiku-explorer",
+        "--brief",
+        "{{PROJECT}}/.jitso/briefs/brief.md",
+        "--mode",
+        "direct"
+      ],
+      "cwd": "{{HOME}}/target",
+      "env": {
+        "JITSO_PROJECT": "{{PROJECT}}"
+      },
+      "capture": {
+        "LAUNCH_ID": {
+          "from": "stdout",
+          "regex": "JITSO (L\\d{8}T\\d{6}-[0-9a-f]{4})",
+          "group": 1
+        }
+      },
+      "expect": {
+        "exit": 0,
+        "orca_calls": {
+          "verbs": [
+            "terminal create",
+            "terminal wait",
+            "terminal read"
+          ],
+          "calls": [
+            {
+              "at": 0,
+              "argv": [
+                "terminal",
+                "create",
+                "--worktree",
+                "path:{{PROJECT}}",
+                "--title",
+                "[jitso:{{LAUNCH_ID}}] haiku-explorer",
+                "--command",
+                "'{{PROJECT}}/.jitso/launches/{{LAUNCH_ID}}/run.sh'"
+              ]
+            }
+          ]
+        },
+        "registry": {
+          "count": 1,
+          "events": [
+            {
+              "at": 0,
+              "event": "launch",
+              "fields": {
+                "repo": "project",
+                "repo_path": {
+                  "absent": true
+                }
+              }
+            }
+          ]
+        },
+        "files": [
+          {
+            "path": "{{HOME}}/target/.jitso",
+            "exists": false
+          }
+        ]
+      }
+    },
+    {
+      "run": [
+        "launch",
+        "--build",
+        "haiku-explorer",
+        "--brief",
+        "{{PROJECT}}/.jitso/briefs/brief.md",
+        "--mode",
+        "direct",
+        "--repo",
+        "{{HOME}}/target",
+        "--dry-run"
+      ],
+      "cwd": "{{HOME}}/target",
+      "env": {
+        "JITSO_PROJECT": "{{PROJECT}}"
+      },
+      "expect": {
+        "exit": 0,
+        "stdout": [
+          "target {{HOME}}/target | home {{PROJECT}}"
+        ]
+      }
+    }
+  ]
+}

@@ -32,7 +32,7 @@ func init() {
 			if err := ctx.OrcaInstalled(); err != nil {
 				return err
 			}
-			root, err := ctx.Project()
+			root, err := ctx.HomeProject()
 			if err != nil {
 				return err
 			}

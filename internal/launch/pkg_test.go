@@ -129,7 +129,7 @@ func TestPlanPackage(t *testing.T) {
 			checkout := t.TempDir()
 			writeTree(t, checkout, tt.files)
 			b := tt.build
-			pkg, err := planPackage(&b, user, checkout, self, tt.support)
+			pkg, err := planPackage(&b, user, checkout, "", self, tt.support)
 			if err != nil {
 				t.Fatal(err)
 			}

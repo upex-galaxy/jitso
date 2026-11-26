@@ -15,6 +15,8 @@ A build is one YAML file: the profile a session launches with. JITSO ships no bu
 
    An `(open)` line means nothing restricts that kind: any model id, effort name or tool name; any skill folder of the project; any server of `.mcp.json`. `jitso arsenal --all` adds what exists on this machine but a list leaves out, each marked `not allowlisted (edit <file>)`: a build may not name it until the list does. It prints key names such as `literal env: KEY`, never a value.
 
+   For a worker in another repository, `jitso arsenal --repo <path>` lists that one's skills, servers, tools and route ids with your models, efforts, fields and subagents, and `jitso build draft ... --repo <path>` checks the draft the same way (`launching.md`, "Another repository").
+
 2. Keep the build as a draft, from standard input or a `.yaml` file:
 
    ```

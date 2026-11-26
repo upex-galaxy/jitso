@@ -1,0 +1,127 @@
+{
+  "id": "launch/repo/dry-run-reads-the-target-skills",
+  "title": "launch --repo checks the build against the target's skills, MCP servers and route ids, asks Orca only for its repository list and writes nothing",
+  "tags": [
+    "posix"
+  ],
+  "source": [
+    "intended: docs/decisions.md, Only launches are blocked, and launches into other repositories"
+  ],
+  "intent": "The caller's repository keeps the build (a draft here) and the brief; the target resolves what the build names. The same draft is invalid without --repo. The card gains one line that names the target and the home repository, and the target needs no jitso/jitso.yaml.",
+  "project": {
+    "files": {
+      ".jitso/briefs/brief.md": "## Goal\n\nFind where the sync entry point of this project is defined and explain in a few sentences how it is wired to the rest of the code.\n\n## Scope\n\nRead only. Look at `src/sync.ts` and `docs/guide.md` and nothing outside the repo. Do not change any file.\n\n## Done when\n\nYou can name the file and the line that defines the entry point, and you have checked it by reading the file.\n\n## Report format\n\nOne short paragraph with the file path, the line number and a one line summary of what it does.\n",
+      ".jitso/drafts/t-worker.yaml": "# A draft a cross-repository case writes.\nid: t-worker\nrole: operator\ntype: explorer\ndescription: Work in the target repository.\nharness: claude\nmodel: claude-haiku-5-5\neffort: low\nroute_scope: [target-area]\nskills_first: [target-only]\ntools: [Read]\nmcp: [tsrv]\n"
+    }
+  },
+  "home": {
+    "files": {
+      "target/.agents/skills/target-only/SKILL.md": "---\nname: target-only\ndescription: A skill only the target holds.\n---\n\nDo the target work.\n",
+      "target/.agents/instructions/agent-target-area.md": "---\nid: target-area\n---\n\n# Target area\n",
+      "target/.mcp.json": "{\"mcpServers\": {\"tsrv\": {\"command\": \"target-server\", \"args\": [\"--target\"]}}}\n"
+    }
+  },
+  "orca": {
+    "responses": {
+      "repo list": {
+        "repos": [
+          {
+            "id": "r0",
+            "path": "{{PROJECT}}"
+          },
+          {
+            "id": "r1",
+            "path": "{{HOME}}/target"
+          }
+        ]
+      }
+    },
+    "cwd": "{{HOME}}/target"
+  },
+  "steps": [
+    {
+      "git_init": {
+        "path": "{{HOME}}/target"
+      }
+    },
+    {
+      "run": [
+        "launch",
+        "--build",
+        "t-worker",
+        "--brief",
+        "{{PROJECT}}/.jitso/briefs/brief.md",
+        "--mode",
+        "direct",
+        "--dry-run"
+      ],
+      "expect": {
+        "exit": 2,
+        "stderr": [
+          "build \"t-worker\" from draft .jitso/drafts/t-worker.yaml is invalid here:",
+          "skill \"target-only\" is not in the allowlist"
+        ],
+        "orca_calls": {
+          "empty": true
+        }
+      }
+    },
+    {
+      "run": [
+        "launch",
+        "--build",
+        "t-worker",
+        "--brief",
+        "{{PROJECT}}/.jitso/briefs/brief.md",
+        "--mode",
+        "direct",
+        "--repo",
+        "{{HOME}}/target",
+        "--dry-run"
+      ],
+      "expect": {
+        "exit": 0,
+        "stdout": [
+          "model claude-haiku-5-5 effort low | bypass | MCP tsrv | skill target-only\n",
+          "ROUTE-SCOPE: target-area\n",
+          {
+            "regex": "^JITSO [^\\n]*\\ntarget [^\\n]*\\n"
+          },
+          "\ntarget {{HOME}}/target | home {{PROJECT}}\n",
+          "dry run: nothing was written; Orca was only asked for its repository list\n"
+        ],
+        "stderr": [
+          {
+            "empty": true
+          }
+        ],
+        "orca_calls": {
+          "calls": [
+            {
+              "at": 0,
+              "argv": [
+                "repo",
+                "list"
+              ]
+            }
+          ],
+          "count": 1
+        },
+        "files": [
+          {
+            "path": ".jitso/launches",
+            "exists": false
+          },
+          {
+            "path": ".jitso/launches.jsonl",
+            "exists": false
+          },
+          {
+            "path": "{{HOME}}/target/.jitso",
+            "exists": false
+          }
+        ]
+      }
+    }
+  ]
+}

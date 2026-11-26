@@ -20,14 +20,19 @@ type Record interface {
 
 // LaunchEvent is the event a launch writes once its terminal is up.
 type LaunchEvent struct {
-	V        int     `json:"v"`
-	Event    string  `json:"event"`
-	ID       string  `json:"id"`
-	Parent   *string `json:"parent"`
-	Root     string  `json:"root"`
-	Depth    int     `json:"depth"`
-	TS       string  `json:"ts"`
-	Repo     string  `json:"repo"`
+	V      int     `json:"v"`
+	Event  string  `json:"event"`
+	ID     string  `json:"id"`
+	Parent *string `json:"parent"`
+	Root   string  `json:"root"`
+	Depth  int     `json:"depth"`
+	TS     string  `json:"ts"`
+	Repo   string  `json:"repo"`
+	// RepoPath and Home are set on a launch into another repository only: the
+	// target's primary checkout, which Repo names, and the primary checkout
+	// that launched it, whose registry this line is in.
+	RepoPath string  `json:"repo_path,omitempty"`
+	Home     string  `json:"home,omitempty"`
 	Worktree string  `json:"worktree"`
 	Cwd      *string `json:"cwd"`
 	Mode     string  `json:"mode"`

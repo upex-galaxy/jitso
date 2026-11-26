@@ -1,6 +1,7 @@
 // Package trust decides where a launch may run and answers the
 // trust-this-folder dialog of a freshly started session. A launch runs only in
-// a worktree of the primary checkout, or a folder the caller configured
+// a worktree of its target repository (the primary checkout and the worktrees
+// git lists for it), or a folder the caller configured
 // (tests): Precheck and Place enforce it on every launch (defect N-22),
 // whether or not a dialog shows. The dialog appears even in bypass mode, and Enter alone picks "No, exit"; Handle
 // confirms it only for a trusted folder and leaves it alone anywhere else.
@@ -46,6 +47,16 @@ type Policy struct {
 	Primary string
 	// Extra are folders a caller configured. No CLI flag sets it.
 	Extra []string
+	// Repo names the repository in a rejection: the path of the target of a
+	// launch into another repository, "" for "this repo".
+	Repo string
+}
+
+func (p Policy) repo() string {
+	if p.Repo != "" {
+		return p.Repo
+	}
+	return "this repo"
 }
 
 // Trusted reports whether dir is exactly a trusted folder, comparing real
@@ -95,7 +106,7 @@ func (p Policy) Precheck(selector string) string {
 		return "--worktree " + selector + " must name an absolute path"
 	}
 	if !slices.Contains(p.allowed(), real(path)) {
-		return "--worktree " + selector + " names " + path + ", which is not a worktree of this repo"
+		return "--worktree " + selector + " names " + path + ", which is not a worktree of " + p.repo()
 	}
 	return ""
 }
@@ -112,12 +123,12 @@ func (p Policy) Place(reported, selector string) string {
 			return ""
 		}
 	}
-	return Untrusted(reported, selector)
+	return p.Untrusted(reported, selector)
 }
 
 // Untrusted is the rejection text for a folder that may not run the launch.
 // It names the path the selector asked for when the selector names one.
-func Untrusted(reported, selector string) string {
+func (p Policy) Untrusted(reported, selector string) string {
 	folder := reported
 	if folder == "" {
 		folder = "(unknown)"
@@ -125,7 +136,7 @@ func Untrusted(reported, selector string) string {
 	if path, ok := SelectorPath(selector); ok {
 		return "untrusted folder " + folder + ": --worktree asked for " + path + "; the terminal was closed"
 	}
-	return "untrusted folder " + folder + ": a launch runs only in a worktree of this repo; the terminal was closed"
+	return "untrusted folder " + folder + ": a launch runs only in a worktree of " + p.repo() + "; the terminal was closed"
 }
 
 // worktrees are the folders `git worktree list --porcelain` reports for the

@@ -64,18 +64,21 @@ func durationSeconds(ts any, now time.Time) int64 {
 	return int64(math.Max(0, math.Round(now.Sub(started).Seconds())))
 }
 
-// EndLaunch writes the end event of sessionID's launch through store, when
-// registryFile exists and holds one to write. A missing registry is no work,
-// and store failures are the caller's to swallow: a registry problem must not
+// EndLaunch writes the end event of sessionID's launch to store, when its
+// registry exists and holds one to write. The registry is read again under the
+// lock, so two hooks of one session (the launch's guard and the one its
+// repository registers) write it once. A missing registry is no work, and
+// store failures are the caller's to swallow: a registry problem must not
 // break the closing of a session.
-func EndLaunch(store registry.Store, registryFile, sessionID string, now time.Time) error {
-	data, err := os.ReadFile(registryFile)
-	if err != nil {
+func EndLaunch(store *registry.FileStore, sessionID string, now time.Time) error {
+	data, err := os.ReadFile(store.Path())
+	if err != nil || EndedBy(data, sessionID, now) == nil {
 		return nil
 	}
-	end := EndedBy(data, sessionID, now)
-	if end == nil {
+	return store.AppendFrom(func(data []byte) registry.Record {
+		if end := EndedBy(data, sessionID, now); end != nil {
+			return end
+		}
 		return nil
-	}
-	return store.Append(end)
+	})
 }

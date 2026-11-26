@@ -37,6 +37,8 @@ type Args struct {
 	Task     *string
 	Parent   *string
 	Worktree *string
+	// Repo is the --repo path: the launch goes into that repository.
+	Repo *string
 	// MCPExclude are the --mcp-exclude values, in order, as given.
 	MCPExclude []string
 	Fields     profile.Fields
@@ -48,7 +50,7 @@ type Args struct {
 // valueFlags are the flags that take the next word as their value. A word
 // that starts with -- is never a value: the flag is missing its value
 // (defect N-26).
-var valueFlags = []string{"build", "brief", "mode", "run", "task", "parent", "worktree", "mcp-exclude", "field", "brief-language"}
+var valueFlags = []string{"build", "brief", "mode", "run", "task", "parent", "worktree", "repo", "mcp-exclude", "field", "brief-language"}
 
 // Parse reads the words after `launch`. It rejects an unknown word, a flag
 // without a value (none left, or the next word starts with --), a malformed --field, a missing --build or --brief, a bad
@@ -109,6 +111,7 @@ func Parse(argv []string) (Args, error) {
 		return Args{}, fail.Rejected("--mode must be direct or fleet")
 	}
 	a.Run, a.Task, a.Parent, a.Worktree = optional(values, "run"), optional(values, "task"), optional(values, "parent"), optional(values, "worktree")
+	a.Repo = optional(values, "repo")
 	return a, nil
 }
 
@@ -120,15 +123,15 @@ func optional(values map[string]string, name string) *string {
 }
 
 // Check runs the launcher field allowlists on every value a model controls
-// besides the brief (build, run, task, parent, worktree, each mcp-exclude,
-// in that order), then, in fleet mode, requires --run and rejects --task (JITSO creates the Task). It needs no
+// besides the brief (build, run, task, parent, worktree, repo, each
+// mcp-exclude, in that order), then, in fleet mode, requires --run and rejects --task (JITSO creates the Task). It needs no
 // project, so it runs before anything is read.
 func (a Args) Check() error {
 	type field struct {
 		name  string
 		value *string
 	}
-	checks := []field{{"build", &a.Build}, {"run", a.Run}, {"task", a.Task}, {"parent", a.Parent}, {"worktree", a.Worktree}}
+	checks := []field{{"build", &a.Build}, {"run", a.Run}, {"task", a.Task}, {"parent", a.Parent}, {"worktree", a.Worktree}, {"repo", a.Repo}}
 	for i := range a.MCPExclude {
 		checks = append(checks, field{"mcp-exclude", &a.MCPExclude[i]})
 	}

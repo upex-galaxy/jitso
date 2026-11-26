@@ -59,6 +59,15 @@ The brief of a launch is checked for sections, length, language and cited paths,
 - Refused for now: claude.ai connectors (`cloud:`), servers that use OAuth, and any literal secret value of a user server.
 - `jitso install skill --scope project`, `jitso setup hook` and `jitso setup instructions` stay available for a project that wants the files in its own checkout. [`docs/build-schema.md`](docs/build-schema.md) has the user allowlist and its texts.
 
+## Launch into another repository
+
+`jitso launch --repo <absolute path>` (or `--worktree path:<folder>` of another repository) sends a worker into that repository, and yours keeps the fleet.
+
+- Your repository keeps the builds, the briefs, `.jitso/` and the model, effort and field lists. The target gives the skills, MCP servers, route ids and instructions, and the skill, MCP and tool lists of its own `jitso/jitso.yaml` when it has one; it needs none.
+- `jitso arsenal --repo <path>` shows what a build for it may name, and `jitso build draft --repo <path>` keeps one that names it.
+- The target must be registered in Orca. JITSO refuses an unregistered one before it writes anything and prints the `orca repo add --path` line; it never registers a repository itself.
+- The worker runs with `JITSO_PROJECT` set to your repository, so its `jitso` calls, its guard and its end event all reach your launch log.
+
 ## See who talks to whom
 
 `jitso graph` serves a live picture of the sessions on `127.0.0.1`, prints its URL and runs until Ctrl-C. Open the URL in a browser.

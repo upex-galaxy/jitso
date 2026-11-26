@@ -12,6 +12,8 @@ The launch event keeps the Orca ids under `orca`: `orca.run`, `orca.task`, `orca
 
 The log is schema v2 (`"v": 2` on every line) and the build id is the key `build` of a launch line. Only `launch`, `end` and `link` lines exist; a jitso from before `link` skips those lines and its `doctor` counts them as invalid. A line an older jitso wrote (`"v": 1`, with `preset`, or an `analyzed` or `rule_break` event) is skipped as invalid: close every running launch with the old version before upgrading, and `jitso doctor` counts the skipped v1 lines.
 
+A launch into another repository is in the caller's log: `repo` names the target, and `repo_path` and `home` (present on those launches only) give both primary checkouts. Its session has `JITSO_PROJECT=<home>`, so `close`, `reap`, `fleet`, `link` and `graph` work on that log from there too. A value that is relative or names no git checkout is ignored.
+
 The launch event also carries `package` when something travelled with the launch: the skills copied in (`name`, `scope`, `sha256` of the copied tree), whether the guard and the jitso skill travelled (`guard`, `jitso_skill`) and how the folder reached the harness (`flag`: `add-dir`, or `none`). The key is absent when nothing travelled.
 
 The launch folder `.jitso/launches/<id>/` keeps what the session was given (`brief.md`, `card.txt`, `mcp.json`, `run.sh`, and `pkg/` when the launch carried a package) and, after `close`, `footer.txt`. Read the end of `brief.md` to see the exact rules a worker carried.
@@ -85,7 +87,7 @@ Read only. Without `--json` it serves a page on `127.0.0.1` (a free port unless 
 |---|---|
 | `orca`, `notices` | whether the terminals could be listed, and what is missing from the snapshot |
 | `project_empty` | why no node is of a project (not a git checkout, no registry, no session open), else `null` |
-| `nodes` | one per session: `key`, `id`, `name`, `title`, `handle`, `role`, `type`, `build`, `harness`, `mode`, `state`, `listed`, `worktree`, `folder` (the last element of the worktree path), `branch`, `parent`, `project`. A closed launch appears only when a running one descends from it |
+| `nodes` | one per session: `key`, `id`, `name`, `title`, `handle`, `role`, `type`, `build`, `harness`, `mode`, `state`, `listed`, `worktree`, `folder` (the last element of the worktree path), `branch`, `repo` (only on a launch into another repository), `parent`, `project`. A closed launch appears only when a running one descends from it |
 | `hierarchy` | `parent` and `child` keys |
 | `synapses` | `from`, `to`, `direction` (`one-way` or `two-way`), `forward`, `back` (the count of each direction) and `last` |
 
@@ -95,7 +97,7 @@ It runs from any folder. Outside a git checkout, or in a repository with no `.ji
 
 ## SessionEnd
 
-When the guard hook is registered (a launch carries it in its `--settings`, or `jitso setup hook` registered it), the hook's SessionEnd entry writes the `end` event of the closing session's launch with source `session_end_hook`. A registry problem there is swallowed so a session can always close.
+When the guard hook is registered (a launch carries it in its `--settings`, or `jitso setup hook` registered it), the hook's SessionEnd entry writes the `end` event of the closing session's launch with source `session_end_hook`, in the log of `JITSO_PROJECT` when it is set. It is written once even when two guards run (the launch's and the repository's). A registry problem there is swallowed so a session can always close.
 
 ## What to report to a human after a fleet
 

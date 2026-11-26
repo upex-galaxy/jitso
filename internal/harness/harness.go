@@ -107,6 +107,10 @@ type SpecInput struct {
 	// the harnesses that run the guard from a generated plugin file; "" when
 	// no guard travels.
 	GuardBinary string
+	// GuardHome is the home repository of a launch into another repository,
+	// which a generated guard plugin passes to the guard as JITSO_PROJECT; ""
+	// otherwise. GuardCommand then carries it as a prefix.
+	GuardHome string
 	// LaunchDir is the launch folder, .jitso/launches/<id>; Files of the Spec
 	// are written under it.
 	LaunchDir string

@@ -59,7 +59,7 @@ func runBuildDiscard(ctx *Context, args []string) error {
 	if err != nil {
 		return err
 	}
-	root, err := ctx.Project()
+	root, err := ctx.HomeProject()
 	if err != nil {
 		return err
 	}

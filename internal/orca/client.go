@@ -255,3 +255,21 @@ func (c *Client) ListTerminals() ([]TerminalInfo, error) {
 	}
 	return terminals, nil
 }
+
+// RepoPaths runs `repo list` and returns the folder of every repository Orca
+// has registered (result.repos[].path), in Orca's order.
+func (c *Client) RepoPaths() ([]string, error) {
+	res, err := c.Call([]string{"repo", "list"})
+	if err != nil {
+		return nil, err
+	}
+	list, _ := res["repos"].([]any)
+	paths := []string{}
+	for _, item := range list {
+		m, _ := item.(map[string]any)
+		if path, ok := m["path"].(string); ok && path != "" {
+			paths = append(paths, path)
+		}
+	}
+	return paths, nil
+}

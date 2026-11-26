@@ -13,6 +13,8 @@ launch: jitso launch
 budget 400k tokens (100%), list cap US$ 6.00 | reports to: you | log .jitso/launches.jsonl
 ```
 
+A launch into another repository has one more line right after the header, `target <path> | home <path>`: the worker runs in the first, and the builds, briefs and registry are in the second.
+
 A build without a `budget` prints the sixth line without its first segment: `reports to: you | log .jitso/launches.jsonl`.
 
 ## Line by line
@@ -40,6 +42,8 @@ Say what the numbers mean, not just what they are. For the example: this is a di
 ```
 dry run: nothing was written and Orca was not called
 ```
+
+Into another repository it reads `dry run: nothing was written; Orca was only asked for its repository list`.
 
 The id on a dry run is a preview. A real launch prints the card again with its own id, and that id is the one to keep.
 

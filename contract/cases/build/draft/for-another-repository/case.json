@@ -1,0 +1,100 @@
+{
+  "id": "build/draft/for-another-repository",
+  "title": "build draft --repo checks the draft against that repository and keeps it in the caller's drafts",
+  "tags": [
+    "posix"
+  ],
+  "source": [
+    "intended: docs/decisions.md, Only launches are blocked, and launches into other repositories"
+  ],
+  "intent": "A build that names another repository's skills is invalid here, so a plain build draft refuses it.",
+  "project": {
+    "files": {
+      ".jitso/briefs/brief.md": "## Goal\n\nFind where the sync entry point of this project is defined and explain in a few sentences how it is wired to the rest of the code.\n\n## Scope\n\nRead only. Look at `src/sync.ts` and `docs/guide.md` and nothing outside the repo. Do not change any file.\n\n## Done when\n\nYou can name the file and the line that defines the entry point, and you have checked it by reading the file.\n\n## Report format\n\nOne short paragraph with the file path, the line number and a one line summary of what it does.\n",
+      "t-worker.yaml": "# A draft a cross-repository case writes.\nid: t-worker\nrole: operator\ntype: explorer\ndescription: Work in the target repository.\nharness: claude\nmodel: claude-haiku-5-5\neffort: low\nroute_scope: [target-area]\nskills_first: [target-only]\ntools: [Read]\nmcp: [tsrv]\n"
+    }
+  },
+  "home": {
+    "files": {
+      "target/.agents/skills/target-only/SKILL.md": "---\nname: target-only\ndescription: A skill only the target holds.\n---\n\nDo the target work.\n",
+      "target/.agents/instructions/agent-target-area.md": "---\nid: target-area\n---\n\n# Target area\n",
+      "target/.mcp.json": "{\"mcpServers\": {\"tsrv\": {\"command\": \"target-server\", \"args\": [\"--target\"]}}}\n"
+    }
+  },
+  "steps": [
+    {
+      "git_init": {
+        "path": "{{HOME}}/target"
+      }
+    },
+    {
+      "run": [
+        "build",
+        "draft",
+        "t-worker.yaml"
+      ],
+      "expect": {
+        "exit": 2,
+        "stderr": [
+          "skill \"target-only\" is not in the allowlist"
+        ],
+        "files": [
+          {
+            "path": ".jitso/drafts",
+            "exists": false
+          }
+        ]
+      }
+    },
+    {
+      "run": [
+        "build",
+        "draft",
+        "t-worker.yaml",
+        "--repo",
+        "{{HOME}}/target"
+      ],
+      "expect": {
+        "exit": 0,
+        "stdout": [
+          {
+            "equals": "drafted t-worker: .jitso/drafts/t-worker.yaml (launch it with --build t-worker --repo {{HOME}}/target)\n"
+          }
+        ],
+        "stderr": [
+          {
+            "empty": true
+          }
+        ],
+        "files": [
+          {
+            "path": ".jitso/drafts/t-worker.yaml",
+            "contains": [
+              "skills_first: [target-only]"
+            ]
+          },
+          {
+            "path": "{{HOME}}/target/.jitso",
+            "exists": false
+          }
+        ]
+      }
+    },
+    {
+      "run": [
+        "build",
+        "draft",
+        "t-worker.yaml",
+        "--repo"
+      ],
+      "expect": {
+        "exit": 2,
+        "stderr": [
+          {
+            "equals": "JITSO REJECTED: --repo needs a value\n"
+          }
+        ]
+      }
+    }
+  ]
+}

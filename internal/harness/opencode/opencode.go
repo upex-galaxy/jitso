@@ -66,7 +66,7 @@ func (Adapter) Spec(in harness.SpecInput) (harness.Spec, error) {
 	}
 	files := []harness.File{{Name: ConfigFile, Data: config}}
 	if in.GuardBinary != "" {
-		files = append(files, harness.File{Name: GuardFile, Data: guardfiles.OpenCode(in.GuardBinary, version.Current())})
+		files = append(files, harness.File{Name: GuardFile, Data: guardfiles.OpenCode(in.GuardBinary, version.Current(), in.GuardHome)})
 	}
 	return harness.Spec{
 		Argv:      Argv(in),

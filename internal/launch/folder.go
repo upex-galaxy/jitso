@@ -10,6 +10,7 @@ import (
 	"github.com/upex-galaxy/jitso/internal/harness"
 	"github.com/upex-galaxy/jitso/internal/jsonx"
 	"github.com/upex-galaxy/jitso/internal/orca"
+	"github.com/upex-galaxy/jitso/internal/project"
 	"github.com/upex-galaxy/jitso/internal/shell"
 	"github.com/upex-galaxy/jitso/internal/trust"
 )
@@ -39,7 +40,7 @@ func writeFolder(p prepared, d Deps, dir string) (folder, error) {
 	var servers map[string]any
 	var err error
 	if len(projectNames(p.mcp)) > 0 {
-		if servers, err = repoServers(filepath.Join(d.Root.Primary, RepoMCPFile)); err != nil {
+		if servers, err = repoServers(filepath.Join(d.target().Primary, RepoMCPFile)); err != nil {
 			return folder{}, err
 		}
 	}
@@ -80,6 +81,7 @@ func writeFolder(p prepared, d Deps, dir string) (folder, error) {
 	}
 	in.GuardCommand = p.pkg.GuardCommand
 	in.GuardBinary = p.pkg.GuardBinary
+	in.GuardHome = p.pkg.Home
 	in.LaunchDir = dir
 	spec, err := p.adapter.Spec(in)
 	if err != nil {
@@ -91,7 +93,13 @@ func writeFolder(p prepared, d Deps, dir string) (folder, error) {
 	if err != nil {
 		return folder{}, err
 	}
-	script, err := shell.RunScript(spec.Env, spec.Argv)
+	env := spec.Env
+	if p.pkg.Home != "" {
+		// The session's own jitso calls and its hooks work on the home
+		// repository.
+		env = append([]harness.EnvVar{{Name: project.HomeEnv, Value: p.pkg.Home}}, env...)
+	}
+	script, err := shell.RunScript(env, spec.Argv)
 	if err != nil {
 		return folder{}, err
 	}
@@ -145,11 +153,6 @@ func repoServers(path string) (map[string]any, error) {
 	top, _ := v.(map[string]any)
 	servers, _ := top["mcpServers"].(map[string]any)
 	return servers, nil
-}
-
-// trustPolicy is the set of folders a launch may run in.
-func trustPolicy(d Deps) trust.Policy {
-	return trust.Policy{Primary: d.Root.Primary, Extra: d.TrustExtra}
 }
 
 // answerTrust handles the trust dialog of the new terminal. The folder Orca

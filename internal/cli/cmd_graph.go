@@ -77,7 +77,7 @@ func graphCollector(ctx *Context) (*graph.Collector, error) {
 	if c.Now == nil {
 		c.Now = time.Now
 	}
-	root, err := ctx.Project()
+	root, err := ctx.HomeProject()
 	var failed *fail.Error
 	if errors.As(err, &failed) && failed.Kind == fail.KindEnv {
 		return c, nil

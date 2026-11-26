@@ -1,0 +1,96 @@
+{
+  "id": "launch/repo/fleet-mode-adopts-in-the-target",
+  "title": "a fleet launch into another repository passes path:<target> to terminal create and to worker-start",
+  "tags": [
+    "posix"
+  ],
+  "source": [
+    "intended: docs/decisions.md, Only launches are blocked, and launches into other repositories"
+  ],
+  "intent": "The terminal and its worker-start must name the same worktree.",
+  "project": {
+    "files": {
+      ".jitso/briefs/brief.md": "## Goal\n\nFind where the sync entry point of this project is defined and explain in a few sentences how it is wired to the rest of the code.\n\n## Scope\n\nRead only. Look at `src/sync.ts` and `docs/guide.md` and nothing outside the repo. Do not change any file.\n\n## Done when\n\nYou can name the file and the line that defines the entry point, and you have checked it by reading the file.\n\n## Report format\n\nOne short paragraph with the file path, the line number and a one line summary of what it does.\n"
+    }
+  },
+  "home": {
+    "files": {
+      "target/readme.txt": "target\n"
+    }
+  },
+  "orca": {
+    "responses": {
+      "repo list": {
+        "repos": [
+          {
+            "id": "r0",
+            "path": "{{PROJECT}}"
+          },
+          {
+            "id": "r1",
+            "path": "{{HOME}}/target"
+          }
+        ]
+      }
+    },
+    "cwd": "{{HOME}}/target"
+  },
+  "steps": [
+    {
+      "git_init": {
+        "path": "{{HOME}}/target"
+      }
+    },
+    {
+      "run": [
+        "launch",
+        "--build",
+        "haiku-explorer",
+        "--brief",
+        "{{PROJECT}}/.jitso/briefs/brief.md",
+        "--mode",
+        "fleet",
+        "--repo",
+        "{{HOME}}/target",
+        "--run",
+        "run_1"
+      ],
+      "capture": {
+        "LAUNCH_ID": {
+          "from": "stdout",
+          "regex": "JITSO (L\\d{8}T\\d{6}-[0-9a-f]{4})",
+          "group": 1
+        }
+      },
+      "expect": {
+        "exit": 0,
+        "orca_calls": {
+          "verbs": [
+            "repo list",
+            "terminal create",
+            "terminal wait",
+            "terminal read",
+            "orchestration worker-start"
+          ],
+          "calls": [
+            {
+              "at": 4,
+              "argv": [
+                "orchestration",
+                "worker-start",
+                "--run",
+                "run_1",
+                "--spec-file",
+                "{{PROJECT}}/.jitso/launches/{{LAUNCH_ID}}/brief.md",
+                "--terminal",
+                "term_fake",
+                "--worktree",
+                "path:{{HOME}}/target"
+              ]
+            }
+          ]
+        }
+      }
+    }
+  ]
+}

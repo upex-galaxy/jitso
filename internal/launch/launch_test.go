@@ -30,6 +30,7 @@ type fakeOrca struct {
 	idle    bool
 	fail    map[string]bool
 	calls   []string
+	repos   []string
 }
 
 var errFake = errors.New("fake failure")
@@ -40,6 +41,13 @@ func (f *fakeOrca) record(verb string) error {
 		return errFake
 	}
 	return nil
+}
+
+func (f *fakeOrca) RepoPaths() ([]string, error) {
+	if err := f.record("repo list"); err != nil {
+		return nil, err
+	}
+	return f.repos, nil
 }
 
 func (f *fakeOrca) CreateTerminal(worktree, title, command string) (orca.Terminal, error) {

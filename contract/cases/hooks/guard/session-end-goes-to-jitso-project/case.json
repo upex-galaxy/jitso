@@ -1,0 +1,77 @@
+{
+  "id": "hooks/guard/session-end-goes-to-jitso-project",
+  "title": "SessionEnd with JITSO_PROJECT writes the end event to that repository's registry, once, even when the target registers the guard too",
+  "source": [
+    "intended: docs/decisions.md, Only launches are blocked, and launches into other repositories"
+  ],
+  "intent": "The session ran in the target; its launch line is in the caller's registry. A second hook for the same session, as a target's own registration would run, adds nothing.",
+  "project": {
+    "files": {
+      ".jitso/briefs/brief.md": "## Goal\n\nFind where the sync entry point of this project is defined and explain in a few sentences how it is wired to the rest of the code.\n\n## Scope\n\nRead only. Look at `src/sync.ts` and `docs/guide.md` and nothing outside the repo. Do not change any file.\n\n## Done when\n\nYou can name the file and the line that defines the entry point, and you have checked it by reading the file.\n\n## Report format\n\nOne short paragraph with the file path, the line number and a one line summary of what it does.\n",
+      ".jitso/launches.jsonl": "{\"v\": 2, \"event\": \"launch\", \"id\": \"L20261113T142233-a3f9\", \"parent\": null, \"root\": \"L20261113T000000-0000\", \"depth\": 2, \"ts\": \"2026-11-13T14:22:33.000Z\", \"mode\": \"fleet\", \"build\": \"haiku-explorer\", \"session_id\": \"sess-parent\", \"orca\": {\"terminal\": \"term_p\"}}\n"
+    }
+  },
+  "home": {
+    "files": {
+      "target/jitso/jitso.yaml": "version: 1\n"
+    }
+  },
+  "steps": [
+    {
+      "git_init": {
+        "path": "{{HOME}}/target"
+      }
+    },
+    {
+      "hook": "guard",
+      "input": {
+        "hook_event_name": "SessionEnd",
+        "session_id": "sess-parent"
+      },
+      "env": {
+        "CLAUDE_PROJECT_DIR": "{{HOME}}/target",
+        "JITSO_PROJECT": "{{PROJECT}}"
+      },
+      "expect": {
+        "exit": 0,
+        "decision": "none",
+        "registry": {
+          "count": 2,
+          "events": [
+            {
+              "at": 1,
+              "event": "end",
+              "fields": {
+                "id": "L20261113T142233-a3f9",
+                "source": "session_end_hook"
+              }
+            }
+          ]
+        },
+        "files": [
+          {
+            "path": "{{HOME}}/target/.jitso",
+            "exists": false
+          }
+        ]
+      }
+    },
+    {
+      "hook": "guard",
+      "input": {
+        "hook_event_name": "SessionEnd",
+        "session_id": "sess-parent"
+      },
+      "env": {
+        "CLAUDE_PROJECT_DIR": "{{HOME}}/target",
+        "JITSO_PROJECT": "{{PROJECT}}"
+      },
+      "expect": {
+        "exit": 0,
+        "registry": {
+          "count": 2
+        }
+      }
+    }
+  ]
+}

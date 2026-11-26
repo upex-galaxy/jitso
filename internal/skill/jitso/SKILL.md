@@ -32,6 +32,17 @@ JITSO launches every agent session from a **build** (model, effort, MCP servers,
 
 Fields, tiers and `user:` names are in `references/builds.md`.
 
+## Launch a worker in another repository
+
+Your repository (home) keeps the builds, the briefs and the registry; the target gives the worker its skills, MCP servers, route ids and instructions. The target needs no `jitso/jitso.yaml`.
+
+1. `jitso arsenal --repo <absolute path>` lists what a build for it may name.
+2. A saved or drafted build that fits both launches as it is. One that names what only the target has: `jitso build draft <file|-> --repo <path>`. It stays a draft.
+3. `jitso launch --build <id> --brief .jitso/briefs/<name>.md --mode <mode> --repo <path> --dry-run`, then without `--dry-run`. The terminal opens at the target's primary checkout; add `--worktree path:<P>` for one of its worktrees.
+4. Exit 3 with `is not registered in Orca`: run the `orca repo add --path <path>` line the message prints, which trusts that folder for Orca, so tell the human, then launch again. `jitso launch` never registers a repository.
+
+The worker's `jitso` calls work on your repository (`JITSO_PROJECT`), so `fleet`, `close`, `link` and `--parent` see one fleet. A child it launches with no `--repo` opens in your repository, and its brief goes in your `.jitso/briefs/` (the card's `home` path).
+
 ## What the guard blocks
 
 Only starting an agent outside `jitso launch`: Orca worker start, an Orca terminal or worktree that runs a harness, the orca-bridge `start_worker` tool, and `claude`, `codex`, `opencode` or `pi` run to open a session. A launch outside `jitso launch` has no card and no registry line, so the rule binds a session without the guard too. A denial looks like this:
@@ -67,7 +78,7 @@ Aim for headings `Goal`, `Scope`, `Done when` and `Report format`, English, a le
 
 ## Find the other sessions
 
-`jitso fleet` is read only: it lists every session Orca lists, this project first, one row each with launch id, role/type, harness, state, Orca handle, parent, `REPO` and title. The title is also the name of the session (`[jitso:<id>] <build>`), so a peer can be addressed by it. `--all` adds closed launches, `--json` prints an object for a program. A row marked `unlaunched` is a terminal no launch of this project explains; `gone` is a launch whose terminal Orca no longer lists. Without Orca it prints the registry rows, with state `unknown`, and exits 3.
+`jitso fleet` is read only: it lists every session Orca lists, this project first (its launches count wherever they run), one row each with launch id, role/type, harness, state, Orca handle, parent, `REPO` and title. The title is also the name of the session (`[jitso:<id>] <build>`), so a peer can be addressed by it. `--all` adds closed launches, `--json` prints an object for a program. A row marked `unlaunched` is a terminal no launch of this project explains; `gone` is a launch whose terminal Orca no longer lists. Without Orca it prints the registry rows, with state `unknown`, and exits 3.
 
 ## Record who you talked to
 

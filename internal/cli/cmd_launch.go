@@ -42,7 +42,8 @@ Launches a worker from a build (saved, or a draft) and a brief file: prints its 
   --mode direct|fleet          direct: the session reports to you; fleet: a worker of an Orca run (required)
   --run <run>                  the Orca run (fleet mode, required there; JITSO creates the Task from the brief)
   --parent <launch_id>         the launch that starts this one
-  --worktree <selector>        the Orca worktree the terminal opens in
+  --worktree <selector>        the Orca worktree the terminal opens in; path:<folder> of another repository launches into it
+  --repo <path>                launch into another repository: an absolute path in its checkout, registered in Orca
   --mcp-exclude <name>         leave one MCP server of the build out (repeatable)
   --field <name>=<value>       a value the build requires (repeatable)
   --brief-language en|es|any   the language the brief check expects (default en)
@@ -62,7 +63,8 @@ func runLaunch(ctx *Context, argv []string) error {
 	if err := args.Check(); err != nil {
 		return err
 	}
-	// A dry run calls no Orca, so only a real launch needs it.
+	// Only a real launch needs Orca; a dry run into another repository asks it
+	// when it is there.
 	if !args.DryRun {
 		if launchGOOS == "windows" {
 			return fail.Env(launchWindows)
@@ -71,13 +73,26 @@ func runLaunch(ctx *Context, argv []string) error {
 			return err
 		}
 	}
-	root, err := ctx.Project()
+	root, err := ctx.HomeProject()
 	if err != nil {
 		return err
 	}
 	cat, err := ctx.Catalog()
 	if err != nil {
 		return err
+	}
+	target, err := launch.ResolveTarget(args, root)
+	if err != nil {
+		return err
+	}
+	if target.Cross {
+		// The builds are checked against what the target holds; an invalid one
+		// fails only its own launch.
+		res, err := ctx.TargetScan(target.Primary)
+		if err != nil {
+			return err
+		}
+		cat = res.Tolerant()
 	}
 	store, err := ctx.Registry()
 	if err != nil {
@@ -92,19 +107,21 @@ func runLaunch(ctx *Context, argv []string) error {
 		return err
 	}
 	d := launch.Deps{
-		Root:       root,
-		Catalog:    cat,
-		Registry:   store,
-		Orca:       ctx.Orca(),
-		Home:       ctx.Home(),
-		Cwd:        cwd,
-		Now:        ctx.Sys.Now,
-		Sleep:      ctx.Sys.Sleep,
-		Rand:       ctx.Sys.Rand,
-		Out:        ctx.Println,
-		Warn:       ctx.Warn,
-		Executable: ctx.Sys.Executable,
-		LookupEnv:  ctx.Sys.LookupEnv,
+		Root:        root,
+		Target:      target,
+		Catalog:     cat,
+		Registry:    store,
+		Orca:        ctx.Orca(),
+		OrcaMissing: ctx.OrcaInstalled,
+		Home:        ctx.Home(),
+		Cwd:         cwd,
+		Now:         ctx.Sys.Now,
+		Sleep:       ctx.Sys.Sleep,
+		Rand:        ctx.Sys.Rand,
+		Out:         ctx.Println,
+		Warn:        ctx.Warn,
+		Executable:  ctx.Sys.Executable,
+		LookupEnv:   ctx.Sys.LookupEnv,
 	}
 	if d.Now == nil {
 		d.Now = time.Now

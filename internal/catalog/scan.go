@@ -134,10 +134,34 @@ func ScanHome(fsys fs.FS, primary, home string) (*Result, error) {
 	if err != nil {
 		return nil, err
 	}
+	return scanItems(cfg, fsys, fsys, primary, home)
+}
+
+// ScanTarget is the scan of a launch into another repository, whose primary
+// checkout is target. The builds, the drafts, the models, the efforts and the
+// field patterns are those of the project (fsys, primary). The skills, the MCP
+// servers and the route ids are those of target, and so are the skills, mcp
+// and tools lists: those of its jitso/jitso.yaml, open when it has none.
+func ScanTarget(fsys fs.FS, primary, home string, target fs.FS) (*Result, error) {
+	cfg, err := LoadConfig(fsys)
+	if err != nil {
+		return nil, err
+	}
+	theirs, err := LoadConfig(target)
+	if err != nil {
+		return nil, err
+	}
+	cfg.Skills, cfg.MCP, cfg.Tools = theirs.Skills, theirs.MCP, theirs.Tools
+	return scanItems(cfg, fsys, target, primary, home)
+}
+
+// scanItems reads the builds of fsys against cfg and what the repository items
+// holds.
+func scanItems(cfg Config, fsys, items fs.FS, primary, home string) (*Result, error) {
 	cfg.User = LoadUser(home)
-	cfg.ProjectSkillDirs = projectSkillDirs(fsys)
-	cfg.ProjectServers = projectServers(fsys)
-	ids, err := RouteIDs(fsys)
+	cfg.ProjectSkillDirs = projectSkillDirs(items)
+	cfg.ProjectServers = projectServers(items)
+	ids, err := RouteIDs(items)
 	if err != nil {
 		return nil, err
 	}

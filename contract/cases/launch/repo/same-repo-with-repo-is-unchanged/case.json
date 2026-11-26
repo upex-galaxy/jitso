@@ -1,0 +1,94 @@
+{
+  "id": "launch/repo/same-repo-with-repo-is-unchanged",
+  "title": "--repo naming the caller's own repository is an ordinary launch: no registration check, no home keys, no JITSO_PROJECT",
+  "tags": [
+    "posix"
+  ],
+  "source": [
+    "intended: docs/decisions.md, Only launches are blocked, and launches into other repositories"
+  ],
+  "intent": "Only a launch whose target is another repository changes anything. --repo still opens the terminal at path:<repository>.",
+  "project": {
+    "files": {
+      ".jitso/briefs/brief.md": "## Goal\n\nFind where the sync entry point of this project is defined and explain in a few sentences how it is wired to the rest of the code.\n\n## Scope\n\nRead only. Look at `src/sync.ts` and `docs/guide.md` and nothing outside the repo. Do not change any file.\n\n## Done when\n\nYou can name the file and the line that defines the entry point, and you have checked it by reading the file.\n\n## Report format\n\nOne short paragraph with the file path, the line number and a one line summary of what it does.\n"
+    }
+  },
+  "steps": [
+    {
+      "run": [
+        "launch",
+        "--build",
+        "haiku-explorer",
+        "--brief",
+        "{{PROJECT}}/.jitso/briefs/brief.md",
+        "--mode",
+        "direct",
+        "--repo",
+        "{{PROJECT}}"
+      ],
+      "capture": {
+        "LAUNCH_ID": {
+          "from": "stdout",
+          "regex": "JITSO (L\\d{8}T\\d{6}-[0-9a-f]{4})",
+          "group": 1
+        }
+      },
+      "expect": {
+        "exit": 0,
+        "stdout": [
+          {
+            "not_contains": "\ntarget "
+          }
+        ],
+        "orca_calls": {
+          "verbs": [
+            "terminal create",
+            "terminal wait",
+            "terminal read"
+          ],
+          "calls": [
+            {
+              "at": 0,
+              "argv": [
+                "terminal",
+                "create",
+                "--worktree",
+                "path:{{PROJECT}}",
+                "--title",
+                "[jitso:{{LAUNCH_ID}}] haiku-explorer",
+                "--command",
+                "'{{PROJECT}}/.jitso/launches/{{LAUNCH_ID}}/run.sh'"
+              ]
+            }
+          ]
+        },
+        "registry": {
+          "events": [
+            {
+              "at": 0,
+              "event": "launch",
+              "fields": {
+                "repo": "project",
+                "repo_path": {
+                  "absent": true
+                },
+                "home": {
+                  "absent": true
+                },
+                "worktree": "primary"
+              }
+            }
+          ]
+        },
+        "files": [
+          {
+            "path": ".jitso/launches/{{LAUNCH_ID}}/run.sh",
+            "not_contains": [
+              "JITSO_PROJECT"
+            ]
+          }
+        ]
+      }
+    }
+  ]
+}

@@ -1,0 +1,116 @@
+{
+  "id": "launch/repo/run-sh-exports-home-and-guard",
+  "title": "on a launch into another repository run.sh exports JITSO_PROJECT=<home> and the guard travels with it, whatever the target registers",
+  "tags": [
+    "posix"
+  ],
+  "source": [
+    "intended: docs/decisions.md, Only launches are blocked, and launches into other repositories"
+  ],
+  "intent": "The target registers the guard on all three slots, which on a launch inside one repository would keep the guard out of --settings. Across repositories the launch's guard always travels and carries JITSO_PROJECT, so nested jitso calls and the end event reach the caller's registry.",
+  "project": {
+    "files": {
+      ".jitso/briefs/brief.md": "## Goal\n\nFind where the sync entry point of this project is defined and explain in a few sentences how it is wired to the rest of the code.\n\n## Scope\n\nRead only. Look at `src/sync.ts` and `docs/guide.md` and nothing outside the repo. Do not change any file.\n\n## Done when\n\nYou can name the file and the line that defines the entry point, and you have checked it by reading the file.\n\n## Report format\n\nOne short paragraph with the file path, the line number and a one line summary of what it does.\n"
+    }
+  },
+  "home": {
+    "files": {
+      "target/.claude/settings.json": "{\n  \"hooks\": {\n    \"PreToolUse\": [\n      {\n        \"matcher\": \"Bash\",\n        \"hooks\": [\n          {\n            \"type\": \"command\",\n            \"command\": \"jitso hook guard\"\n          }\n        ]\n      },\n      {\n        \"matcher\": \"mcp__.*orca.*__.*\",\n        \"hooks\": [\n          {\n            \"type\": \"command\",\n            \"command\": \"jitso hook guard\"\n          }\n        ]\n      }\n    ],\n    \"SessionEnd\": [\n      {\n        \"hooks\": [\n          {\n            \"type\": \"command\",\n            \"command\": \"jitso hook guard\"\n          }\n        ]\n      }\n    ]\n  }\n}\n"
+    }
+  },
+  "orca": {
+    "responses": {
+      "repo list": {
+        "repos": [
+          {
+            "id": "r0",
+            "path": "{{PROJECT}}"
+          },
+          {
+            "id": "r1",
+            "path": "{{HOME}}/target"
+          }
+        ]
+      }
+    },
+    "cwd": "{{HOME}}/target"
+  },
+  "steps": [
+    {
+      "git_init": {
+        "path": "{{HOME}}/target"
+      }
+    },
+    {
+      "run": [
+        "launch",
+        "--build",
+        "haiku-explorer",
+        "--brief",
+        "{{PROJECT}}/.jitso/briefs/brief.md",
+        "--mode",
+        "direct",
+        "--repo",
+        "{{HOME}}/target"
+      ],
+      "capture": {
+        "LAUNCH_ID": {
+          "from": "stdout",
+          "regex": "JITSO (L\\d{8}T\\d{6}-[0-9a-f]{4})",
+          "group": 1
+        }
+      },
+      "expect": {
+        "exit": 0,
+        "registry": {
+          "events": [
+            {
+              "at": 0,
+              "event": "launch",
+              "fields": {
+                "package.guard": true
+              }
+            }
+          ]
+        },
+        "files": [
+          {
+            "path": ".jitso/launches/{{LAUNCH_ID}}/run.sh",
+            "contains": [
+              "export JITSO_PROJECT='{{PROJECT}}'\n"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "exec": "run_sh",
+      "launch": "{{LAUNCH_ID}}",
+      "expect": {
+        "exit": 0,
+        "claude": {
+          "ran": true,
+          "env": {
+            "JITSO_PROJECT": "{{PROJECT}}"
+          },
+          "json_arg_after": {
+            "--settings": [
+              {
+                "path": "hooks.PreToolUse.0.hooks.0.command",
+                "regex": "^JITSO_PROJECT='{{PROJECT}}' '.*' hook guard$"
+              },
+              {
+                "path": "hooks.PreToolUse.1.hooks.0.command",
+                "regex": "^JITSO_PROJECT='{{PROJECT}}' '.*' hook guard$"
+              },
+              {
+                "path": "hooks.SessionEnd.0.hooks.0.command",
+                "regex": "^JITSO_PROJECT='{{PROJECT}}' '.*' hook guard$"
+              }
+            ]
+          }
+        }
+      }
+    }
+  ]
+}

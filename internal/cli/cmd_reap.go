@@ -18,7 +18,7 @@ func init() {
 			if err := ctx.OrcaInstalled(); err != nil {
 				return err
 			}
-			if _, err := ctx.Project(); err != nil {
+			if _, err := ctx.HomeProject(); err != nil {
 				return err
 			}
 			store, err := ctx.Registry()

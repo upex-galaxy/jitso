@@ -33,6 +33,7 @@ type Orca interface {
 	SendText(handle, text string) error
 	CloseTerminal(handle string) error
 	Call(args []string) (map[string]any, error)
+	RepoPaths() ([]string, error)
 }
 
 // Adapters are the harnesses a build's harness field may name.
@@ -45,12 +46,20 @@ var Adapters = map[string]harness.Adapter{
 
 // Deps is everything a launch reads, writes or calls.
 type Deps struct {
-	// Root is the project: the catalog, .mcp.json and
-	// .jitso/ come from its primary checkout.
-	Root     project.Root
+	// Root is the home repository: the builds and .jitso/ come from its
+	// primary checkout.
+	Root project.Root
+	// Target is the repository the worker goes into (ResolveTarget); the zero
+	// value is Root.
+	Target Target
+	// Catalog is the catalog of the home repository as checked against the
+	// target.
 	Catalog  *catalog.Catalog
 	Registry registry.Store
 	Orca     Orca
+	// OrcaMissing says why Orca cannot be asked, nil when it can. A dry run of
+	// a launch into another repository needs it; nil means it can.
+	OrcaMissing func() error
 	// Home is $HOME: the transcripts live under it.
 	Home string
 	// Cwd is the working directory a relative --brief is read from.
@@ -71,10 +80,20 @@ type Deps struct {
 	LookupEnv func(string) (string, bool)
 }
 
+// target is Deps.Target, or Root when it is not set.
+func (d Deps) target() Target {
+	if d.Target.Primary == "" {
+		return Target{Root: d.Root}
+	}
+	return d.Target
+}
+
 // Run launches a, already parsed and checked (Parse, Args.Check). After the
 // build, the brief and the parent are validated it warns about each
 // --mcp-exclude name the build does not list (stderr, the launch goes on) and
-// prints the card; a dry run stops there. A real launch then executes (see execute).
+// prints the card; a dry run stops there. A real launch then executes (see execute). A
+// launch into another repository first checks that Orca has it registered, a
+// dry run too, and writes nothing when it has not.
 func Run(a Args, d Deps) error {
 	p, err := profile.Resolve(profile.Request{Build: a.Build, Fields: a.Fields}, d.Catalog)
 	if err != nil {
@@ -87,7 +106,12 @@ func Run(a Args, d Deps) error {
 	if problems := SupportProblems(p.Build, adapter); len(problems) > 0 {
 		return fail.Rejected(strings.Join(problems, "; "))
 	}
-	carried, err := planPackage(p.Build, d.Catalog.Config.User, d.Root.Checkout, d.Executable, adapter.Support())
+	target := d.target()
+	home := ""
+	if target.Cross {
+		home = d.Root.Primary
+	}
+	carried, err := planPackage(p.Build, d.Catalog.Config.User, target.Checkout, home, d.Executable, adapter.Support())
 	if err != nil {
 		return err
 	}
@@ -111,13 +135,13 @@ func Run(a Args, d Deps) error {
 	}
 	briefText := string(data)
 	var failures []brief.Failure
-	if target, isPointer := brief.Pointer(briefText); isPointer {
-		briefText, failures, err = readTarget(target, a.BriefLanguage, d.Root.Primary)
+	if pointed, isPointer := brief.Pointer(briefText); isPointer {
+		briefText, failures, err = readTarget(pointed, a.BriefLanguage, d.Root.Primary)
 		if err != nil {
 			return err
 		}
 	} else {
-		failures = brief.Check(briefText, a.BriefLanguage, brief.Exists(d.Root.Primary))
+		failures = brief.Check(briefText, a.BriefLanguage, citedIn(target.Primary, d.Root.Primary))
 	}
 	// The brief checks are advice: each failed one is a warning.
 	for _, f := range failures {
@@ -134,8 +158,18 @@ func Run(a Args, d Deps) error {
 		return err
 	}
 	id := ID(d.Now(), random)
-	pkg, _ := os.ReadFile(filepath.Join(d.Root.Primary, "package.json"))
-	cardText := card.Render(Card(id, a.Mode, p, mcp, card.LaunchCommand(pkg)))
+	// The card's launch line is for the session it starts, so across
+	// repositories it follows the package.json of the folder that session is in.
+	commandRoot := d.Root.Primary
+	if target.Cross {
+		commandRoot = target.Checkout
+	}
+	pkg, _ := os.ReadFile(filepath.Join(commandRoot, "package.json"))
+	shown := Card(id, a.Mode, p, mcp, card.LaunchCommand(pkg))
+	if target.Cross {
+		shown.Target, shown.Home = target.Primary, home
+	}
+	cardText := card.Render(shown)
 	for _, u := range UnknownExcludes(p.MCP, a.MCPExclude) {
 		hint := ""
 		if u.Hint != "" {
@@ -146,15 +180,58 @@ func Run(a Args, d Deps) error {
 	for _, w := range unset {
 		d.Warn(w)
 	}
+	asked := false
+	if target.Cross {
+		if asked, err = checkTarget(a, d, target); err != nil {
+			return err
+		}
+	}
 	if a.DryRun {
 		d.Out(cardText)
 		if note := adapter.Support().Note; note != "" {
 			d.Out(note)
 		}
-		d.Out(DryRunLine)
+		if asked {
+			d.Out(DryRunAskedLine)
+		} else {
+			d.Out(DryRunLine)
+		}
 		return nil
 	}
 	return execute(prepared{args: a, profile: p, adapter: adapter, mcp: mcp, briefText: briefText, id: id, card: cardText, lineage: lineage, pkg: carried, userServers: users}, d)
+}
+
+// checkTarget refuses a target Orca has not registered: a real launch also
+// fails when the list cannot be read, a dry run only warns, because it opens
+// nothing. asked is true when Orca was called.
+func checkTarget(a Args, d Deps, target Target) (asked bool, err error) {
+	skipped := func(why error) {
+		d.Warn("jitso: warning: could not check that Orca has " + target.Primary + " registered (" + why.Error() + "); a launch checks it")
+	}
+	if a.DryRun && d.OrcaMissing != nil {
+		if missing := d.OrcaMissing(); missing != nil {
+			skipped(missing)
+			return false, nil
+		}
+	}
+	ok, err := registered(d.Orca, target.Primary)
+	switch {
+	case err != nil && a.DryRun:
+		skipped(err)
+		return true, nil
+	case err != nil:
+		return true, err
+	case !ok:
+		return true, unregistered(target.Primary)
+	}
+	return true, nil
+}
+
+// citedIn is the existence probe of a brief's cited paths: a relative path
+// may be a file of the target repository or of the home one.
+func citedIn(target, home string) func(string) bool {
+	inTarget, inHome := brief.Exists(target), brief.Exists(home)
+	return func(path string) bool { return inTarget(path) || inHome(path) }
 }
 
 // readTarget is the text of a pointer brief: the target is resolved inside the
@@ -219,7 +296,9 @@ type prepared struct {
 // path is checked before anything is written or Orca is called, and the folder
 // Orca reports is checked right after terminal create, before the idle wait.
 func execute(p prepared, d Deps) (err error) {
-	policy := trustPolicy(d)
+	target := d.target()
+	policy := policyOf(target, d.TrustExtra)
+	selector := openSelector(p.args, d.Root, target)
 	if why := policy.Precheck(deref(p.args.Worktree)); why != "" {
 		return fail.Rejected(why)
 	}
@@ -242,7 +321,7 @@ func execute(p prepared, d Deps) (err error) {
 	if err != nil {
 		return err
 	}
-	term, err := d.Orca.CreateTerminal(deref(p.args.Worktree), files.title, files.command)
+	term, err := d.Orca.CreateTerminal(selector, files.title, files.command)
 	if err != nil {
 		return err
 	}
@@ -259,8 +338,8 @@ func execute(p prepared, d Deps) (err error) {
 	}
 	if p.args.Mode == ModeFleet {
 		start := []string{"orchestration", "worker-start", "--run", deref(p.args.Run), "--spec-file", files.brief, "--terminal", term.Handle}
-		if p.args.Worktree != nil {
-			start = append(start, "--worktree", *p.args.Worktree)
+		if selector != "" {
+			start = append(start, "--worktree", selector)
 		}
 		receipt, err := d.Orca.Call(start)
 		if err != nil {
@@ -278,9 +357,13 @@ func execute(p prepared, d Deps) (err error) {
 	if term.WorktreePath != "" {
 		transcript = p.adapter.TranscriptPath(term.WorktreePath, files.sessionID, d.Home)
 	}
+	repoPath, home := "", ""
+	if target.Cross {
+		repoPath, home = target.Primary, d.Root.Primary
+	}
 	event := Event(EventInput{
 		ID: p.id, Args: p.args, Profile: p.profile, MCP: p.mcp, Lineage: p.lineage,
-		Repo: filepath.Base(d.Root.Primary), Harness: p.adapter.ID(), Argv: files.argv, Prompted: p.args.Mode == ModeDirect,
+		Repo: filepath.Base(target.Primary), RepoPath: repoPath, Home: home, Harness: p.adapter.ID(), Argv: files.argv, Prompted: p.args.Mode == ModeDirect,
 		BriefPath: files.brief, BriefText: p.briefText, SessionID: files.sessionID,
 		Cwd: term.WorktreePath, Transcript: transcript, Trust: outcome, Terminal: term.Handle, Title: files.title, Now: d.Now(),
 		Package: p.pkg.Ref(),
@@ -316,7 +399,7 @@ func awaitReady(p prepared, d Deps, policy trust.Policy, term orca.Terminal) (tr
 		return "", err
 	}
 	if outcome == trust.Refused {
-		return "", fail.Rejected(trust.Untrusted(term.WorktreePath, deref(p.args.Worktree)))
+		return "", fail.Rejected(policy.Untrusted(term.WorktreePath, deref(p.args.Worktree)))
 	}
 	if !first.Idle {
 		if again := d.Orca.WaitIdle(term.Handle, IdleTimeoutMS); !again.Idle {

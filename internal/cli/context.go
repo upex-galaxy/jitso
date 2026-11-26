@@ -1,6 +1,7 @@
 package cli
 
 import (
+	"fmt"
 	"io"
 	"os"
 	"os/exec"
@@ -49,6 +50,8 @@ type Context struct {
 
 	root       *project.Root
 	rootErr    error
+	homeRoot   *project.Root
+	homeErr    error
 	scan       *catalog.Result
 	scanErr    error
 	catalog    *catalog.Catalog
@@ -79,14 +82,12 @@ func (c *Context) Warn(line string) {
 }
 
 // Project resolves the project once: the git primary checkout of the cwd.
-// Outside a checkout it is an Env error (exit 3) naming the folder.
+// Outside a checkout it is an Env error (exit 3) naming the folder. It is the
+// project of the commands that change or check the checkout they run in
+// (init, install, setup, doctor).
 func (c *Context) Project() (project.Root, error) {
 	if c.root == nil && c.rootErr == nil {
-		getwd := c.Sys.Getwd
-		if getwd == nil {
-			getwd = os.Getwd
-		}
-		cwd, err := getwd()
+		cwd, err := c.getwd()
 		if err != nil {
 			c.rootErr = err
 		} else {
@@ -100,12 +101,39 @@ func (c *Context) Project() (project.Root, error) {
 	return *c.root, nil
 }
 
+// HomeProject resolves once the project that holds the builds and the
+// registry a command works on: the one JITSO_PROJECT names when it is valid (a
+// session launched into another repository), else that of the cwd
+// (project.ResolveHome).
+func (c *Context) HomeProject() (project.Root, error) {
+	if c.homeRoot == nil && c.homeErr == nil {
+		cwd, err := c.getwd()
+		if err != nil {
+			c.homeErr = err
+		} else {
+			r, err := project.ResolveHome(cwd, c.Getenv(project.HomeEnv))
+			c.homeRoot, c.homeErr = &r, err
+		}
+	}
+	if c.homeErr != nil {
+		return project.Root{}, c.homeErr
+	}
+	return *c.homeRoot, nil
+}
+
+func (c *Context) getwd() (string, error) {
+	if c.Sys.Getwd != nil {
+		return c.Sys.Getwd()
+	}
+	return os.Getwd()
+}
+
 // Scan reads every build file of the project once, with no whole-catalog rule:
 // an invalid file is a problem of that file (see catalog.Scan). Commands that
 // show files, drafts included, use it after Catalog has applied the rule.
 func (c *Context) Scan() (*catalog.Result, error) {
 	if c.scan == nil && c.scanErr == nil {
-		root, err := c.Project()
+		root, err := c.HomeProject()
 		if err != nil {
 			return nil, err
 		}
@@ -129,10 +157,24 @@ func (c *Context) Catalog() (*catalog.Catalog, error) {
 	return c.catalog, c.catalogErr
 }
 
-// Registry is the registry store of the project's primary checkout, on the
-// context's clock.
+// TargetScan reads the build files of the project against the repository
+// whose primary checkout is target (catalog.ScanTarget).
+func (c *Context) TargetScan(target string) (*catalog.Result, error) {
+	root, err := c.HomeProject()
+	if err != nil {
+		return nil, err
+	}
+	res, err := catalog.ScanTarget(os.DirFS(root.Primary), root.Primary, c.Home(), os.DirFS(target))
+	if err != nil {
+		return nil, fmt.Errorf("target %s: %w", target, err)
+	}
+	return res, nil
+}
+
+// Registry is the registry store of the home project's primary checkout, on
+// the context's clock.
 func (c *Context) Registry() (*registry.FileStore, error) {
-	root, err := c.Project()
+	root, err := c.HomeProject()
 	if err != nil {
 		return nil, err
 	}

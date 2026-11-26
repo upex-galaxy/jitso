@@ -1,0 +1,125 @@
+{
+  "id": "launch/repo/fleet-and-graph-show-the-target",
+  "title": "jitso fleet and jitso graph run from the caller's repository, or from the target with JITSO_PROJECT, show a cross-repository launch first with the target as its repo",
+  "tags": [
+    "posix"
+  ],
+  "source": [
+    "intended: docs/decisions.md, Only launches are blocked, and launches into other repositories"
+  ],
+  "intent": "The launch is the caller's: it is listed with this project's launches although its terminal is in another repository.",
+  "project": {
+    "files": {
+      ".jitso/briefs/brief.md": "## Goal\n\nFind where the sync entry point of this project is defined and explain in a few sentences how it is wired to the rest of the code.\n\n## Scope\n\nRead only. Look at `src/sync.ts` and `docs/guide.md` and nothing outside the repo. Do not change any file.\n\n## Done when\n\nYou can name the file and the line that defines the entry point, and you have checked it by reading the file.\n\n## Report format\n\nOne short paragraph with the file path, the line number and a one line summary of what it does.\n"
+    }
+  },
+  "home": {
+    "files": {
+      "target/readme.txt": "target\n"
+    }
+  },
+  "orca": {
+    "responses": {
+      "repo list": {
+        "repos": [
+          {
+            "path": "{{HOME}}/target"
+          }
+        ]
+      },
+      "terminal list": {
+        "terminals": [
+          {
+            "handle": "term_h",
+            "worktreePath": "{{PROJECT}}",
+            "title": "zsh"
+          },
+          {
+            "handle": "term_fake",
+            "worktreePath": "{{HOME}}/target",
+            "title": "worker"
+          }
+        ]
+      }
+    },
+    "cwd": "{{HOME}}/target"
+  },
+  "steps": [
+    {
+      "git_init": {
+        "path": "{{HOME}}/target"
+      }
+    },
+    {
+      "run": [
+        "launch",
+        "--build",
+        "haiku-explorer",
+        "--brief",
+        "{{PROJECT}}/.jitso/briefs/brief.md",
+        "--mode",
+        "direct",
+        "--repo",
+        "{{HOME}}/target"
+      ],
+      "capture": {
+        "LAUNCH_ID": {
+          "from": "stdout",
+          "regex": "JITSO (L\\d{8}T\\d{6}-[0-9a-f]{4})",
+          "group": 1
+        }
+      },
+      "expect": {
+        "exit": 0
+      }
+    },
+    {
+      "run": [
+        "fleet"
+      ],
+      "expect": {
+        "exit": 0,
+        "stdout": [
+          {
+            "regex": "(?m)\\A.*\\n{{LAUNCH_ID}} +operator/explorer +claude +live +term_fake +- +target +worker\\n- +- +- +unlaunched +term_h +- +project +zsh\\n"
+          }
+        ]
+      }
+    },
+    {
+      "run": [
+        "fleet"
+      ],
+      "cwd": "{{HOME}}/target",
+      "env": {
+        "JITSO_PROJECT": "{{PROJECT}}"
+      },
+      "expect": {
+        "exit": 0,
+        "stdout": [
+          {
+            "regex": "(?m)^{{LAUNCH_ID}} .* live +term_fake +- +target +worker$"
+          }
+        ]
+      }
+    },
+    {
+      "run": [
+        "graph",
+        "--json"
+      ],
+      "cwd": "{{HOME}}/target",
+      "env": {
+        "JITSO_PROJECT": "{{PROJECT}}"
+      },
+      "expect": {
+        "exit": 0,
+        "stdout": [
+          {
+            "regex": "\"id\": \"{{LAUNCH_ID}}\"[^}]*\"repo\": \"target\""
+          }
+        ]
+      }
+    }
+  ]
+}

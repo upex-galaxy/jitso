@@ -24,7 +24,7 @@ func init() {
 			if err != nil {
 				return err
 			}
-			root, err := ctx.Project()
+			root, err := ctx.HomeProject()
 			if err != nil {
 				return err
 			}

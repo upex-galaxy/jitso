@@ -1,0 +1,111 @@
+{
+  "id": "launch/repo/target-lists-restrict",
+  "title": "the target's own jitso/jitso.yaml restricts skills and tools; models and efforts stay those of the caller's repository",
+  "tags": [
+    "posix"
+  ],
+  "source": [
+    "intended: docs/decisions.md, Only launches are blocked, and launches into other repositories"
+  ],
+  "intent": "A target with a jitso/jitso.yaml has its skills, mcp and tools lists win. Its models and efforts lists do not count: the caller's repository pays for the model, so its lists decide.",
+  "project": {
+    "files": {
+      ".jitso/briefs/brief.md": "## Goal\n\nFind where the sync entry point of this project is defined and explain in a few sentences how it is wired to the rest of the code.\n\n## Scope\n\nRead only. Look at `src/sync.ts` and `docs/guide.md` and nothing outside the repo. Do not change any file.\n\n## Done when\n\nYou can name the file and the line that defines the entry point, and you have checked it by reading the file.\n\n## Report format\n\nOne short paragraph with the file path, the line number and a one line summary of what it does.\n",
+      ".jitso/drafts/fits.yaml": "# A draft a cross-repository case writes.\nid: fits\nrole: operator\ntype: explorer\ndescription: Work in the target repository.\nharness: claude\nmodel: claude-haiku-5-5\neffort: low\nroute_scope: [none]\nskills_first: [t-allowed]\ntools: [Read]\n",
+      ".jitso/drafts/outside.yaml": "# A draft a cross-repository case writes.\nid: outside\nrole: operator\ntype: explorer\ndescription: Work in the target repository.\nharness: claude\nmodel: claude-haiku-5-5\neffort: low\nroute_scope: [none]\nskills_first: [t-other]\ntools: [Bash]\n",
+      ".jitso/drafts/their-model.yaml": "# A draft a cross-repository case writes.\nid: their-model\nrole: operator\ntype: explorer\ndescription: Work in the target repository.\nharness: claude\nmodel: target-model\neffort: low\nroute_scope: [none]\n"
+    }
+  },
+  "home": {
+    "files": {
+      "target/jitso/jitso.yaml": "version: 1\nmodels: [target-model]\nefforts: [high]\nskills: [t-allowed]\ntools: [Read]\n",
+      "target/.agents/skills/t-allowed/SKILL.md": "---\nname: t-allowed\ndescription: Allowed.\n---\n",
+      "target/.agents/skills/t-other/SKILL.md": "---\nname: t-other\ndescription: Not allowed.\n---\n"
+    }
+  },
+  "orca": {
+    "responses": {
+      "repo list": {
+        "repos": [
+          {
+            "id": "r0",
+            "path": "{{PROJECT}}"
+          },
+          {
+            "id": "r1",
+            "path": "{{HOME}}/target"
+          }
+        ]
+      }
+    },
+    "cwd": "{{HOME}}/target"
+  },
+  "steps": [
+    {
+      "git_init": {
+        "path": "{{HOME}}/target"
+      }
+    },
+    {
+      "run": [
+        "launch",
+        "--build",
+        "fits",
+        "--brief",
+        "{{PROJECT}}/.jitso/briefs/brief.md",
+        "--mode",
+        "direct",
+        "--repo",
+        "{{HOME}}/target",
+        "--dry-run"
+      ],
+      "expect": {
+        "exit": 0,
+        "stdout": [
+          "skill t-allowed"
+        ]
+      }
+    },
+    {
+      "run": [
+        "launch",
+        "--build",
+        "outside",
+        "--brief",
+        "{{PROJECT}}/.jitso/briefs/brief.md",
+        "--mode",
+        "direct",
+        "--repo",
+        "{{HOME}}/target",
+        "--dry-run"
+      ],
+      "expect": {
+        "exit": 2,
+        "stderr": [
+          "skill \"t-other\" is not in the allowlist",
+          "tool \"Bash\" is not in the allowlist"
+        ]
+      }
+    },
+    {
+      "run": [
+        "launch",
+        "--build",
+        "their-model",
+        "--brief",
+        "{{PROJECT}}/.jitso/briefs/brief.md",
+        "--mode",
+        "direct",
+        "--repo",
+        "{{HOME}}/target",
+        "--dry-run"
+      ],
+      "expect": {
+        "exit": 2,
+        "stderr": [
+          "model \"target-model\" is not in the allowlist"
+        ]
+      }
+    }
+  ]
+}

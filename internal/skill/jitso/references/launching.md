@@ -5,7 +5,7 @@ Read this when you are about to build a `jitso launch` line. The card line `laun
 ## The line
 
 ```
-jitso launch --build <id> --brief <file> --mode direct|fleet [--run <run>] [--worktree <sel>] [--field name=value]... [--parent <launch id>] [--mcp-exclude <server>]... [--brief-language en|es|any] [--dry-run]
+jitso launch --build <id> --brief <file> --mode direct|fleet [--run <run>] [--worktree <sel>] [--repo <path>] [--field name=value]... [--parent <launch id>] [--mcp-exclude <server>]... [--brief-language en|es|any] [--dry-run]
 ```
 
 | Flag | Meaning |
@@ -15,12 +15,13 @@ jitso launch --build <id> --brief <file> --mode direct|fleet [--run <run>] [--wo
 | `--mode` | required: `direct` or `fleet`. The build's `mode_default` is ignored by `launch` |
 | `--run` | fleet only, required there: the Orca Run the worker is adopted into. It must already exist (`orca orchestration run-create --objective <text> --json`) |
 | `--task` | not accepted in fleet mode: `JITSO REJECTED: --task is not accepted in fleet mode: JITSO creates the Task from the brief`. In direct mode it is ignored |
-| `--worktree` | which Orca worktree the terminal opens in (an id or a selector); without it, the primary |
+| `--worktree` | which Orca worktree the terminal opens in (an id or a selector); without it, Orca picks. `path:<folder>` of another repository launches into it ("Another repository") |
+| `--repo` | launch into another repository: an absolute path (spaces allowed, at most 1024 bytes) inside one of its checkouts. Without `--worktree` the terminal opens at its primary checkout |
 | `--field` | a value for a field the build `requires`, as `name=value`; repeat for more. The values reach the worker in the `## Fields` block of its `brief.md` and the `fields` object of the launch line in the log |
 | `--parent` | the launch id of the launcher, so the registry records the tree (an unknown id is rejected, also on a dry run) |
 | `--mcp-exclude` | drop one of the build's MCP servers for this launch, by the name the build wrote (`user:<name>` for a user server); repeat for more |
 | `--brief-language` | `en` (default), `es` or `any`. Only change it when the project's briefs are not in English |
-| `--dry-run` | validate and print the card, write nothing, never call Orca |
+| `--dry-run` | validate and print the card, write nothing; Orca is not called, except to ask whether the target of another repository is registered |
 
 A flag whose next word starts with `--` has no value: `launch --build --dry-run` is `JITSO REJECTED: --build needs a value`. Old spellings are unknown: `--preset` is `JITSO REJECTED: unknown argument "--preset"`.
 
@@ -45,7 +46,23 @@ dry run: nothing was written and Orca was not called
 
 The launch id in a dry run is only a preview. A real launch draws a new one.
 
-The dry run checks the build, the required fields, the brief file and `--parent`, and prints the brief warnings. It does not check the terminal, the folder Orca opens it in, a `--worktree` path, the trust dialog or `.mcp.json`, so a clean dry run is not a promise that the real launch succeeds.
+The dry run checks the build, the required fields, the brief file and `--parent`, and prints the brief warnings. It does not check the terminal, the folder Orca opens it in, a `--worktree` path of this repository, the trust dialog or `.mcp.json`, so a clean dry run is not a promise that the real launch succeeds.
+
+## Another repository
+
+The target is the repository of `--repo`, or the one a `--worktree path:<folder>` belongs to when it is not yours. `--repo` with a `--worktree` of any other repository is rejected. `--repo` naming your own repository is an ordinary launch.
+
+| From your repository (home) | From the target |
+|---|---|
+| builds, drafts, briefs, `.jitso/`, `--parent` | skills, `.mcp.json` servers, route ids, instructions |
+| the `models`, `efforts` and `fields` of `jitso/jitso.yaml` | the `skills`, `mcp` and `tools` lists of its own `jitso/jitso.yaml`, all open without one |
+
+- The build is checked against that mix, so only the build you launch must be valid there. `jitso build draft <file|-> --repo <path>` drafts one that names the target's items; here it shows as invalid, which is expected.
+- Orca must have the target registered. Otherwise exit 3 before anything is written, on a dry run too, with the `orca repo add --path <target>` line. Running it is your explicit sign of trust; `jitso launch` never runs it. A dry run with no Orca to ask warns and goes on.
+- The card gains the line `target <path> | home <path>`, and its `launch:` command follows the target's `package.json`.
+- The launch line records `repo` (the target's folder name), `repo_path` and `home`.
+- `run.sh` exports `JITSO_PROJECT=<home>`, and the guard travels with it even when the target registers one. In that session every `jitso` command that reads builds or the registry works on home, and the guard blocks launches although the target has no `jitso/jitso.yaml`. `init`, `setup`, `install` and `doctor` still act on the folder they run in.
+- A launch from that session with no `--repo` goes to home: JITSO opens its terminal at home's primary checkout. Pass `--repo <target>` to stay in the target.
 
 ## Direct and fleet
 
@@ -69,9 +86,9 @@ A conductor starts every worker with the `launch:` command of its own card plus 
 
 In this order (read from the launch code, then seen with a fake Orca on a scratch project):
 
-1. Resolves the build and reads the brief. Any rejection stops here with exit 2; a failed brief check is only a warning. A `--worktree` that names a path (`path:<path>` or `id:<id>::<path>`) must be an absolute path of a worktree of this repo, or the launch is rejected here, before anything is written or Orca is called. A selector with no path (a worktree name) is not checked here.
+1. Resolves the build and reads the brief. Any rejection stops here with exit 2; a failed brief check is only a warning. A `--worktree` that names a path (`path:<path>` or `id:<id>::<path>`) must be an absolute path of a worktree of the target repository (yours, unless it is another one), or the launch is rejected here, before anything is written. A selector with no path (a worktree name) is not checked here.
 2. Creates `.jitso/launches/<id>/` and writes into it `brief.md` (the card, the skills to load first, your brief, a `## Fields` block when you gave `--field` values, then JITSO's rules), `mcp.json`, `card.txt` and `run.sh`.
-3. Opens an Orca terminal titled `[jitso:<id>] <build>` running `run.sh`. The harness session gets the same text as its name where the harness has a launch flag for one (`--name` for Claude Code and Pi; Codex and OpenCode have none for their interactive session). Right away, before it waits for anything, it checks the folder Orca reports for that terminal, on every launch, with or without the trust dialog: it must be a worktree of this repo, and the path `--worktree` names when it names one. A wrong or unknown folder closes the terminal and rejects the launch (exit 2). Then it waits for the harness prompt and answers the trust dialog.
+3. Opens an Orca terminal titled `[jitso:<id>] <build>` running `run.sh`. The harness session gets the same text as its name where the harness has a launch flag for one (`--name` for Claude Code and Pi; Codex and OpenCode have none for their interactive session). Right away, before it waits for anything, it checks the folder Orca reports for that terminal, on every launch, with or without the trust dialog: it must be a worktree of the target repository, and the path `--worktree` names when it names one. A wrong or unknown folder closes the terminal and rejects the launch (exit 2). Then it waits for the harness prompt and answers the trust dialog.
 4. In fleet mode, creates the Task from `brief.md` and adopts the terminal into the run.
 5. Appends the launch line to `.jitso/launches.jsonl` and prints the card.
 
@@ -87,7 +104,7 @@ When a launch carries more than its own files, it also writes `.jitso/launches/<
 |---|---|
 | each `user:` skill of the build, copied under `pkg/.claude/skills/<name>/` | the build names it and the owner's `~/.jitso/jitso.yaml` lists it |
 | the jitso usage skill | the build is `tier: conductor` or names `jitso`, and the checkout holds no `.claude/skills/jitso/SKILL.md` |
-| the guard hook | not in the folder: it is added to the `--settings` JSON, unless the project's `.claude/settings.json` already registers it on all three slots |
+| the guard hook | not in the folder: it is added to the `--settings` JSON, unless the project's `.claude/settings.json` already registers it on all three slots. Into another repository it always travels |
 
 A launch that carries nothing writes no `pkg/` and passes no `--add-dir`. The launch event records what travelled under `package` (`references/lifecycle.md`). User MCP servers go into `mcp.json` by reference only: a `${VAR}` stays a reference, and a variable that is unset in jitso's environment is one stderr warning that names it.
 
