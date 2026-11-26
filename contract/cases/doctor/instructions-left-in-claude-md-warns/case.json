@@ -6,7 +6,7 @@
     "intended: owner decision (v0.3): Claude Code reads only CLAUDE.md when it exists, so one that does not import AGENTS.md hides the block; ~/.claude/CLAUDE.md keeps its block"
   ],
   "defect": "N-20",
-  "intent": "INTENDED behavior (doctor, setup instructions writes AGENTS.md only). `AGENTS.md` holds the current block and a Claude memory file holds one an older jitso appended. When that file imports AGENTS.md (`@AGENTS.md` in `CLAUDE.md`, `@../AGENTS.md` in `.claude/CLAUDE.md`, because Claude Code resolves an import relative to the file that holds it) the block is a leftover: `warn instructions: <file> holds a JITSO block: run jitso setup instructions to move it to AGENTS.md`. When it does not, Claude Code never reads AGENTS.md: `warn instructions: <file> does not import AGENTS.md, so Claude Code does not read the JITSO block: add a line <import> to it`, and no advice to move a block that setup instructions keeps. The home has a `~/.codex/AGENTS.md` with the block and a `~/.claude/CLAUDE.md` with an old one, which is what Claude Code reads for the user: `ok   instructions-user: block 1 in ~/.codex/AGENTS.md`, with no advice to move it. A warning never breaks a script, so the exit code is 0.",
+  "intent": "INTENDED behavior (doctor, setup instructions writes AGENTS.md only). `AGENTS.md` holds the current block and a Claude memory file holds one an older jitso appended. When that file imports AGENTS.md (`@AGENTS.md` in `CLAUDE.md`, `@../AGENTS.md` in `.claude/CLAUDE.md`, because Claude Code resolves an import relative to the file that holds it) the block is a leftover: `warn instructions: <file> holds a JITSO block: run jitso setup instructions to move it to AGENTS.md`. When it does not, Claude Code never reads AGENTS.md: `warn instructions: <file> does not import AGENTS.md, so Claude Code does not read the JITSO block: add a line <import> to it`, and no advice to move a block that setup instructions keeps. The home has a `~/.codex/AGENTS.md` with the block and a `~/.claude/CLAUDE.md` with an old one, which is what Claude Code reads for the user: `ok   instructions-user: block 2 in ~/.codex/AGENTS.md`, with no advice to move it. A warning never breaks a script, so the exit code is 0.",
   "project": {
     "files": {
       "AGENTS.md": {
@@ -71,7 +71,7 @@
         "exit": 0,
         "stdout": [
           "\nwarn instructions: {{warning}}\n",
-          "\nok   instructions-user: block 1 in ~/.codex/AGENTS.md\n",
+          "\nok   instructions-user: block 2 in ~/.codex/AGENTS.md\n",
           {
             "not_contains": "--scope user to move it"
           }

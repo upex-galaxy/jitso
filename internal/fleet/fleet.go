@@ -32,6 +32,7 @@ import (
 	"text/tabwriter"
 	"unicode"
 
+	"github.com/upex-galaxy/jitso/internal/card"
 	"github.com/upex-galaxy/jitso/internal/fail"
 	"github.com/upex-galaxy/jitso/internal/jsonx"
 	"github.com/upex-galaxy/jitso/internal/orca"
@@ -269,11 +270,7 @@ func Text(rows []Row) string {
 		}
 		cells("ID", "ROLE/TYPE", "HARNESS", "STATE", "HANDLE", "PARENT", "REPO", "TITLE")
 		for _, r := range rows {
-			roleType := ""
-			if r.Role != "" || r.Type != "" {
-				roleType = r.Role + "/" + r.Type
-			}
-			cells(r.ID, roleType, r.Harness, r.State, r.Handle, r.Parent, r.Repo, r.Title)
+			cells(r.ID, card.RoleType(r.Role, r.Type), r.Harness, r.State, r.Handle, r.Parent, r.Repo, r.Title)
 		}
 		w.Flush()
 	}

@@ -1,0 +1,147 @@
+{
+  "id": "build/save/draft-without-status-is-saved-approved",
+  "title": "a draft with no status key saves: the saved file gains the line status: approved before its first key, every other byte is kept, and the saved build launches",
+  "source": [
+    "intended: docs/decisions.md, \"Only launches are blocked, and launches into other repositories\": a draft may omit status, and build save writes with no owner gate"
+  ],
+  "defect": "N-15",
+  "intent": "A draft that launches must also save. The status goes in front of the first key, with that key's indentation and the file's line break, or right after the brace of a one-line mapping, so a comment, a document marker, a block text at the end and a missing final newline stay as written.",
+  "project": {
+    "files": {
+      ".jitso/briefs/brief.md": "## Goal\n\nFind where the sync entry point of this project is defined and explain in a few sentences how it is wired to the rest of the code.\n\n## Scope\n\nRead only. Do not change any file and do not leave the repository.\n\n## Done when\n\nYou can name the file and the line that defines the entry point, and you have checked it by reading the file.\n\n## Report format\n\nOne short paragraph with the file path, the line number and a one line summary of what it does.\n"
+    }
+  },
+  "tags": [
+    "posix"
+  ],
+  "for_each": {
+    "vars": [
+      "draft",
+      "saved"
+    ],
+    "ids": [
+      "minimal",
+      "comments-and-marker",
+      "one-line-mapping",
+      "crlf",
+      "block-text-without-final-newline",
+      "indented"
+    ],
+    "rows": [
+      [
+        "id: probe\nmodel: claude-haiku-5-5\neffort: low\n",
+        "status: approved\nid: probe\nmodel: claude-haiku-5-5\neffort: low\n"
+      ],
+      [
+        "# a note\n---\n\n# about the id\nid: probe  # kept\nmodel: claude-haiku-5-5\neffort: low\n",
+        "# a note\n---\n\n# about the id\nstatus: approved\nid: probe  # kept\nmodel: claude-haiku-5-5\neffort: low\n"
+      ],
+      [
+        "{id: probe, model: claude-haiku-5-5, effort: low}\n",
+        "{status: approved, id: probe, model: claude-haiku-5-5, effort: low}\n"
+      ],
+      [
+        "id: probe\r\nmodel: claude-haiku-5-5\r\neffort: low\r\n",
+        "status: approved\r\nid: probe\r\nmodel: claude-haiku-5-5\r\neffort: low\r\n"
+      ],
+      [
+        "id: probe\nmodel: claude-haiku-5-5\neffort: low\ndescription: |\n  Look around.",
+        "status: approved\nid: probe\nmodel: claude-haiku-5-5\neffort: low\ndescription: |\n  Look around."
+      ],
+      [
+        "  id: probe\n  model: claude-haiku-5-5\n  effort: low\n",
+        "  status: approved\n  id: probe\n  model: claude-haiku-5-5\n  effort: low\n"
+      ]
+    ]
+  },
+  "steps": [
+    {
+      "run": [
+        "build",
+        "draft",
+        "-"
+      ],
+      "stdin": "{{draft}}",
+      "expect": {
+        "exit": 0
+      }
+    },
+    {
+      "run": [
+        "build",
+        "save",
+        "probe"
+      ],
+      "expect": {
+        "exit": 0,
+        "stderr": [
+          {
+            "empty": true
+          }
+        ],
+        "stdout": [
+          {
+            "contains": "saved probe: jitso/builds/probe.yaml (status approved); the draft is removed\n"
+          }
+        ],
+        "files": [
+          {
+            "path": "jitso/builds/probe.yaml",
+            "equals": "{{saved}}"
+          },
+          {
+            "path": ".jitso/drafts/probe.yaml",
+            "exists": false
+          }
+        ]
+      }
+    },
+    {
+      "run": [
+        "build",
+        "validate",
+        "probe"
+      ],
+      "expect": {
+        "exit": 0,
+        "stdout": [
+          {
+            "equals": "ok probe repo jitso/builds/probe.yaml\nchecked 1 builds: 1 ok, 0 invalid\n"
+          }
+        ]
+      }
+    },
+    {
+      "run": [
+        "launch",
+        "--build",
+        "probe",
+        "--brief",
+        "{{PROJECT}}/.jitso/briefs/brief.md",
+        "--mode",
+        "direct"
+      ],
+      "expect": {
+        "exit": 0,
+        "stdout": [
+          {
+            "regex": "^JITSO L\\d{8}T\\d{6}-[0-9a-f]{4} \\| mode direct \\(asks you\\) \\| build probe\\n"
+          }
+        ],
+        "registry": {
+          "count": 1,
+          "events": [
+            {
+              "at": 0,
+              "event": "launch",
+              "fields": {
+                "build": "probe",
+                "build_layer": "repo"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ]
+}

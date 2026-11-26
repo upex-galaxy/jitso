@@ -163,15 +163,15 @@ func TestDraftLine(t *testing.T) {
 		"- a-ok: claude-haiku-5-5 low. Fine. requires: nothing (draft .jitso/drafts/a-ok.yaml)",
 		"- saved: claude-haiku-5-5 low. Same id as a saved build. requires: nothing (draft .jitso/drafts/b-shadow.yaml) shadowed by repo jitso/builds/saved.yaml",
 		`- c-bad: gpt low. Broken. requires: nothing (draft .jitso/drafts/c-bad.yaml) invalid here: model "gpt" is not in the allowlist`,
-		"- d-list: undefined undefined. undefined requires: nothing (draft .jitso/drafts/d-list.yaml) invalid here: build is not a mapping",
+		"- d-list: requires: nothing (draft .jitso/drafts/d-list.yaml) invalid here: build is not a mapping",
 	}
 	if len(got) != 6 || !reflect.DeepEqual(got[:4], want) {
 		t.Fatalf("lines\n%s\nwant\n%s", strings.Join(got, "\n"), strings.Join(want, "\n"))
 	}
-	if !strings.HasPrefix(got[4], "- e-garbage: undefined undefined. undefined requires: nothing (draft .jitso/drafts/e-garbage.yaml) invalid here: ") {
+	if !strings.HasPrefix(got[4], "- e-garbage: requires: nothing (draft .jitso/drafts/e-garbage.yaml) invalid here: ") {
 		t.Errorf("a file that is not YAML: %q", got[4])
 	}
-	if !strings.HasPrefix(got[5], "- f-noid: undefined undefined. undefined requires: nothing (draft .jitso/drafts/f-noid.yaml) invalid here: id must be kebab-case; ") {
+	if !strings.HasPrefix(got[5], "- f-noid: requires: nothing (draft .jitso/drafts/f-noid.yaml) invalid here: id must be kebab-case; ") {
 		t.Errorf("a file with no id: %q", got[5])
 	}
 }

@@ -51,7 +51,7 @@
               "One short paragraph with the file path, the line number and a one line summary of what it does.\n\n## JITSO rules\n"
             ],
             "regex": [
-              "\\n\\n## JITSO rules\\nStart other agent sessions only with the card's `launch:` line\\. The card's budget is your ceiling: near it, stop and report\\.\\nLoad the card's skills before any other work\\. You may ask the human\\.\\nLeave `jitso/`, `\\.jitso/` and `~/\\.jitso/` alone except your own draft in `\\.jitso/drafts/`, and never run `jitso build save`\\.\\nFind another session with `jitso fleet` \\(read only\\)[^\\n]*\\n[^\\n]*`SendMessage`[^\\n]*\\n[^\\n]*`orca orchestration reply[^\\n]*\\n$"
+              "\\n\\n## JITSO rules\\nStart other agent sessions only with the card's `launch:` line\\. The card's budget is your ceiling: near it, stop and report\\.\\nLoad the card's skills before any other work\\. You may ask the human\\.\\nNever hand-edit `\\.jitso/launches\\.jsonl` or `\\.jitso/launches/`\\.\\nFind another session with `jitso fleet` \\(read only\\)[^\\n]*\\n[^\\n]*`SendMessage`[^\\n]*\\n[^\\n]*`orca orchestration reply[^\\n]*\\n$"
             ]
           }
         ]

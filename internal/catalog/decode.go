@@ -4,6 +4,9 @@ import (
 	"bytes"
 	"errors"
 	"io"
+	"reflect"
+	"slices"
+	"strings"
 	"unicode/utf8"
 
 	yaml "go.yaml.in/yaml/v3"
@@ -146,6 +149,96 @@ func StatusSpan(data []byte) (start, end int, ok bool) {
 		return 0, 0, false
 	}
 	return at, at + len(text), true
+}
+
+// AddStatus is data, a build file with no top-level `status` key, with one
+// added and every other byte kept: on a line of its own before the first key,
+// with that key's indentation and the file's line break, or right after the
+// brace of a flow mapping. ok is false when the file has the key already, or
+// the place cannot be found with certainty: the result is decoded again and
+// must hold the same mapping plus the status.
+func AddStatus(data []byte, status string) ([]byte, bool) {
+	old, ok := decodeMap(data)
+	if !ok || len(old.keys) == 0 {
+		return nil, false
+	}
+	if _, has := old.Get("status"); has {
+		return nil, false
+	}
+	var doc yaml.Node
+	if err := yaml.NewDecoder(bytes.NewReader(data)).Decode(&doc); err != nil {
+		return nil, false
+	}
+	m := doc.Content[0]
+	flow := m.Style&yaml.FlowStyle != 0
+	node := m
+	if !flow {
+		node = m.Content[0]
+	}
+	at, ok := offsetAt(data, node.Line, node.Column)
+	if !ok || at >= len(data) {
+		return nil, false
+	}
+	added := "status: " + status
+	if flow {
+		if data[at] != '{' {
+			return nil, false
+		}
+		at++
+		added += ", "
+	} else {
+		start := lineStart(data, at)
+		indent := string(data[start:at])
+		if strings.Trim(indent, " ") != "" {
+			return nil, false
+		}
+		at, added = start, indent+added+lineBreak(data)
+	}
+	out := slices.Concat(data[:at], []byte(added), data[at:])
+	got, ok := decodeMap(out)
+	if !ok || len(got.keys) != len(old.keys)+1 || got.Value("status") != status {
+		return nil, false
+	}
+	for _, key := range old.keys {
+		if !reflect.DeepEqual(old.vals[key], got.vals[key]) {
+			return nil, false
+		}
+	}
+	return out, true
+}
+
+// decodeMap is decodeYAML of a document that is a mapping.
+func decodeMap(data []byte) (*Map, bool) {
+	v, err := decodeYAML(data)
+	m, ok := v.(*Map)
+	return m, err == nil && ok
+}
+
+// lineStart is the offset of the first byte of the line that holds data[at],
+// after a leading byte order mark.
+func lineStart(data []byte, at int) int {
+	start := 0
+	if bytes.HasPrefix(data, []byte{0xEF, 0xBB, 0xBF}) {
+		start = 3
+	}
+	for i := start; i < at; {
+		if n := breakLen(data[i:]); n > 0 {
+			i += n
+			start = i
+			continue
+		}
+		i++
+	}
+	return start
+}
+
+// lineBreak is the line break of a file: "\r\n" when its first "\n" follows a
+// "\r", else "\n".
+func lineBreak(data []byte) string {
+	if i := bytes.IndexByte(data, '\n'); i > 0 && data[i-1] == '\r' {
+		return "\r\n"
+	}
+	return "\n"
 }
 
 // quotedSpan is the span of the text of a quoted scalar that starts at the

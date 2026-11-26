@@ -1,12 +1,17 @@
 # JITSO
 
-JITSO is a strategy for orchestrating AI agents based on **builds**. A build is an approved
-profile (model, effort, MCP servers, skills, rules) that a session is launched with. The `jitso`
+JITSO is a strategy for orchestrating AI agents based on **builds**. A build is the profile
+(model, effort, MCP servers, skills, rules) a session is launched with. The `jitso`
 CLI launches each worker from a build, composes the launch line in code instead of trusting a
 model to type it, and logs every launch to a local event log.
 
-JITSO ships no builds of its own. Each project writes its builds; JITSO validates them against
-the allowlists of the repo where they launch.
+It is made to fit under any orchestration system: the one thing it blocks is starting an agent
+outside `jitso launch`. A build can be composed just in time (`jitso arsenal` shows what it may
+name, `jitso build draft -` keeps it, `jitso launch` runs it) and saved only if it is worth
+keeping.
+
+JITSO ships no builds of its own. JITSO validates every build against the repo that launches it,
+and against the allowlists of that repo when it lists any.
 
 ## Status
 
@@ -24,7 +29,7 @@ Read the script first if you prefer: it is `scripts/install.sh`. Then set everyt
 jitso init
 ```
 
-It installs the `jitso` skill for every harness, writes the JITSO block into `AGENTS.md`, creates `jitso/jitso.yaml` when it is missing, and registers the guard for each harness it finds on `PATH` (Claude Code, Codex, OpenCode, Pi). It shows every change and asks once; `--yes` skips the question, `--dry-run` only shows, `--remove` undoes it. Asking an AI agent to install JITSO? Point it at [`INSTALL.md`](INSTALL.md).
+It installs the `jitso` skill for every harness, writes the JITSO block into `AGENTS.md` (replacing the block of an older release), creates `jitso/jitso.yaml` when it is missing, and registers the guard for each harness it finds on `PATH` (Claude Code, Codex, OpenCode, Pi). It shows every change and asks once; `--yes` skips the question, `--dry-run` only shows, `--remove` undoes it. Asking an AI agent to install JITSO? Point it at [`INSTALL.md`](INSTALL.md).
 
 | Part | State |
 |---|---|
@@ -32,8 +37,8 @@ It installs the `jitso` skill for every harness, writes the JITSO block into `AG
 | Release order | released first, then tested end to end from an install of that release; the attended real Orca run gates `v1.0.0`. Every outward step waits for the owner ([`docs/decisions.md`](docs/decisions.md), section "Release order and the conductor skill") |
 | Conductor skill | the user-level skill `agent-orchestration` (repo `agentic-user-skills`) is the conductor doctrine. It runs on Orca by default and uses a `jitso` mode only when the `jitso` binary is on PATH and the project has `jitso/jitso.yaml`. JITSO becomes its default path only after it is published and has passed an attended real run |
 | Build schema, validators, rules text, templates | in this repo: [`docs/build-schema.md`](docs/build-schema.md) is the schema, `jitso build validate` is the validator, JITSO's short rules text is appended to the end of every launched session's `brief.md` (`internal/card`), and the build templates ship inside the binary. JITSO still ships no builds |
-| Adoption (`init`, `install skill`, `setup hook`, `setup instructions`, `doctor`) | `init` runs the other three (and the `jitso/jitso.yaml` skeleton) with one preview and one question. They show a diff, back up what they change, ask before they write and have `--remove` as their undo. Instruction blocks go to `AGENTS.md` files only, never `CLAUDE.md`. `doctor` reports what is missing on the machine and in the project and changes nothing. The launch guard denies `init`, `setup`, `install` and `build save` to agent sessions |
-| The guard hook (`jitso hook guard`) | in Go, with contract cases on fakes. It denies launching an agent outside `jitso launch` (the Orca launch verbs and the orca MCP tools), a harness started as a program of its own (`claude`, `codex`, `opencode`, `pi`), `jitso build save`, `jitso init`, `jitso setup` and `jitso install` (the owner's). `jitso setup hook` registers it for Claude Code (`.claude/settings.json`), Codex (`.codex/hooks.json`), OpenCode (`.opencode/plugins/jitso-guard.js`) and Pi (`.pi/extensions/jitso-guard.js`), or under the home folder with `--scope user`; `jitso doctor` checks each |
+| Adoption (`init`, `install skill`, `setup hook`, `setup instructions`, `doctor`) | `init` runs the other three (and the `jitso/jitso.yaml` skeleton) with one preview and one question. They show a diff, back up what they change, ask before they write and have `--remove` as their undo. Instruction blocks go to `AGENTS.md` files only, never `CLAUDE.md`. `doctor` reports what is missing on the machine and in the project and changes nothing |
+| The guard hook (`jitso hook guard`) | in Go, with contract cases on fakes. It denies only launching an agent outside `jitso launch`: the Orca launch verbs, the orca MCP tools that start one, and a harness (`claude`, `codex`, `opencode`, `pi`) run to open a session. Invocations that start no session, such as `claude --version`, and every other `jitso` command pass. `jitso setup hook` registers it for Claude Code (`.claude/settings.json`), Codex (`.codex/hooks.json`), OpenCode (`.opencode/plugins/jitso-guard.js`) and Pi (`.pi/extensions/jitso-guard.js`), or under the home folder with `--scope user`; `jitso doctor` checks each |
 | Which sessions the guard covers | a session of Claude Code, Codex, OpenCode or Pi that has the guard registered (project or user files), and every worker `jitso launch` starts, which always carries its own copy. Codex runs project hooks only in a trusted project after the person trusts them (the first session shows "Hooks need review"; `codex exec` skips untrusted hooks silently). A terminal outside an agent session and any session that turns hooks off are not covered, and the guard reads text, so a program it does not know (`python`, `node`, a script file) can still start an agent. The rules at the end of `brief.md` bind those sessions, a hook does not |
 | Distribution (GitHub Releases, install script) | the packaging script, the install script with its offline test and the release workflow are files of this repo. The procedure is [`docs/release.md`](docs/release.md) |
 | Upgrading from the TypeScript CLI | the launch log is schema v2 (`v: 2`, the build id under the key `build`) and a line of an older log (`v: 1`, key `preset`) is not read. Close or reap every running launch with the old CLI before the first run of this one: the old lines stay in `.jitso/launches.jsonl`, `jitso doctor` counts them, and a worker that a still-running old launch started is reported as unlogged. Moving the old file aside (`mv .jitso/launches.jsonl .jitso/launches.v1.jsonl`) is safe |
@@ -43,12 +48,14 @@ It installs the `jitso` skill for every harness, writes the JITSO block into `AG
 
 ## Adopt JITSO in a project
 
-`jitso init` in the project is the whole setup (see Status). What it leaves in the checkout: `jitso/jitso.yaml` (the allowlists), the JITSO block in `AGENTS.md`, `.jitso/` in `.gitignore`, and the guard files of each harness. The builds go in `jitso/builds/`. `jitso init --project-only` also keeps the skill in the checkout and writes nothing under the home folder.
+`jitso init` in the project is the whole setup (see Status). What it leaves in the checkout: `jitso/jitso.yaml` (it switches the guard on, and its optional allowlists restrict builds; `init` writes none, so everything that exists is open), the JITSO block in `AGENTS.md`, `.jitso/` in `.gitignore`, and the guard files of each harness. Saved builds go in `jitso/builds/`, drafts in `.jitso/drafts/`. `launch`, `build`, `arsenal` and `doctor` also work in a project without the file.
+
+The brief of a launch is checked for sections, length, language and cited paths, and a miss is a warning. `jitso fleet` lists every session Orca knows with its repository, this project first. `jitso init --project-only` also keeps the skill in the checkout and writes nothing under the home folder.
 
 - The jitso skill and the guard are optional because they travel. A launch carries the guard in its `--settings` unless the project already registers it, and the jitso skill for a conductor build or a build that names `jitso` unless the checkout holds a copy. They live in a per-launch folder, `.jitso/launches/<id>/pkg/`, passed with `--add-dir`.
 - `jitso setup hook --scope user` guards the owner's own session, which JITSO does not launch. It registers the same guard in `~/.claude/settings.json` and prints nothing in a folder without `jitso/jitso.yaml`.
-- `~/.jitso/jitso.yaml` is the owner's allowlist for items that live outside the project: user skills and user MCP servers. A build names one as `user:<name>`; a plain name never resolves there. A launch copies the skill into its package and the server into its `mcp.json`, with variable references only, never a literal secret.
-- `jitso arsenal` lists what a build may name in the project, and `jitso arsenal --all` adds what exists on the machine but no allowlist names yet.
+- A build names a user skill or user MCP server, one that lives outside the project, as `user:<name>`; a plain name never resolves there. `~/.jitso/jitso.yaml` is the owner's optional allowlist for them: an absent or empty list is open. A launch copies the skill into its package and the server into its `mcp.json`, with variable references only, never a literal secret.
+- `jitso arsenal` lists what a build may name in the project, and `jitso arsenal --all` adds what exists on the machine but a restricting allowlist leaves out.
 - Refused for now: claude.ai connectors (`cloud:`), servers that use OAuth, and any literal secret value of a user server.
 - `jitso install skill --scope project`, `jitso setup hook` and `jitso setup instructions` stay available for a project that wants the files in its own checkout. [`docs/build-schema.md`](docs/build-schema.md) has the user allowlist and its texts.
 

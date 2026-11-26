@@ -50,7 +50,7 @@
           {
             "path": "{{HOME}}/.pi/agent/AGENTS.md",
             "contains": [
-              "BEGIN JITSO block=1 added=new:"
+              "BEGIN JITSO block=2 added=new:"
             ]
           },
           {
@@ -100,7 +100,7 @@
             "path": "{{HOME}}/.config/opencode/AGENTS.md",
             "contains": [
               "# oc\n",
-              "BEGIN JITSO block=1 added=1:"
+              "BEGIN JITSO block=2 added=1:"
             ]
           },
           {

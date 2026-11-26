@@ -12,16 +12,16 @@ import (
 )
 
 // The status words of a build. A draft is saved by changing the first into the
-// second and nothing else.
+// second, or by adding the second, and nothing else.
 const (
 	statusDraft    = "draft"
 	statusApproved = "approved"
 )
 
 // ErrStatusForm is returned by SaveContent for a draft whose status cannot be
-// changed without touching any other byte: it is not written as the plain word
-// `draft` or as `draft` in single or double quotes, or it is not a top-level
-// scalar.
+// set without touching any other byte: it is written, but not as the plain word
+// `draft` or as `draft` in single or double quotes, or not as a top-level
+// scalar; or there is none and no place to add it is certain.
 var ErrStatusForm = errors.New("the status is not written as the plain word draft, or in quotes")
 
 // ErrExists is returned by Save when the target file already exists.
@@ -31,10 +31,14 @@ var ErrExists = errors.New("the build file already exists")
 // the top-level `status` changed from draft to approved and every other byte
 // kept (a quoted value keeps its quotes). The position of the value comes from
 // the YAML node, so the word draft elsewhere in the file is never touched. A
-// status that is not that scalar is ErrStatusForm.
+// draft with no status key gets `status: approved` added (catalog.AddStatus).
+// Any other status is ErrStatusForm.
 func SaveContent(draft []byte) ([]byte, error) {
 	start, end, ok := catalog.StatusSpan(draft)
 	if !ok || string(draft[start:end]) != statusDraft {
+		if out, added := catalog.AddStatus(draft, statusApproved); added {
+			return out, nil
+		}
 		return nil, ErrStatusForm
 	}
 	out := make([]byte, 0, len(draft)+len(statusApproved)-len(statusDraft))

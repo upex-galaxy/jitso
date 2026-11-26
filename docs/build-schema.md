@@ -37,12 +37,12 @@ Every build is validated against the launching project: its `jitso/jitso.yaml`, 
 
 | Status | Where | Meaning |
 |---|---|---|
-| `draft` | `.jitso/drafts/` only | being written; launches like any build, marked `(draft)` |
+| `draft` | `.jitso/drafts/` only | composed and not saved; launches like any build, marked `(draft)` |
 | `candidate` | `jitso/builds/` | not approved: it does not launch |
 | `approved` | `jitso/builds/` | launchable (subagent tier: usable by a worker) |
 | `retired` | `jitso/builds/` | kept for history: it does not launch |
 
-`jitso build save <id>` turns a draft into `jitso/builds/<id>.yaml` with the `status` scalar changed from `draft` to `approved` and every other byte kept. Only the owner saves a build, and the draft is removed.
+`jitso build save <id>` turns a draft into `jitso/builds/<id>.yaml` with `status: approved` and every other byte kept, and removes the draft. Saving is optional: a draft launches as it is.
 
 ## `jitso/jitso.yaml`: the allowlists and the field patterns
 
@@ -110,8 +110,8 @@ Key: R required, O optional (validated when present), U optional and unused by t
 | `id` | kebab-case string | R | R | `id must be kebab-case` |
 | `status` | `candidate`, `approved`, `retired`; in `.jitso/drafts/` `draft` or no key, which means draft | R (O in a draft) | R (O in a draft) | `status must be one of candidate, approved, retired`; in a draft `status must be draft in a draft` |
 | `tier` | `worker`, `conductor`, `subagent`; absent means worker | O | R | `tier must be one of worker, conductor, subagent` |
-| `model` | allowed by `models` | R | R | `model "<m>" is not in the allowlist` |
-| `effort` | allowed by `efforts` | R | R | `effort "<e>" is not in the allowlist` |
+| `model` | allowed by `models` | R | R | `model "<m>" is not in the allowlist`; `model is missing` for an absent key under a restricting list |
+| `effort` | allowed by `efforts` | R | R | `effort "<e>" is not in the allowlist`; `effort is missing` likewise |
 | `description` | text; it is the summary a launching session reads | O | R, non-empty | `description must be a non-empty string in a subagent-tier build` |
 | `prompt` | text; the subagent's instructions | U | R, non-empty | `prompt must be a non-empty string in a subagent-tier build` |
 | `tools` | list, each allowed by `tools`; absent means the harness default (a subagent inherits its parent's) | O | O | `tool "<t>" is not in the allowlist` |
@@ -123,7 +123,7 @@ Key: R required, O optional (validated when present), U optional and unused by t
 | `requires` | list of field names the launch must supply; each matches `^[a-z][a-z_]*$` | O | E | `required field "<f>" is not a field name`; `requires must be empty in a subagent-tier build` |
 | `subagents` | list of kebab-case names, each a subagent-tier build | O | E | `subagents must be a list of kebab-case names`; `subagent "<s>" is not a subagent-tier build`; `a subagent-tier build cannot list subagents` |
 | listed subagent status | each listed subagent is `approved`; a draft worker may also list drafts | L | n/a | launch: `JITSO REJECTED: build "<w>" lists subagent "<s>", which is <status>, not approved`; validate: `subagent "<s>" is <status>, not approved` |
-| `version`, `role`, `type`, `work_kind`, `mode_default`, `agents_md` | free text, printed on the card and in the summary; `agents_md: exclude` launches `claude` with `CLAUDE_CODE_DISABLE_CLAUDE_MDS=1` | O | U | none |
+| `version`, `role`, `type`, `work_kind`, `mode_default`, `agents_md` | free text; `agents_md: exclude` launches `claude` with `CLAUDE_CODE_DISABLE_CLAUDE_MDS=1` | O | U | none |
 
 ### What each harness honors
 
@@ -139,6 +139,8 @@ An adapter never drops a field it cannot honor: `jitso build validate` reports i
 | `skills_first` `user:<n>` | `--add-dir` package | no | `skills` of the launch's config | one `--skill` per skill | `harness "<h>" cannot load the user skill "user:<n>" from the launch package` |
 | jitso skill (conductor) | in the package | from the session's own `.agents/skills` (`jitso install skill`) | in the package | in the package | none |
 | effort | `--effort` | `-c model_reasoning_effort=` | the model variant `<model>#<effort>` | `--thinking` | none |
+
+A build needs only `id`, `model` and `effort` (plus `status` when saved). `role`, `type`, `version` and `description` are printed when present and left out otherwise: the card header reads `JITSO <id> | mode ...` with no role and type segment, the one that is set stands alone, and the `v<version>` goes with the version; the summary line of `build list` drops the missing description; `jitso fleet` shows `-`; the `launch` event holds an empty `role` and `type` and a null `build_version`. A key written with no value counts as absent.
 
 A subagent-tier build is never launched alone, or listed: a worker or conductor lists it by name in `subagents`, and its `description`, `prompt`, `model` and `tools` reach `claude` as an `--agents` entry. Worker and conductor builds are validated identically; the tier changes how a build is used, not what a valid launch needs.
 
@@ -167,13 +169,13 @@ A project has no rules files. Every launch appends JITSO's short rules text to t
 | tier | `worker` (the default), `conductor` or `subagent`; anything else is `JITSO REJECTED: --tier must be worker, conductor or subagent`; `--tier` with no value is `JITSO REJECTED: --tier needs a value` |
 | refuses | the id of a saved build (`JITSO REJECTED: build "<id>" already exists (<layer> <path>): a draft needs an id no build has`) and the id of an existing draft (`JITSO REJECTED: draft "<id>" already exists: edit .jitso/drafts/<id>.yaml or discard it`); both are checked before anything is written, and a draft is never overwritten |
 | no `jitso/jitso.yaml` | it also writes the skeleton (`version: 1` and comments, no list; it never overwrites a file) and prints `wrote jitso/jitso.yaml (every allowlist is open: add a list there to restrict builds)`, then the draft line. An invalid saved build stops the command before it writes anything |
-| stdout | `wrote .jitso/drafts/<id>.yaml (tier <tier>, status draft): fill every empty value, check it with jitso build validate <id>, and ask the owner to run jitso build save <id>` |
+| stdout | `wrote .jitso/drafts/<id>.yaml (tier <tier>, status draft): fill every empty value and check it with jitso build validate <id>; jitso build save <id> keeps it` |
 
-The author fills the empty values, checks the build with `jitso build validate <id>`, tries it with `jitso launch --build <id>`, and asks the owner to run `jitso build save <id>`. `jitso build draft <file.yaml|->` keeps an existing build as a draft after the same checks. `jitso build discard <id>` and `jitso build discard --all` delete drafts.
+The author fills the empty values, checks the build with `jitso build validate <id>`, launches it with `jitso launch --build <id>`, and may keep it with `jitso build save <id>`. `jitso build draft <file.yaml|->` keeps an existing build as a draft after the same checks. `jitso build discard <id>` and `jitso build discard --all` delete drafts.
 
 ## Drafts
 
-A draft is a build that is not saved yet: the file `<primary>/.jitso/drafts/<id>.yaml`, a layer of its own (the last one) that no session needs the owner's OK to write to and that launches like any build.
+A draft is a build that is not saved yet: the file `<primary>/.jitso/drafts/<id>.yaml`, a layer of its own (the last one) that launches like any build. It is how a session composes a build just in time.
 
 | Aspect | Rule |
 |---|---|
@@ -181,10 +183,10 @@ A draft is a build that is not saved yet: the file `<primary>/.jitso/drafts/<id>
 | input of `jitso build draft` | a path ending in `.yaml` or `.yml`, or `-` for standard input; at most 64 KiB; anything else is `JITSO REJECTED: a draft is a .yaml file (or - for stdin) of at most 64 KiB`. A file that cannot be read is `JITSO REJECTED: cannot read <path>: <reason>`; a second word or a flag is `JITSO REJECTED: unknown argument "<x>"` |
 | checks | the rules of this page for the draft layer (`status` `draft` or absent), the launch rules marked L (a harness needs an adapter, a listed subagent must exist), and an id of at most 64 characters (`id must be at most 64 characters`). A problem is `JITSO REJECTED: draft <path or stdin> is invalid: <problems joined by "; ">`, and nothing is written |
 | id | an id no saved build has: `JITSO REJECTED: build "<id>" already exists (<layer> <path>): a draft needs an id no build has`. An id that already has a draft is replaced |
-| written | the input bytes, unchanged, as `.jitso/drafts/<id>.yaml`; stdout is `drafted <id>: .jitso/drafts/<id>.yaml (launch it with --build <id>; only the owner can save it)` |
+| written | the input bytes, unchanged, as `.jitso/drafts/<id>.yaml`; stdout is `drafted <id>: .jitso/drafts/<id>.yaml (launch it with --build <id>; keep it with jitso build save <id>)` |
 | listing | `jitso build list` never lists a draft (an invalid one is a warning on stderr). `jitso build list --drafts` prints one line per draft file, by file name: the summary line, ` (draft .jitso/drafts/<file>)`, ` shadowed by <layer> <path>` when a saved build has its id, ` invalid here: <problems>` when it is invalid. |
 | launching | `jitso launch --build <id>` launches a draft: the card header ends ` (draft)` and the registry line records `build_layer: draft`, `build_file` and the `build_sha256` of the bytes. A draft is the only file that launches with a status other than `approved`. A draft worker may list draft subagents; a saved worker may list only approved ones |
-| saving | `jitso build save <id> [--yes]` writes `jitso/builds/<id>.yaml` and removes the draft; the id must be kebab-case (`JITSO REJECTED: build save needs a draft id`, `JITSO REJECTED: build id must be kebab-case`), and a missing draft is `JITSO REJECTED: no draft "<id>"`. The draft is checked again against the current allowlists and the launch rules (`JITSO REJECTED: draft "<id>" is invalid: <problems>`), its `id` must be its file name (`the id "<x>" must be the file name "<id>"`), and the target must be free: `JITSO REJECTED: jitso/builds/<id>.yaml already exists: save never overwrites a build`, or `build "<id>" already exists (<layer> <path>): a draft needs an id no build has` when a build of another layer has the id. The content is the draft bytes with the top-level `status` scalar `draft` replaced by `approved` and nothing else changed (a quoted value keeps its quotes); a status written with a tag, an anchor, an escape or over several lines is `JITSO REJECTED: draft "<id>" cannot be saved: write its status as the plain word draft, or in quotes`. Stdout shows the content, every line prefixed `+ ` (a control character as `\xNN`). On a terminal it then asks `Save it as jitso/builds/<id>.yaml with status approved? [y/N] ` and only `y` or `yes` (any case) saves; anything else is `JITSO REJECTED: not saved`. `--yes` saves without asking, on a terminal or not. Without a terminal and without `--yes` it refuses with `JITSO REJECTED: saving a build needs the owner: read the file above, then run it again with --yes, or in a terminal to answer the prompt; nothing saved`. Success prints `saved <id>: jitso/builds/<id>.yaml (status approved); the draft is removed`. `jitso hook guard` denies `jitso build save` to a session that has it installed; `--yes` does not stop a session that can write the file itself |
+| saving | `jitso build save <id> [--yes]` writes `jitso/builds/<id>.yaml` and removes the draft; the id must be kebab-case (`JITSO REJECTED: build save needs a draft id`, `JITSO REJECTED: build id must be kebab-case`), and a missing draft is `JITSO REJECTED: no draft "<id>"`. The draft is checked again against the current allowlists and the launch rules (`JITSO REJECTED: draft "<id>" is invalid: <problems>`), its `id` must be its file name (`the id "<x>" must be the file name "<id>"`), and the target must be free: `JITSO REJECTED: jitso/builds/<id>.yaml already exists: save never overwrites a build`, or `build "<id>" already exists (<layer> <path>): a draft needs an id no build has` when a build of another layer has the id. The content is the draft bytes with the top-level `status` scalar `draft` replaced by `approved` (a quoted value keeps its quotes), or, when the draft has no `status` key, with the line `status: approved` added before its first key (right after the brace of a flow mapping); nothing else changes. A status written with a tag, an anchor, an escape or over several lines, and a draft with no place that is certain for the line, are `JITSO REJECTED: draft "<id>" cannot be saved: write its status as the plain word draft, or in quotes`. Stdout shows the content, every line prefixed `+ ` (a control character as `\xNN`), then `saved <id>: jitso/builds/<id>.yaml (status approved); the draft is removed`. It asks nothing and needs no terminal; `--yes` is accepted and changes nothing. A saved worker launches only with approved subagents, so the draft subagents it lists need saving too |
 | discarding | `jitso build discard <id>` deletes one draft (`discarded <id>`; no draft is `JITSO REJECTED: no draft "<id>"`; an id that is not kebab-case is `JITSO REJECTED: build id must be kebab-case`); `jitso build discard --all` deletes every `*.yaml` of the folder (`discarded <n> drafts`) and leaves the `.gitignore` and any other file. Drafts never expire |
 
 ## Checking builds

@@ -55,7 +55,7 @@ func TestParseNewArgs(t *testing.T) {
 	}
 }
 
-const newLine = "wrote .jitso/drafts/%s.yaml (tier %s, status draft): fill every empty value, check it with jitso build validate %s, and ask the owner to run jitso build save %s\n"
+const newLine = "wrote .jitso/drafts/%s.yaml (tier %s, status draft): fill every empty value and check it with jitso build validate %s; jitso build save %s keeps it\n"
 
 func newLineOf(id, tier string) string { return fmt.Sprintf(newLine, id, tier, id, id) }
 

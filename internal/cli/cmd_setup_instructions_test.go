@@ -51,7 +51,7 @@ func TestSetupInstructionsProjectRoundTrip(t *testing.T) {
 				t.Fatalf("add: exit %d\n%s\n%s", code, out, errOut)
 			}
 			got, _ := setupRead(root, "AGENTS.md")
-			if !strings.Contains(got, "BEGIN JITSO block=1") {
+			if !strings.Contains(got, "BEGIN JITSO block=2") {
 				t.Fatalf("no block: %q", got)
 			}
 			if code, out, errOut := setupInstrRun(t, root, "", "", "--remove", "--yes"); code != 0 {
@@ -256,7 +256,7 @@ func TestSetupInstructionsUserScopeLinks(t *testing.T) {
 	if want := "jitso: warning: ~/.pi/agent/AGENTS.md is a link to " + filepath.Join(outside, "AGENTS.md") + ", which is outside your home folder, so jitso left it alone\n"; errOut != want {
 		t.Errorf("stderr = %q, want %q", errOut, want)
 	}
-	if got, _ := setupRead(home, ".agents/AGENTS.md"); !strings.HasPrefix(got, "# shared\n\n<!-- BEGIN JITSO block=1 added=1:") {
+	if got, _ := setupRead(home, ".agents/AGENTS.md"); !strings.HasPrefix(got, "# shared\n\n<!-- BEGIN JITSO block=2 added=1:") {
 		t.Errorf("real file = %q", got)
 	}
 	if info, err := os.Lstat(filepath.Join(home, ".codex", "AGENTS.md")); err != nil || info.Mode()&os.ModeSymlink == 0 {

@@ -18,8 +18,8 @@ import (
 // .jitso/drafts/<id>.yaml, from the commented template of the tier (worker by
 // default), with `id: <id>` filled and every allowlist-bound value empty. The
 // draft is invalid until it is filled in, and an invalid draft is skipped by
-// the catalog, so a new draft never breaks the project; the owner promotes it
-// with `build save`. Nothing is written to jitso/builds/.
+// the catalog, so a new draft never breaks the project; `build save` keeps it.
+// Nothing is written to jitso/builds/.
 //
 // In a project without jitso/jitso.yaml it also writes the skeleton, which
 // restricts nothing. It never overwrites, and refuses the id of a saved build
@@ -108,7 +108,7 @@ func runBuildNew(ctx *Context, args []string) error {
 	if err := drafts.Put(root.Primary, id, []byte(text)); err != nil {
 		return err
 	}
-	ctx.Println("wrote " + catalog.DraftsDir + "/" + id + drafts.ExtensionYAML + " (tier " + tier + ", status draft): fill every empty value, check it with jitso build validate " + id + ", and ask the owner to run jitso build save " + id)
+	ctx.Println("wrote " + catalog.DraftsDir + "/" + id + drafts.ExtensionYAML + " (tier " + tier + ", status draft): fill every empty value and check it with jitso build validate " + id + "; jitso build save " + id + " keeps it")
 	return nil
 }
 

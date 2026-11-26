@@ -32,7 +32,7 @@
         "stdout": [
           "--- /dev/null",
           "+++ b/AGENTS.md",
-          "+<!-- BEGIN JITSO block=1 added=new:",
+          "+<!-- BEGIN JITSO block=2 added=new:",
           "created AGENTS.md",
           {
             "regex": "jitso setup instructions: done\\n$"

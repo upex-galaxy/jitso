@@ -18,7 +18,11 @@
             "regex": "^Usage: jitso launch --build <id> --brief <file> --mode direct\\|fleet \\[options\\]\n"
           },
           "--mcp-exclude <name>",
-          "--dry-run"
+          "--dry-run",
+          "Launches a worker from a build (saved, or a draft) and a brief file",
+          {
+            "not_contains": "approved build"
+          }
         ],
         "stderr": [
           {

@@ -1,33 +1,68 @@
 # Builds and drafts
 
-A build is one YAML file: the approved profile a session launches with. JITSO ships no builds of its own. Each project writes its builds, and each build is validated against that project's allowlists in `jitso/jitso.yaml` (the models, efforts, MCP servers, skills and tools a build may name). In the jitso repository the field-by-field rules are in `docs/build-schema.md`. In a consumer project, `jitso build validate` is the schema check, and it prints each problem by name.
+A build is one YAML file: the profile a session launches with. JITSO ships no builds of its own. A project saves the builds it wants to keep, and a session composes the others when it needs them. Each build is validated against the project that launches it. In the jitso repository the field-by-field rules are in `docs/build-schema.md`; in a consumer project `jitso build validate` is the schema check, and it prints each problem by name.
 
-## Look before you launch
+## Compose a build just in time
 
-`jitso build list` prints one line per launchable build: id, model, effort, description and what it `requires`. Example from a test fixture project:
+1. `jitso arsenal` lists what a build may name here, one line per item, as a build writes it:
+
+   ```
+   model   claude-sonnet-5-5
+   skill   sprint-testing   <first sentence of its description>
+   skill   user:humanizer   <first sentence of its description>
+   mcp     user:engram      stdio
+   ```
+
+   An `(open)` line means nothing restricts that kind: any model id, effort name or tool name; any skill folder of the project; any server of `.mcp.json`. `jitso arsenal --all` adds what exists on this machine but a list leaves out, each marked `not allowlisted (edit <file>)`: a build may not name it until the list does. It prints key names such as `literal env: KEY`, never a value.
+
+2. Keep the build as a draft, from standard input or a `.yaml` file:
+
+   ```
+   jitso build draft -
+   ```
+
+   `id`, `model` and `effort` are enough. A draft needs no `status`, and with no `harness` it is a `claude` build. Add what the job needs: `skills_first`, `mcp`, `tools`, `subagents`, `requires`, `route_scope`, `budget` (`tokens`, `usd_list_cap`), `description`, `role`, `type`, `version`. Full model ids only, never aliases. The command checks the draft and writes `.jitso/drafts/<id>.yaml` byte for byte, or refuses with `JITSO REJECTED: draft <path or stdin> is invalid: <problems>`. A re-draft of the same id replaces it. An id a saved build has is refused.
+
+3. Launch it: `jitso launch --build <id> --brief ...`, with `--dry-run` first. A draft card ends `(draft)`.
+4. Optional: `jitso build save <id>`.
+
+`jitso build new <id> [--tier worker|conductor|subagent]` writes a commented template as a draft instead, with the model and effort left empty (in a project without `jitso/jitso.yaml` it also writes that skeleton). Fill it, then `jitso build validate <id>`.
+
+Real output of a draft, then of the listing:
+
+```
+drafted my-scout: .jitso/drafts/my-scout.yaml (launch it with --build my-scout; keep it with jitso build save my-scout)
+- my-scout: claude-haiku-5-5 low. Read-only scout that returns paths and line numbers. requires: nothing (draft .jitso/drafts/my-scout.yaml)
+```
+
+`jitso build list --drafts` shows the drafts, with `shadowed by <layer> <path>` when a saved build now has the id and `invalid here: <problems>` when a draft no longer validates. `jitso build discard <id>` removes a draft and `jitso build discard --all` removes every draft, so use `--all` only when the human asked.
+
+## Save a build
+
+`jitso build save <id>` checks the draft again, prints the bytes it writes (each line prefixed `+ `), writes `jitso/builds/<id>.yaml` with `status: approved` and removes the draft. It asks nothing and never overwrites. `--yes` is accepted and changes nothing. Save a build the project will use again, and tell the human: the new file is theirs to review and commit.
+
+A saved worker launches only when every subagent it lists is approved, so save its draft subagents too.
+
+## Look before you compose
+
+`jitso build list` prints one line per saved launchable build (worker and conductor tiers, status `approved`): id, model, effort, description and what it `requires`. Parts a build does not give are left out. Example:
 
 ```
 - haiku-explorer: claude-haiku-5-5 low. Read-only search of the repo that returns file paths and line numbers. requires: nothing
 - sonnet-tester: claude-sonnet-5-5 medium. Manual QA of one user story end to end with sprint-testing. requires: ticket_key
 ```
 
-It lists only approved builds of the worker and conductor tiers. Subagent builds, candidates, retired builds and drafts are not shown.
-
-`jitso build validate` checks every build file and prints one line each, then a summary. With an id it checks the winner of that id and the files it shadows. Exit 0 when all are fine, 2 when one is invalid or the id is unknown.
+`jitso build validate` checks every build file and prints one line each, then a summary; with an id it checks the winner of that id and the files it shadows. Exit 0 when all are fine, 2 when one is invalid or the id is unknown.
 
 ```
-ok haiku-explorer repo jitso/builds/haiku-explorer.yaml
 invalid my-scout draft .jitso/drafts/my-scout.yaml
   model "null" is not in the allowlist
-  effort "null" is not in the allowlist
 checked 1 builds: 0 ok, 1 invalid
 ```
 
-(The two blocks are joined from different real runs, to show both shapes.)
+## Allowlists
 
-## Optional keys
-
-`route_scope` is optional on every tier. Without it the card prints `ROUTE-SCOPE: none`. A build has no `success` key: the validator ignores an unknown key, so one left in a file does nothing. A field a build `requires` is checked against the pattern the project gives it in the optional `fields` key of `jitso/jitso.yaml`, or only for being non-empty and on one line when it has none.
+`jitso/jitso.yaml` marks the project for the guard, and may restrict builds with the lists `models`, `efforts`, `mcp`, `skills` and `tools`. A key that is absent or `[]` is open; a list with entries restricts every build to them. Without the file everything is open and the guard is off. The optional `fields` key gives a pattern per `--field`; a field without one takes any non-empty value on one line. The lists are the human's restrictions: change them only when the human asks.
 
 ## Tiers
 
@@ -35,66 +70,23 @@ checked 1 builds: 0 ok, 1 invalid
 |---|---|---|
 | `worker` (the default) | yes | one job from one brief |
 | `conductor` | yes | coordinates workers; validated like a worker |
-| `subagent` | never | a helper listed by a worker in `subagents`; it needs a `description` and a `prompt` and leaves `route_scope`, `skills_first`, `mcp`, `requires` and `subagents` empty |
+| `subagent` | never | a helper listed by a worker in `subagents`; it needs a `description` and a `prompt` and leaves `skills_first`, `mcp`, `requires` and `subagents` empty |
 
-`jitso launch --build <a subagent>` is `JITSO REJECTED: build "plan" has tier subagent: it is not launched alone, a worker lists it in its subagents`. A worker may launch only when every subagent it lists is approved.
+A worker's `subagents` reach the session as `--agents` with their `description`, `prompt`, `model` and `tools`. To change what a helper does, change its build.
 
 ## Where builds live
 
-Builds come from two places only:
-
 | Place | Where | Notes |
 |---|---|---|
-| `repo` | `jitso/builds/` in the primary checkout | the project's own; one invalid file here fails every catalog command with exit 3 |
+| `repo` | `jitso/builds/` in the primary checkout | saved builds; one invalid file here fails every catalog command with exit 3 |
 | `draft` | `.jitso/drafts/` in the primary checkout | git-ignored; last in the order, and a draft never shadows a saved build |
 
-Builds are read only from the project: a folder of builds under the user's home or in a parent folder is not a source of builds. The one file read from outside is the owner's `~/.jitso/jitso.yaml`, and only to resolve `user:` names (below). Two files with the same id are one build: the first one by file name wins, and the other is never used. An invalid draft file is skipped: `build list` warns on stderr, and `jitso launch --build <that id>` is rejected with the problems. Every build is validated against the project that launches it.
+Builds are read only from the project. Two files with the same id are one build: the first one by file name wins. An invalid draft is skipped: `build list` warns on stderr, and a launch of that id is rejected with the problems.
 
-Statuses: `draft` (only in `.jitso/drafts/`, launches like any build), `candidate` (not approved, does not launch), `approved` (launches), `retired` (history, does not launch).
-
-## Compose a build from the arsenal
-
-Run `jitso arsenal` first. It lists what a build may name in this project, one line per item, in the form a build writes it:
-
-```
-model   claude-sonnet-5-5
-skill   sprint-testing   <first sentence of its description>
-skill   user:humanizer   <first sentence of its description>
-mcp     user:engram      stdio
-```
-
-Take each `model`, `effort`, `tool`, `skill` and `mcp` value of the draft from those lines. `jitso arsenal --all` adds candidates that no allowlist names, each marked `not allowlisted (edit <file>)`: do not put a candidate in a draft, tell the owner which file to edit. The command prints key names such as `literal env: KEY`, never a value, and an invalid user file is one `user` line, not an error.
+Statuses: `draft` (a draft, with the key written or left out; launches), `candidate` (does not launch), `approved` (launches), `retired` (history, does not launch). A saved file always carries one.
 
 ## User items: `user:<name>`
 
-`skills_first` and `mcp` accept `user:<name>` for an item the owner listed in `~/.jitso/jitso.yaml` (`skills`, `mcp`, `literal_env`). A plain name resolves only in the project's `jitso/jitso.yaml`. A launch copies each user skill into its own package folder and writes each user server into its `mcp.json`, so the session lists the skill by its plain name. `--mcp-exclude user:<name>` drops one for a launch. A build that names a `user:` item fails validation on a machine whose user file does not list it, and the message names the file to edit: that is the owner's call, not yours. The jitso skill needs no entry: name `jitso` in `skills_first`.
+`skills_first` and `mcp` accept `user:<name>` for a skill under `~/.claude/skills/` or a server of `~/.claude.json`; a plain name resolves only in the project. The lists `skills` and `mcp` of `~/.jitso/jitso.yaml` restrict them the way the project's lists do. A launch copies each user skill into its package folder and writes each user server into its `mcp.json`. `--mcp-exclude user:<name>` drops one for a launch. The jitso skill needs no entry: name `jitso` in `skills_first`.
 
-Refused, with the text in `references/troubleshooting.md`: `cloud:` connectors, a user server that uses OAuth, a literal secret value in a user server's `env` or `headers` (use `${VAR}`), and a user skill over 5 MiB or 500 files.
-
-## When no build fits: draft one
-
-A draft is a build that is not saved yet. You may write one, the owner approves it. Do it in this order:
-
-0. Run `jitso arsenal` and read what the build may name.
-1. Run `jitso build new <id> [--tier worker|conductor|subagent]` once to see the template for the tier (in a fresh project it first writes an empty `jitso/jitso.yaml` skeleton). It writes `.jitso/drafts/<id>.yaml` with every allowlist-bound value empty. A new draft lists as `null null. null` until it is filled.
-2. Fill in the draft: edit `.jitso/drafts/<id>.yaml` (JITSO's rules allow editing a draft, and nothing else under `.jitso/`), or write the complete build in another file or on standard input and keep it with `jitso build draft`. Take every model, effort, MCP server, skill and tool from the allowlists in `jitso/jitso.yaml`. Full model ids only, never aliases. A worker needs a `harness`; a `budget` mapping (`tokens`, `usd_list_cap`) is optional.
-3. Keep it: `jitso build draft <file.yaml>` or `jitso build draft -`. The command checks it with the draft rules and writes `.jitso/drafts/<id>.yaml` byte for byte, or refuses with `JITSO REJECTED: draft <path or stdin> is invalid: <problems>`. A re-draft of the same id replaces that draft. An id that any saved build already has is refused: pick another.
-4. Check it: `jitso build validate <id>`, then `jitso launch --build <id> --brief ... --dry-run` to read the card. A draft card ends `(draft)`.
-5. Tell the human what you drafted and why. Say that `jitso build save <id>` is theirs to run. Do not run it, and do not launch a draft the human has not seen unless they asked you to.
-
-Real output of step 3, then of the listing:
-
-```
-drafted my-scout: .jitso/drafts/my-scout.yaml (launch it with --build my-scout; only the owner can save it)
-- my-scout: claude-haiku-5-5 low. Read-only scout that returns paths and line numbers. requires: nothing (draft .jitso/drafts/my-scout.yaml)
-```
-
-`jitso build list --drafts` shows the drafts, with `shadowed by <layer> <path>` when a saved build now has the id and `invalid here: <problems>` when a draft no longer validates. `jitso build discard <id>` removes one of your drafts and `jitso build discard --all` removes every draft, so use `--all` only when the human asked.
-
-## What `build save` does (the owner's command)
-
-It checks the draft again, prints the exact bytes it would write with every line prefixed `+ `, and on a terminal asks `[y/N]` (`--yes` skips the question). Only `y` or `yes` saves it as `jitso/builds/<id>.yaml` with `status: approved` and removes the draft. Without a terminal it refuses unless the owner passes `--yes` after reading the file. The hook denies the command to agent sessions, and JITSO's rules forbid it. If you run it, you have approved your own build, which is the one thing the design exists to prevent.
-
-## Subagents of a worker
-
-A worker's `subagents` list names subagent-tier builds. They reach the session as `--agents` with their `description`, `prompt`, `model` and `tools`. To change what a helper does, change its build. The card line `subagents` shows the names.
+Refused, with the text in `references/troubleshooting.md`: `cloud:` connectors, a user server that uses OAuth, a literal secret value in a user server's `env`, `headers` or `args` (use `${VAR}`), and a user skill over 5 MiB or 500 files.

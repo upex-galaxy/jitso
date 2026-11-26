@@ -71,7 +71,7 @@
       "expect": {
         "exit": 0,
         "stdout": [
-          "+<!-- BEGIN JITSO block=1 added={{added}}:",
+          "+<!-- BEGIN JITSO block=2 added={{added}}:",
           {
             "regex": "jitso setup instructions: done\\n$"
           }
@@ -85,7 +85,7 @@
           {
             "path": "AGENTS.md",
             "contains": [
-              "<!-- BEGIN JITSO block=1 added={{added}}: managed by"
+              "<!-- BEGIN JITSO block=2 added={{added}}: managed by"
             ]
           }
         ]

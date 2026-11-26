@@ -1,0 +1,71 @@
+{
+  "id": "build/list/leaves-out-what-a-build-does-not-say",
+  "title": "build list leaves out a description a build does not have, and a draft with no model and no effort says they are missing",
+  "source": [
+    "intended: docs/decisions.md, \"Only launches are blocked, and launches into other repositories\": a build is composed just in time"
+  ],
+  "intent": "The summary line holds what the file says. The default fixture restricts models and efforts, so a missing one is named as missing instead of being quoted as a value.",
+  "project": {
+    "files": {
+      "jitso/builds/bare.yaml": "id: bare\nstatus: approved\nmodel: claude-haiku-5-5\neffort: low\n",
+      ".jitso/drafts/hollow.yaml": "id: hollow\n"
+    }
+  },
+  "steps": [
+    {
+      "run": [
+        "build",
+        "list"
+      ],
+      "expect": {
+        "exit": 0,
+        "stdout": [
+          {
+            "contains": "- bare: claude-haiku-5-5 low. requires: nothing\n"
+          },
+          {
+            "not_contains": "undefined"
+          }
+        ],
+        "stderr": [
+          {
+            "not_contains": "undefined"
+          },
+          {
+            "contains": "model is missing; effort is missing"
+          }
+        ]
+      }
+    },
+    {
+      "run": [
+        "build",
+        "list",
+        "--drafts"
+      ],
+      "expect": {
+        "exit": 0,
+        "stdout": [
+          {
+            "equals": "- hollow: requires: nothing (draft .jitso/drafts/hollow.yaml) invalid here: model is missing; effort is missing\n"
+          }
+        ]
+      }
+    },
+    {
+      "run": [
+        "build",
+        "validate",
+        "hollow"
+      ],
+      "expect": {
+        "exit": 2,
+        "stdout": [
+          {
+            "equals": "invalid hollow draft .jitso/drafts/hollow.yaml\n  model is missing\n  effort is missing\nchecked 1 builds: 0 ok, 1 invalid\n"
+          }
+        ]
+      }
+    }
+  ]
+}

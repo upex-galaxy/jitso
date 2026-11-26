@@ -59,7 +59,7 @@
         "stdout": [
           "+++ b/AGENTS.md",
           "--- a/{{file}}",
-          "-<!-- BEGIN JITSO block=1 added=1:",
+          "-<!-- BEGIN JITSO block=2 added=1:",
           "backed up {{file}} to .jitso/backups/",
           "created AGENTS.md",
           "wrote {{file}}",

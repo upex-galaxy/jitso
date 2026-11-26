@@ -24,7 +24,8 @@ func TestSaveContent(t *testing.T) {
 		{"CRLF stays", "id: x\r\nstatus: draft\r\n", "id: x\r\nstatus: approved\r\n", nil},
 		{"already approved", "id: x\nstatus: approved\n", "", ErrStatusForm},
 		{"a tag", "id: x\nstatus: !!str draft\n", "", ErrStatusForm},
-		{"no status", "id: x\n", "", ErrStatusForm},
+		{"no status is added", "id: x\n", "status: approved\nid: x\n", nil},
+		{"no status and an explicit key", "? id\n: x\n", "", ErrStatusForm},
 		{"not yaml", "id: [\n", "", ErrStatusForm},
 	}
 	for _, tt := range tests {

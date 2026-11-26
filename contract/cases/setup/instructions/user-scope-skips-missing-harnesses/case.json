@@ -78,7 +78,7 @@
           {
             "path": "{{HOME}}/{{target}}",
             "contains": [
-              "BEGIN JITSO block=1 added=new:"
+              "BEGIN JITSO block=2 added=new:"
             ]
           },
           {

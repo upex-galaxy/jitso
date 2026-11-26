@@ -18,10 +18,9 @@ import (
 // unchanged, in .jitso/drafts/<id>.yaml (defect N-15). It writes only that
 // folder. The draft is checked like a build of the draft layer: the
 // allowlists and the route scope of this project, the
-// rules only a launch sees (a worker needs a budget and a harness with an
-// adapter, a listed subagent must exist and be approved or a draft), and the
-// id must be one no saved build has, so an agent cannot shadow an approved
-// build with its own.
+// rules only a launch sees (the harness needs an adapter that can honor the
+// build, a listed subagent must exist and be approved or a draft), and the id
+// must be one no saved build has, so a draft never shadows a saved build.
 //
 //	build draft <file.yaml|.yml>   a file, at most 64 KiB
 //	build draft -                  standard input, at most 64 KiB
@@ -95,7 +94,7 @@ func runBuildDraft(ctx *Context, args []string) error {
 	if err := drafts.Put(root.Primary, f.ID, data); err != nil {
 		return err
 	}
-	ctx.Println("drafted " + f.ID + ": " + catalog.DraftsDir + "/" + f.ID + drafts.ExtensionYAML + " (launch it with --build " + f.ID + "; only the owner can save it)")
+	ctx.Println("drafted " + f.ID + ": " + catalog.DraftsDir + "/" + f.ID + drafts.ExtensionYAML + " (launch it with --build " + f.ID + "; keep it with jitso build save " + f.ID + ")")
 	return nil
 }
 

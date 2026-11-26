@@ -27,7 +27,7 @@
       "expect": {
         "exit": 0,
         "stdout": [
-          "-<!-- BEGIN JITSO block=1 added=1:",
+          "-<!-- BEGIN JITSO block=2 added=1:",
           "wrote AGENTS.md",
           {
             "regex": "jitso setup instructions: done\\n$"

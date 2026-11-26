@@ -4,6 +4,7 @@ import (
 	"os"
 	"path/filepath"
 	"runtime"
+	"strconv"
 	"strings"
 	"testing"
 
@@ -265,7 +266,7 @@ func TestSkillOutdatedUnmanagedAndOther(t *testing.T) {
 func block(t *testing.T, number int) string {
 	t.Helper()
 	text := instructions.Render(instructions.AddedNew, "\n") + "\n"
-	return strings.Replace(text, "block=1", "block="+string(rune('0'+number)), 2)
+	return strings.Replace(text, "block="+strconv.Itoa(instructions.Number), "block="+strconv.Itoa(number), 2)
 }
 
 func TestInstructionsProject(t *testing.T) {
@@ -278,12 +279,12 @@ func TestInstructionsProject(t *testing.T) {
 	put(t, dir, "AGENTS.md", "# Rules\n")
 	want(t, run(dir), Warn, "instructions", "no JITSO block in AGENTS.md (run jitso setup instructions)")
 
-	put(t, dir, "AGENTS.md", block(t, 1))
-	want(t, run(dir), OK, "instructions", "block 1 in AGENTS.md")
+	put(t, dir, "AGENTS.md", block(t, 2))
+	want(t, run(dir), OK, "instructions", "block 2 in AGENTS.md")
 
 	// An older block number is replaced by a newer jitso.
-	put(t, dir, "AGENTS.md", block(t, 0))
-	want(t, run(dir), Warn, "instructions", "block 0 in AGENTS.md is older than block 1 (run jitso setup instructions)")
+	put(t, dir, "AGENTS.md", block(t, 1))
+	want(t, run(dir), Warn, "instructions", "block 1 in AGENTS.md is older than block 2 (run jitso setup instructions)")
 
 	// Broken markers fail, and the line does not say "nothing written".
 	put(t, dir, "AGENTS.md", "<!-- BEGIN JITSO block=1 added=new: x -->\nno end\n")
@@ -297,20 +298,20 @@ func TestInstructionsProject(t *testing.T) {
 	// so one that does not import AGENTS.md is a warning, block or not; one
 	// that imports it is fine, and a block an older jitso left there is to be
 	// moved.
-	put(t, dir, "AGENTS.md", block(t, 1))
+	put(t, dir, "AGENTS.md", block(t, 2))
 	put(t, dir, "CLAUDE.md", "# Claude\n")
 	want(t, run(dir), Warn, "instructions", "CLAUDE.md does not import AGENTS.md, so Claude Code does not read the JITSO block: add a line @AGENTS.md to it")
-	put(t, dir, "CLAUDE.md", "# Claude\n\n"+block(t, 1))
+	put(t, dir, "CLAUDE.md", "# Claude\n\n"+block(t, 2))
 	want(t, run(dir), Warn, "instructions", "CLAUDE.md does not import AGENTS.md, so Claude Code does not read the JITSO block: add a line @AGENTS.md to it")
 	if d := run(dir).Detail; strings.Contains(d, "move it") {
 		t.Errorf("a block setup instructions keeps is not to be moved: %q", d)
 	}
 	put(t, dir, "CLAUDE.md", "@AGENTS.md\n")
-	want(t, run(dir), OK, "instructions", "block 1 in AGENTS.md")
+	want(t, run(dir), OK, "instructions", "block 2 in AGENTS.md")
 	if d := run(dir).Detail; strings.Contains(d, "CLAUDE.md") {
 		t.Errorf("a CLAUDE.md that imports AGENTS.md without a block is not listed: %q", d)
 	}
-	put(t, dir, "CLAUDE.md", "@AGENTS.md\n\n"+block(t, 1))
+	put(t, dir, "CLAUDE.md", "@AGENTS.md\n\n"+block(t, 2))
 	want(t, run(dir), Warn, "instructions", "CLAUDE.md holds a JITSO block: run jitso setup instructions to move it to AGENTS.md")
 
 	// .claude/CLAUDE.md imports AGENTS.md from its parent folder.
@@ -318,7 +319,7 @@ func TestInstructionsProject(t *testing.T) {
 	put(t, dir, ".claude/CLAUDE.md", "@AGENTS.md\n")
 	want(t, run(dir), Warn, "instructions", ".claude/CLAUDE.md does not import AGENTS.md, so Claude Code does not read the JITSO block: add a line @../AGENTS.md to it")
 	put(t, dir, ".claude/CLAUDE.md", "@../AGENTS.md\n")
-	want(t, run(dir), OK, "instructions", "block 1 in AGENTS.md")
+	want(t, run(dir), OK, "instructions", "block 2 in AGENTS.md")
 	put(t, dir, ".claude/CLAUDE.md", "<!-- END JITSO block=1 -->\n")
 	want(t, run(dir), Fail, "instructions", ".claude/CLAUDE.md has a broken JITSO block (an END without a BEGIN at line 1)")
 	os.Remove(filepath.Join(dir, ".claude", "CLAUDE.md"))
@@ -328,12 +329,12 @@ func TestInstructionsProject(t *testing.T) {
 	if err := os.Symlink("AGENTS.md", filepath.Join(dir, "CLAUDE.md")); err != nil {
 		t.Fatal(err)
 	}
-	want(t, run(dir), OK, "instructions", "block 1 in AGENTS.md")
+	want(t, run(dir), OK, "instructions", "block 2 in AGENTS.md")
 
 	// CLAUDE.local.md is not looked at any more.
 	os.Remove(filepath.Join(dir, "CLAUDE.md"))
 	put(t, dir, "CLAUDE.local.md", "# mine\n")
-	want(t, run(dir), OK, "instructions", "block 1 in AGENTS.md")
+	want(t, run(dir), OK, "instructions", "block 2 in AGENTS.md")
 }
 
 func TestInstructionsUser(t *testing.T) {
@@ -346,18 +347,18 @@ func TestInstructionsUser(t *testing.T) {
 	want(t, checkInstructionsUser(p), OK, "instructions-user", "not set up (optional)")
 
 	put(t, home, ".codex/config.toml", "x")
-	put(t, home, ".codex/AGENTS.md", block(t, 1))
-	put(t, home, ".pi/agent/AGENTS.md", block(t, 1))
-	want(t, checkInstructionsUser(p), OK, "instructions-user", "block 1 in ~/.codex/AGENTS.md, ~/.pi/agent/AGENTS.md")
+	put(t, home, ".codex/AGENTS.md", block(t, 2))
+	put(t, home, ".pi/agent/AGENTS.md", block(t, 2))
+	want(t, checkInstructionsUser(p), OK, "instructions-user", "block 2 in ~/.codex/AGENTS.md, ~/.pi/agent/AGENTS.md")
 
-	put(t, home, ".codex/AGENTS.md", block(t, 0))
-	want(t, checkInstructionsUser(p), Warn, "instructions-user", "block 0 in ~/.codex/AGENTS.md is older than block 1")
+	put(t, home, ".codex/AGENTS.md", block(t, 1))
+	want(t, checkInstructionsUser(p), Warn, "instructions-user", "block 1 in ~/.codex/AGENTS.md is older than block 2")
 
 	// The block in ~/.claude/CLAUDE.md is the one Claude Code reads for the
 	// user: it is not to be moved.
-	put(t, home, ".codex/AGENTS.md", block(t, 1))
-	put(t, home, ".claude/CLAUDE.md", block(t, 1))
-	want(t, checkInstructionsUser(p), OK, "instructions-user", "block 1 in ~/.codex/AGENTS.md, ~/.pi/agent/AGENTS.md")
+	put(t, home, ".codex/AGENTS.md", block(t, 2))
+	put(t, home, ".claude/CLAUDE.md", block(t, 2))
+	want(t, checkInstructionsUser(p), OK, "instructions-user", "block 2 in ~/.codex/AGENTS.md, ~/.pi/agent/AGENTS.md")
 
 	put(t, home, ".claude/CLAUDE.md", "<!-- END JITSO block=1 -->\n")
 	want(t, checkInstructionsUser(p), Fail, "instructions-user", "~/.claude/CLAUDE.md has a broken JITSO block (an END without a BEGIN at line 1)")

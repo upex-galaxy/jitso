@@ -50,7 +50,7 @@
         "exit": 0,
         "stdout": [
           "+++ b/AGENTS.md",
-          "+<!-- BEGIN JITSO block=1 added=1:",
+          "+<!-- BEGIN JITSO block=2 added=1:",
           {
             "regex": "backed up AGENTS\\.md to \\.jitso/backups/\\d{8}T\\d{6}Z-[0-9a-f]{4}/AGENTS\\.md\\n"
           },

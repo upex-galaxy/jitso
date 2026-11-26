@@ -10,7 +10,7 @@ jitso launch --build <id> --brief <file> --mode direct|fleet [--run <run>] [--wo
 
 | Flag | Meaning |
 |---|---|
-| `--build` | the build id; it must be a launchable build of this project (`jitso build list`) |
+| `--build` | the build id: a saved build (`jitso build list`) or a draft (`jitso build list --drafts`) |
 | `--brief` | the brief file, a regular file under `.jitso/briefs/` of the project (a relative path is read from your working folder). Its only line may be `Brief: <path>` to launch a card that lives elsewhere in the project (`briefs.md`) |
 | `--mode` | required: `direct` or `fleet`. The build's `mode_default` is ignored by `launch` |
 | `--run` | fleet only, required there: the Orca Run the worker is adopted into. It must already exist (`orca orchestration run-create --objective <text> --json`) |
@@ -45,7 +45,7 @@ dry run: nothing was written and Orca was not called
 
 The launch id in a dry run is only a preview. A real launch draws a new one.
 
-The dry run checks the build, the required fields, the brief and `--parent`. It does not check the terminal, the folder Orca opens it in, a `--worktree` path, the trust dialog or `.mcp.json`, so a clean dry run is not a promise that the real launch succeeds.
+The dry run checks the build, the required fields, the brief file and `--parent`, and prints the brief warnings. It does not check the terminal, the folder Orca opens it in, a `--worktree` path, the trust dialog or `.mcp.json`, so a clean dry run is not a promise that the real launch succeeds.
 
 ## Direct and fleet
 
@@ -69,7 +69,7 @@ A conductor starts every worker with the `launch:` command of its own card plus 
 
 In this order (read from the launch code, then seen with a fake Orca on a scratch project):
 
-1. Resolves the build and checks the brief. Any rejection stops here with exit 2. A `--worktree` that names a path (`path:<path>` or `id:<id>::<path>`) must be an absolute path of a worktree of this repo, or the launch is rejected here, before anything is written or Orca is called. A selector with no path (a worktree name) is not checked here.
+1. Resolves the build and reads the brief. Any rejection stops here with exit 2; a failed brief check is only a warning. A `--worktree` that names a path (`path:<path>` or `id:<id>::<path>`) must be an absolute path of a worktree of this repo, or the launch is rejected here, before anything is written or Orca is called. A selector with no path (a worktree name) is not checked here.
 2. Creates `.jitso/launches/<id>/` and writes into it `brief.md` (the card, the skills to load first, your brief, a `## Fields` block when you gave `--field` values, then JITSO's rules), `mcp.json`, `card.txt` and `run.sh`.
 3. Opens an Orca terminal titled `[jitso:<id>] <build>` running `run.sh`. The harness session gets the same text as its name where the harness has a launch flag for one (`--name` for Claude Code and Pi; Codex and OpenCode have none for their interactive session). Right away, before it waits for anything, it checks the folder Orca reports for that terminal, on every launch, with or without the trust dialog: it must be a worktree of this repo, and the path `--worktree` names when it names one. A wrong or unknown folder closes the terminal and rejects the launch (exit 2). Then it waits for the harness prompt and answers the trust dialog.
 4. In fleet mode, creates the Task from `brief.md` and adopts the terminal into the run.
@@ -93,5 +93,5 @@ A launch that carries nothing writes no `pkg/` and passes no `--add-dir`. The la
 
 ## Preconditions
 
-- You are inside a git checkout of the project, and `jitso/jitso.yaml` exists (the allowlists). A linked worktree works: the project is its primary checkout.
+- You are inside a git checkout of the project. A linked worktree works: the project is its primary checkout. `jitso/jitso.yaml` is not required: it switches the guard on and may restrict builds.
 - A real launch reads `.mcp.json` in the project only when it still names an MCP server after `--mcp-exclude`. A build with no servers needs no `.mcp.json`.

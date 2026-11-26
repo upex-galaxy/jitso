@@ -1,0 +1,85 @@
+{
+  "id": "init/replaces-an-older-block",
+  "title": "jitso init in a project that holds the block of an older jitso replaces it where it stands and keeps every byte outside it",
+  "source": [
+    "intended: jitso init is the one command that brings a project up to date (docs/decisions.md, \"Only launches are blocked, and launches into other repositories\")"
+  ],
+  "defect": "N-18",
+  "intent": "A project set up by an earlier release carries rules that no longer hold. doctor names the older block number, init replaces the block in AGENTS.md and a second run has nothing to do.",
+  "project": {
+    "files": {
+      "AGENTS.md": {
+        "from": "seed.md"
+      },
+      ".golden/golden.md": {
+        "from": "golden.md"
+      }
+    }
+  },
+  "steps": [
+    {
+      "run": [
+        "doctor"
+      ],
+      "expect": {
+        "stdout": [
+          "warn instructions: block 1 in AGENTS.md is older than block 2 (run jitso setup instructions)"
+        ]
+      }
+    },
+    {
+      "run": [
+        "init",
+        "--harness",
+        "claude",
+        "--yes"
+      ],
+      "capture": {
+        "WANT": {
+          "from": "file",
+          "path": ".golden/golden.md",
+          "regex": "(?s)^(.*)$"
+        }
+      },
+      "expect": {
+        "exit": 0,
+        "stdout": [
+          "jitso init: instructions (AGENTS.md)",
+          "wrote AGENTS.md"
+        ],
+        "files": [
+          {
+            "path": "AGENTS.md",
+            "equals": "{{WANT}}"
+          }
+        ]
+      }
+    },
+    {
+      "run": [
+        "init",
+        "--harness",
+        "claude",
+        "--yes"
+      ],
+      "expect": {
+        "exit": 0,
+        "stdout": [
+          {
+            "equals": "jitso init: nothing to do (JITSO is already set up here)\n"
+          }
+        ]
+      }
+    },
+    {
+      "run": [
+        "doctor"
+      ],
+      "expect": {
+        "stdout": [
+          "ok   instructions: block 2 in AGENTS.md"
+        ]
+      }
+    }
+  ]
+}

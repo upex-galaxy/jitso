@@ -144,11 +144,15 @@ func ValidateBuildIn(raw any, cfg Config, routeIDs []string, layer Layer) []stri
 }
 
 // valueProblem is the problem of the model or the effort of a build, "" for
-// none. A restricting list names the value it refuses. An open list takes any
-// usable text or number, and its problem never repeats the value.
+// none. A restricting list names the value it refuses, and says a key the file
+// lacks is missing. An open list takes any usable text or number, and its
+// problem never repeats the value.
 func valueProblem(key string, v any, list []string) string {
 	text := jsconv.String(v)
 	if !Open(list) {
+		if v == jsconv.Undefined {
+			return key + " is missing"
+		}
 		if slices.Contains(list, text) {
 			return ""
 		}

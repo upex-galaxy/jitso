@@ -13,9 +13,10 @@ import (
 )
 
 // build save turns a draft into a build of the project (defect N-15): the
-// draft bytes with the status scalar `draft` replaced by `approved` and
-// nothing else changed, written to jitso/builds/<id>.yaml, and the draft
-// removed. It is the one command that makes a build approved:
+// draft bytes with the status scalar `draft` replaced by `approved`, or with
+// `status: approved` added when there is none, and nothing else changed,
+// written to jitso/builds/<id>.yaml, and the draft removed. Saving is
+// optional, a draft launches too:
 //
 //   - it shows the content it writes, every line prefixed with `+ `;
 //   - it asks nothing and needs neither a terminal nor a flag; `--yes` is

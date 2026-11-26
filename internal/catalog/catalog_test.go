@@ -83,7 +83,7 @@ func TestValidateBuild(t *testing.T) {
 		{"model as a number is coerced", []string{"model: 123"}, nil},
 		{"model not allowlisted", []string{"model: gpt"}, []string{`model "gpt" is not in the allowlist`}},
 		{"model float", []string{"model: 0.50"}, []string{`model "0.5" is not in the allowlist`}},
-		{"model missing", []string{"model:-"}, []string{`model "undefined" is not in the allowlist`}},
+		{"model missing", []string{"model:-"}, []string{`model is missing`}},
 		{"model null", []string{"model: null"}, []string{`model "null" is not in the allowlist`}},
 		{"model list", []string{"model: [a, b]"}, []string{`model "a,b" is not in the allowlist`}},
 		{"model mapping", []string{"model: {a: 1}"}, []string{`model "[object Object]" is not in the allowlist`}},
@@ -462,7 +462,7 @@ func TestSummaryLine(t *testing.T) {
 	}{
 		{"nothing", nil, "- haiku-explorer: claude-haiku-5-5 low. Read-only search. requires: nothing"},
 		{"fields", []string{"requires: [ticket_key, env]"}, "- haiku-explorer: claude-haiku-5-5 low. Read-only search. requires: ticket_key, env"},
-		{"missing description", []string{"description:-"}, "- haiku-explorer: claude-haiku-5-5 low. undefined requires: nothing"},
+		{"missing description", []string{"description:-"}, "- haiku-explorer: claude-haiku-5-5 low. requires: nothing"},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

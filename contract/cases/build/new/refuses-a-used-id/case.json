@@ -69,7 +69,7 @@
         "exit": 0,
         "stdout": [
           {
-            "equals": "wrote .jitso/drafts/my-build.yaml (tier worker, status draft): fill every empty value, check it with jitso build validate my-build, and ask the owner to run jitso build save my-build\n"
+            "equals": "wrote .jitso/drafts/my-build.yaml (tier worker, status draft): fill every empty value and check it with jitso build validate my-build; jitso build save my-build keeps it\n"
           }
         ]
       }

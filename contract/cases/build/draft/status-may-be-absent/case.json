@@ -158,7 +158,7 @@
         "exit": 0,
         "stdout": [
           {
-            "equals": "drafted scout: .jitso/drafts/scout.yaml (launch it with --build scout; only the owner can save it)\n"
+            "equals": "drafted scout: .jitso/drafts/scout.yaml (launch it with --build scout; keep it with jitso build save scout)\n"
           }
         ],
         "files": [

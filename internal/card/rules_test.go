@@ -12,7 +12,7 @@ func TestRules(t *testing.T) {
 		budget = " The card's budget is your ceiling: near it, stop and report."
 		direct = "Load the card's skills before any other work. You may ask the human."
 		fleet  = "Load the card's skills before any other work. Never ask a human: send your questions and your final report (a count of done, failed, open) to the session that launched you."
-		last   = "Leave `jitso/`, `.jitso/` and `~/.jitso/` alone except your own draft in `.jitso/drafts/`, and never run `jitso build save`." +
+		last   = "Never hand-edit `.jitso/launches.jsonl` or `.jitso/launches/`." +
 			"\nFind another session with `jitso fleet` (read only); your own row is the one with your launch id." +
 			"\nBetween two Claude Code sessions use `SendMessage` to the session name, then run `jitso link <your launch id> <peer>`; otherwise use `orca orchestration send --to <handle> --from <your handle> --subject <s> --body <b>`." +
 			"\nPut your own handle and session name in every message, so the peer can answer with `orca orchestration reply --id <msg_id> --body <b>`."

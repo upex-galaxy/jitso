@@ -19,8 +19,8 @@ A build without a `budget` prints the sixth line without its first segment: `rep
 
 | Line | Fields | What it limits or tells |
 |---|---|---|
-| 1 header | launch id, `role/type`, mode and who it asks, build id and version | The id is what `close` and the registry use. `mode direct (asks you)` means the worker may ask its human. `mode fleet (asks your conductor)` means it never does. A draft ends with `(draft)`: it is not approved. |
-| 2 model | model, effort, `bypass`, MCP servers, skills | `bypass` means the session runs with permission prompts skipped, so JITSO's rules at the end of `brief.md` and the hook are the only guard rails. `MCP` lists the only servers the session has (others are stripped). `skill` is what it must load before any other work (`none` when empty). |
+| 1 header | launch id, `role/type`, mode and who it asks, build id and version | The id is what `close` and the registry use. `mode direct (asks you)` means the worker may ask its human. `mode fleet (asks your conductor)` means it never does. A draft ends with `(draft)`: it is not saved. A role, type or version the build does not give is left out. |
+| 2 model | model, effort, `bypass`, MCP servers, skills | `bypass` means the session runs with permission prompts skipped, so what holds it is the build, the rules at the end of `brief.md` and the guard (which blocks launches only). `MCP` lists the only servers the session has (others are stripped). `skill` is what it must load before any other work (`none` when empty). |
 | 3 subagents | helper names, or `unrestricted (harness default)` | A listed set is a suggestion: `(suggested; others allowed)`. The names are the builds the worker was given as `--agents`. |
 | 4 `ROUTE-SCOPE:` | instruction-section ids, or `none` (also what a build with no `route_scope` prints) | The sections of the project's `.agents/instructions/` the session is routed to. It starts its own line so the instruction router can read it. Work outside this scope is outside the brief. |
 | 5 `launch:` | the command to start another session | `jitso launch`, or `bun run jitso launch` in a project whose `package.json` has a `jitso` script that is not blank. It is bare: a conductor adds `--mode fleet --run <run>` itself, and JITSO creates the Task from the brief. Only this command may start a session. |
@@ -47,4 +47,4 @@ The id on a dry run is a preview. A real launch prints the card again with its o
 
 - Wrong build or layer: `jitso build list` and `jitso build validate <id>` show which file wins an id.
 - A missing MCP server or skill: the build does not list it. A launch may only drop servers (`--mcp-exclude`), never add them.
-- A model or effort you did not expect: it is the build's. A launch cannot override it. Ask for a different build or draft one.
+- A model or effort you did not expect: it is the build's. A launch cannot override it. Use another build or compose one.

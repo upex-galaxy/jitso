@@ -5,7 +5,7 @@
     "intended: docs/decisions.md D7 and the templates row of the other decisions (a new build starts as a draft from a template: invalid until every empty value is filled)"
   ],
   "defect": "N-14",
-  "intent": "INTENDED behavior (defect N-14, shipped core and templates; docs/decisions.md D7). `jitso build new <id> --tier worker|conductor|subagent` writes a draft, `.jitso/drafts/<id>.yaml`, from the commented template of the tier, with the line `id: <id>` filled, `status: draft` and every value that must come from an allowlist left empty. It prints `wrote .jitso/drafts/<id>.yaml (tier <t>, status draft): fill every empty value, check it with jitso build validate <id>, and ask the owner to run jitso build save <id>`. The new draft is invalid for this project, so `build validate <id>` exits 2 and `launch --build <id>` is `is invalid here`, while the rest of the catalog still launches. Nothing is written to `jitso/builds/`.",
+  "intent": "INTENDED behavior (defect N-14, shipped core and templates; docs/decisions.md D7). `jitso build new <id> --tier worker|conductor|subagent` writes a draft, `.jitso/drafts/<id>.yaml`, from the commented template of the tier, with the line `id: <id>` filled, `status: draft` and every value that must come from an allowlist left empty. It prints `wrote .jitso/drafts/<id>.yaml (tier <t>, status draft): fill every empty value and check it with jitso build validate <id>; jitso build save <id> keeps it`. The new draft is invalid for this project, so `build validate <id>` exits 2 and `launch --build <id>` is `is invalid here`, while the rest of the catalog still launches. Nothing is written to `jitso/builds/`.",
   "for_each": {
     "var": "tier",
     "values": [
@@ -32,7 +32,7 @@
         "exit": 0,
         "stdout": [
           {
-            "equals": "wrote .jitso/drafts/my-build.yaml (tier {{tier}}, status draft): fill every empty value, check it with jitso build validate my-build, and ask the owner to run jitso build save my-build\n"
+            "equals": "wrote .jitso/drafts/my-build.yaml (tier {{tier}}, status draft): fill every empty value and check it with jitso build validate my-build; jitso build save my-build keeps it\n"
           }
         ],
         "stderr": [

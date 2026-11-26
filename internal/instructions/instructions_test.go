@@ -12,10 +12,10 @@ func TestRenderShape(t *testing.T) {
 	for _, unit := range []string{"\n", "\r\n"} {
 		got := Render(AddedNew, unit)
 		lines := strings.Split(got, unit)
-		if lines[0] != `<!-- BEGIN JITSO block=1 added=new: managed by "jitso setup instructions"; edits inside this block are replaced -->` {
+		if lines[0] != `<!-- BEGIN JITSO block=2 added=new: managed by "jitso setup instructions"; edits inside this block are replaced -->` {
 			t.Errorf("BEGIN line %q", lines[0])
 		}
-		if lines[len(lines)-1] != "<!-- END JITSO block=1 -->" {
+		if lines[len(lines)-1] != "<!-- END JITSO block=2 -->" {
 			t.Errorf("END line %q", lines[len(lines)-1])
 		}
 		if strings.HasSuffix(got, unit) {

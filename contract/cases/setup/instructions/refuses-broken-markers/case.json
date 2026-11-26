@@ -19,27 +19,27 @@
     ],
     "rows": [
       [
-        "# A\n\n<!-- BEGIN JITSO block=1 added=1 -->\ntext\n",
+        "# A\n\n<!-- BEGIN JITSO block=2 added=1 -->\ntext\n",
         "a BEGIN without an END",
         "3"
       ],
       [
-        "# A\n\n<!-- END JITSO block=1 -->\n",
+        "# A\n\n<!-- END JITSO block=2 -->\n",
         "an END without a BEGIN",
         "3"
       ],
       [
-        "# A\n<!-- END JITSO block=1 -->\n<!-- BEGIN JITSO block=1 added=1 -->\ntext\n",
+        "# A\n<!-- END JITSO block=2 -->\n<!-- BEGIN JITSO block=2 added=1 -->\ntext\n",
         "an END before its BEGIN",
         "2"
       ],
       [
-        "# A\n<!-- BEGIN JITSO block=1 added=1 -->\nx\n<!-- END JITSO block=1 -->\n\n<!-- BEGIN JITSO block=1 added=1 -->\ny\n<!-- END JITSO block=1 -->\n",
+        "# A\n<!-- BEGIN JITSO block=2 added=1 -->\nx\n<!-- END JITSO block=2 -->\n\n<!-- BEGIN JITSO block=2 added=1 -->\ny\n<!-- END JITSO block=2 -->\n",
         "a second block",
         "6"
       ],
       [
-        "# A\n<!-- BEGIN JITSO block=1 added=1 -->\nx\n<!-- BEGIN JITSO block=1 added=1 -->\ny\n<!-- END JITSO block=1 -->\n",
+        "# A\n<!-- BEGIN JITSO block=2 added=1 -->\nx\n<!-- BEGIN JITSO block=2 added=1 -->\ny\n<!-- END JITSO block=2 -->\n",
         "a BEGIN inside a block",
         "4"
       ]

@@ -378,8 +378,8 @@ func deref(s *string) string {
 	return *s
 }
 
-// jsString is the String() of a build key as a launch prints it
-// ("undefined" when the key is missing).
+// jsString is the String() of a build key the file holds, as a launch prints
+// it.
 func jsString(b *catalog.Build, key string) string {
 	return jsconv.String(b.Raw.Value(key))
 }

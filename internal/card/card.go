@@ -16,12 +16,14 @@ import (
 
 // Input is what the card shows. Text fields are printed as given.
 type Input struct {
-	ID   string
+	ID string
+	// Role and Type are "" for a build that names none.
 	Role string
 	Type string
 	// Mode is direct or fleet.
-	Mode         string
-	Build        string
+	Mode  string
+	Build string
+	// BuildVersion is "" for a build with no version.
 	BuildVersion string
 	// Layer is where the build file lives: repo or draft. The header names it
 	// for a draft; "" and repo print nothing.
@@ -51,7 +53,10 @@ type Input struct {
 //	budget <n>k tokens (100%), list cap US$ <x.xx> | reports to: <whom> | log .jitso/launches.jsonl
 //
 // A build without a budget prints the sixth line without its first segment:
-// reports to: <whom> | log .jitso/launches.jsonl.
+// reports to: <whom> | log .jitso/launches.jsonl. The header leaves out what
+// the build does not say: <role>/<type> is the one that is set when the other
+// is not, and goes with its separator when neither is; v<version> goes when
+// there is no version.
 func Render(in Input) string {
 	asks, reports := "asks your conductor", "your conductor"
 	if in.Mode == "direct" {
@@ -65,14 +70,32 @@ func Render(in Input) string {
 	if in.HasBudget {
 		last = "budget " + jsconv.Number(jsRound(in.BudgetTokens/1000)) + "k tokens (100%), list cap US$ " + toFixed2(in.BudgetUSD) + " | " + last
 	}
+	header := "JITSO " + in.ID
+	if kind := RoleType(in.Role, in.Type); kind != "" {
+		header += " | " + kind
+	}
+	header += " | mode " + in.Mode + " (" + asks + ") | build " + in.Build
+	if in.BuildVersion != "" {
+		header += " v" + in.BuildVersion
+	}
 	return strings.Join([]string{
-		"JITSO " + in.ID + " | " + in.Role + "/" + in.Type + " | mode " + in.Mode + " (" + asks + ") | build " + in.Build + " v" + in.BuildVersion + layer,
+		header + layer,
 		"model " + in.Model + " effort " + in.Effort + " | bypass | MCP " + list(in.MCP) + " | skill " + list(in.SkillsFirst),
 		"subagents " + subagents(in.Subagents),
 		ScopeLine(in.RouteScope),
 		"launch: " + in.LaunchCommand,
 		last,
 	}, "\n")
+}
+
+// RoleType is the role and the type of a session as the card and the fleet
+// table show them: "<role>/<type>", the one that is set when the other is
+// empty, "" when both are.
+func RoleType(role, kind string) string {
+	if role == "" || kind == "" {
+		return role + kind
+	}
+	return role + "/" + kind
 }
 
 // ScopeLine is the route scope line the router reads:

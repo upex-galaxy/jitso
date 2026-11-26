@@ -23,7 +23,7 @@
         "exit": 0,
         "stdout": [
           {
-            "equals": "wrote jitso/jitso.yaml (every allowlist is open: add a list there to restrict builds)\nwrote .jitso/drafts/first-one.yaml (tier worker, status draft): fill every empty value, check it with jitso build validate first-one, and ask the owner to run jitso build save first-one\n"
+            "equals": "wrote jitso/jitso.yaml (every allowlist is open: add a list there to restrict builds)\nwrote .jitso/drafts/first-one.yaml (tier worker, status draft): fill every empty value and check it with jitso build validate first-one; jitso build save first-one keeps it\n"
           }
         ],
         "stderr": [
@@ -82,7 +82,7 @@
         "exit": 0,
         "stdout": [
           {
-            "equals": "wrote .jitso/drafts/second-one.yaml (tier subagent, status draft): fill every empty value, check it with jitso build validate second-one, and ask the owner to run jitso build save second-one\n"
+            "equals": "wrote .jitso/drafts/second-one.yaml (tier subagent, status draft): fill every empty value and check it with jitso build validate second-one; jitso build save second-one keeps it\n"
           }
         ],
         "files": [

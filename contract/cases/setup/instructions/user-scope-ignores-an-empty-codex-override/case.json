@@ -38,7 +38,7 @@
           {
             "path": "{{HOME}}/.codex/AGENTS.md",
             "contains": [
-              "BEGIN JITSO block=1 added=new:"
+              "BEGIN JITSO block=2 added=new:"
             ]
           }
         ]

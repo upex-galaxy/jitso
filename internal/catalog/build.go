@@ -3,8 +3,8 @@ package catalog
 import "github.com/upex-galaxy/jitso/internal/jsconv"
 
 // Build is one validated file of jitso/builds/. Text fields hold the String() of the
-// decoded value, or "" when the key is missing; Raw keeps the decoded file for
-// anything that needs the value as written.
+// decoded value, or "" when the key is missing or has no value; Raw keeps the
+// decoded file for anything that needs the value as written.
 type Build struct {
 	// File is the file name under its builds folder, for example haiku-explorer.yaml.
 	File string
@@ -78,13 +78,7 @@ func (b *Build) Launchable() bool {
 
 // buildFrom turns a decoded file that passed ValidateBuild into a Build.
 func buildFrom(file string, m *Map) Build {
-	text := func(key string) string {
-		v, ok := m.Get(key)
-		if !ok {
-			return ""
-		}
-		return jsconv.String(v)
-	}
+	text := func(key string) string { return textOf(m, key) }
 	b := Build{
 		File:        file,
 		Raw:         m,

@@ -29,7 +29,7 @@ skills_first: []
 # tools: []
 # mcp: MCP servers, by their name in .mcp.json.
 mcp: []
-# subagents: names of subagent-tier builds this worker may hand work to. Each must be an approved build.
+# subagents: names of subagent-tier builds this worker may hand work to. Each is an approved build, or in a draft another draft.
 subagents: []
 # requires: fields the launch must be given with --field name=value (for example ticket_key).
 requires: []

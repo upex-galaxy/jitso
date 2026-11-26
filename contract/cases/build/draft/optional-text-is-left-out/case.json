@@ -1,0 +1,153 @@
+{
+  "id": "build/draft/optional-text-is-left-out",
+  "title": "a build that names no role, type, version or description reads cleanly in the draft listing, the card, the launch log and fleet: what is absent is left out",
+  "source": [
+    "intended: docs/decisions.md, \"Only launches are blocked, and launches into other repositories\": a build is composed just in time"
+  ],
+  "intent": "A build composed on the spot is an id, a model and an effort. A part of a line that has no value is omitted, so no line shows a placeholder word. A key written with no value counts as absent. The launch log keeps its keys: an empty role and type, and a null build_version.",
+  "project": {
+    "files": {
+      ".jitso/briefs/brief.md": "## Goal\n\nFind where the sync entry point of this project is defined and explain in a few sentences how it is wired to the rest of the code.\n\n## Scope\n\nRead only. Do not change any file and do not leave the repository.\n\n## Done when\n\nYou can name the file and the line that defines the entry point, and you have checked it by reading the file.\n\n## Report format\n\nOne short paragraph with the file path, the line number and a one line summary of what it does.\n"
+    }
+  },
+  "tags": [
+    "posix"
+  ],
+  "for_each": {
+    "vars": [
+      "extra",
+      "head",
+      "version",
+      "cell",
+      "about",
+      "role",
+      "type",
+      "number"
+    ],
+    "ids": [
+      "minimal",
+      "empty-keys",
+      "role-only",
+      "type-only",
+      "all"
+    ],
+    "rows": [
+      ["", "", "", "-", "", "", "", "null"],
+      ["role:\ntype:\nversion:\ndescription:\n", "", "", "-", "", "", "", "null"],
+      ["role: operator\n", "operator \\| ", "", "operator", "", "operator", "", "null"],
+      ["type: scanner\n", "scanner \\| ", "", "scanner", "", "", "scanner", "null"],
+      ["role: operator\ntype: scanner\nversion: 2\ndescription: Look around.\n", "operator/scanner \\| ", " v2", "operator/scanner", " Look around.", "operator", "scanner", "2"]
+    ]
+  },
+  "steps": [
+    {
+      "run": [
+        "build",
+        "draft",
+        "-"
+      ],
+      "stdin": "id: probe\nmodel: claude-haiku-5-5\neffort: low\n{{extra}}",
+      "expect": {
+        "exit": 0,
+        "stderr": [
+          {
+            "empty": true
+          }
+        ]
+      }
+    },
+    {
+      "run": [
+        "build",
+        "list",
+        "--drafts"
+      ],
+      "expect": {
+        "exit": 0,
+        "stdout": [
+          {
+            "equals": "- probe: claude-haiku-5-5 low.{{about}} requires: nothing (draft .jitso/drafts/probe.yaml)\n"
+          }
+        ]
+      }
+    },
+    {
+      "run": [
+        "launch",
+        "--build",
+        "probe",
+        "--brief",
+        "{{PROJECT}}/.jitso/briefs/brief.md",
+        "--mode",
+        "direct"
+      ],
+      "capture": {
+        "LAUNCH_ID": {
+          "from": "stdout",
+          "regex": "JITSO (L\\d{8}T\\d{6}-[0-9a-f]{4})",
+          "group": 1
+        }
+      },
+      "expect": {
+        "exit": 0,
+        "stdout": [
+          {
+            "regex": "^JITSO L\\d{8}T\\d{6}-[0-9a-f]{4} \\| {{head}}mode direct \\(asks you\\) \\| build probe{{version}} \\(draft\\)\\n"
+          },
+          {
+            "not_regex": "undefined|null"
+          }
+        ],
+        "files": [
+          {
+            "path": ".jitso/launches/{{LAUNCH_ID}}/brief.md",
+            "not_contains": [
+              "undefined"
+            ]
+          },
+          {
+            "path": ".jitso/launches.jsonl",
+            "contains": [
+              "\"role\":\"{{role}}\",",
+              "\"type\":\"{{type}}\",",
+              "\"build_version\":{{number}},"
+            ],
+            "not_contains": [
+              "undefined"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "run": [
+        "fleet"
+      ],
+      "expect": {
+        "exit": 0,
+        "stdout": [
+          {
+            "regex": "(?m)^L\\d{8}T\\d{6}-[0-9a-f]{4} +{{cell}} +claude +live +term_fake "
+          },
+          {
+            "not_contains": "undefined"
+          }
+        ]
+      }
+    },
+    {
+      "run": [
+        "fleet",
+        "--json"
+      ],
+      "expect": {
+        "exit": 0,
+        "stdout": [
+          {
+            "not_regex": "undefined|\"\""
+          }
+        ]
+      }
+    }
+  ]
+}

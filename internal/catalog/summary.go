@@ -8,8 +8,7 @@ import (
 
 // SummaryLine is one build as `build list` shows it:
 // `- <id>: <model> <effort>. <description> requires: <fields or nothing>`.
-// Values are rendered with String(), so a missing description reads
-// "undefined".
+// A part the file does not give is left out.
 func SummaryLine(b *Build) string {
 	return summaryOf(b.Raw, jsconv.String(b.Raw.Value("id")))
 }
@@ -20,8 +19,23 @@ func summaryOf(m *Map, id string) string {
 	if list, ok := m.Value("requires").([]any); ok && len(list) > 0 {
 		requires = jsconv.Join(list, ", ")
 	}
-	return "- " + id + ": " + jsconv.String(m.Value("model")) + " " +
-		jsconv.String(m.Value("effort")) + ". " + jsconv.String(m.Value("description")) + " requires: " + requires
+	line := "- " + id + ":"
+	if with := strings.TrimSpace(textOf(m, "model") + " " + textOf(m, "effort")); with != "" {
+		line += " " + with + "."
+	}
+	if description := textOf(m, "description"); description != "" {
+		line += " " + description
+	}
+	return line + " requires: " + requires
+}
+
+// textOf is the String() of a key of a decoded file, "" when the key is
+// missing or has no value.
+func textOf(m *Map, key string) string {
+	if v, ok := m.Get(key); ok && v != nil {
+		return jsconv.String(v)
+	}
+	return ""
 }
 
 // DraftLine is one draft file as `build list --drafts` shows it: the summary
@@ -29,7 +43,7 @@ func summaryOf(m *Map, id string) string {
 // path>` when a saved build has the id of the draft, then ` invalid here:
 // <problems joined by "; ">` when the file is not valid for this project. A
 // file that is not a mapping, or has no id, still has a line: the id is the
-// file name without its extension and the other values read as undefined.
+// file name without its extension.
 func DraftLine(f *File) string {
 	id := jsconv.String(f.Raw.Value("id"))
 	if f.Raw.Value("id") == jsconv.Undefined {

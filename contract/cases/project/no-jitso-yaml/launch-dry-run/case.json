@@ -102,7 +102,7 @@
         "exit": 0,
         "stdout": [
           {
-            "equals": "drafted composed: .jitso/drafts/composed.yaml (launch it with --build composed; only the owner can save it)\n"
+            "equals": "drafted composed: .jitso/drafts/composed.yaml (launch it with --build composed; keep it with jitso build save composed)\n"
           }
         ]
       }

@@ -42,7 +42,7 @@ jitso init --yes
 `jitso init` does every setup step in one run:
 
 - installs the `jitso` skill for every harness, in `~/.agents/skills/jitso` (Claude Code reads it through `~/.claude/skills/jitso`);
-- inside a project, creates `jitso/jitso.yaml` with empty allowlists when it is missing, adds `.jitso/` to `.gitignore`, writes the JITSO block into `AGENTS.md`, and registers the guard for every harness it finds on `PATH`: Claude Code (`.claude/settings.json`), Codex (`.codex/hooks.json`), OpenCode (`.opencode/plugins/jitso-guard.js`) and Pi (`.pi/extensions/jitso-guard.js`).
+- inside a project, creates `jitso/jitso.yaml` with no allowlist (everything open) when it is missing, adds `.jitso/` to `.gitignore`, writes the JITSO block into `AGENTS.md` (replacing the block of an older release), and registers the guard for every harness it finds on `PATH`: Claude Code (`.claude/settings.json`), Codex (`.codex/hooks.json`), OpenCode (`.opencode/plugins/jitso-guard.js`) and Pi (`.pi/extensions/jitso-guard.js`).
 
 It prints every change before it writes, keeps a backup of every file it changes, and `jitso init --remove` undoes it. Options:
 
@@ -56,8 +56,6 @@ It prints every change before it writes, keeps a backup of every file it changes
 
 Without `--yes` on a terminal, `jitso init` asks a few questions and then asks before writing.
 
-If `jitso init` is denied with `JITSO: only the owner changes the JITSO setup`, a JITSO guard is already active in this session. Do not try another way. Give the person the exact command to run in their own terminal, and continue when they say it is done.
-
 Check: `jitso doctor` ends with `0 fail`. Two lines may still fail on a new machine: `fail orca` until Orca is installed (step 4), and `fail claude` when no harness at all is installed (with Codex, OpenCode or Pi present it is only a warning). A `warn hooks` that says a file is not tracked by git goes away when the person commits the new files.
 
 ## 4. Harness notes
@@ -67,16 +65,15 @@ Check: `jitso doctor` ends with `0 fail`. Two lines may still fail on a new mach
 
 ## 5. First build
 
-A build is the approved profile a worker is launched with. Create one as a draft, fill it, check it, then the person saves it:
+A build is the profile a worker is launched with. See what it may name, then compose one as a draft:
 
 ```sh
-jitso build new <id>
-# edit jitso/jitso.yaml (the allowlists) and .jitso/drafts/<id>.yaml
-jitso build validate <id>
-jitso build save <id>     # the person runs this; agents are denied
+jitso arsenal
+printf 'id: scout\nmodel: <model>\neffort: low\n' | jitso build draft -
+jitso launch --build scout --brief .jitso/briefs/<name>.md --mode direct --dry-run
 ```
 
-Then `jitso launch --build <id> --brief <file> --mode direct` starts a worker. The `jitso` skill explains briefs, cards and launches.
+Run the last line without `--dry-run` to start the worker. A real launch opens a paid session, so ask the person first. `jitso build save scout` keeps the build as `jitso/builds/scout.yaml`, which is optional. `jitso build new <id>` writes a commented template instead. The `jitso` skill explains builds, briefs, cards and launches.
 
 ## What to report back
 

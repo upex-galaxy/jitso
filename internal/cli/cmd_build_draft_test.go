@@ -143,7 +143,7 @@ func TestBuildDraftListDiscard(t *testing.T) {
 	root := gitProject(t)
 
 	code, out, errOut := runIn(t, root, draftText, "build", "draft", "-")
-	want := "drafted scout: .jitso/drafts/scout.yaml (launch it with --build scout; only the owner can save it)\n"
+	want := "drafted scout: .jitso/drafts/scout.yaml (launch it with --build scout; keep it with jitso build save scout)\n"
 	if code != 0 || out != want || errOut != "" {
 		t.Fatalf("draft: exit %d, stdout %q, stderr %q", code, out, errOut)
 	}

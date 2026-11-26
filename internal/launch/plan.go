@@ -41,14 +41,17 @@ func ID(now time.Time, random [2]byte) string {
 // Card is the card input of a resolved profile.
 func Card(id, mode string, p profile.Profile, mcp []string, launchCommand string) card.Input {
 	b := p.Build
-	raw := func(key string) string { return jsconv.String(b.Raw.Value(key)) }
+	version := ""
+	if b.Version != nil {
+		version = jsconv.String(b.Version)
+	}
 	return card.Input{
 		ID:            id,
-		Role:          raw("role"),
-		Type:          raw("type"),
+		Role:          b.Role,
+		Type:          b.Type,
 		Mode:          mode,
 		Build:         b.ID,
-		BuildVersion:  raw("version"),
+		BuildVersion:  version,
 		Layer:         string(b.LayerWord()),
 		Model:         p.Model,
 		Effort:        p.Effort,

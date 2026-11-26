@@ -131,7 +131,7 @@
       "expect": {
         "exit": 0,
         "stdout": [
-          "-<!-- BEGIN JITSO block=1 added=1:",
+          "-<!-- BEGIN JITSO block=2 added=1:",
           "wrote ~/.claude/CLAUDE.md",
           {
             "not_contains": "removed ~/.claude"

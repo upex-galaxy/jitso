@@ -17,7 +17,7 @@
         "exit": 0,
         "stdout": [
           {
-            "equals": "wrote .jitso/drafts/plain-one.yaml (tier worker, status draft): fill every empty value, check it with jitso build validate plain-one, and ask the owner to run jitso build save plain-one\n"
+            "equals": "wrote .jitso/drafts/plain-one.yaml (tier worker, status draft): fill every empty value and check it with jitso build validate plain-one; jitso build save plain-one keeps it\n"
           }
         ],
         "stderr": [

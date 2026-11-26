@@ -41,7 +41,7 @@
           {
             "path": ".jitso/launches/{{LAUNCH_ID}}/brief.md",
             "contains": [
-              "never run `jitso build save`.\nFind another session with `jitso fleet` (read only); your own row is the one with your launch id.\nBetween two Claude Code sessions use `SendMessage` to the session name, then run `jitso link <your launch id> <peer>`; otherwise use `orca orchestration send --to <handle> --from <your handle> --subject <s> --body <b>`.\nPut your own handle and session name in every message, so the peer can answer with `orca orchestration reply --id <msg_id> --body <b>`.\n"
+              "Never hand-edit `.jitso/launches.jsonl` or `.jitso/launches/`.\nFind another session with `jitso fleet` (read only); your own row is the one with your launch id.\nBetween two Claude Code sessions use `SendMessage` to the session name, then run `jitso link <your launch id> <peer>`; otherwise use `orca orchestration send --to <handle> --from <your handle> --subject <s> --body <b>`.\nPut your own handle and session name in every message, so the peer can answer with `orca orchestration reply --id <msg_id> --body <b>`.\n"
             ],
             "regex": [
               "(?s)\\n\\n## JITSO rules\\n(?:[^\\n]+\\n){6}$"

@@ -35,7 +35,7 @@ func init() {
 // launchUsage is what `jitso launch --help` prints (defect N-26).
 const launchUsage = `Usage: jitso launch --build <id> --brief <file> --mode direct|fleet [options]
 
-Launches a worker from an approved build and a brief file: prints its card, opens its terminal and writes its registry line.
+Launches a worker from a build (saved, or a draft) and a brief file: prints its card, opens its terminal and writes its registry line.
 
   --build <id>                 the build to launch (required)
   --brief <file>               the brief, a file under .jitso/briefs/ of the project (required)

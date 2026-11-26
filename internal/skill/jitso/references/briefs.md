@@ -4,13 +4,13 @@ A brief is the whole job description of a worker. The worker has none of your co
 
 ## What the launcher checks
 
-`jitso launch` runs four checks and reports every one that fails, in this order (the code is `internal/brief/check.go` in the jitso source; a consumer project only has the messages, so read them):
+`jitso launch` runs four checks and warns about every one that fails, one stderr line each, in this order; the launch goes on (the code is `internal/brief/check.go` in the jitso source; a consumer project only has the messages, so read them):
 
 | Check | Passes when |
 |---|---|
 | `sections` | the text has a heading line for each of `Goal`, `Scope`, `Done when` and `Report format`. Any heading level, any case, an optional trailing colon, nothing else on the line |
-| `length` | the word count is inside the limits the rejection prints. A word is a run of characters between spaces that holds a letter: `` `src/sync.ts` `` and `don't` are one word each, a number such as `3.14` is none, and the heading lines (`## Goal` and the like) are not counted |
-| `language` | the text reads as English. The check counts common English and Spanish words, so a short brief of identifiers and paths can fail it. `--brief-language es` or `any` skips it, only for a project that works in another language |
+| `length` | the word count is inside the limits the warning prints. A word is a run of characters between spaces that holds a letter: `` `src/sync.ts` `` and `don't` are one word each, a number such as `3.14` is none, and the heading lines (`## Goal` and the like) are not counted |
+| `language` | the text reads as English. The check counts common English and Spanish words, so a short brief of identifiers and paths can fail it. `--brief-language es` or `any` skips it, for a project that works in another language |
 | `paths` | every backticked token that looks like a file path exists |
 
 A backticked token counts as a path when it contains a slash and does not start with `~`, `$` or `@`, has no URL scheme and none of `*`, `<`, `>`, `{`, `}`, and its last segment ends in a dot and a letter-led extension of up to ten characters (`.ts`, `.md`, `.env`). So `docs/guide.md` must exist, while a branch (`docs/foundation`), a skill (`/project-foundation`), a folder (`src/app/`), an alias (`@platform/kit/line-chart`) and a version (`release/v0.1.2`) are text and are not looked up. A relative path is looked up from the project's primary checkout. An extensionless file is not checked.
@@ -21,15 +21,17 @@ A file the worker will create is exempt when its path is on a line that starts w
 Output: `src/new-module.ts`
 ```
 
-Real rejections, from a scratch project (the limits come from the launcher, so quote them from your own run):
+Warnings, as a launch prints them:
 
 ```
-JITSO REJECTED: brief failed: sections (missing section: Scope, Done when, Report format); length (3 words, expected 40 to 800)
-JITSO REJECTED: brief failed: paths (cited path does not exist: docs/missing-guide.md). A file the worker will create goes on a line that starts with Output: or Creates:
-JITSO REJECTED: brief failed: language (the brief must be written in English)
+jitso: warning: brief sections: missing section: Scope, Done when, Report format
+jitso: warning: brief length: 3 words, expected 40 to 800
+jitso: warning: brief paths: cited path does not exist: docs/missing-guide.md. A file the worker will create goes on a line that starts with Output: or Creates:
 ```
 
-Fix what the message names and run `--dry-run` again. Do not pad a brief to pass `length`: a short brief that says what to do and how to know it is done is better than a long one.
+A warning is advice about the worker's job description: fix what it names and run `--dry-run` again. Do not pad a brief to pass `length`: a short brief that says what to do and how to know it is done is better than a long one.
+
+Two rules still reject a launch (exit 2), because they keep secrets out: the brief is a regular file under `.jitso/briefs/`, and a pointer target is a Markdown file inside the project (below).
 
 ## What a good brief holds
 
@@ -56,7 +58,7 @@ Brief: docs/cards/worker-1.md
 The keyword may be in any case and the path may sit in backticks. A second non-blank line makes the file an ordinary brief again, checked as above. The launcher then:
 
 - resolves the path from the project's primary checkout (not from your working folder), follows every symlink, and requires a regular file inside the primary checkout whose real path ends in `.md`. A link that leads to `.env` or any other file that is not `.md` is refused, and so is any target (as written or after links) with a path segment `.auth`, `.jitso` or one starting with `.env`, in any case: `brief target is a protected path: <path>`;
-- checks the card's text for the language (`--brief-language`) and for at least the minimum words. It asks for no sections, no maximum and no existing cited paths;
+- warns about the card's text for the language (`--brief-language`) and for fewer than the minimum words (`jitso: warning: brief length: <n> words, expected at least <minimum>`). It looks for no sections, no maximum and no cited paths;
 - copies the card's text into `brief.md` where a brief goes, then a `## Fields` block with the launch's `--field` values (one `- <key>: <value>` line per field, sorted; none without fields), with the JITSO rules last. The registry hash `brief_sha256` is the hash of that card text.
 
 The pointer line carries no extra text: put any instruction the worker needs in the card itself. The target must be a file the worker may read, so keep secrets out of the card.
@@ -71,11 +73,10 @@ Rejections, each naming the path as you wrote it:
 | `brief target is outside the project: <path>` | move the card inside the primary checkout (a linked worktree does not count) |
 | `brief target must be a .md file: <path>` | the real path must end in `.md` |
 | `brief target is a protected path: <path>` | the path, as written or after links, has a segment `.auth`, `.jitso` or one starting with `.env`; copy the card to another folder |
-| `brief target failed: length (<n> words, expected at least <minimum>)`, `language (...)` | the card is too short or not in English; fix it or pass `--brief-language` |
 
 ## A filled example
 
-This block is verified: it passed `jitso launch --dry-run` against a fixture project that has `src/sync.ts` and `docs/guide.md`. Its paths are fixture paths, so replace them with real ones from your project.
+This block is verified: `jitso launch --dry-run` printed no warning for it in a fixture project that has `src/sync.ts` and `docs/guide.md`. Its paths are fixture paths, so replace them with real ones from your project.
 
 ```markdown
 ## Goal
@@ -98,7 +99,7 @@ To prove your own brief the same way, write it to `.jitso/briefs/<name>.md` and 
 jitso launch --build <id> --brief .jitso/briefs/<name>.md --mode direct --dry-run
 ```
 
-A card and `dry run: nothing was written and Orca was not called` mean the brief passed.
+A card, `dry run: nothing was written and Orca was not called` and no warning mean the brief passed.
 
 ## Briefs in a fleet
 
