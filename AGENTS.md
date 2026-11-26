@@ -22,7 +22,7 @@ JITSO is a strategy for orchestrating agents based on builds: a build is an appr
 | `scripts/`, `.github/workflows/` | packaging, the install script and its offline test, the release workflow |
 | `.session/` | local history, handoffs and the living records of section 10, gitignored, mostly Spanish: never commit it, never quote it or its tracker keys in committed files |
 
-Published releases are the tags and GitHub Releases of `origin`; the release workflow also runs the contract suite on Linux. Not done: a real Orca run, the real Claude Code interactive path, and Windows testing. The contract runs against the built Go binary only.
+Published releases are the tags and GitHub Releases of `origin`; the release workflow also runs the contract suite on Linux. Not done: a real Orca on Windows. The contract runs against the built Go binary only.
 
 ## 3. Which skill to load
 
@@ -74,7 +74,7 @@ The contract suite: build the runner and run it as `contract/README.md` ("Run it
 
 ## 7. Git strategy
 
-Single branch `main`. The remote `origin` is the public repository named in `docs/release.md`. Commit only when the owner asks, after he has seen the message and the exact path list. Conventional commit subjects, no tracker keys. Every push to `main` is owner-gated: push only when the owner asks in this conversation, never with force, never after rewriting pushed history. When the owner confirms a push that carries a release, the agent runs the release right after it, without asking again (`docs/release.md` section 4): wait for `ci.yml` to pass on the pushed commit, pick the next version by the policy in `docs/release.md` section 2, create and push the annotated tag, watch the release workflow, verify the published release, and report. A red CI stops the flow before the tag. A tag is never moved, deleted or reused, and a release is never deleted (a bad one is fixed by a new version, `docs/release.md` section 6). No pull-request flow: one maintainer. Procedure: `git-flow-master`.
+Single branch `main`. The remote `origin` is the public repository named in `docs/release.md`. Commit only when the owner asks, after he has seen the message and the exact path list. Conventional commit subjects, no tracker keys. Every push to `main` is owner-gated: push only when the owner asks in this conversation, never with force, never after rewriting pushed history. When the owner confirms a push that carries a release, the agent runs the release right after it, without asking again (`docs/release.md` section 4): wait for `ci.yml` to pass on the pushed commit, pick the next version by the policy in `docs/release.md` section 2, create and push the annotated tag, watch the release workflow, verify the published release, update the architecture docs so they describe it (`docs/architecture.md` and the architecture artifact, whose source and link `.session/CONTEXTO-REPOS.md` gives), and report. A red CI stops the flow before the tag. A tag is never moved, deleted or reused, and a release is never deleted (a bad one is fixed by a new version, `docs/release.md` section 6). No pull-request flow: one maintainer. Procedure: `git-flow-master`.
 
 ## 8. Skills discovery
 

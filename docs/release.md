@@ -55,7 +55,7 @@ These steps run on this machine and change nothing outside the repository and yo
 
 ## 4. Publishing, in order
 
-Every step in this list is **OWNER-GATED**. Do not run one without the owner's say in the conversation, and stop at the first failure. His OK to push `main` for a release covers steps 3 to 6 in one go, as AGENTS.md section 7 says: the agent pushes, waits for `ci.yml` on that commit, tags, watches the workflow and verifies the release. Step 7 stays his.
+Every step in this list is **OWNER-GATED**. Do not run one without the owner's say in the conversation, and stop at the first failure. His OK to push `main` for a release covers steps 3 to 6 and step 8 in one go, as AGENTS.md section 7 says: the agent pushes, waits for `ci.yml` on that commit, tags, watches the workflow, verifies the release and updates the architecture docs. Step 7 stays his.
 
 | # | Step | Notes |
 |---|---|---|
@@ -66,6 +66,7 @@ Every step in this list is **OWNER-GATED**. Do not run one without the owner's s
 | 5 | **OWNER-GATED** Run and watch the release workflow | The workflow first runs `ci.yml` on the tagged commit (section 9); then it verifies both modules, builds the archives, runs the contract on the Linux binary, runs the install test, then the `release` job creates the GitHub Release. If anything fails, nothing is published: the `build` job needs the `ci` job and the `release` job needs the `build` job. |
 | 6 | **OWNER-GATED** Verify the published release from a clean machine or container | Download `checksums.txt` and one archive, `shasum -a 256 -c` it, run `jitso version`. Then download `install.sh` from the release, read it, and run `sh install.sh v<x>`. |
 | 7 | **OWNER-GATED** Announce | Where and what is the owner's call. |
+| 8 | Update the architecture docs to the released version | `docs/architecture.md` and the architecture artifact; its source file and link are in `.session/CONTEXTO-REPOS.md` (local). Part of the release: the OK of steps 3 to 6 covers it, but its commit and push follow AGENTS.md section 7. |
 
 The workflow uses no configured secret: `github.token` is the automatic token, scoped by the `permissions` blocks (`contents: read` for the build job and for every CI job, `contents: write` only for the release job, which checks out no code).
 
