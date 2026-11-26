@@ -1,0 +1,49 @@
+{
+  "id": "build/save/saves-without-a-terminal",
+  "title": "build save with no terminal and no --yes shows the file and saves it: there is no owner gate",
+  "source": [
+    "intended: docs/decisions.md, \"Only launches are blocked, and launches into other repositories\": build save writes with no owner gate; --yes is accepted and changes nothing"
+  ],
+  "defect": "N-15",
+  "intent": "INTENDED behavior (defect N-15, drafts). `jitso build save <id>` shows the build it writes (the draft bytes with `status: approved`) on stdout, every line prefixed with `+ `, then writes `jitso/builds/<id>.yaml`, removes the draft and prints `saved <id>: jitso/builds/<id>.yaml (status approved); the draft is removed`, exit 0. Standard input is not a terminal here and there is no `--yes`: nothing is asked and nothing is refused.",
+  "project": {
+    "files": {
+      ".jitso/drafts/scout.yaml": "# Draft written by a drafts case.\nid: scout\nversion: 1\nstatus: draft\nrole: operator\ntype: scanner\nwork_kind: repo-scan\ndescription: Scan the repo for TODO comments and report them.\nharness: claude\nmodel: claude-haiku-5-5\neffort: low\nmode_default: direct\nagents_md: exclude\nroute_scope: [none]\nskills_first: []\ntools: [Read, Glob, Grep]\nmcp: []\nrequires: []\nbudget: { tokens: 150000, usd_list_cap: 0.30 }\n"
+    }
+  },
+  "steps": [
+    {
+      "run": [
+        "build",
+        "save",
+        "scout"
+      ],
+      "expect": {
+        "exit": 0,
+        "stdout": [
+          {
+            "equals": "+ # Draft written by a drafts case.\n+ id: scout\n+ version: 1\n+ status: approved\n+ role: operator\n+ type: scanner\n+ work_kind: repo-scan\n+ description: Scan the repo for TODO comments and report them.\n+ harness: claude\n+ model: claude-haiku-5-5\n+ effort: low\n+ mode_default: direct\n+ agents_md: exclude\n+ route_scope: [none]\n+ skills_first: []\n+ tools: [Read, Glob, Grep]\n+ mcp: []\n+ requires: []\n+ budget: { tokens: 150000, usd_list_cap: 0.30 }\nsaved scout: jitso/builds/scout.yaml (status approved); the draft is removed\n"
+          }
+        ],
+        "stderr": [
+          {
+            "empty": true
+          }
+        ],
+        "orca_calls": {
+          "empty": true
+        },
+        "files": [
+          {
+            "path": "jitso/builds/scout.yaml",
+            "equals": "# Draft written by a drafts case.\nid: scout\nversion: 1\nstatus: approved\nrole: operator\ntype: scanner\nwork_kind: repo-scan\ndescription: Scan the repo for TODO comments and report them.\nharness: claude\nmodel: claude-haiku-5-5\neffort: low\nmode_default: direct\nagents_md: exclude\nroute_scope: [none]\nskills_first: []\ntools: [Read, Glob, Grep]\nmcp: []\nrequires: []\nbudget: { tokens: 150000, usd_list_cap: 0.30 }\n"
+          },
+          {
+            "path": ".jitso/drafts/scout.yaml",
+            "exists": false
+          }
+        ]
+      }
+    }
+  ]
+}

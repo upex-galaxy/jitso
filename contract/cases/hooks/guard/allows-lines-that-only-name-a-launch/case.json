@@ -1,0 +1,48 @@
+{
+  "id": "hooks/guard/allows-lines-that-only-name-a-launch",
+  "title": "each command of a line is judged on its own: a commit message, a search or a heredoc that only names a harness, a jitso command or an Orca verb passes beside other commands",
+  "source": [
+    "intended: docs/decisions.md, section \"Only launches are blocked, and launches into other repositories\" (the guard denies only what starts an agent)"
+  ],
+  "intent": "A line that lexes is judged command by command, so a command that is not a data command (git add, cd, a shell) no longer removes the quotes of the others. A data command (git commit or tag, orca orchestration send, ask or reply, gh pr, issue or release create, edit or comment, echo, printf, cat that reads a heredoc) has its quoted text and heredoc bodies masked; any other command is judged by its program and its words.",
+  "for_each": {
+    "var": "command",
+    "values": [
+      "git add . && git commit -m \"fix (claude) x\" -- a",
+      "git add a && git commit -m \"chore: set up (jitso init) here\" -- a",
+      "grep -rn \"jitso setup\" docs",
+      "grep -rn \"(claude)\" docs",
+      "cd x && git commit -m \"docs: orchestration worker-start is denied\"",
+      "git status; gh pr create --title \"x\" --body \"run orca orchestration dispatch\"",
+      "git log --grep \"; claude -p hi\"",
+      "bash -c \"git commit -m 'fix (claude)'\"",
+      "bash scripts/check.sh && git commit -m \"fix (claude) x\"",
+      "python3 <<'EOF'\n# claude rules\nEOF",
+      "git add . && git commit -F - <<'EOF'\nfix (claude): orca agent launch\nEOF",
+      "git commit -m \"$(cat <<'EOF'\nfix (claude) x\nEOF\n)\" && git push",
+      "bash --version && git commit -m \"fix (claude) x\""
+    ]
+  },
+  "steps": [
+    {
+      "hook": "guard",
+      "input": {
+        "hook_event_name": "PreToolUse",
+        "tool_name": "Bash",
+        "tool_input": {
+          "command": "{{command}}"
+        },
+        "cwd": "{{PROJECT}}"
+      },
+      "expect": {
+        "exit": 0,
+        "decision": "none",
+        "stdout": [
+          {
+            "empty": true
+          }
+        ]
+      }
+    }
+  ]
+}

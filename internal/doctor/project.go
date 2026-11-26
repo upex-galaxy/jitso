@@ -58,9 +58,16 @@ func (c *projectChecks) catalog() Line {
 		c.catErr = true
 		return Line{Fail, "catalog", describe(err)}
 	}
-	detail := fmt.Sprintf("%s, %s, %d launchable", catalog.ConfigPath, plural(len(c.cat.Builds), "build"), len(c.cat.Launchable()))
+	status, source, separator := OK, catalog.ConfigPath, ", "
+	// Without the file nothing is restricted, which is a choice, but the guard
+	// acts only in a project that has it.
+	if _, err := c.p.Stat(filepath.Join(c.root.Primary, filepath.FromSlash(catalog.ConfigPath))); errors.Is(err, fs.ErrNotExist) {
+		status, separator = Warn, "; "
+		source = "no " + catalog.ConfigPath + ": every allowlist is open and the guard stays off in this project (run jitso init)"
+	}
+	detail := fmt.Sprintf("%s%s%s, %d launchable", source, separator, plural(len(c.cat.Builds), "build"), len(c.cat.Launchable()))
 	if len(c.cat.Skipped) == 0 {
-		return Line{OK, "catalog", detail}
+		return Line{status, "catalog", detail}
 	}
 	parts := []string{detail}
 	for _, s := range c.cat.Skipped {

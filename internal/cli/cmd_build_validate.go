@@ -20,7 +20,7 @@ import (
 //	build validate <id>   the winner of that id, its problems and the files it shadows
 //
 // Exit 0 when every counted file is ok, 2 when one is invalid or the id is
-// unknown, 3 for the environment (no jitso/jitso.yaml, bad user config,
+// unknown, 3 for the environment (invalid jitso/jitso.yaml, bad user config,
 // outside a git checkout, an unreadable folder).
 func init() {
 	RegisterSubcommand(Subcommand{

@@ -1,8 +1,8 @@
 {
   "id": "hooks/guard/allows-the-other-build-verbs",
-  "title": "the guard stays silent for the build verbs an agent may run: draft, list, validate, discard and new, and for text that only names the file",
+  "title": "the guard stays silent for the build verbs draft, list, validate, discard and new, and for text that only names the file",
   "source": [
-    "intended: docs/decisions.md D7 and B3-19 (the agent boundary of build save is the launch guard)"
+    "intended: docs/decisions.md, section \"Only launches are blocked, and launches into other repositories\" (the guard denies only what starts an agent)"
   ],
   "for_each": {
     "var": "command",

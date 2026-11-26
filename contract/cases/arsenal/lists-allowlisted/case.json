@@ -4,7 +4,7 @@
   "source": [
     "intended: JITSO v0.2 plan 2.5 (a read-only inventory for the dispatching session)"
   ],
-  "intent": "Project skills print the first sentence of their SKILL.md description; jitso is listed as built in; user items print with their user: scope. A user server whose env holds a literal shows the key name, never the value. A project without jitso/jitso.yaml is exit 3 with the existing message.",
+  "intent": "Project skills print the first sentence of their SKILL.md description; jitso is listed as built in; user items print with their user: scope. A user server whose env holds a literal shows the key name, never the value.",
   "project": {
     "files": {
       ".agents/skills/sprint-testing/SKILL.md": "---\nname: sprint-testing\ndescription: >\n  Runs in-sprint manual QA per issue: plan, execute and report. Use when testing a user story.\n---\n",
@@ -57,31 +57,6 @@
         "stderr": [
           {
             "equals": "JITSO REJECTED: unknown argument \"--bogus\"\n"
-          }
-        ]
-      }
-    },
-    {
-      "write": {
-        "project": {
-          "jitso/jitso.yaml": null
-        }
-      }
-    },
-    {
-      "run": [
-        "arsenal"
-      ],
-      "expect": {
-        "exit": 3,
-        "stdout": [
-          {
-            "empty": true
-          }
-        ],
-        "stderr": [
-          {
-            "regex": "^jitso: jitso/jitso\\.yaml is missing: "
           }
         ]
       }

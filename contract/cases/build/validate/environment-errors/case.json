@@ -1,39 +1,12 @@
 {
   "id": "build/validate/environment-errors",
-  "title": "build validate without jitso/jitso.yaml, or outside a git checkout, is an environment error: exit 3, nothing on stdout",
+  "title": "build validate outside a git checkout is an environment error: exit 3, nothing on stdout",
   "source": [
     "intended: docs/decisions.md (build validate: a tolerant check of every build of every layer, one line per file, problem lines, one summary line)"
   ],
   "defect": "N-13",
-  "intent": "INTENDED behavior (defect N-13, build validate). Exit 3 is for what no build file can explain: a project without `jitso/jitso.yaml` has no allowlists (`jitso: jitso/jitso.yaml is missing: this project has no JITSO allowlists (create it with jitso build new <id>)`), and a working folder outside any git checkout has no project (`jitso: <cwd> is not inside a git checkout`). Nothing is printed on stdout, orca is never called.",
-  "project": {
-    "files": {
-      "jitso/jitso.yaml": null
-    }
-  },
+  "intent": "Exit 3 is for what no build file can explain: a working folder outside any git checkout has no project (`jitso: <cwd> is not inside a git checkout`). Nothing is printed on stdout, orca is never called. A missing `jitso/jitso.yaml` is not such an error: every allowlist is then open.",
   "steps": [
-    {
-      "run": [
-        "build",
-        "validate"
-      ],
-      "expect": {
-        "exit": 3,
-        "stdout": [
-          {
-            "empty": true
-          }
-        ],
-        "stderr": [
-          {
-            "contains": "jitso: jitso/jitso.yaml is missing: this project has no JITSO allowlists (create it with jitso build new <id>)"
-          }
-        ],
-        "orca_calls": {
-          "empty": true
-        }
-      }
-    },
     {
       "run": [
         "build",

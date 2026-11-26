@@ -4,7 +4,7 @@
   "source": [
     "intended: docs/decisions.md, release 1 of the communication plan; orca terminal list --json gives handle, worktreeId, worktreePath, branch, title, connected and writable"
   ],
-  "intent": "One header line, one row per session in launch order (id, role/type, harness, state, handle, parent, title), the unlaunched terminals after them, then the summary line. A launch counts as live when its handle is in the terminal list. The call is read only: the registry keeps its line count, no lock folder appears, and the only Orca verb is the terminal list.",
+  "intent": "One header line, one row per session in launch order (id, role/type, harness, state, handle, parent, repo, title), the unlaunched terminals after them, then the summary line. The repo of a launch row is the repo field of its launch event (a dash when the line has none); the repo of an unlaunched terminal outside a git checkout is the name of its worktree folder. A launch counts as live when its handle is in the terminal list. The call is read only: the registry keeps its line count, no lock folder appears, and the only Orca verb is the terminal list.",
   "project": {
     "files": {
       ".jitso/launches.jsonl": {
@@ -65,19 +65,19 @@
         "exit": 0,
         "stdout": [
           {
-            "regex": "(?m)^ID +ROLE/TYPE +HARNESS +STATE +HANDLE +PARENT +TITLE$"
+            "regex": "(?m)^ID +ROLE/TYPE +HARNESS +STATE +HANDLE +PARENT +REPO +TITLE$"
           },
           {
-            "regex": "(?m)^L20261124T100000-a1a1 +conductor/conductor +claude +live +term_a +- +\\[jitso:L20261124T100000-a1a1\\] sonnet-conductor$"
+            "regex": "(?m)^L20261124T100000-a1a1 +conductor/conductor +claude +live +term_a +- +repo +\\[jitso:L20261124T100000-a1a1\\] sonnet-conductor$"
           },
           {
-            "regex": "(?m)^L20261124T100100-b2b2 +operator/explorer +claude +live +term_b +L20261124T100000-a1a1 +\\[jitso:L20261124T100100-b2b2\\] haiku-explorer$"
+            "regex": "(?m)^L20261124T100100-b2b2 +operator/explorer +claude +live +term_b +L20261124T100000-a1a1 +repo +\\[jitso:L20261124T100100-b2b2\\] haiku-explorer$"
           },
           {
-            "regex": "(?m)^L20261124T100200-c3c3 +operator/worker +pi +gone +term_c +L20261124T100000-a1a1 +\\[jitso:L20261124T100200-c3c3\\] pi-worker$"
+            "regex": "(?m)^L20261124T100200-c3c3 +operator/worker +pi +gone +term_c +L20261124T100000-a1a1 +- +\\[jitso:L20261124T100200-c3c3\\] pi-worker$"
           },
           {
-            "regex": "(?m)^- +- +- +unlaunched +term_x +- +zsh$"
+            "regex": "(?m)^- +- +- +unlaunched +term_x +- +other +zsh$"
           },
           {
             "regex": "(?m)^jitso fleet: 2 live, 1 gone, 1 unlaunched$"

@@ -15,6 +15,9 @@ var Statuses = []string{"candidate", "approved", "retired"}
 // StatusDraft is the status of every file of the draft layer.
 const StatusDraft = "draft"
 
+// DefaultHarness is the harness of a build that has no harness key.
+const DefaultHarness = "claude"
+
 // The tiers of a build (docs/decisions.md, tiers). A build without a tier is a
 // worker. A subagent-tier build is never launched alone: a worker or a
 // conductor lists it by name in its subagents.
@@ -47,8 +50,9 @@ func ValidateBuild(raw any, cfg Config, routeIDs []string) []string {
 // The messages use the String() coercion of values.
 //
 // The layer decides one rule, the status: a saved layer takes candidate,
-// approved or retired, the draft layer takes exactly draft (defect N-15), so a
-// draft cannot pass as a saved build and a saved file cannot claim to be a draft.
+// approved or retired. The draft layer takes draft or no status key, which
+// means draft (defect N-15), so a draft cannot pass as a saved build and a
+// saved file cannot claim to be a draft.
 //
 // Worker and conductor builds are validated identically. route_scope is
 // optional on every tier: it is checked only when present. A
@@ -65,20 +69,23 @@ func ValidateBuildIn(raw any, cfg Config, routeIDs []string, layer Layer) []stri
 	if id, ok := p.Value("id").(string); !ok || !kebab.MatchString(id) {
 		add("id must be kebab-case")
 	}
-	status, isString := p.Value("status").(string)
+	written, hasStatus := p.Get("status")
+	status, isString := written.(string)
 	switch {
 	case layer == LayerDraft:
-		if !isString || status != StatusDraft {
+		if hasStatus && (!isString || status != StatusDraft) {
 			add("status must be draft in a draft")
 		}
 	case !isString || !slices.Contains(Statuses, status):
 		add("status must be one of " + strings.Join(Statuses, ", "))
 	}
-	if model := jsconv.String(p.Value("model")); !slices.Contains(cfg.Models, model) {
-		add(`model "` + model + `" is not in the allowlist`)
-	}
-	if effort := jsconv.String(p.Value("effort")); !slices.Contains(cfg.Efforts, effort) {
-		add(`effort "` + effort + `" is not in the allowlist`)
+	for _, v := range []struct {
+		key  string
+		list []string
+	}{{"model", cfg.Models}, {"effort", cfg.Efforts}} {
+		if problem := valueProblem(v.key, p.Value(v.key), v.list); problem != "" {
+			add(problem)
+		}
 	}
 	for _, skill := range jsconv.Strings(p.Value("skills_first")) {
 		switch {
@@ -87,6 +94,10 @@ func ValidateBuildIn(raw any, cfg Config, routeIDs []string, layer Layer) []stri
 				add(problem)
 			}
 		case skill == JitsoSkill:
+		case Open(cfg.Skills):
+			if !slices.Contains(cfg.ProjectSkillDirs, skill) {
+				add(`skill "` + skill + `" has no folder under .agents/skills or .claude/skills`)
+			}
 		case !slices.Contains(cfg.Skills, skill):
 			add(`skill "` + skill + `" is not in the allowlist`)
 		}
@@ -97,13 +108,23 @@ func ValidateBuildIn(raw any, cfg Config, routeIDs []string, layer Layer) []stri
 			if problem := scopedMCPProblem(name, cfg); problem != "" {
 				add(problem)
 			}
-		case !slices.Contains(cfg.MCP, name):
+		case cfg.AllowsMCP(name):
+		case Open(cfg.MCP):
+			add(`mcp "` + name + `" is not defined in .mcp.json`)
+		default:
 			add(`mcp "` + name + `" is not in the allowlist`)
 		}
 	}
-	for _, tool := range jsconv.Strings(p.Value("tools")) {
-		if !slices.Contains(cfg.Tools, tool) {
-			add(`tool "` + tool + `" is not in the allowlist`)
+	tools := jsconv.Strings(p.Value("tools"))
+	if Open(cfg.Tools) {
+		if slices.ContainsFunc(tools, func(t string) bool { return !usableText(t) }) {
+			add("tools must hold non-empty values with no control character")
+		}
+	} else {
+		for _, tool := range tools {
+			if !slices.Contains(cfg.Tools, tool) {
+				add(`tool "` + tool + `" is not in the allowlist`)
+			}
 		}
 	}
 	if v, present := p.Get("subagents"); present && !kebabList(v) {
@@ -120,6 +141,26 @@ func ValidateBuildIn(raw any, cfg Config, routeIDs []string, layer Layer) []stri
 		}
 	}
 	return append(errs, tierProblems(p)...)
+}
+
+// valueProblem is the problem of the model or the effort of a build, "" for
+// none. A restricting list names the value it refuses. An open list takes any
+// usable text or number, and its problem never repeats the value.
+func valueProblem(key string, v any, list []string) string {
+	text := jsconv.String(v)
+	if !Open(list) {
+		if slices.Contains(list, text) {
+			return ""
+		}
+		return key + ` "` + text + `" is not in the allowlist`
+	}
+	switch v.(type) {
+	case string, int, int64, uint64, float64:
+		if v != jsconv.Undefined && usableText(text) {
+			return ""
+		}
+	}
+	return key + " must be a non-empty value with no control character"
 }
 
 // tierOf is the tier a build file declares: worker when the key is absent or

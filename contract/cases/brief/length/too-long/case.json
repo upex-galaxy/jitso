@@ -1,11 +1,12 @@
 {
   "id": "brief/length/too-long",
-  "title": "a brief well over 800 words is rejected with its word count",
+  "title": "a brief well over 800 words warns with its word count",
   "tags": [
     "posix"
   ],
   "source": [
-    "cli/jitso/brief.test.ts: 'fails a brief under 40 words and one over 800' (GOOD + 'word ' x 800)"
+    "cli/jitso/brief.test.ts: 'fails a brief under 40 words and one over 800' (GOOD + 'word ' x 800)",
+    "intended: docs/decisions.md, \"Only launches are blocked, and launches into other repositories\": the brief checks are warnings on stderr and the launch goes on"
   ],
   "project": {
     "files": {
@@ -23,18 +24,20 @@
         "--brief",
         "{{PROJECT}}/.jitso/briefs/brief.md",
         "--mode",
-        "direct"
+        "direct",
+        "--dry-run"
       ],
       "expect": {
-        "exit": 2,
+        "exit": 0,
         "stdout": [
           {
-            "empty": true
-          }
+            "regex": "^JITSO L\\d{8}T\\d{6}-[0-9a-f]{4} \\|"
+          },
+          "dry run: nothing was written and Orca was not called"
         ],
         "stderr": [
           {
-            "regex": "length \\(8\\d\\d words, expected 40 to 800\\)"
+            "regex": "^jitso: warning: brief length: 8\\d\\d words, expected 40 to 800\\njitso: warning: brief language: the brief must be written in English\\n$"
           }
         ],
         "orca_calls": {

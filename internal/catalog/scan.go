@@ -56,6 +56,10 @@ func (f *File) Build() *Build {
 	}
 	b := buildFrom(f.Name, f.Raw)
 	b.Layer, b.Display, b.Path, b.SHA256 = f.Layer, f.Display, f.Path, f.SHA256
+	// A draft with no status key is a draft.
+	if _, ok := f.Raw.Get("status"); !ok && f.Layer == LayerDraft {
+		b.Status = StatusDraft
+	}
 	return &b
 }
 
@@ -132,6 +136,7 @@ func ScanHome(fsys fs.FS, primary, home string) (*Result, error) {
 	}
 	cfg.User = LoadUser(home)
 	cfg.ProjectSkillDirs = projectSkillDirs(fsys)
+	cfg.ProjectServers = projectServers(fsys)
 	ids, err := RouteIDs(fsys)
 	if err != nil {
 		return nil, err

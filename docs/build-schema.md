@@ -46,7 +46,18 @@ Every build is validated against the launching project: its `jitso/jitso.yaml`, 
 
 ## `jitso/jitso.yaml`: the allowlists and the field patterns
 
-One top-level mapping. A build may name only what it lists. Each list is read as text; a value that is not a list is an empty list.
+One top-level mapping. Every allowlist is optional. A key that is absent, null or `[]` is **open**; a non-empty list **restricts** a build to what it lists. Each list is read as text. A value that is neither a list nor null restricts to nothing, so a mistake never lifts a restriction.
+
+Open does not mean unchecked:
+
+| Open key | What a build may name | Problem text |
+|---|---|---|
+| `models`, `efforts` | any text or number that is not blank and has no control character | `model must be a non-empty value with no control character` (`effort ...`) |
+| `tools` | the same, per item | `tools must hold non-empty values with no control character` |
+| `skills` | a folder (or a link to one) under `.agents/skills/` or `.claude/skills/` of the primary checkout, or `jitso` | `skill "<s>" has no folder under .agents/skills or .claude/skills` |
+| `mcp` | a server of `.mcp.json` at the primary checkout | `mcp "<m>" is not defined in .mcp.json` |
+
+The problem texts that say `is not in the allowlist` belong to a restricting list. A restricting list is not checked against what exists.
 
 | Key | Type | Used by |
 |---|---|---|
@@ -54,11 +65,11 @@ One top-level mapping. A build may name only what it lists. Each list is read as
 | `models` | list of full model ids, never aliases | `model` of a build |
 | `efforts` | list of effort names | `effort` of a build |
 | `mcp` | list of MCP server names, as in `.mcp.json` | `mcp` of a build |
-| `skills` | list of skill folder names under `.agents/skills/` | `skills_first` of a build |
+| `skills` | list of skill folder names | `skills_first` of a build |
 | `tools` | list of harness tool names | `tools` of a build |
 | `fields` | optional mapping of field name to pattern (see below) | the `--field` values of a launch, which also reach the launch's `brief.md` and the `fields` object of its launch event |
 
-A project without this file has no allowlists: every catalog command exits 3 with `jitso: jitso/jitso.yaml is missing: this project has no JITSO allowlists (create it with jitso build new <id>)`. `jitso build new` writes an empty skeleton in a fresh project. The `fields` key is optional: absent or null means no patterns. Each key is a field name (`^[a-z][a-z_]*$`) and each value a non-empty Go `regexp` (RE2) pattern, which must match the whole value: the loader compiles `^(?:<pattern>)$`. A field a launch supplies is checked against its pattern; a field with no entry accepts any non-empty value with no control character (U+0000 to U+001F, U+007F). A build may require any well-formed field name, with or without an entry, and an entry no build requires is accepted. A problem in the key is reported with all the others, in key order, as `jitso/jitso.yaml is invalid: <problems joined by "; ">` (exit 3, and `fail catalog:` in `jitso doctor`):
+A project without this file has every allowlist open: `launch`, the `build` commands and `arsenal` work, and `jitso doctor` warns, because the file is also what switches the guard on. `jitso init` and `jitso build new` write the skeleton when it is missing: `version: 1` and comments, no list. The `fields` key is optional: absent or null means no patterns. Each key is a field name (`^[a-z][a-z_]*$`) and each value a non-empty Go `regexp` (RE2) pattern, which must match the whole value: the loader compiles `^(?:<pattern>)$`. A field a launch supplies is checked against its pattern; a field with no entry accepts any non-empty value with no control character (U+0000 to U+001F, U+007F). A build may require any well-formed field name, with or without an entry, and an entry no build requires is accepted. A problem in the key is reported with all the others, in key order, as `jitso/jitso.yaml is invalid: <problems joined by "; ">` (exit 3, and `fail catalog:` in `jitso doctor`):
 
 | Input | Problem text |
 |---|---|
@@ -73,15 +84,15 @@ Route-scope ids are not in this file: they are the `id:` line of each `.agents/i
 
 ## `~/.jitso/jitso.yaml`: the user allowlist
 
-Same YAML subset as `jitso/jitso.yaml`. A build names an item of this file with the scope `user:` in `skills_first` or `mcp` (`user:humanizer`); a plain name never resolves here, and a `user:` name never resolves in the project file. Keys: `version` (`1`), `skills` (folder names under `~/.claude/skills/`), `mcp` (server names of the top-level `mcpServers` of `~/.claude.json`), `literal_env` (`<server>/<KEY>` entries). Any other key is ignored. A missing file is an empty user layer, silent. An invalid file fails only a command whose builds name a `user:` item, with exit 3 and `jitso: ~/.jitso/jitso.yaml is invalid: <problems>`.
+Same YAML subset as `jitso/jitso.yaml`. A build names an item of this file with the scope `user:` in `skills_first` or `mcp` (`user:humanizer`); a plain name never resolves here, and a `user:` name never resolves in the project file. Keys: `version` (`1`), `skills` (folder names under `~/.claude/skills/`), `mcp` (server names of the top-level `mcpServers` of `~/.claude.json`), `literal_env` (`<server>/<KEY>` entries). Any other key is ignored. `skills` and `mcp` open like the project's lists: with no file, an empty file, or a key that is absent or `[]`, a build may name every skill under `~/.claude/skills/` that has a `SKILL.md` and every server of `~/.claude.json`. `literal_env` is not such a list: without it no literal value travels. A project skill, for the name clash below, is one the project's `skills` lists or a folder it holds; a project server is one the project's `mcp` lists or, when that list is open, one `.mcp.json` defines. An invalid file fails only a command whose builds name a `user:` item, with exit 3 and `jitso: ~/.jitso/jitso.yaml is invalid: <problems>`.
 
 | Input | Problem text |
 |---|---|
-| `user:<n>` skill not in `skills` | `skill "user:<n>" is not in the user allowlist (~/.jitso/jitso.yaml)` |
+| `user:<n>` skill not in a restricting `skills` | `skill "user:<n>" is not in the user allowlist (~/.jitso/jitso.yaml)` |
 | `user:<n>` skill without `~/.claude/skills/<n>/SKILL.md` | `user skill "<n>" has no SKILL.md under ~/.claude/skills/<n>` |
-| `user:<n>` skill that is also a project skill (in `skills`, or a folder under `.claude/skills/` or `.agents/skills/`) | `user skill "<n>" has the name of a project skill` |
-| `user:<n>` server not in `mcp` | `mcp "user:<n>" is not in the user allowlist (~/.jitso/jitso.yaml)` |
-| `user:<n>` server that is also in the project's `mcp` | `user mcp "<n>" has the name of a project mcp server` |
+| `user:<n>` skill that is also a project skill | `user skill "<n>" has the name of a project skill` |
+| `user:<n>` server not in a restricting `mcp` | `mcp "user:<n>" is not in the user allowlist (~/.jitso/jitso.yaml)` |
+| `user:<n>` server that is also a project server | `user mcp "<n>" has the name of a project mcp server` |
 | `user:<n>` server not under `mcpServers` of `~/.claude.json` | `user mcp "<n>" is not defined in ~/.claude.json` |
 | `user:<n>` server with a literal `env` or `headers` value whose `<n>/<KEY>` is not in `literal_env` | `user mcp "<n>" has a literal value in env <KEY>: use ${VAR}, or list <n>/<KEY> in literal_env of ~/.jitso/jitso.yaml` (`in headers <KEY>` for a header) |
 | `user:<n>` server with an `oauth` key | `user mcp "<n>" uses OAuth, which a launch cannot carry` |
@@ -97,18 +108,18 @@ Key: R required, O optional (validated when present), U optional and unused by t
 | Field | Type and rule | worker / conductor | subagent | Problem text |
 |---|---|---|---|---|
 | `id` | kebab-case string | R | R | `id must be kebab-case` |
-| `status` | `candidate`, `approved`, `retired`; in `.jitso/drafts/` exactly `draft` | R | R | `status must be one of candidate, approved, retired`; in a draft `status must be draft in a draft` |
+| `status` | `candidate`, `approved`, `retired`; in `.jitso/drafts/` `draft` or no key, which means draft | R (O in a draft) | R (O in a draft) | `status must be one of candidate, approved, retired`; in a draft `status must be draft in a draft` |
 | `tier` | `worker`, `conductor`, `subagent`; absent means worker | O | R | `tier must be one of worker, conductor, subagent` |
-| `model` | in `models` | R | R | `model "<m>" is not in the allowlist` |
-| `effort` | in `efforts` | R | R | `effort "<e>" is not in the allowlist` |
+| `model` | allowed by `models` | R | R | `model "<m>" is not in the allowlist` |
+| `effort` | allowed by `efforts` | R | R | `effort "<e>" is not in the allowlist` |
 | `description` | text; it is the summary a launching session reads | O | R, non-empty | `description must be a non-empty string in a subagent-tier build` |
 | `prompt` | text; the subagent's instructions | U | R, non-empty | `prompt must be a non-empty string in a subagent-tier build` |
-| `tools` | list, each in `tools`; absent means the harness default (a subagent inherits its parent's) | O | O | `tool "<t>" is not in the allowlist` |
+| `tools` | list, each allowed by `tools`; absent means the harness default (a subagent inherits its parent's) | O | O | `tool "<t>" is not in the allowlist` |
 | `route_scope` | list of instruction-section ids, or `[none]`; absent or empty means none (the card prints `ROUTE-SCOPE: none`) | O | U | `route_scope id "<id>" is not an instruction section` |
 | `budget` | mapping with `tokens` and `usd_list_cap` | O | U | none: a build without a budget validates and launches |
-| `harness` | a harness with an adapter (`Adapters` in `internal/launch`): `claude`, `codex`, `opencode`, `pi`; a field the harness cannot honor is a problem (table below) | L | U | validate: `harness "<h>" has no adapter`; launch: `no adapter for harness "<h>"` (exit 2) |
-| `skills_first` | list, each in `skills`, or `user:<name>` in the user allowlist, or `jitso` (JITSO's own skill, no entry needed) | O | E | `skill "<s>" is not in the allowlist`; `skills_first must be empty in a subagent-tier build` |
-| `mcp` | list, each in `mcp`, or `user:<name>` in the user allowlist; a launch reads the project's `.mcp.json` only when it still names a server after `--mcp-exclude` | O | E | `mcp "<m>" is not in the allowlist`; `mcp must be empty in a subagent-tier build` |
+| `harness` | a harness with an adapter (`Adapters` in `internal/launch`): `claude`, `codex`, `opencode`, `pi`; absent means `claude`; a field the harness cannot honor is a problem (table below) | L | U | validate: `harness "<h>" has no adapter`; launch: `no adapter for harness "<h>"` (exit 2) |
+| `skills_first` | list, each allowed by `skills`, or `user:<name>` in the user allowlist, or `jitso` (JITSO's own skill, no entry needed) | O | E | `skill "<s>" is not in the allowlist`; `skills_first must be empty in a subagent-tier build` |
+| `mcp` | list, each allowed by `mcp`, or `user:<name>` in the user allowlist; a launch reads the project's `.mcp.json` only when it still names a server after `--mcp-exclude` | O | E | `mcp "<m>" is not in the allowlist`; `mcp must be empty in a subagent-tier build` |
 | `requires` | list of field names the launch must supply; each matches `^[a-z][a-z_]*$` | O | E | `required field "<f>" is not a field name`; `requires must be empty in a subagent-tier build` |
 | `subagents` | list of kebab-case names, each a subagent-tier build | O | E | `subagents must be a list of kebab-case names`; `subagent "<s>" is not a subagent-tier build`; `a subagent-tier build cannot list subagents` |
 | listed subagent status | each listed subagent is `approved`; a draft worker may also list drafts | L | n/a | launch: `JITSO REJECTED: build "<w>" lists subagent "<s>", which is <status>, not approved`; validate: `subagent "<s>" is <status>, not approved` |
@@ -148,14 +159,14 @@ A project has no rules files. Every launch appends JITSO's short rules text to t
 
 ## Starting a build
 
-`jitso build new <id> [--tier worker|conductor|subagent]` writes a draft, `.jitso/drafts/<id>.yaml`, from the embedded template of the tier. A template is a commented draft: `status: draft`, the tier set, and every value that must come from an allowlist left empty, so the validator names each one until the author fills it in. No template names a real model, skill or server. The template stays out of `jitso/builds/` on purpose: an invalid file there would fail every command.
+`jitso build new <id> [--tier worker|conductor|subagent]` writes a draft, `.jitso/drafts/<id>.yaml`, from the embedded template of the tier. A template is a commented draft: `status: draft`, the tier set, and every value the author must choose left empty, so the validator names each one until the author fills it in. No template names a real model, skill or server. The template stays out of `jitso/builds/` on purpose: an invalid file there would fail every command.
 
 | Aspect | Rule |
 |---|---|
 | id | kebab-case, at most 64 characters (`^[a-z][a-z0-9-]{0,63}$`); anything else is `JITSO REJECTED: build id must be kebab-case`. No id is `JITSO REJECTED: build new needs a build id` |
 | tier | `worker` (the default), `conductor` or `subagent`; anything else is `JITSO REJECTED: --tier must be worker, conductor or subagent`; `--tier` with no value is `JITSO REJECTED: --tier needs a value` |
 | refuses | the id of a saved build (`JITSO REJECTED: build "<id>" already exists (<layer> <path>): a draft needs an id no build has`) and the id of an existing draft (`JITSO REJECTED: draft "<id>" already exists: edit .jitso/drafts/<id>.yaml or discard it`); both are checked before anything is written, and a draft is never overwritten |
-| fresh project | with no `jitso/jitso.yaml` and no `*.yaml` in `jitso/builds/`, it first writes the `jitso/jitso.yaml` skeleton (the allowlists, all empty; it never overwrites a file) and prints `wrote jitso/jitso.yaml (empty allowlists: fill them first)`. With builds and no `jitso/jitso.yaml` it exits 3 with the missing-allowlists message of this page and writes nothing |
+| no `jitso/jitso.yaml` | it also writes the skeleton (`version: 1` and comments, no list; it never overwrites a file) and prints `wrote jitso/jitso.yaml (every allowlist is open: add a list there to restrict builds)`, then the draft line. An invalid saved build stops the command before it writes anything |
 | stdout | `wrote .jitso/drafts/<id>.yaml (tier <tier>, status draft): fill every empty value, check it with jitso build validate <id>, and ask the owner to run jitso build save <id>` |
 
 The author fills the empty values, checks the build with `jitso build validate <id>`, tries it with `jitso launch --build <id>`, and asks the owner to run `jitso build save <id>`. `jitso build draft <file.yaml|->` keeps an existing build as a draft after the same checks. `jitso build discard <id>` and `jitso build discard --all` delete drafts.
@@ -168,7 +179,7 @@ A draft is a build that is not saved yet: the file `<primary>/.jitso/drafts/<id>
 |---|---|
 | folder | `.jitso/drafts/` of the primary checkout, even from a linked worktree. It holds its own `.gitignore` with the single line `*`, created when missing and never rewritten, so a draft is never committed |
 | input of `jitso build draft` | a path ending in `.yaml` or `.yml`, or `-` for standard input; at most 64 KiB; anything else is `JITSO REJECTED: a draft is a .yaml file (or - for stdin) of at most 64 KiB`. A file that cannot be read is `JITSO REJECTED: cannot read <path>: <reason>`; a second word or a flag is `JITSO REJECTED: unknown argument "<x>"` |
-| checks | the rules of this page for the draft layer (`status` exactly `draft`), the launch rules marked L (a worker needs a harness with an adapter, a listed subagent must exist), and an id of at most 64 characters (`id must be at most 64 characters`). A problem is `JITSO REJECTED: draft <path or stdin> is invalid: <problems joined by "; ">`, and nothing is written |
+| checks | the rules of this page for the draft layer (`status` `draft` or absent), the launch rules marked L (a harness needs an adapter, a listed subagent must exist), and an id of at most 64 characters (`id must be at most 64 characters`). A problem is `JITSO REJECTED: draft <path or stdin> is invalid: <problems joined by "; ">`, and nothing is written |
 | id | an id no saved build has: `JITSO REJECTED: build "<id>" already exists (<layer> <path>): a draft needs an id no build has`. An id that already has a draft is replaced |
 | written | the input bytes, unchanged, as `.jitso/drafts/<id>.yaml`; stdout is `drafted <id>: .jitso/drafts/<id>.yaml (launch it with --build <id>; only the owner can save it)` |
 | listing | `jitso build list` never lists a draft (an invalid one is a warning on stderr). `jitso build list --drafts` prints one line per draft file, by file name: the summary line, ` (draft .jitso/drafts/<file>)`, ` shadowed by <layer> <path>` when a saved build has its id, ` invalid here: <problems>` when it is invalid. |
@@ -178,4 +189,4 @@ A draft is a build that is not saved yet: the file `<primary>/.jitso/drafts/<id>
 
 ## Checking builds
 
-`jitso build validate` checks every build file of the project against this project's allowlists and instruction sections, and also reports what only a launch would reject (a harness with no adapter, a listed subagent that is not approved). `jitso build validate <id>` checks the winner of one id and the files it shadows. It lists every problem of every file instead of stopping at the first, and an invalid file of the project is a finding here, not the exit 3 that other commands give. Exit codes: 0 when every checked build is ok, 2 when one is invalid or the id is unknown, 3 when the environment is wrong (no `jitso/jitso.yaml`, outside a git checkout).
+`jitso build validate` checks every build file of the project against this project's allowlists and instruction sections, and also reports what only a launch would reject (a harness with no adapter, a listed subagent that is not approved). `jitso build validate <id>` checks the winner of one id and the files it shadows. It lists every problem of every file instead of stopping at the first, and an invalid file of the project is a finding here, not the exit 3 that other commands give. Exit codes: 0 when every checked build is ok, 2 when one is invalid or the id is unknown, 3 when the environment is wrong (outside a git checkout, an invalid `jitso/jitso.yaml`).

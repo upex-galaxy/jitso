@@ -1,0 +1,47 @@
+{
+  "id": "hooks/guard/allows-build-save",
+  "title": "the guard stays silent for jitso build save in every form: saving a draft starts no agent",
+  "source": [
+    "intended: docs/decisions.md, section \"Only launches are blocked, and launches into other repositories\" (the guard denies only what starts an agent)"
+  ],
+  "intent": "The guard blocks only what starts an agent, so an agent may save a draft as a build: the word jitso, bun run jitso, this binary's own path, after NAME=value words or a separator, and inside sh -c.",
+  "for_each": {
+    "var": "command",
+    "values": [
+      "jitso build save x",
+      "bun run jitso build save x",
+      "{{JITSO}} build save x --yes",
+      "FOO=1 jitso build save x",
+      "cd a && jitso build save x",
+      "sh -c 'jitso build save x'",
+      "ls; jitso build save x",
+      "echo ok\njitso build save x",
+      "jitso   build    save x",
+      "bash -c \"jitso build save x\"",
+      "(jitso build save x)",
+      "env FOO=1 {{JITSO}} build save x"
+    ]
+  },
+  "steps": [
+    {
+      "hook": "guard",
+      "input": {
+        "hook_event_name": "PreToolUse",
+        "tool_name": "Bash",
+        "tool_input": {
+          "command": "{{command}}"
+        },
+        "cwd": "{{PROJECT}}"
+      },
+      "expect": {
+        "exit": 0,
+        "decision": "none",
+        "stdout": [
+          {
+            "empty": true
+          }
+        ]
+      }
+    }
+  ]
+}

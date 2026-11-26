@@ -115,15 +115,15 @@ func TestDoctorInAProjectWritesNothing(t *testing.T) {
 		t.Skip("git init failed")
 	}
 	before := tree(t, cwd)
-	code, out, errOut := doctorRun(t, cwd)
-	// No jitso/jitso.yaml here, so the catalog check fails: exit 3 with nothing on stderr.
-	if code != 3 || errOut != "" {
-		t.Errorf("exit %d, stderr %q", code, errOut)
+	_, out, errOut := doctorRun(t, cwd)
+	if errOut != "" {
+		t.Errorf("stderr %q", errOut)
 	}
-	if !regexp.MustCompile(`(?m)^fail catalog: jitso/jitso\.yaml is missing`).MatchString(out) {
+	// No jitso/jitso.yaml here: a warning, since every allowlist is then open.
+	if !regexp.MustCompile(`(?m)^warn catalog: no jitso/jitso\.yaml: `).MatchString(out) {
 		t.Errorf("stdout:\n%s", out)
 	}
-	if !regexp.MustCompile(`(?m)^doctor: [0-9]+ ok, [0-9]+ warn, [1-9][0-9]* fail$`).MatchString(out) {
+	if !regexp.MustCompile(`(?m)^doctor: [0-9]+ ok, [0-9]+ warn, [0-9]+ fail$`).MatchString(out) {
 		t.Errorf("summary line missing:\n%s", out)
 	}
 	if after := tree(t, cwd); strings.Join(before, "\n") != strings.Join(after, "\n") {

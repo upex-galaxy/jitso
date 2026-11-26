@@ -9,11 +9,11 @@ import (
 
 var orcaTool = regexp.MustCompile(`^mcp__.*orca.*__`)
 
-// Guard is what the guard refuses in a PreToolUse payload: a launch of an
-// agent outside jitso (an orca launch verb, or a harness run as a program of
-// its own), a `jitso build save` (the owner saves a draft as a build, an agent never does) or a `jitso setup` or `jitso install` that is not
-// a dry run (the owner changes the setup), the zero Denial when it refuses nothing (the
-// guard then stays silent). Bash commands are judged command by command (BashDenial); the
+// Guard is what the guard refuses in a PreToolUse payload: only what starts an
+// agent outside jitso (an orca launch verb, an orca MCP tool that starts an
+// agent, or a harness run as a program of its own), the zero Denial when it
+// refuses nothing (the guard then stays silent). Bash commands are judged
+// command by command (BashDenial); the
 // tools of an MCP server whose name contains orca by tool name and arguments.
 // Every other tool, and any field of the wrong type, passes: the guard protects
 // a workflow and must never break an unrelated session.
@@ -38,12 +38,6 @@ func (l Launcher) GuardVerb(input map[string]any) string {
 // package.json (empty when it has none), which decides how the launcher is
 // spelled.
 func (d Denial) Reason(packageJSON []byte) string {
-	if d.Verb == VerbBuildSave {
-		return SaveReason(LauncherWord(packageJSON), d.SaveID)
-	}
-	if d.Verb == VerbSetup || d.Verb == VerbInstall || d.Verb == VerbInit {
-		return AdoptionReason(d.Verb)
-	}
 	if directHarnesses[d.Verb] {
 		return HarnessReason(LaunchWord(packageJSON), d.Verb)
 	}
@@ -110,20 +104,6 @@ func GuardReason(launchWord, verb string) string {
 		" --build <id> --brief <file> --mode fleet --run <run> [--worktree <sel>]." +
 		" The orca-orchestration launch step is replaced; everything else in that skill still applies." +
 		" (denied: " + verb + ")"
-}
-
-// SaveReason is the deny text for `jitso build save`: it tells the model that
-// only the owner saves a draft, and names the verb that was denied.
-func SaveReason(launcherWord, id string) string {
-	return "JITSO: only the owner saves a draft as a build; ask the owner to run: " + launcherWord +
-		" build save " + id + " (denied: " + VerbBuildSave + ")"
-}
-
-// AdoptionReason is the deny text for `jitso setup` and `jitso install`: it
-// tells the model that only the owner changes the setup, and names the verb
-// that was denied (VerbSetup, VerbInstall or VerbInit).
-func AdoptionReason(verb string) string {
-	return "JITSO: only the owner changes the JITSO setup; ask the owner to run it in a terminal (denied: " + verb + ")"
 }
 
 // HarnessReason is the deny text for a harness run as a program of its own

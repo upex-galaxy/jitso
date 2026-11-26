@@ -1,0 +1,85 @@
+{
+  "id": "validation/allowlist/open-mcp-must-be-in-mcp-json",
+  "title": "with no mcp list a server must be named in the project's .mcp.json; without that file no server exists",
+  "source": [
+    "intended: docs/decisions.md, Only launches are blocked, and launches into other repositories (allowlists are open unless a list restricts)"
+  ],
+  "intent": "Open does not mean unchecked: a typo fails validation instead of failing in the terminal.",
+  "project": {
+    "files": {
+      "jitso/jitso.yaml": "version: 1\n",
+      "jitso/builds": null,
+      ".jitso/drafts/present.yaml": "id: present\nversion: 1\nstatus: draft\nrole: operator\ntype: scanner\ndescription: Scan the repo.\nharness: claude\nmodel: any-vendor/any-model\neffort: extreme\nskills_first: []\nmcp: [dbhub, unlisted]\n",
+      ".jitso/drafts/missing.yaml": "id: missing\nversion: 1\nstatus: draft\nrole: operator\ntype: scanner\ndescription: Scan the repo.\nharness: claude\nmodel: any-vendor/any-model\neffort: extreme\nskills_first: []\nmcp: [ghost]\n"
+    }
+  },
+  "steps": [
+    {
+      "run": [
+        "build",
+        "validate",
+        "present"
+      ],
+      "expect": {
+        "exit": 0,
+        "stderr": [
+          {
+            "empty": true
+          }
+        ],
+        "stdout": [
+          {
+            "equals": "ok present draft .jitso/drafts/present.yaml\nchecked 1 builds: 1 ok, 0 invalid\n"
+          }
+        ]
+      }
+    },
+    {
+      "run": [
+        "build",
+        "validate",
+        "missing"
+      ],
+      "expect": {
+        "exit": 2,
+        "stderr": [
+          {
+            "empty": true
+          }
+        ],
+        "stdout": [
+          {
+            "equals": "invalid missing draft .jitso/drafts/missing.yaml\n  mcp \"ghost\" is not defined in .mcp.json\nchecked 1 builds: 0 ok, 1 invalid\n"
+          }
+        ]
+      }
+    },
+    {
+      "write": {
+        "project": {
+          ".mcp.json": null
+        }
+      }
+    },
+    {
+      "run": [
+        "build",
+        "validate",
+        "present"
+      ],
+      "expect": {
+        "exit": 2,
+        "stderr": [
+          {
+            "empty": true
+          }
+        ],
+        "stdout": [
+          {
+            "equals": "invalid present draft .jitso/drafts/present.yaml\n  mcp \"dbhub\" is not defined in .mcp.json\n  mcp \"unlisted\" is not defined in .mcp.json\nchecked 1 builds: 0 ok, 1 invalid\n"
+          }
+        ]
+      }
+    }
+  ]
+}

@@ -1,25 +1,26 @@
 {
   "id": "brief/pointer/target-text-checks",
-  "title": "a pointer target under the minimum words or written in Spanish is rejected naming the failed check",
+  "title": "a pointer target under the minimum words or written in Spanish gets a warning naming the failed check, and the launch carries the target text",
   "tags": [
     "posix"
   ],
   "source": [
-    "intended: docs/decisions.md, Pre-release fixes (pointer brief)"
+    "intended: docs/decisions.md, Pre-release fixes (pointer brief)",
+    "intended: docs/decisions.md, \"Only launches are blocked, and launches into other repositories\": the brief checks are warnings on stderr and the launch goes on"
   ],
   "for_each": {
     "vars": [
       "text",
-      "reason"
+      "warning"
     ],
     "rows": [
       [
         "Name the file that holds the sync entry point here",
-        "brief target failed: length (10 words, expected at least 40)"
+        "brief length: 10 words, expected at least 40"
       ],
       [
         "Lee el punto de entrada de la sincronizacion de este proyecto y explica en pocas frases como esta conectado con el resto del codigo. Comprueba lo que dices leyendo el archivo, no cambies nada y devuelve la ruta del archivo y el numero de linea en un parrafo corto para la persona que lo pidio.",
-        "brief target failed: language (the brief must be written in English)"
+        "brief language: the brief must be written in English"
       ]
     ],
     "ids": [
@@ -44,28 +45,32 @@
         "--mode",
         "direct"
       ],
+      "capture": {
+        "LAUNCH_ID": {
+          "from": "stdout",
+          "regex": "JITSO (L\\d{8}T\\d{6}-[0-9a-f]{4})",
+          "group": 1
+        }
+      },
       "expect": {
-        "exit": 2,
-        "stdout": [
+        "exit": 0,
+        "stderr": [
           {
-            "empty": true
+            "equals": "jitso: warning: {{warning}}\n"
           }
         ],
-        "stderr": [
-          "JITSO REJECTED: {{reason}}"
-        ],
-        "orca_calls": {
-          "empty": true
-        },
-        "registry": {
-          "count": 0
-        },
         "files": [
           {
-            "path": ".jitso/launches",
-            "exists": false
+            "path": ".jitso/launches/{{LAUNCH_ID}}/brief.md",
+            "contains": [
+              "{{text}}",
+              "## JITSO rules"
+            ]
           }
-        ]
+        ],
+        "registry": {
+          "count": 1
+        }
       }
     }
   ]

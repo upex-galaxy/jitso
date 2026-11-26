@@ -1,8 +1,14 @@
-// Package fleet is `jitso fleet`: the read-only list of the sessions of a
-// project. It joins the launches of the registry with the terminals Orca
-// lists, so a session can find a peer: the launch id, role and type, harness,
-// the title (which is also the session name), the Orca handle, the parent and
-// the state. It writes nothing and remembers nothing.
+// Package fleet is `jitso fleet`: the read-only list of the sessions Orca
+// lists, this project first. It joins the launches of the registry with those
+// terminals, so a session can find a peer: the launch id, role and type,
+// harness, the title (which is also the session name), the Orca handle, the
+// parent, the repository and the state. It writes nothing and remembers
+// nothing.
+//
+// The rows come in three groups: the launches of the project in registry order,
+// the unlaunched terminals in a checkout of the project, then the other
+// unlaunched terminals, each of the last two in Orca's order. A terminal of
+// another repository is never hidden.
 //
 // A row has one of five states:
 //
@@ -20,6 +26,7 @@
 package fleet
 
 import (
+	"slices"
 	"strconv"
 	"strings"
 	"text/tabwriter"
@@ -83,20 +90,30 @@ type Deps struct {
 	// then come from the registry alone and a launch without an end event is
 	// unknown.
 	Orca Orca
+	// Checkouts are the checkout folders of the project (InsideAny), asked
+	// for only when Orca listed the terminals; nil means there are none.
+	Checkouts func() []string
+	// RepoName names the repository of a worktree folder (the function
+	// RepoName), asked once for each folder of an unlaunched terminal; nil
+	// leaves the repository unknown.
+	RepoName func(folder string) string
 }
 
 // Row is one session. A field that is not known is "".
 type Row struct {
-	ID       string
-	Parent   string
-	Role     string
-	Type     string
-	Build    string
-	Harness  string
-	Mode     string
-	State    string
-	Handle   string
-	Title    string
+	ID      string
+	Parent  string
+	Role    string
+	Type    string
+	Build   string
+	Harness string
+	Mode    string
+	State   string
+	Handle  string
+	Title   string
+	// Repo is the repository the launch event records, and for an unlaunched
+	// terminal the repository of its worktree folder.
+	Repo     string
 	Worktree string
 	Branch   string
 	TS       string
@@ -116,6 +133,9 @@ func Run(o Options, d Deps) (string, error) {
 		}
 	}
 	rows := Rows(o, launches, terminals, d.Orca != nil)
+	if d.Orca != nil {
+		arrange(rows, d)
+	}
 	if o.JSON {
 		return JSON(rows, d.Orca != nil)
 	}
@@ -124,7 +144,8 @@ func Run(o Options, d Deps) (string, error) {
 
 // Rows joins launches with terminals: the launches in registry order (the
 // closed ones only with o.All), then the terminals no launch explains in
-// Orca's order. orcaKnown is false when terminals could not be listed.
+// Orca's order. orcaKnown is false when terminals could not be listed. The
+// repository of an unlaunched row is left empty (Run fills it).
 func Rows(o Options, launches []registry.Launch, terminals []orca.TerminalInfo, orcaKnown bool) []Row {
 	listed := map[string]orca.TerminalInfo{}
 	for _, t := range terminals {
@@ -145,6 +166,7 @@ func Rows(o Options, launches []registry.Launch, terminals []orca.TerminalInfo, 
 		r.Handle, _ = e.String("orca.terminal")
 		r.Title, _ = e.String("orca.title")
 		r.TS, _ = e.String("ts")
+		r.Repo, _ = e.String("repo")
 		if r.Handle != "" {
 			explained[r.Handle] = true
 		}
@@ -180,6 +202,46 @@ func Rows(o Options, launches []registry.Launch, terminals []orca.TerminalInfo, 
 	return rows
 }
 
+// arrange names the repository of each unlaunched row of Rows and moves the
+// unlaunched terminals of the project before the others, keeping the order
+// inside each group.
+func arrange(rows []Row, d Deps) {
+	var checkouts []string
+	if d.Checkouts != nil {
+		checkouts = d.Checkouts()
+	}
+	inProject := InsideAny(checkouts)
+	repos := map[string]string{}
+	// The handles of the unlaunched terminals of the project.
+	own := map[string]bool{}
+	for i := range rows {
+		r := &rows[i]
+		if r.State != Unlaunched || r.Worktree == "" {
+			continue
+		}
+		own[r.Handle] = inProject(r.Worktree)
+		if d.RepoName == nil {
+			continue
+		}
+		name, asked := repos[r.Worktree]
+		if !asked {
+			name = d.RepoName(r.Worktree)
+			repos[r.Worktree] = name
+		}
+		r.Repo = name
+	}
+	group := func(r Row) int {
+		switch {
+		case r.State != Unlaunched:
+			return 0
+		case own[r.Handle]:
+			return 1
+		}
+		return 2
+	}
+	slices.SortStableFunc(rows, func(a, b Row) int { return group(a) - group(b) })
+}
+
 func hasMark(title string, marks []string) bool {
 	for _, m := range marks {
 		if strings.Contains(title, m) {
@@ -205,13 +267,13 @@ func Text(rows []Row) string {
 			}
 			w.Write([]byte{'\n'})
 		}
-		cells("ID", "ROLE/TYPE", "HARNESS", "STATE", "HANDLE", "PARENT", "TITLE")
+		cells("ID", "ROLE/TYPE", "HARNESS", "STATE", "HANDLE", "PARENT", "REPO", "TITLE")
 		for _, r := range rows {
 			roleType := ""
 			if r.Role != "" || r.Type != "" {
 				roleType = r.Role + "/" + r.Type
 			}
-			cells(r.ID, roleType, r.Harness, r.State, r.Handle, r.Parent, r.Title)
+			cells(r.ID, roleType, r.Harness, r.State, r.Handle, r.Parent, r.Repo, r.Title)
 		}
 		w.Flush()
 	}
@@ -268,6 +330,7 @@ func JSON(rows []Row, orcaKnown bool) (string, error) {
 			{Key: "state", Value: r.State},
 			{Key: "handle", Value: nullable(r.Handle)},
 			{Key: "title", Value: nullable(r.Title)},
+			{Key: "repo", Value: nullable(r.Repo)},
 			{Key: "worktree", Value: nullable(r.Worktree)},
 			{Key: "branch", Value: nullable(r.Branch)},
 			{Key: "ts", Value: nullable(r.TS)},

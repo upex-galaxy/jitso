@@ -1,7 +1,8 @@
 # JITSO build template, tier conductor. This is a DRAFT: it is not valid until every empty value is filled.
 # A conductor coordinates a batch of work. It starts workers only with the launch command printed on its card,
 # plus --mode fleet --run <run>, never any other way.
-# Every model, effort, skill, MCP server and tool named here must be listed in jitso/jitso.yaml.
+# A model, effort, skill, MCP server or tool must be in its list of jitso/jitso.yaml when that file has one.
+# Without a list, a skill must be a folder of the project and a server one of .mcp.json.
 # Fill each empty value, then check the build with: jitso build validate <id>.
 id: <id>
 version: 1
@@ -15,19 +16,19 @@ work_kind:
 # description: one sentence a launching session reads to choose this build.
 description:
 harness: claude
-# model: a full model id from the models list of jitso/jitso.yaml. Never an alias.
+# model: a full model id, never an alias. One of the models list of jitso/jitso.yaml when it has one.
 model:
-# effort: a value from the efforts list of jitso/jitso.yaml.
+# effort: an effort name. One of the efforts list of jitso/jitso.yaml when it has one.
 effort:
 mode_default: direct
 agents_md: full
 # route_scope: optional. Ids of instruction sections the session works in. Leave it out for none.
 # route_scope: [section-id]
-# skills_first: skills the session loads before any other work, from the skills list of jitso/jitso.yaml.
+# skills_first: skills the session loads before any other work.
 skills_first: []
-# tools: [a, b] limits the tools the session may use, from the tools list of jitso/jitso.yaml. Without it the harness default applies.
+# tools: [a, b] limits the tools the session may use, by harness tool name. Without it the harness default applies.
 # tools: []
-# mcp: MCP servers from the mcp list of jitso/jitso.yaml.
+# mcp: MCP servers, by their name in .mcp.json.
 mcp: []
 # subagents: names of subagent-tier builds this conductor may hand work to. Each must be an approved build.
 subagents: []

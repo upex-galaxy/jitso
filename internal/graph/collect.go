@@ -6,6 +6,7 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/upex-galaxy/jitso/internal/fleet"
 	"github.com/upex-galaxy/jitso/internal/orca"
 	"github.com/upex-galaxy/jitso/internal/registry"
 )
@@ -144,7 +145,7 @@ func (c *Collector) Snapshot() (Snapshot, error) {
 	if project && known && c.Checkouts != nil {
 		checkouts = c.Checkouts()
 	}
-	b := newBuilder(launches, terminals, known, insideAny(checkouts))
+	b := newBuilder(launches, terminals, known, fleet.InsideAny(checkouts))
 	b.addLinks(registry.Links(events))
 	if known {
 		c.addMessages(b, client, noInbox, note)

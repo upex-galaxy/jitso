@@ -12,8 +12,6 @@ import (
 	"path"
 	"regexp"
 	"strings"
-
-	"github.com/upex-galaxy/jitso/internal/fail"
 )
 
 // Paths inside the project.
@@ -140,12 +138,13 @@ func RouteIDs(fsys fs.FS) ([]string, error) {
 	return ids, nil
 }
 
-// LoadConfig reads jitso/jitso.yaml.
+// LoadConfig reads jitso/jitso.yaml. A project without the file has every
+// allowlist open.
 func LoadConfig(fsys fs.FS) (Config, error) {
 	data, err := fs.ReadFile(fsys, ConfigPath)
 	if err != nil {
 		if errors.Is(err, fs.ErrNotExist) {
-			return Config{}, fail.Envf("%s is missing: this project has no JITSO allowlists (create it with jitso build new <id>)", ConfigPath)
+			return Config{Version: 1}, nil
 		}
 		return Config{}, err
 	}

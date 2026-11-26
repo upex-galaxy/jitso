@@ -41,7 +41,7 @@ func TestCheck(t *testing.T) {
 			[]Failure{{CheckPaths, "cited path does not exist: new/out.md"}}},
 		{"ignored tokens", good + "`https://x.test/a/b` `~/a/b` `$HOME/a` `src/**/*.ts` `<d>/f.ts` `{a}/b` `ghost.ts`\n", LanguageEnglish, all, nil},
 		{"only file-shaped tokens are checked", good + "`docs/foundation` `/project-foundation` `src/app/` `@platform/kit/line-chart` `@scope/pkg/missing.ts` `release/v0.1.2`\n", LanguageEnglish, all, nil},
-		{"file-shaped ghosts are rejected", good + "`docs/foundation/plan.md` `.github/workflows/ghost.yml` `src/.env.ghost`\n", LanguageEnglish, all,
+		{"file-shaped ghosts fail", good + "`docs/foundation/plan.md` `.github/workflows/ghost.yml` `src/.env.ghost`\n", LanguageEnglish, all,
 			[]Failure{{CheckPaths, "cited path does not exist: docs/foundation/plan.md, .github/workflows/ghost.yml, src/.env.ghost"}}},
 		{"missing sections in order", strings.Replace(strings.Replace(good, "## Scope", "Scope", 1), "## Report format", "## Reports", 1), LanguageEnglish, all,
 			[]Failure{{CheckSections, "missing section: Scope, Report format"}}},
@@ -50,7 +50,7 @@ func TestCheck(t *testing.T) {
 			[]Failure{{CheckSections, "missing section: Scope"}}},
 		{"too short", "## Goal\n## Scope\n## Done when\n## Report format\nthe a an of to and\n", LanguageEnglish, all,
 			[]Failure{{CheckLength, "6 words, expected 40 to 800"}}},
-		{"spanish rejected in en", spanishBrief, LanguageEnglish, all, []Failure{{CheckLanguage, "the brief must be written in English"}}},
+		{"spanish fails in en", spanishBrief, LanguageEnglish, all, []Failure{{CheckLanguage, "the brief must be written in English"}}},
 		{"spanish accepted in es", spanishBrief, LanguageSpanish, all, nil},
 		{"any skips language only", spanishBrief + "`x/ghost.ts`\n", LanguageAny, all, []Failure{{CheckPaths, "cited path does not exist: x/ghost.ts"}}},
 	}
@@ -125,13 +125,22 @@ func TestCheckCountsWordsNotTokens(t *testing.T) {
 	}
 }
 
-func TestReason(t *testing.T) {
-	got := Reason([]Failure{{CheckSections, "missing section: Goal"}, {CheckPaths, "cited path does not exist: a/b"}})
-	if want := "brief failed: sections (missing section: Goal); paths (cited path does not exist: a/b). " + pathsHint; got != want {
-		t.Errorf("got %q", got)
+func TestWarning(t *testing.T) {
+	tests := []struct {
+		failure Failure
+		want    string
+	}{
+		{Failure{CheckSections, "missing section: Goal"}, "brief sections: missing section: Goal"},
+		{Failure{CheckLength, "6 words, expected 40 to 800"}, "brief length: 6 words, expected 40 to 800"},
+		{Failure{CheckLanguage, "the brief must be written in English"}, "brief language: the brief must be written in English"},
+		{Failure{CheckPaths, "cited path does not exist: a/b"}, "brief paths: cited path does not exist: a/b. " + pathsHint},
 	}
-	if got := Reason([]Failure{{CheckSections, "missing section: Goal"}}); strings.Contains(got, "Output:") {
-		t.Errorf("hint without a paths failure: %q", got)
+	for _, tt := range tests {
+		t.Run(tt.failure.Check, func(t *testing.T) {
+			if got := tt.failure.Warning(); got != tt.want {
+				t.Errorf("got %q, want %q", got, tt.want)
+			}
+		})
 	}
 }
 

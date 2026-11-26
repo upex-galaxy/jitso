@@ -81,7 +81,7 @@ func TestProblems(t *testing.T) {
 		{"plan", nil},
 		{"no-budget", nil}, // the budget is optional
 		{"odd-harness", []string{`harness "other" has no adapter`}},
-		{"no-harness", []string{`harness "undefined" has no adapter`}},
+		{"no-harness", nil}, // no harness key is the default one
 		{"lists-cand", []string{`subagent "cand" is candidate, not approved`}},
 		// the order of the lines: harness, then the subagents
 		{"every-rule", []string{

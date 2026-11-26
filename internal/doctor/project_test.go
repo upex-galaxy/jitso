@@ -58,8 +58,17 @@ func TestCatalog(t *testing.T) {
 	if err := os.Remove(filepath.Join(dir, "jitso/jitso.yaml")); err != nil {
 		t.Fatal(err)
 	}
+	// Without the file every list is open, so the skills the builds name must
+	// exist: a warning about the file, not a failure.
+	for _, skill := range []string{"orca-orchestration", "sprint-testing", "test-automation"} {
+		put(t, dir, ".agents/skills/"+skill+"/SKILL.md", "---\nname: "+skill+"\n---\n")
+	}
 	c, _ = checksFor(t, dir, nil)
-	want(t, c.catalog(), Fail, "catalog", "jitso/jitso.yaml is missing")
+	want(t, c.catalog(), Warn, "catalog", "no jitso/jitso.yaml: every allowlist is open and the guard stays off in this project (run jitso init); 7 builds, 4 launchable")
+
+	put(t, dir, "jitso/jitso.yaml", "models: [\n")
+	c, _ = checksFor(t, dir, nil)
+	c.catalog()
 	want(t, c.mcp(), Warn, "mcp", "not checked: the catalog did not load")
 }
 

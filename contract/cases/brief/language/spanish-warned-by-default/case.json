@@ -1,0 +1,59 @@
+{
+  "id": "brief/language/spanish-warned-by-default",
+  "title": "a Spanish brief launches with the warning that the brief must be written in English",
+  "tags": [
+    "posix"
+  ],
+  "source": [
+    "cli/jitso/launch.test.ts: 'default still rejects a Spanish brief'",
+    "cli/jitso/brief.test.ts: 'fails a brief written in Spanish'",
+    "intended: docs/decisions.md, \"Only launches are blocked, and launches into other repositories\": the brief checks are warnings on stderr and the launch goes on"
+  ],
+  "project": {
+    "files": {
+      ".jitso/briefs/brief.md": {
+        "from": "brief.md"
+      }
+    }
+  },
+  "steps": [
+    {
+      "run": [
+        "launch",
+        "--build",
+        "haiku-explorer",
+        "--brief",
+        "{{PROJECT}}/.jitso/briefs/brief.md",
+        "--mode",
+        "direct",
+        "--dry-run"
+      ],
+      "expect": {
+        "exit": 0,
+        "stdout": [
+          {
+            "regex": "^JITSO L\\d{8}T\\d{6}-[0-9a-f]{4} \\|"
+          },
+          "dry run: nothing was written and Orca was not called"
+        ],
+        "stderr": [
+          {
+            "equals": "jitso: warning: brief language: the brief must be written in English\n"
+          }
+        ],
+        "orca_calls": {
+          "empty": true
+        },
+        "registry": {
+          "count": 0
+        },
+        "files": [
+          {
+            "path": ".jitso/launches",
+            "exists": false
+          }
+        ]
+      }
+    }
+  ]
+}

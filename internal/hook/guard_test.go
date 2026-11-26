@@ -39,15 +39,14 @@ func TestGuardVerb(t *testing.T) {
 		{"read tool", mcp("read_terminal", map[string]any{}), ""},
 		{"send_instruction", mcp("send_instruction", map[string]any{}), ""},
 		{"other tool", map[string]any{"tool_name": "Write", "tool_input": map[string]any{"command": "orca orchestration worker-start"}}, ""},
-		{"build save", bash("jitso build save x"), VerbBuildSave},
-		{"build save by own path", bash("/opt/jitso build save x --yes"), VerbBuildSave},
-		{"build draft", bash("jitso build draft x.yaml"), ""},
-		{"setup", bash("jitso setup hook --remove --yes"), VerbSetup},
-		{"install by own path", bash("/opt/jitso install skill --scope user --yes"), VerbInstall},
-		{"setup dry run", bash("jitso setup hook --dry-run"), ""},
-		{"doctor", bash("jitso doctor"), ""},
-		{"setup in a Write is not Bash", map[string]any{"tool_name": "Write", "tool_input": map[string]any{"command": "jitso setup hook"}}, ""},
-		{"build save in a Write is not Bash", map[string]any{"tool_name": "Write", "tool_input": map[string]any{"command": "jitso build save x"}}, ""},
+		{"build save", bash("jitso build save x"), ""},
+		{"build save by own path", bash("/opt/jitso build save x --yes"), ""},
+		{"setup", bash("jitso setup hook --remove --yes"), ""},
+		{"install by own path", bash("/opt/jitso install skill --scope user --yes"), ""},
+		{"init", bash("jitso init --yes"), ""},
+		{"harness session", bash("claude -p hi"), "claude"},
+		{"harness without a session", bash("claude mcp list"), ""},
+		{"a worker start in a Write is not Bash", map[string]any{"tool_name": "Write", "tool_input": map[string]any{"command": "claude -p hi"}}, ""},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -100,15 +99,9 @@ func TestDenialReason(t *testing.T) {
 		pkg  []byte
 		want string
 	}{
-		{"save", Denial{Verb: VerbBuildSave, SaveID: "scout"}, nil,
-			"JITSO: only the owner saves a draft as a build; ask the owner to run: jitso build save scout (denied: jitso build save)"},
-		{"save with a script", Denial{Verb: VerbBuildSave, SaveID: "<id>"}, script,
-			"JITSO: only the owner saves a draft as a build; ask the owner to run: bun run jitso build save <id> (denied: jitso build save)"},
-		{"setup", Denial{Verb: VerbSetup}, nil,
-			"JITSO: only the owner changes the JITSO setup; ask the owner to run it in a terminal (denied: jitso setup)"},
-		{"install with a script", Denial{Verb: VerbInstall}, script,
-			"JITSO: only the owner changes the JITSO setup; ask the owner to run it in a terminal (denied: jitso install)"},
 		{"launch", Denial{Verb: "agent launch"}, nil, GuardReason("jitso launch", "agent launch")},
+		{"launch with a script", Denial{Verb: "agent launch"}, script, GuardReason("bun run jitso launch", "agent launch")},
+		{"harness", Denial{Verb: "codex"}, nil, HarnessReason("jitso launch", "codex")},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

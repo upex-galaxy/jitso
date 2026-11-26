@@ -2,7 +2,7 @@
   "id": "build/save/unknown-draft",
   "title": "build save of an id with no draft, an id that is not kebab-case, and bad arguments are rejected before anything is shown or written",
   "source": [
-    "intended: docs/decisions.md \"The v0.1.0 cut\" (build save asks on a terminal or takes --yes): a draft becomes a build only with the owner's OK, which is a terminal answer or --yes; the guard denies the agent"
+    "intended: docs/decisions.md, \"Only launches are blocked, and launches into other repositories\": build save writes with no owner gate; --yes is accepted and changes nothing"
   ],
   "defect": "N-15",
   "intent": "INTENDED behavior (defect N-15, drafts; docs/decisions.md \"The v0.1.0 cut\"). `build save` reads only `.jitso/drafts/<id>.yaml`: an id with no draft is `JITSO REJECTED: no draft \"<id>\"`; an id that is not kebab-case (a path, for example) is `JITSO REJECTED: build id must be kebab-case` and is never turned into a path; no id is `JITSO REJECTED: build save needs a draft id`; any other word is an unknown argument. All exit 2 with nothing on stdout.",

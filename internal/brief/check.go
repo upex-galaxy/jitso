@@ -1,7 +1,8 @@
-// Package brief holds what the code enforces about a brief: the quality
-// checks (pure, apart from one existence probe per cited path) and the guard
-// on the brief file's path. A brief is text a model wrote; it travels as a
-// file and never as an argument.
+// Package brief holds what the code knows about a brief: the quality checks,
+// which only warn (pure, apart from one existence probe per cited path), and
+// the guards on the paths of the brief file and of a pointer's target, which
+// reject. A brief is text a model wrote; it travels as a file and never as an
+// argument.
 //
 // The patterns spell out JavaScript's \s and case-insensitive letters instead
 // of using Go's \s and (?i): Go's \s lacks \v and the Unicode spaces, and (?i)
@@ -70,7 +71,7 @@ var english = set("the", "a", "an", "of", "to", "and", "in", "is", "for", "on", 
 var spanish = set("el", "la", "los", "las", "de", "del", "que", "en", "y", "un", "una", "por", "para", "con", "es", "se", "lo", "al", "como", "pero", "su", "está", "puedes", "cada", "ni")
 
 // Check runs every brief check and returns the failures in the fixed order
-// sections, length, language, paths; none means the brief is acceptable.
+// sections, length, language, paths; none means there is nothing to warn about.
 // exists reports whether a cited path exists (see Exists).
 func Check(text, language string, exists func(path string) bool) []Failure {
 	var failures []Failure
@@ -148,27 +149,18 @@ func countWords(text string) int {
 	return n
 }
 
-// pathsHint follows the whole reason when a cited path is missing, so a
-// brief author learns how to declare a file the worker will create.
+// pathsHint follows the message of the paths check, so a brief author learns
+// how to declare a file the worker will create.
 const pathsHint = "A file the worker will create goes on a line that starts with Output: or Creates:"
 
-// Reason is the rejection text for failures:
-// `brief failed: <check> (<message>); ...`, followed by pathsHint once when
-// one of the failures is the paths check.
-func Reason(failures []Failure) string {
-	parts := make([]string, len(failures))
-	hint := false
-	for i, f := range failures {
-		parts[i] = f.Check + " (" + f.Message + ")"
-		if f.Check == CheckPaths {
-			hint = true
-		}
+// Warning is the one line that warns about the failure:
+// `brief <check>: <message>`, followed by pathsHint for the paths check.
+func (f Failure) Warning() string {
+	warning := "brief " + f.Check + ": " + f.Message
+	if f.Check == CheckPaths {
+		warning += ". " + pathsHint
 	}
-	reason := "brief failed: " + strings.Join(parts, "; ")
-	if hint {
-		reason += ". " + pathsHint
-	}
-	return reason
+	return warning
 }
 
 // citedPaths are the backtick-quoted tokens that look like a file path: a

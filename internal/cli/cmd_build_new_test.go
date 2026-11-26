@@ -145,7 +145,7 @@ func TestBuildNewInAFreshProject(t *testing.T) {
 	}
 
 	code, out, errOut := runIn(t, root, "", "build", "new", "first")
-	want := "wrote jitso/jitso.yaml (empty allowlists: fill them first)\n" + newLineOf("first", "worker")
+	want := "wrote jitso/jitso.yaml (every allowlist is open: add a list there to restrict builds)\n" + newLineOf("first", "worker")
 	if code != 0 || out != want || errOut != "" {
 		t.Fatalf("exit %d, stdout %q, stderr %q", code, out, errOut)
 	}
@@ -187,7 +187,9 @@ func TestBuildNewWithAnEmptyBuildsFolder(t *testing.T) {
 	}
 }
 
-func TestBuildNewWithBuildsAndNoAllowlistsExits3(t *testing.T) {
+// The whole-catalog rule holds without jitso/jitso.yaml too: an invalid saved
+// build stops the command before it writes anything.
+func TestBuildNewWithAnInvalidBuildAndNoFileWritesNothing(t *testing.T) {
 	root := gitProject(t)
 	if err := os.Remove(filepath.Join(root, "jitso/jitso.yaml")); err != nil {
 		t.Fatal(err)
@@ -199,7 +201,7 @@ func TestBuildNewWithBuildsAndNoAllowlistsExits3(t *testing.T) {
 		t.Fatal(err)
 	}
 	code, out, errOut := runIn(t, root, "", "build", "new", "first")
-	if code != 3 || out != "" || errOut != "jitso: jitso/jitso.yaml is missing: this project has no JITSO allowlists (create it with jitso build new <id>)\n" {
+	if code != 3 || out != "" || !strings.HasPrefix(errOut, "jitso: build jitso/builds/a.yaml is invalid: ") {
 		t.Fatalf("exit %d, stdout %q, stderr %q", code, out, errOut)
 	}
 	if _, err := os.Lstat(filepath.Join(root, "jitso/jitso.yaml")); err == nil {

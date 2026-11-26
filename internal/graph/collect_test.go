@@ -254,28 +254,6 @@ func TestFolderName(t *testing.T) {
 	}
 }
 
-func TestInsideAny(t *testing.T) {
-	root := t.TempDir()
-	repo := filepath.Join(root, "repo")
-	sub := filepath.Join(repo, "sub")
-	if err := os.MkdirAll(sub, 0o755); err != nil {
-		t.Fatal(err)
-	}
-	inside := insideAny([]string{repo, filepath.Join(root, "gone")})
-	for folder, want := range map[string]bool{
-		repo:                            true,
-		repo + string(os.PathSeparator): true,
-		filepath.Join(root, "gone"):     true,
-		sub:                             false,
-		root:                            false,
-		filepath.Join(root, "other"):    false,
-	} {
-		if got := inside(folder); got != want {
-			t.Errorf("%s: %v, want %v", folder, got, want)
-		}
-	}
-}
-
 func TestParseArgs(t *testing.T) {
 	good := []struct {
 		args []string

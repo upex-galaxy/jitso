@@ -5,6 +5,7 @@ import (
 	"errors"
 	"io/fs"
 	"os"
+	"path"
 	"path/filepath"
 	"slices"
 	"sort"
@@ -30,8 +31,11 @@ const JitsoSkill = "jitso"
 const ScopeUser = "user"
 
 // User is the user allowlist, ~/.jitso/jitso.yaml, and what the user folder
-// holds for the names it lists. A plain name never resolves here: only a
-// user:<name> of skills_first or mcp does. The zero value is an empty layer.
+// holds. A plain name never resolves here: only a user:<name> of skills_first
+// or mcp does. Its skills and mcp lists open like the project's: without the
+// file, or without items in a key, every user skill or server that exists may
+// be named. literal_env is not an allowlist of that kind: without it no
+// literal value travels. The zero value has no home, so nothing exists in it.
 type User struct {
 	// Home is $HOME, "" for no user layer at all.
 	Home string
@@ -54,8 +58,8 @@ type userServers struct {
 	table map[string]any
 }
 
-// LoadUser reads the user allowlist under home. A missing file is an empty
-// layer; an invalid one is a layer whose Err is set.
+// LoadUser reads the user allowlist under home. A missing or empty file opens
+// both lists; an invalid one is a layer whose Err is set.
 func LoadUser(home string) User {
 	u := User{Home: home, servers: &userServers{}}
 	if home == "" {
@@ -81,8 +85,8 @@ func LoadUser(home string) User {
 		u.Err = userInvalid("the top level is not a mapping")
 		return u
 	}
-	u.Skills = jsconv.Strings(m.Value("skills"))
-	u.MCP = jsconv.Strings(m.Value("mcp"))
+	u.Skills = allowlist(m.Value("skills"))
+	u.MCP = allowlist(m.Value("mcp"))
 	u.LiteralEnv = jsconv.Strings(m.Value("literal_env"))
 	return u
 }
@@ -186,22 +190,48 @@ func namesUser(p *Map) bool {
 	return false
 }
 
-// projectSkillDirs are the folder names under .claude/skills and
-// .agents/skills of the project, a link to a folder included.
+// projectSkillDirs are the names of the folders under .agents/skills and
+// .claude/skills of the project, a link to a folder included, sorted. A name
+// that starts with a dot is not a skill.
 func projectSkillDirs(fsys fs.FS) []string {
 	var names []string
-	for _, dir := range []string{".claude/skills", ".agents/skills"} {
+	for _, dir := range []string{".agents/skills", ".claude/skills"} {
 		entries, err := fs.ReadDir(fsys, dir)
 		if err != nil {
 			continue
 		}
 		for _, e := range entries {
-			if !slices.Contains(names, e.Name()) {
+			if !plainName(e.Name()) || slices.Contains(names, e.Name()) {
+				continue
+			}
+			if info, err := fs.Stat(fsys, path.Join(dir, e.Name())); err == nil && info.IsDir() {
 				names = append(names, e.Name())
 			}
 		}
 	}
+	slices.Sort(names)
 	return names
+}
+
+// projectServers is the mcpServers table of the project's .mcp.json, empty
+// when the file is missing or is not JSON.
+func projectServers(fsys fs.FS) map[string]map[string]any {
+	data, err := fs.ReadFile(fsys, ".mcp.json")
+	if err != nil {
+		return nil
+	}
+	var top struct {
+		MCPServers map[string]any `json:"mcpServers"`
+	}
+	if json.Unmarshal(data, &top) != nil {
+		return nil
+	}
+	out := map[string]map[string]any{}
+	for name, v := range top.MCPServers {
+		def, _ := v.(map[string]any)
+		out[name] = def
+	}
+	return out
 }
 
 // scopedSkillProblem is the problem of one scoped skills_first item, "" for
@@ -215,11 +245,11 @@ func scopedSkillProblem(item string, cfg Config) string {
 	switch {
 	case u.Err != nil:
 		return strings.TrimPrefix(u.Err.Error(), fail.EnvPrefix)
-	case !slices.Contains(u.Skills, name):
+	case !Open(u.Skills) && !slices.Contains(u.Skills, name):
 		return `skill "` + item + `" is not in the user allowlist (` + UserConfigDisplay + `)`
 	case !u.hasSkill(name):
 		return `user skill "` + name + `" has no SKILL.md under ` + UserSkillsDisplay + "/" + name
-	case slices.Contains(cfg.Skills, name) || slices.Contains(cfg.ProjectSkillDirs, name):
+	case cfg.OwnsSkill(name):
 		return `user skill "` + name + `" has the name of a project skill`
 	}
 	return ""
@@ -239,9 +269,9 @@ func scopedMCPProblem(item string, cfg Config) string {
 	switch {
 	case u.Err != nil:
 		return strings.TrimPrefix(u.Err.Error(), fail.EnvPrefix)
-	case !slices.Contains(u.MCP, name):
+	case !Open(u.MCP) && !slices.Contains(u.MCP, name):
 		return `mcp "` + item + `" is not in the user allowlist (` + UserConfigDisplay + `)`
-	case slices.Contains(cfg.MCP, name):
+	case cfg.OwnsMCP(name):
 		return `user mcp "` + name + `" has the name of a project mcp server`
 	}
 	def, ok := u.Server(name)

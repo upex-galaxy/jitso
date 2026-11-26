@@ -112,7 +112,7 @@ func TestCheckTarget(t *testing.T) {
 	if got := CheckTarget(strings.Repeat("palabra ", 50), LanguageAny); got != nil {
 		t.Errorf("any: %v", got)
 	}
-	if got, want := TargetReason(CheckTarget(strings.Repeat("el la de que ", 20), LanguageEnglish)), "brief target failed: language (the brief must be written in English)"; got != want {
-		t.Errorf("reason %q", got)
+	if got := CheckTarget(strings.Repeat("el la de que ", 20), LanguageEnglish); len(got) != 1 || got[0] != (Failure{CheckLanguage, "the brief must be written in English"}) {
+		t.Errorf("spanish: %v", got)
 	}
 }

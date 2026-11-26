@@ -211,12 +211,14 @@ async function main() {
 
   // The real guard: a harness started directly in a JITSO project is denied.
   usePath(jitsoDir("real", jitso));
-  r = await outcome(() => before({ tool: "shell", sessionID: "oc-1", input: { command: "claude --version" } }));
-  check("opencode: the real guard denies claude --version", r.error instanceof Error && r.error.message.endsWith("(denied: claude)"), r.error ?? "no error");
+  r = await outcome(() => before({ tool: "shell", sessionID: "oc-1", input: { command: "claude -p hi" } }));
+  check("opencode: the real guard denies claude -p hi", r.error instanceof Error && r.error.message.endsWith("(denied: claude)"), r.error ?? "no error");
   r = await outcome(() => handlers.tool_call({ toolName: "bash", input: { command: "pi -p hi" } }, piCtx));
   check("pi: the real guard denies pi -p hi", r.value?.block === true && r.value.reason.endsWith("(denied: pi)"), JSON.stringify(r));
   r = await outcome(() => handlers.tool_call({ toolName: "bash", input: { command: "git status" } }, piCtx));
   check("pi: the real guard allows git status", !r.error && r.value === undefined, JSON.stringify(r));
+  r = await outcome(() => before({ tool: "shell", sessionID: "oc-1", input: { command: "claude --version" } }));
+  check("opencode: the real guard allows claude --version", !r.error, r.error);
   // OpenCode names an MCP tool <server>_<tool>, also inside Code Mode's
   // execute (measured on 2.3.2): an orca server's start_worker is denied.
   r = await outcome(() => before({ tool: "orca-bridge_start_worker", sessionID: "oc-1", input: { runId: "r", spec: "s", placement: "p" } }));

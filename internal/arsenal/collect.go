@@ -1,7 +1,6 @@
 package arsenal
 
 import (
-	"encoding/json"
 	"io/fs"
 	"os"
 	"path"
@@ -17,33 +16,53 @@ import (
 const (
 	editProject = "not allowlisted (edit " + catalog.ConfigPath + ")"
 	editUser    = "not allowlisted (edit " + catalog.UserConfigDisplay + ")"
+	// openName stands where a name would, in the line of an open list.
+	openName = "(open)"
 )
 
 // Collect reads the inventory of the project whose primary checkout is
-// fsys (at the real path primary) and of the user folder home. Only a missing
-// or invalid jitso/jitso.yaml, or an unreadable instructions folder, is an
-// error; an invalid user file is one line of the inventory.
+// fsys (at the real path primary) and of the user folder home. Only an invalid
+// jitso/jitso.yaml, or an unreadable instructions folder, is an error; an
+// invalid user file is one line of the inventory.
+//
+// For an open allowlist the inventory says so, one line of the kind with the
+// name (open), and lists what exists in its place: nothing for models, efforts
+// and tools, which are free text, and the skill folders and servers a build
+// may name for skills and mcp. An open list leaves no candidate.
 func Collect(fsys fs.FS, primary, home string) (Inventory, error) {
 	res, err := catalog.Scan(fsys, primary)
 	if err != nil {
 		return Inventory{}, err
 	}
 	cfg := res.Config
-	user := catalog.LoadUser(home)
+	// The scan above reads no user layer; the inventory reads it on its own,
+	// so that an invalid file is a line and not an error.
+	cfg.User = catalog.LoadUser(home)
+	user := cfg.User
+	userKnown := user.Err == nil && home != ""
 	var inv Inventory
 	add := func(kind, name, detail string) { inv.Allowed = append(inv.Allowed, Item{kind, name, detail}) }
 	candidate := func(kind, name, detail string) { inv.Candidates = append(inv.Candidates, Item{kind, name, detail}) }
+	open := func(kind, what, key, file string) { add(kind, openName, what+": no "+key+" list in "+file) }
+	values := func(kind, key, what string, list []string) {
+		if catalog.Open(list) {
+			open(kind, what, key, catalog.ConfigPath)
+		}
+		for _, v := range list {
+			add(kind, v, "")
+		}
+	}
 
-	for _, m := range cfg.Models {
-		add("model", m, "")
+	values("model", "models", "any model id", cfg.Models)
+	values("effort", "efforts", "any effort name", cfg.Efforts)
+	values("tool", "tools", "any tool name", cfg.Tools)
+
+	skills := cfg.Skills
+	if catalog.Open(cfg.Skills) {
+		open("skill", "any skill folder of the project", "skills", catalog.ConfigPath)
+		skills = without(cfg.ProjectSkillDirs, func(s string) bool { return s == catalog.JitsoSkill })
 	}
-	for _, e := range cfg.Efforts {
-		add("effort", e, "")
-	}
-	for _, t := range cfg.Tools {
-		add("tool", t, "")
-	}
-	for _, s := range cfg.Skills {
+	for _, s := range skills {
 		add("skill", s, projectSkillSummary(fsys, s))
 	}
 	if !slices.Contains(cfg.Skills, catalog.JitsoSkill) {
@@ -52,12 +71,23 @@ func Collect(fsys fs.FS, primary, home string) (Inventory, error) {
 	if user.Err != nil {
 		add("user", strings.TrimPrefix(fail.Text(user.Err), fail.EnvPrefix), "")
 	} else {
-		for _, s := range user.Skills {
+		userSkills := user.Skills
+		if userKnown && catalog.Open(user.Skills) {
+			open("skill", "user:<name> of any skill under "+catalog.UserSkillsDisplay, "skills", catalog.UserConfigDisplay)
+			userSkills = without(userSkillDirs(home), cfg.OwnsSkill)
+		}
+		for _, s := range userSkills {
 			add("skill", "user:"+s, userSkillSummary(user, s))
 		}
 	}
-	project := projectServers(fsys)
-	for _, name := range cfg.MCP {
+
+	project := cfg.ProjectServers
+	servers := cfg.MCP
+	if catalog.Open(cfg.MCP) {
+		open("mcp", "any server of .mcp.json", "mcp", catalog.ConfigPath)
+		servers = serverNames(project)
+	}
+	for _, name := range servers {
 		detail := "(not defined in .mcp.json)"
 		if def, ok := project[name]; ok {
 			detail = Transport(def)
@@ -65,7 +95,12 @@ func Collect(fsys fs.FS, primary, home string) (Inventory, error) {
 		add("mcp", name, detail)
 	}
 	if user.Err == nil {
-		for _, name := range user.MCP {
+		userMCP := user.MCP
+		if userKnown && catalog.Open(user.MCP) {
+			open("mcp", "user:<name> of any server of "+catalog.UserClaudeDisplay, "mcp", catalog.UserConfigDisplay)
+			userMCP = without(user.ServerNames(), cfg.OwnsMCP)
+		}
+		for _, name := range userMCP {
 			add("mcp", "user:"+name, userServerDetail(user, name))
 		}
 	}
@@ -81,29 +116,28 @@ func Collect(fsys fs.FS, primary, home string) (Inventory, error) {
 		add("field", f.Name, f.Source)
 	}
 
-	for _, s := range dirNames(fsys, ".agents/skills") {
-		if !slices.Contains(cfg.Skills, s) && s != catalog.JitsoSkill {
-			candidate("skill", s, editProject)
+	if !catalog.Open(cfg.Skills) {
+		for _, s := range dirNames(fsys, ".agents/skills") {
+			if !slices.Contains(cfg.Skills, s) && s != catalog.JitsoSkill {
+				candidate("skill", s, editProject)
+			}
 		}
 	}
-	if user.Err == nil {
+	if user.Err == nil && !catalog.Open(user.Skills) {
 		for _, s := range userSkillDirs(home) {
 			if !slices.Contains(user.Skills, s) {
 				candidate("skill", "user:"+s, editUser)
 			}
 		}
 	}
-	names := make([]string, 0, len(project))
-	for name := range project {
-		names = append(names, name)
-	}
-	sort.Strings(names)
-	for _, name := range names {
-		if !slices.Contains(cfg.MCP, name) {
-			candidate("mcp", name, Transport(project[name])+", "+editProject)
+	if !catalog.Open(cfg.MCP) {
+		for _, name := range serverNames(project) {
+			if !slices.Contains(cfg.MCP, name) {
+				candidate("mcp", name, Transport(project[name])+", "+editProject)
+			}
 		}
 	}
-	if user.Err == nil {
+	if user.Err == nil && !catalog.Open(user.MCP) {
 		for _, name := range user.ServerNames() {
 			if !slices.Contains(user.MCP, name) {
 				candidate("mcp", "user:"+name, userServerDetail(user, name)+", "+editUser)
@@ -112,6 +146,27 @@ func Collect(fsys fs.FS, primary, home string) (Inventory, error) {
 	}
 	candidate("cloud", "connectors", "listed by your own session (/mcp); a launched session cannot get them yet")
 	return inv, nil
+}
+
+// without is names minus the ones drop reports.
+func without(names []string, drop func(string) bool) []string {
+	var out []string
+	for _, n := range names {
+		if !drop(n) {
+			out = append(out, n)
+		}
+	}
+	return out
+}
+
+// serverNames are the names of a server table, sorted.
+func serverNames(servers map[string]map[string]any) []string {
+	names := make([]string, 0, len(servers))
+	for name := range servers {
+		names = append(names, name)
+	}
+	sort.Strings(names)
+	return names
 }
 
 func projectSkillSummary(fsys fs.FS, name string) string {
@@ -153,27 +208,6 @@ func userServerDetail(user catalog.User, name string) string {
 		detail += ", literal args after: " + strings.Join(flags, ", ") + " (refused at launch)"
 	}
 	return detail
-}
-
-// projectServers is the mcpServers table of the project's .mcp.json, empty
-// when the file is missing or is not JSON.
-func projectServers(fsys fs.FS) map[string]map[string]any {
-	data, err := fs.ReadFile(fsys, ".mcp.json")
-	if err != nil {
-		return nil
-	}
-	var top struct {
-		MCPServers map[string]any `json:"mcpServers"`
-	}
-	if json.Unmarshal(data, &top) != nil {
-		return nil
-	}
-	out := map[string]map[string]any{}
-	for name, v := range top.MCPServers {
-		def, _ := v.(map[string]any)
-		out[name] = def
-	}
-	return out
 }
 
 func dirNames(fsys fs.FS, dir string) []string {

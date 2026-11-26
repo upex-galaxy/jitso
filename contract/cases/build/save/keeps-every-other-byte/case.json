@@ -2,7 +2,7 @@
   "id": "build/save/keeps-every-other-byte",
   "title": "the saved file differs from the draft in the one status scalar: comments, quotes, spacing, a trailing comment, blank lines and the word draft elsewhere stay byte for byte",
   "source": [
-    "intended: docs/decisions.md \"The v0.1.0 cut\" (build save asks on a terminal or takes --yes): a draft becomes a build only with the owner's OK, which is a terminal answer or --yes; the guard denies the agent"
+    "intended: docs/decisions.md, \"Only launches are blocked, and launches into other repositories\": build save writes with no owner gate; --yes is accepted and changes nothing"
   ],
   "defect": "N-15",
   "intent": "INTENDED behavior (defect N-15, drafts; docs/decisions.md \"The v0.1.0 cut\"). The written content is the draft bytes with the status value `draft` replaced by `approved`: the position is taken from the YAML node, so a trailing comment on the status line, a single or double quoted value (the quotes stay), a quoted key, extra spaces, a comment and blank lines at the end of the file, and the word `draft` or `status` inside another value are all kept exactly as written.",

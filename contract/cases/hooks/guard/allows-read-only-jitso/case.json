@@ -1,8 +1,8 @@
 {
   "id": "hooks/guard/allows-read-only-jitso",
-  "title": "the guard stays silent for the jitso commands that only read (doctor, version) and for a dry run of setup or install, which writes nothing",
+  "title": "the guard stays silent for the jitso commands that only read (doctor, version) and for a dry run of setup, install or init",
   "source": [
-    "intended: docs/decisions.md D8 and B4-12 (a dry run only reads)"
+    "intended: docs/decisions.md, section \"Only launches are blocked, and launches into other repositories\" (the guard denies only what starts an agent)"
   ],
   "for_each": {
     "var": "command",

@@ -1,0 +1,173 @@
+{
+  "id": "project/no-jitso-yaml/launch-dry-run",
+  "title": "a project without jitso/jitso.yaml has every allowlist open: it lists, validates, drafts, saves and launches builds, and none of that writes the file",
+  "source": [
+    "intended: docs/decisions.md, Only launches are blocked, and launches into other repositories (allowlists are open unless a list restricts)"
+  ],
+  "intent": "The file switches the guard on and may restrict builds. Without it nothing is restricted, and these commands do not create it.",
+  "project": {
+    "files": {
+      ".jitso/briefs/brief.md": "## Goal\n\nFind where the sync entry point of this project is defined and explain in a few sentences how it is wired to the rest of the code.\n\n## Scope\n\nRead only. Do not change any file and do not leave the repository.\n\n## Done when\n\nYou can name the file and the line that defines the entry point, and you have checked it by reading the file.\n\n## Report format\n\nOne short paragraph with the file path, the line number and a one line summary of what it does.\n",
+      ".agents/skills/local-skill/SKILL.md": "---\nname: local-skill\ndescription: A project skill.\n---\n",
+      ".claude/skills/claude-only/SKILL.md": "---\nname: claude-only\ndescription: A skill only Claude Code holds.\n---\n",
+      "jitso/jitso.yaml": null,
+      ".agents/skills/orca-orchestration/SKILL.md": "---\nname: orca-orchestration\ndescription: A project skill.\n---\n",
+      ".agents/skills/sprint-testing/SKILL.md": "---\nname: sprint-testing\ndescription: A project skill.\n---\n",
+      ".agents/skills/test-automation/SKILL.md": "---\nname: test-automation\ndescription: A project skill.\n---\n"
+    }
+  },
+  "tags": [
+    "posix"
+  ],
+  "steps": [
+    {
+      "run": [
+        "build",
+        "list"
+      ],
+      "expect": {
+        "exit": 0,
+        "stderr": [
+          {
+            "empty": true
+          }
+        ],
+        "stdout": [
+          {
+            "contains": "- haiku-explorer: "
+          }
+        ]
+      }
+    },
+    {
+      "run": [
+        "build",
+        "validate",
+        "haiku-explorer"
+      ],
+      "expect": {
+        "exit": 0,
+        "stdout": [
+          {
+            "contains": "ok haiku-explorer repo jitso/builds/haiku-explorer.yaml\n"
+          }
+        ]
+      }
+    },
+    {
+      "run": [
+        "launch",
+        "--build",
+        "haiku-explorer",
+        "--brief",
+        "{{PROJECT}}/.jitso/briefs/brief.md",
+        "--mode",
+        "direct",
+        "--dry-run"
+      ],
+      "expect": {
+        "exit": 0,
+        "stderr": [
+          {
+            "empty": true
+          }
+        ],
+        "stdout": [
+          {
+            "contains": "model claude-haiku-5-5"
+          },
+          {
+            "contains": "dry run: nothing was written"
+          }
+        ],
+        "orca_calls": {
+          "empty": true
+        },
+        "files": [
+          {
+            "path": ".jitso/launches",
+            "exists": false
+          }
+        ]
+      }
+    },
+    {
+      "run": [
+        "build",
+        "draft",
+        "-"
+      ],
+      "stdin": "id: composed\nversion: 1\nstatus: draft\nrole: operator\ntype: scanner\ndescription: Scan the repo.\nharness: claude\nmodel: any-vendor/any-model\neffort: extreme\nskills_first: [local-skill]\nmcp: [dbhub]\ntools: [Read]\n",
+      "expect": {
+        "exit": 0,
+        "stdout": [
+          {
+            "equals": "drafted composed: .jitso/drafts/composed.yaml (launch it with --build composed; only the owner can save it)\n"
+          }
+        ]
+      }
+    },
+    {
+      "run": [
+        "launch",
+        "--build",
+        "composed",
+        "--brief",
+        "{{PROJECT}}/.jitso/briefs/brief.md",
+        "--mode",
+        "direct",
+        "--dry-run"
+      ],
+      "expect": {
+        "exit": 0,
+        "stderr": [
+          {
+            "empty": true
+          }
+        ],
+        "stdout": [
+          {
+            "contains": "model any-vendor/any-model effort extreme"
+          },
+          {
+            "contains": "dry run: nothing was written"
+          }
+        ],
+        "orca_calls": {
+          "empty": true
+        },
+        "files": [
+          {
+            "path": ".jitso/launches",
+            "exists": false
+          }
+        ]
+      }
+    },
+    {
+      "run": [
+        "build",
+        "save",
+        "composed",
+        "--yes"
+      ],
+      "expect": {
+        "exit": 0,
+        "stdout": [
+          {
+            "contains": "saved composed: jitso/builds/composed.yaml (status approved)"
+          }
+        ],
+        "files": [
+          {
+            "path": "jitso/jitso.yaml",
+            "exists": false
+          },
+          {
+            "path": "jitso/builds/composed.yaml"
+          }
+        ]
+      }
+    }
+  ]
+}

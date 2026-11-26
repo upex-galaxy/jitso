@@ -54,7 +54,8 @@ func Build(tier, id string) (string, error) {
 	return strings.Replace(text, IDLine+"\n", "id: "+id+"\n", 1), nil
 }
 
-// Config is the skeleton of jitso/jitso.yaml: the allowlists, all empty.
+// Config is the skeleton of jitso/jitso.yaml: the version and comments on the
+// optional allowlists, none written, so every one is open.
 func Config() string {
 	return config
 }

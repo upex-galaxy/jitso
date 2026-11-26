@@ -1,17 +1,14 @@
-# JITSO allowlists. A build, and any override a launch asks for, may name only what is listed here.
-# Fill each list with the exact names your project uses. Models are full ids, never aliases.
-# Skills are folders under .agents/skills/, MCP servers are the ones in .mcp.json, tools are harness tool names.
+# JITSO project file. Its presence marks a project that uses JITSO: the guard acts only where it is.
+# Every allowlist here is optional. A key that is absent or [] is open: a build may name any model, effort
+# or tool, any skill folder under .agents/skills/ or .claude/skills/, and any server of .mcp.json.
+# A key with a list restricts every build to what it lists. Models are full ids, never aliases.
 version: 1
 
-models: []
-
-efforts: []
-
-mcp: []
-
-skills: []
-
-tools: []
+# models: [your-full-model-id]
+# efforts: [low, medium, high]
+# mcp: [server-name]
+# skills: [skill-folder-name]
+# tools: [Read, Grep]
 
 # fields: optional. A pattern (Go regexp, matched against the whole value) per field a build may require.
 # A field without one accepts any non-empty value on one line.

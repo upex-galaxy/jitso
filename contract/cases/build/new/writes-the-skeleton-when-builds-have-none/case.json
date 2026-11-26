@@ -1,0 +1,71 @@
+{
+  "id": "build/new/writes-the-skeleton-when-builds-have-none",
+  "title": "build new in a project that has saved builds but no jitso/jitso.yaml writes the skeleton and the draft, since a missing file restricts nothing",
+  "source": [
+    "intended: docs/decisions.md, Only launches are blocked, and launches into other repositories (allowlists are open unless a list restricts)"
+  ],
+  "defect": "N-14",
+  "intent": "A project with builds and no allowlists is valid, so there is nothing to refuse. The skeleton restricts nothing, so the saved builds stay as valid as before.",
+  "project": {
+    "files": {
+      "jitso/jitso.yaml": null,
+      ".agents/skills/orca-orchestration/SKILL.md": "---\nname: orca-orchestration\ndescription: A project skill.\n---\n",
+      ".agents/skills/sprint-testing/SKILL.md": "---\nname: sprint-testing\ndescription: A project skill.\n---\n",
+      ".agents/skills/test-automation/SKILL.md": "---\nname: test-automation\ndescription: A project skill.\n---\n"
+    }
+  },
+  "steps": [
+    {
+      "run": [
+        "build",
+        "new",
+        "my-build"
+      ],
+      "expect": {
+        "exit": 0,
+        "stderr": [
+          {
+            "empty": true
+          }
+        ],
+        "stdout": [
+          {
+            "contains": "wrote jitso/jitso.yaml (every allowlist is open: add a list there to restrict builds)\nwrote .jitso/drafts/my-build.yaml "
+          }
+        ],
+        "files": [
+          {
+            "path": "jitso/jitso.yaml",
+            "regex": [
+              "(?m)^version: 1$"
+            ]
+          },
+          {
+            "path": "jitso/jitso.yaml",
+            "text": [
+              {
+                "not_regex": "(?m)^(models|efforts|mcp|skills|tools|fields):"
+              },
+              {
+                "regex": "(?m)^# .*optional"
+              }
+            ]
+          },
+          {
+            "path": ".jitso/drafts/my-build.yaml"
+          }
+        ]
+      }
+    },
+    {
+      "run": [
+        "build",
+        "validate",
+        "haiku-explorer"
+      ],
+      "expect": {
+        "exit": 0
+      }
+    }
+  ]
+}

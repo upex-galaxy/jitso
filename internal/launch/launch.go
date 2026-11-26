@@ -110,13 +110,18 @@ func Run(a Args, d Deps) error {
 		return err
 	}
 	briefText := string(data)
+	var failures []brief.Failure
 	if target, isPointer := brief.Pointer(briefText); isPointer {
-		briefText, err = readTarget(target, a.BriefLanguage, d.Root.Primary)
+		briefText, failures, err = readTarget(target, a.BriefLanguage, d.Root.Primary)
 		if err != nil {
 			return err
 		}
-	} else if failures := brief.Check(briefText, a.BriefLanguage, brief.Exists(d.Root.Primary)); len(failures) > 0 {
-		return fail.Rejected(brief.Reason(failures))
+	} else {
+		failures = brief.Check(briefText, a.BriefLanguage, brief.Exists(d.Root.Primary))
+	}
+	// The brief checks are advice: each failed one is a warning.
+	for _, f := range failures {
+		d.Warn("jitso: warning: " + f.Warning())
 	}
 
 	lineage, err := lineageOf(a.Parent, d.Registry)
@@ -153,21 +158,20 @@ func Run(a Args, d Deps) error {
 }
 
 // readTarget is the text of a pointer brief: the target is resolved inside the
-// primary checkout, read and checked, and its text takes the place of the brief.
-func readTarget(target, language, root string) (string, error) {
+// primary checkout (a target the path guard refuses is rejected) and read, and
+// its text takes the place of the brief. The failures are those of the checks
+// that text owes.
+func readTarget(target, language, root string) (string, []brief.Failure, error) {
 	path, err := brief.ResolveTarget(target, root)
 	if err != nil {
-		return "", err
+		return "", nil, err
 	}
 	data, err := os.ReadFile(path)
 	if err != nil {
-		return "", err
+		return "", nil, err
 	}
 	text := string(data)
-	if failures := brief.CheckTarget(text, language); len(failures) > 0 {
-		return "", fail.Rejected(brief.TargetReason(failures))
-	}
-	return text, nil
+	return text, brief.CheckTarget(text, language), nil
 }
 
 // lineageOf finds the parent launch: its root and its depth plus one. An

@@ -1,11 +1,12 @@
 {
   "id": "brief/section-heading/malformed",
-  "title": "a heading that is not a markdown heading of exactly the section name does not count",
+  "title": "a heading that is not a markdown heading of exactly the section name does not count and warns",
   "tags": [
     "posix"
   ],
   "source": [
-    "cli/jitso/brief.test.ts: hasSection regex '^#{1,6}\\\\s*<name>\\\\s*:?\\\\s*$' (im)"
+    "cli/jitso/brief.test.ts: hasSection regex '^#{1,6}\\\\s*<name>\\\\s*:?\\\\s*$' (im)",
+    "intended: docs/decisions.md, \"Only launches are blocked, and launches into other repositories\": the brief checks are warnings on stderr and the launch goes on"
   ],
   "project": {
     "files": {
@@ -33,17 +34,21 @@
         "--brief",
         "{{PROJECT}}/.jitso/briefs/brief.md",
         "--mode",
-        "direct"
+        "direct",
+        "--dry-run"
       ],
       "expect": {
-        "exit": 2,
+        "exit": 0,
         "stdout": [
           {
-            "empty": true
-          }
+            "regex": "^JITSO L\\d{8}T\\d{6}-[0-9a-f]{4} \\|"
+          },
+          "dry run: nothing was written and Orca was not called"
         ],
         "stderr": [
-          "sections (missing section: Goal)"
+          {
+            "equals": "jitso: warning: brief sections: missing section: Goal\n"
+          }
         ],
         "orca_calls": {
           "empty": true

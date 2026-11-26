@@ -1,0 +1,67 @@
+{
+  "id": "validation/allowlist/open-skill-must-exist",
+  "title": "with no skills list a skill must be a folder under .agents/skills or .claude/skills of the project; jitso needs none",
+  "source": [
+    "intended: docs/decisions.md, Only launches are blocked, and launches into other repositories (allowlists are open unless a list restricts)"
+  ],
+  "intent": "Open does not mean unchecked: a typo fails validation instead of failing in the terminal. A link to a folder counts, a plain file does not.",
+  "tags": [
+    "posix"
+  ],
+  "project": {
+    "files": {
+      ".agents/skills/local-skill/SKILL.md": "---\nname: local-skill\ndescription: A project skill.\n---\n",
+      ".claude/skills/claude-only/SKILL.md": "---\nname: claude-only\ndescription: A skill only Claude Code holds.\n---\n",
+      "jitso/jitso.yaml": "version: 1\n",
+      "jitso/builds": null,
+      ".agents/skills/a-file": "not a folder\n",
+      ".claude/skills/linked": {
+        "symlink": "../../.agents/skills/local-skill"
+      },
+      ".jitso/drafts/present.yaml": "id: present\nversion: 1\nstatus: draft\nrole: operator\ntype: scanner\ndescription: Scan the repo.\nharness: claude\nmodel: any-vendor/any-model\neffort: extreme\nskills_first: [local-skill, claude-only, linked, jitso]\nmcp: []\n",
+      ".jitso/drafts/missing.yaml": "id: missing\nversion: 1\nstatus: draft\nrole: operator\ntype: scanner\ndescription: Scan the repo.\nharness: claude\nmodel: any-vendor/any-model\neffort: extreme\nskills_first: [ghost, a-file, ../skills/local-skill]\nmcp: []\n"
+    }
+  },
+  "steps": [
+    {
+      "run": [
+        "build",
+        "validate",
+        "present"
+      ],
+      "expect": {
+        "exit": 0,
+        "stderr": [
+          {
+            "empty": true
+          }
+        ],
+        "stdout": [
+          {
+            "equals": "ok present draft .jitso/drafts/present.yaml\nchecked 1 builds: 1 ok, 0 invalid\n"
+          }
+        ]
+      }
+    },
+    {
+      "run": [
+        "build",
+        "validate",
+        "missing"
+      ],
+      "expect": {
+        "exit": 2,
+        "stderr": [
+          {
+            "empty": true
+          }
+        ],
+        "stdout": [
+          {
+            "equals": "invalid missing draft .jitso/drafts/missing.yaml\n  skill \"ghost\" has no folder under .agents/skills or .claude/skills\n  skill \"a-file\" has no folder under .agents/skills or .claude/skills\n  skill \"../skills/local-skill\" has no folder under .agents/skills or .claude/skills\nchecked 1 builds: 0 ok, 1 invalid\n"
+          }
+        ]
+      }
+    }
+  ]
+}

@@ -1,14 +1,15 @@
 {
   "id": "brief/length/headings-and-path-punctuation-are-not-words",
-  "title": "headings add no words and a cited path is one word: a brief of 39 words with two cited paths is rejected as 39",
+  "title": "headings add no words and a cited path is one word: a brief of 39 words with two cited paths warns as 39",
   "tags": [
     "posix"
   ],
   "source": [
-    "intended: defect N-27"
+    "intended: defect N-27",
+    "intended: docs/decisions.md, \"Only launches are blocked, and launches into other repositories\": the brief checks are warnings on stderr and the launch goes on"
   ],
   "defect": "N-27",
-  "intent": "INTENDED behavior (defect N-27). The length check counts words: whitespace-separated tokens that hold a letter, and the four heading lines of the brief add nothing. The brief has four headings and 39 words, two of them the cited paths `src/sync.ts` and `docs/guide.md` (both exist in the default fixture), so it is rejected with `39 words`.",
+  "intent": "INTENDED behavior (defect N-27). The length check counts words: whitespace-separated tokens that hold a letter, and the four heading lines of the brief add nothing. The brief has four headings and 39 words, two of them the cited paths `src/sync.ts` and `docs/guide.md` (both exist in the default fixture), so it warns with `39 words`.",
   "project": {
     "files": {
       ".jitso/briefs/brief.md": {
@@ -25,17 +26,21 @@
         "--brief",
         "{{PROJECT}}/.jitso/briefs/brief.md",
         "--mode",
-        "direct"
+        "direct",
+        "--dry-run"
       ],
       "expect": {
-        "exit": 2,
+        "exit": 0,
         "stdout": [
           {
-            "empty": true
-          }
+            "regex": "^JITSO L\\d{8}T\\d{6}-[0-9a-f]{4} \\|"
+          },
+          "dry run: nothing was written and Orca was not called"
         ],
         "stderr": [
-          "length (39 words, expected 40 to 800)"
+          {
+            "equals": "jitso: warning: brief length: 39 words, expected 40 to 800\n"
+          }
         ],
         "orca_calls": {
           "empty": true

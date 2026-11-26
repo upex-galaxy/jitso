@@ -5,7 +5,7 @@
     "intended: every command is listed in the usage with a summary"
   ],
   "defect": "N-21",
-  "intent": "INTENDED behavior (defect N-21, version). Each later command adds its own word to the for_each list (install, defect N-16, setup, defect N-17, and doctor, defect N-20: those usage rows appear only in the Go CLI; arsenal, JITSO v0.2; link and graph, release 2 of the communication plan). The second step pins the final summary of the `build` row, `list, validate, create, draft, save and discard builds` (defects N-13, N-14, N-15).",
+  "intent": "INTENDED behavior (defect N-21, version). Each later command adds its own word to the for_each list (install, defect N-16, setup, defect N-17, and doctor, defect N-20: those usage rows appear only in the Go CLI; arsenal, JITSO v0.2; link and graph, release 2 of the communication plan). The second step pins the final summary of the `build` row, `list, validate, create, draft, save and discard builds` (defects N-13, N-14, N-15). The third step pins the summary of the `fleet` row.",
   "for_each": {
     "var": "word",
     "values": [
@@ -50,6 +50,19 @@
         "stdout": [
           {
             "regex": "(?m)^  build +list, validate, create, draft, save and discard builds$"
+          }
+        ]
+      }
+    },
+    {
+      "run": [
+        "--help"
+      ],
+      "expect": {
+        "exit": 0,
+        "stdout": [
+          {
+            "regex": "(?m)^  fleet +list the sessions Orca lists, this project first \\(read only\\): launch, role, harness, state, handle, parent, repo, title$"
           }
         ]
       }

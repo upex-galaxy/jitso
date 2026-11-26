@@ -1,12 +1,13 @@
 {
   "id": "brief/length/too-short-all-sections",
-  "title": "a brief with the four sections but only a few words is too short",
+  "title": "a brief with the four sections but only a few words warns as too short",
   "tags": [
     "posix"
   ],
   "source": [
     "cli/jitso/brief.test.ts: 'fails a brief under 40 words' ('## Goal\\nx\\n## Scope\\nx...')",
-    "intended: defect N-27"
+    "intended: defect N-27",
+    "intended: docs/decisions.md, \"Only launches are blocked, and launches into other repositories\": the brief checks are warnings on stderr and the launch goes on"
   ],
   "defect": "N-27",
   "intent": "INTENDED behavior (defect N-27). The length check counts words: whitespace-separated tokens that hold a letter, and the four heading lines of the brief add nothing. The brief ends with a line of six filler words so that the pinned count is true under the new rule. The count is 10.",
@@ -26,17 +27,21 @@
         "--brief",
         "{{PROJECT}}/.jitso/briefs/brief.md",
         "--mode",
-        "direct"
+        "direct",
+        "--dry-run"
       ],
       "expect": {
-        "exit": 2,
+        "exit": 0,
         "stdout": [
           {
-            "empty": true
-          }
+            "regex": "^JITSO L\\d{8}T\\d{6}-[0-9a-f]{4} \\|"
+          },
+          "dry run: nothing was written and Orca was not called"
         ],
         "stderr": [
-          "length (10 words, expected 40 to 800)"
+          {
+            "equals": "jitso: warning: brief length: 10 words, expected 40 to 800\n"
+          }
         ],
         "orca_calls": {
           "empty": true

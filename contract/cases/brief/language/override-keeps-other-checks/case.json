@@ -5,7 +5,8 @@
     "posix"
   ],
   "source": [
-    "cli/jitso/launch.test.ts: 'the other checks and the path guard still apply with the override'"
+    "cli/jitso/launch.test.ts: 'the other checks and the path guard still apply with the override'",
+    "intended: docs/decisions.md, \"Only launches are blocked, and launches into other repositories\": the brief checks are warnings on stderr and the launch goes on"
   ],
   "project": {
     "files": {
@@ -25,17 +26,21 @@
         "--mode",
         "direct",
         "--brief-language",
-        "any"
+        "any",
+        "--dry-run"
       ],
       "expect": {
-        "exit": 2,
+        "exit": 0,
         "stdout": [
           {
-            "empty": true
-          }
+            "regex": "^JITSO L\\d{8}T\\d{6}-[0-9a-f]{4} \\|"
+          },
+          "dry run: nothing was written and Orca was not called"
         ],
         "stderr": [
-          "sections (missing section: Goal, Scope, Done when, Report format)"
+          {
+            "equals": "jitso: warning: brief sections: missing section: Goal, Scope, Done when, Report format\njitso: warning: brief length: 2 words, expected 40 to 800\n"
+          }
         ],
         "orca_calls": {
           "empty": true

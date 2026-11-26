@@ -2,17 +2,18 @@
   "id": "hooks/guard/deny-direct-harness",
   "title": "a Bash segment whose program is claude, codex, opencode or pi is denied, through paths, quotes, wrappers, shells and substitutions",
   "source": [
-    "intended: docs/decisions.md A3 (defect N-24): the guard denies a harness started directly"
+    "intended: docs/decisions.md A3 (defect N-24): the guard denies a harness started directly",
+    "intended: docs/decisions.md, section \"Only launches are blocked, and launches into other repositories\" (the guard denies only what starts an agent)"
   ],
   "defect": "N-24",
-  "intent": "INTENDED behavior (defect N-24, owner answer A3). A worker starts only through the launcher, so a Bash segment whose program is claude, codex, opencode or pi is denied: by name or path, in any letter case, with NAME=value words, quotes or a backslash in the word, behind a wrapper (env, command, exec, nohup, time, sudo, nice, timeout, xargs), behind a shell -c or eval, and in a command substitution, a backtick or a subshell. Every invocation is denied, claude --version included. The reason tells the session to start workers through the launcher and ends with (denied: <name>).",
+  "intent": "INTENDED behavior (defect N-24, owner answer A3). A worker starts only through the launcher, so a Bash segment whose program is claude, codex, opencode or pi is denied: by name or path, in any letter case, with NAME=value words, quotes or a backslash in the word, behind a wrapper (env, command, exec, nohup, time, sudo, nice, timeout, xargs), behind a shell -c or eval, and in a command substitution, a backtick or a subshell. Only the invocations that start no session pass (hooks/guard/allows-harness-commands-without-a-session). The reason tells the session to start workers through the launcher and ends with (denied: <name>).",
   "for_each": {
     "var": "command",
     "values": [
       "claude -p hi",
       "codex exec x",
       "opencode run x",
-      "/usr/local/bin/claude --version",
+      "/usr/local/bin/claude -p hi",
       "./claude",
       "../x/claude",
       "~/bin/claude",
@@ -42,7 +43,7 @@
       "git status && codex",
       "pi -p hi",
       "PI",
-      "/opt/bin/pi --version",
+      "/opt/bin/pi -p hi",
       "env pi",
       "sh -c 'pi -p x'",
       "$(pi)"

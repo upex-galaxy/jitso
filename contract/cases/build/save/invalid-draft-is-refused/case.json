@@ -2,7 +2,7 @@
   "id": "build/save/invalid-draft-is-refused",
   "title": "a draft is checked again at save time against the current allowlists, its id must be its file name, and its status must be written so the save can change it; nothing is saved",
   "source": [
-    "intended: docs/decisions.md \"The v0.1.0 cut\" (build save asks on a terminal or takes --yes): a draft becomes a build only with the owner's OK, which is a terminal answer or --yes; the guard denies the agent"
+    "intended: docs/decisions.md, \"Only launches are blocked, and launches into other repositories\": build save writes with no owner gate; --yes is accepted and changes nothing"
   ],
   "defect": "N-15",
   "intent": "INTENDED behavior (defect N-15, drafts; docs/decisions.md \"The v0.1.0 cut\"). The allowlists may have changed since the draft was written, so `build save` re-checks the draft with the rules of `build draft`: `JITSO REJECTED: draft \"<id>\" is invalid: <problems joined by \"; \">`, exit 2, nothing shown as saved. A draft whose `id` is not its file name is invalid (`the id \"<x>\" must be the file name \"<id>\"`), because the saved file would then carry another name than its id. A status written with a tag (`!!str draft`) is a valid draft that cannot be saved byte for byte: `JITSO REJECTED: draft \"<id>\" cannot be saved: write its status as the plain word draft, or in quotes`.",

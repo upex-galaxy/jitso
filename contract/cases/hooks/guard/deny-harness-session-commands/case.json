@@ -1,0 +1,65 @@
+{
+  "id": "hooks/guard/deny-harness-session-commands",
+  "title": "a harness invocation that is not in the table of no-session commands is denied, a table flag followed by more words included",
+  "source": [
+    "intended: docs/decisions.md, section \"Only launches are blocked, and launches into other repositories\" (the guard denies only what starts an agent)"
+  ],
+  "intent": "Deny by default: the first word after the harness must be in the table. A flag of the table followed by anything but a redirection is denied (claude --version -p x, claude --help then a prompt), and so is a table flag that comes after another word (claude -p x --help). claude plugin eval runs agent sessions and is denied; claude config is no subcommand of Claude Code, so its word would be a prompt.",
+  "for_each": {
+    "var": "command",
+    "values": [
+      "claude",
+      "claude \"fix the bug\"",
+      "claude -p x --help",
+      "claude --help -p x",
+      "claude --version -p x",
+      "claude --help mcp",
+      "claude -p mcp",
+      "claude --debug mcp list",
+      "claude config list",
+      "claude plugin eval x",
+      "claude plugin -h eval",
+      "claude --version >out -p x",
+      "codex exec x",
+      "codex e x",
+      "codex resume",
+      "codex \"fix\"",
+      "codex --help exec",
+      "opencode",
+      "opencode run x",
+      "opencode serve",
+      "opencode .",
+      "pi",
+      "pi \"hi\"",
+      "pi mcp list",
+      "pi --help -p x",
+      "claude --version && claude -p x",
+      "sh -c 'claude -p x'",
+      "echo \"$(claude -p hi)\"",
+      "git add . && claude -p hi",
+      "git commit -m \"fix (claude)\" && codex exec x"
+    ]
+  },
+  "steps": [
+    {
+      "hook": "guard",
+      "input": {
+        "hook_event_name": "PreToolUse",
+        "tool_name": "Bash",
+        "tool_input": {
+          "command": "{{command}}"
+        },
+        "cwd": "{{PROJECT}}"
+      },
+      "expect": {
+        "exit": 0,
+        "decision": "deny",
+        "reason": [
+          {
+            "regex": "^JITSO owns worker launch in this project: a harness starts only through (bun run jitso|jitso) launch --build <id> --brief <file> --mode <mode>, never as a program of its own\\. .*\\(denied: (claude|codex|opencode|pi)\\)$"
+          }
+        ]
+      }
+    }
+  ]
+}

@@ -66,10 +66,10 @@
         "exit": 0,
         "stdout": [
           {
-            "regex": "(?m)^L20261124T090000-d4d4 +operator/tester +claude +closed +term_d +- +\\[jitso:L20261124T090000-d4d4\\] sonnet-tester$"
+            "regex": "(?m)^L20261124T090000-d4d4 +operator/tester +claude +closed +term_d +- +repo +\\[jitso:L20261124T090000-d4d4\\] sonnet-tester$"
           },
           {
-            "regex": "(?m)^L20261124T100000-a1a1 +conductor/conductor +claude +live +term_a +- +"
+            "regex": "(?m)^L20261124T100000-a1a1 +conductor/conductor +claude +live +term_a +- +repo +"
           },
           {
             "regex": "(?m)^jitso fleet: 2 live, 1 gone, 1 closed, 1 unlaunched$"

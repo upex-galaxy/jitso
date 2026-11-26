@@ -1,0 +1,138 @@
+{
+  "id": "fleet/other-repos-after-this-project",
+  "title": "fleet keeps every terminal Orca lists and orders this project first: its launches, then the unlaunched terminals in its checkouts, then the rest; the repo column names the repository of each row",
+  "source": [
+    "intended: docs/decisions.md, Only launches are blocked, and launches into other repositories (fleet keeps every session, adds a repo column, orders this project first)"
+  ],
+  "intent": "A terminal of another repository is not hidden: it comes after this project's rows, so a peer can still be found. A launch row stays first wherever its terminal is, and its repo is the one its launch event records. An unlaunched terminal is of this project when its folder is the primary checkout or a linked worktree of it; its repo is named after the git common directory of its folder, so a linked worktree and a subfolder show the repository's name. Outside git the folder name is shown, and a terminal with no folder has none. Inside each group Orca's order is kept.",
+  "project": {
+    "files": {
+      ".jitso/launches.jsonl": {
+        "from": "launches.jsonl"
+      }
+    }
+  },
+  "home": {
+    "files": {
+      "other-repo/pkg/notes.txt": "a folder inside another repository\n"
+    }
+  },
+  "orca": {
+    "responses": {
+      "terminal list": {
+        "terminals": [
+          {
+            "handle": "term_o",
+            "worktreePath": "{{HOME}}/other-repo/pkg",
+            "title": "other session"
+          },
+          {
+            "handle": "term_plain",
+            "worktreePath": "/work/plain",
+            "title": "plain folder"
+          },
+          {
+            "handle": "term_a",
+            "worktreePath": "{{HOME}}/other-repo/pkg",
+            "title": "[jitso:L20261124T100000-a1a1] sonnet-conductor"
+          },
+          {
+            "handle": "term_w",
+            "worktreePath": "{{WORKTREE_linked}}",
+            "title": "worktree session"
+          },
+          {
+            "handle": "term_none",
+            "title": "no folder"
+          },
+          {
+            "handle": "term_p",
+            "worktreeId": "uuid-1::{{PROJECT}}",
+            "title": "primary session"
+          }
+        ]
+      }
+    }
+  },
+  "steps": [
+    {
+      "git_worktree": {
+        "name": "linked"
+      }
+    },
+    {
+      "git_init": {
+        "path": "{{HOME}}/other-repo"
+      }
+    },
+    {
+      "run": [
+        "fleet"
+      ],
+      "expect": {
+        "exit": 0,
+        "stdout": [
+          {
+            "regex": "^ID +ROLE/TYPE +HARNESS +STATE +HANDLE +PARENT +REPO +TITLE\\nL20261124T100000-a1a1 +conductor/conductor +claude +live +term_a +- +target-app +\\[jitso:L20261124T100000-a1a1\\] sonnet-conductor\\nL20261124T100200-c3c3 +operator/worker +pi +gone +term_c +L20261124T100000-a1a1 +project +\\[jitso:L20261124T100200-c3c3\\] pi-worker\\n- +- +- +unlaunched +term_w +- +project +worktree session\\n- +- +- +unlaunched +term_p +- +project +primary session\\n- +- +- +unlaunched +term_o +- +other-repo +other session\\n- +- +- +unlaunched +term_plain +- +plain +plain folder\\n- +- +- +unlaunched +term_none +- +- +no folder\\njitso fleet: 1 live, 1 gone, 5 unlaunched\\n$"
+          }
+        ],
+        "stderr": [
+          {
+            "empty": true
+          }
+        ],
+        "orca_calls": {
+          "verbs": [
+            "terminal list"
+          ]
+        },
+        "registry": {
+          "count": 2
+        },
+        "files": [
+          {
+            "path": ".jitso/launches.lock",
+            "exists": false
+          }
+        ]
+      }
+    },
+    {
+      "run": [
+        "fleet",
+        "--json"
+      ],
+      "expect": {
+        "exit": 0,
+        "stdout": [
+          {
+            "regex": "(?s)\"handle\": \"term_a\".*\"handle\": \"term_c\".*\"handle\": \"term_w\".*\"handle\": \"term_p\".*\"handle\": \"term_o\".*\"handle\": \"term_plain\".*\"handle\": \"term_none\""
+          },
+          {
+            "regex": "\"handle\": \"term_a\",\\n +\"title\": \"[^\\n]*\",\\n +\"repo\": \"target-app\",\\n"
+          },
+          {
+            "regex": "\"handle\": \"term_w\",\\n +\"title\": \"worktree session\",\\n +\"repo\": \"project\",\\n"
+          },
+          {
+            "regex": "\"handle\": \"term_o\",\\n +\"title\": \"other session\",\\n +\"repo\": \"other-repo\",\\n"
+          },
+          {
+            "regex": "\"handle\": \"term_none\",\\n +\"title\": \"no folder\",\\n +\"repo\": null,\\n +\"worktree\": null,\\n"
+          }
+        ],
+        "stderr": [
+          {
+            "empty": true
+          }
+        ],
+        "orca_calls": {
+          "verbs": [
+            "terminal list",
+            "terminal list"
+          ]
+        }
+      }
+    }
+  ]
+}

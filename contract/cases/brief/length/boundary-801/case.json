@@ -1,15 +1,16 @@
 {
   "id": "brief/length/boundary-801",
-  "title": "a brief of exactly 801 words is rejected with the exact count",
+  "title": "a brief of exactly 801 words warns with the exact count",
   "tags": [
     "posix"
   ],
   "source": [
     "cli/jitso/brief.test.ts: 'fails a brief under 40 words and one over 800' (boundary)",
-    "intended: defect N-27"
+    "intended: defect N-27",
+    "intended: docs/decisions.md, \"Only launches are blocked, and launches into other repositories\": the brief checks are warnings on stderr and the launch goes on"
   ],
   "defect": "N-27",
-  "intent": "INTENDED behavior (defect N-27). The length check counts words: whitespace-separated tokens that hold a letter, and the four heading lines of the brief add nothing. The brief ends with a line of six filler words so that the pinned count is true under the new rule. The count is 801 and the rejection says `801 words`.",
+  "intent": "INTENDED behavior (defect N-27). The length check counts words: whitespace-separated tokens that hold a letter, and the four heading lines of the brief add nothing. The brief ends with a line of six filler words so that the pinned count is true under the new rule. The count is 801 and the warning says `801 words`.",
   "project": {
     "files": {
       ".jitso/briefs/brief.md": {
@@ -26,17 +27,21 @@
         "--brief",
         "{{PROJECT}}/.jitso/briefs/brief.md",
         "--mode",
-        "direct"
+        "direct",
+        "--dry-run"
       ],
       "expect": {
-        "exit": 2,
+        "exit": 0,
         "stdout": [
           {
-            "empty": true
-          }
+            "regex": "^JITSO L\\d{8}T\\d{6}-[0-9a-f]{4} \\|"
+          },
+          "dry run: nothing was written and Orca was not called"
         ],
         "stderr": [
-          "length (801 words, expected 40 to 800)"
+          {
+            "equals": "jitso: warning: brief length: 801 words, expected 40 to 800\n"
+          }
         ],
         "orca_calls": {
           "empty": true

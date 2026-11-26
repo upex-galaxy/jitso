@@ -1,12 +1,13 @@
 {
   "id": "brief/failures-in-fixed-order",
-  "title": "when a brief fails several checks they are reported as one line in the order sections, length, language, paths",
+  "title": "a brief that fails several checks gets one warning line per check, in the order sections, length, language, paths, and launches, with --dry-run and without",
   "tags": [
     "posix"
   ],
   "source": [
     "cli/jitso/brief.test.ts: checkBrief order of checks",
-    "cli/jitso/launch.test.ts: runLaunch joins failures with '; '"
+    "cli/jitso/launch.test.ts: runLaunch joins failures with '; '",
+    "intended: docs/decisions.md, \"Only launches are blocked, and launches into other repositories\": the brief checks are warnings on stderr and the launch goes on"
   ],
   "project": {
     "files": {
@@ -24,18 +25,20 @@
         "--brief",
         "{{PROJECT}}/.jitso/briefs/brief.md",
         "--mode",
-        "direct"
+        "direct",
+        "--dry-run"
       ],
       "expect": {
-        "exit": 2,
+        "exit": 0,
         "stdout": [
           {
-            "empty": true
-          }
+            "regex": "^JITSO L\\d{8}T\\d{6}-[0-9a-f]{4} \\|"
+          },
+          "dry run: nothing was written and Orca was not called"
         ],
         "stderr": [
           {
-            "regex": "(?m)JITSO REJECTED: brief failed: sections \\(missing section: Scope, Done when, Report format\\); length \\(\\d+ words, expected 40 to 800\\); language \\(the brief must be written in English\\); paths \\(cited path does not exist: src/ghost/x\\.ts\\)\\. A file the worker will create goes on a line that starts with Output: or Creates:$"
+            "regex": "^jitso: warning: brief sections: missing section: Scope, Done when, Report format\\njitso: warning: brief length: \\d+ words, expected 40 to 800\\njitso: warning: brief language: the brief must be written in English\\njitso: warning: brief paths: cited path does not exist: src/ghost/x\\.ts\\. A file the worker will create goes on a line that starts with Output: or Creates:\\n$"
           }
         ],
         "orca_calls": {
@@ -50,6 +53,44 @@
             "exists": false
           }
         ]
+      }
+    },
+    {
+      "run": [
+        "launch",
+        "--build",
+        "haiku-explorer",
+        "--brief",
+        "{{PROJECT}}/.jitso/briefs/brief.md",
+        "--mode",
+        "direct"
+      ],
+      "capture": {
+        "LAUNCH_ID": {
+          "from": "stdout",
+          "regex": "JITSO (L\\d{8}T\\d{6}-[0-9a-f]{4})",
+          "group": 1
+        }
+      },
+      "expect": {
+        "exit": 0,
+        "stderr": [
+          {
+            "regex": "^jitso: warning: brief sections: missing section: Scope, Done when, Report format\\njitso: warning: brief length: \\d+ words, expected 40 to 800\\njitso: warning: brief language: the brief must be written in English\\njitso: warning: brief paths: cited path does not exist: src/ghost/x\\.ts\\. A file the worker will create goes on a line that starts with Output: or Creates:\\n$"
+          }
+        ],
+        "files": [
+          {
+            "path": ".jitso/launches/{{LAUNCH_ID}}/brief.md",
+            "contains": [
+              "src/ghost/x.ts",
+              "## JITSO rules"
+            ]
+          }
+        ],
+        "registry": {
+          "count": 1
+        }
       }
     }
   ]

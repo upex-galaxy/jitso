@@ -320,7 +320,7 @@ func initConfigPart(root project.Root) (adopt.Part, bool) {
 	path := filepath.Join(root.Primary, filepath.FromSlash(catalog.ConfigPath))
 	var plan adopt.Plan
 	plan.Add(adopt.Change{Path: path, Display: catalog.ConfigPath, New: []byte(templates.Config()), Kind: adopt.KindFile, Brief: true})
-	plan.Notes = append(plan.Notes, "note: "+catalog.ConfigPath+" has empty allowlists: fill them before your first build")
+	plan.Notes = append(plan.Notes, "note: "+catalog.ConfigPath+" lists no allowlist: every one is open until you add a list")
 	return adopt.Part{Label: "allowlists (" + catalog.ConfigPath + ")", Plan: plan, Options: adopt.Options{
 		Scope: "project", Version: version.Current(), Root: root.Checkout, BackupsDir: filepath.Join(root.StateDir(), "backups"),
 		Display: func(p string) string {

@@ -1,0 +1,79 @@
+{
+  "id": "validation/allowlist/listing-restricts",
+  "title": "a non-empty list restricts its own key and no other; a value that is neither a list nor empty stays closed",
+  "source": [
+    "intended: docs/decisions.md, Only launches are blocked, and launches into other repositories (allowlists are open unless a list restricts)"
+  ],
+  "intent": "Each row gives one key a value and leaves the others open, so the draft breaks exactly that key. A key written as a single word is a mistake, not an open list: it allows nothing, so a restriction is never dropped in silence.",
+  "project": {
+    "files": {
+      ".agents/skills/local-skill/SKILL.md": "---\nname: local-skill\ndescription: A project skill.\n---\n",
+      ".claude/skills/claude-only/SKILL.md": "---\nname: claude-only\ndescription: A skill only Claude Code holds.\n---\n",
+      "jitso/jitso.yaml": "version: 1\n{{line}}\n",
+      "jitso/builds": null,
+      ".jitso/drafts/restricted.yaml": "id: restricted\nversion: 1\nstatus: draft\nrole: operator\ntype: scanner\ndescription: Scan the repo.\nharness: claude\nmodel: any-vendor/any-model\neffort: extreme\nskills_first: [local-skill]\nmcp: [dbhub]\ntools: [AnyTool]\n"
+    }
+  },
+  "for_each": {
+    "vars": [
+      "line",
+      "problem"
+    ],
+    "ids": [
+      "models",
+      "efforts",
+      "mcp",
+      "skills",
+      "tools",
+      "not-a-list"
+    ],
+    "rows": [
+      [
+        "models: [claude-haiku-5-5]",
+        "model \"any-vendor/any-model\" is not in the allowlist"
+      ],
+      [
+        "efforts: [low]",
+        "effort \"extreme\" is not in the allowlist"
+      ],
+      [
+        "mcp: [openapi]",
+        "mcp \"dbhub\" is not in the allowlist"
+      ],
+      [
+        "skills: [sprint-testing]",
+        "skill \"local-skill\" is not in the allowlist"
+      ],
+      [
+        "tools: [Read]",
+        "tool \"AnyTool\" is not in the allowlist"
+      ],
+      [
+        "models: any-vendor/any-model",
+        "model \"any-vendor/any-model\" is not in the allowlist"
+      ]
+    ]
+  },
+  "steps": [
+    {
+      "run": [
+        "build",
+        "validate",
+        "restricted"
+      ],
+      "expect": {
+        "exit": 2,
+        "stderr": [
+          {
+            "empty": true
+          }
+        ],
+        "stdout": [
+          {
+            "equals": "invalid restricted draft .jitso/drafts/restricted.yaml\n  {{problem}}\nchecked 1 builds: 0 ok, 1 invalid\n"
+          }
+        ]
+      }
+    }
+  ]
+}

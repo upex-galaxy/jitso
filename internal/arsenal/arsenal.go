@@ -21,7 +21,8 @@ type Item struct {
 
 // Inventory is everything one arsenal prints.
 type Inventory struct {
-	// Allowed are the items a build may name, in print order.
+	// Allowed are the items a build may name, in print order, with a line for
+	// each open allowlist.
 	Allowed []Item
 	// Candidates are the items no allowlist names (--all only).
 	Candidates []Item

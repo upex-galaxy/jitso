@@ -10,7 +10,7 @@ import (
 // lexed is the commands of line as "word word | word", or "!" when it does
 // not lex.
 func lexed(line string) string {
-	cmds, ok := lex(line)
+	cmds, _, ok := lex(line)
 	if !ok {
 		return "!"
 	}
@@ -54,6 +54,7 @@ func TestLex(t *testing.T) {
 		{"unbalanced backtick", "echo `a", "!"},
 		{"unbalanced substitution", "echo $(a", "!"},
 		{"a ) with no (", "case x in a) b;; esac", "!"},
+		{"case inside a substitution", "echo $(case x in a) b;; esac)", "!"},
 		{"heredoc without its delimiter line", "cat <<EOF\nclaude", "!"},
 		{"heredoc at the end of the line", "cat <<EOF", "!"},
 		{"heredoc without a delimiter word", "cat << ;", "!"},
@@ -119,60 +120,85 @@ func TestDataPositions(t *testing.T) {
 	}
 }
 
+func TestLexDocs(t *testing.T) {
+	tests := []struct {
+		in   string
+		want []string
+	}{
+		{"ls", nil},
+		{"cat <<A <<-B\na\nA\n\tb\n\tB\nls", []string{"a\n", "\tb\n"}},
+		{"git commit -m \"$(cat <<'EOF'\nfix\nEOF\n)\"", []string{"fix\n"}},
+		{"echo `cat <<EOF\nx\nEOF\n`", []string{"x\n"}},
+	}
+	for _, tt := range tests {
+		t.Run(tt.in, func(t *testing.T) {
+			if _, docs, ok := lex(tt.in); !ok || !reflect.DeepEqual(docs, tt.want) {
+				t.Errorf("lex(%q) docs = %q %v, want %q", tt.in, docs, ok, tt.want)
+			}
+		})
+	}
+}
+
 // What the lexer changes, beyond the old tables: each row is judged by the
 // guard, and old says what the old splitter said, so a row that moves is
-// visible here. Only quoted text and heredoc bodies of data commands move.
+// visible here.
 func TestLexedJudgment(t *testing.T) {
 	l := Launcher{IsOwn: isOwnAt("/opt/jitso")}
-	const save, setup, ws, harness = VerbBuildSave, VerbSetup, "orchestration worker-start", "claude"
+	const ws, harness, terminal = "orchestration worker-start", "claude", "terminal create --command <harness>"
 	tests := []struct {
 		command, want, old string
 	}{
 		// text in a data command
-		{`orca orchestration send --to dispatch:x --body "ask the owner to run jitso build save cp-x"`, "", save},
-		{`orca orchestration reply --id i --body 'run jitso setup hook'`, "", setup},
-		{`git commit -m "$(cat <<'EOF'` + "\nfix (claude): jitso build save x\nEOF\n)\"", "", harness},
-		{`gh pr create --title "x" --body "$(cat <<'EOF'` + "\nrun jitso setup hook\nEOF\n)\"", "", setup},
+		{`orca orchestration send --to dispatch:x --body "run orca orchestration worker-start"`, "", ws},
+		{`git commit -m "$(cat <<'EOF'` + "\nfix (claude): x\nEOF\n)\"", "", harness},
 		{"git commit -F - <<'EOF'\norca orchestration worker-start is denied\nEOF", "", ws},
 		{"cat > r.md <<EOF\n| w1 | claude --resume abc |\nEOF", "", harness},
 		{"cat <<-EOF\n\tclaude\n\tEOF", "", harness},
 		{"cat <<EOF\n\\$(claude -p)\nEOF", "", harness},
-		{`echo "x" "jitso build save x"`, "", save},
-		{`git commit -m "a" && git tag -m "jitso build save x" v1`, "", save},
+		// each command on its own: another program does not unmask a data command
+		{`git add . && git commit -m "fix (claude) x" -- a`, "", harness},
+		{`cd x && git commit -m "orca orchestration worker-start"`, "", ws},
+		{`bash scripts/x.sh && git commit -m "fix (claude)"`, "", harness},
+		{`bash --version && git commit -m "fix (claude)"`, "", harness},
+		{`sh -c 'git commit -m "fix (claude)"'`, "", harness},
+		{`eval "$(ssh-agent -s)" && git commit -m "fix (claude)"`, "", harness},
+		// another program is judged by its program, not by text it holds
+		{`git log --grep "; claude -p hi"`, "", harness},
+		{`ssh host "cd x; claude -p hi"`, "", harness},
+		{`'claude -p hi'`, "", harness},
+		{"python3 <<'EOF'\norca orchestration worker-start\nEOF", "", ws},
+		// but its words are read for the orca verbs
+		{`python3 -c "orca orchestration worker-start --run r"`, ws, ws},
+		{`orca "orchestration worker-start" --run r`, ws, ws},
+		{`git rebase --exec "orca orchestration worker-start"`, ws, ws},
+		{`FOO=1 git commit -m "orca orchestration worker-start"`, ws, ws},
+		{`orca terminal create --title "a b" --command "claude --model x"`, terminal, terminal},
+		{`orca terminal create --command "env 'claude'"`, terminal, terminal},
+		{`orca terminal create --command="cd x && claude"`, harness, harness},
 		// text outside a data position is still read
-		{`git commit -m "x" jitso build save y`, save, save},
-		{`echo jitso build save x`, save, save},
-		{`gh pr create --title x jitso setup hook`, setup, setup},
-		// a substitution is a command, so it must be a data command too
+		{`git commit -m "x" orca orchestration worker-start`, ws, ws},
+		{`echo orca orchestration worker-start`, ws, ws},
+		// a substitution is a command
 		{`git commit -m "x $(claude -p hi)"`, harness, harness},
 		{"cat <<EOF\n`claude -p`\nEOF", harness, harness},
-		{`git commit -m "$(printf 'jitso build save x' | sh)"`, save, save},
-		// every other program, anywhere on the line, keeps the old splitter
-		{`python3 -c "jitso build save x"`, save, save},
-		{`python3 -c "jitso setup hook"`, setup, setup},
-		{`python3 -c "orca orchestration worker-start --run r"`, ws, ws},
-		{`node -e "jitso build save x"`, save, save},
-		{`echo "jitso build save x" | python3`, save, save},
-		{`echo "jitso build save x" > a.sh && sh a.sh`, save, save},
-		{`docker exec c sh -c "jitso build save x"`, save, save},
-		{`busybox sh -c "jitso build save x"`, save, save},
-		{`git -c alias.x='! jitso build save x' x`, save, save},
-		{`git rebase --exec "jitso build save x"`, save, save},
-		{`cd x && git commit -m "jitso build save x"`, save, save},
-		{`FOO=1 git commit -m "jitso build save x"`, save, save},
-		{`sh -c 'git commit -m "fix (claude)"'`, harness, harness},
-		{`bash -c "git commit -m 'jitso build save notes'"`, save, save},
-		{"read -r X <<'EOF'\njitso build save x\nEOF\n$X", save, save},
-		{`echo 'jitso build save x' | xargs -I{} sh -c '{}'`, save, save},
-		{`echo "jitso build save x" | cat`, save, save},
-		{`cat <<< "jitso build save x"`, save, save},
-		{`echo "jitso build save x" | git commit -F - && sh -c x`, save, save},
-		{`'claude -p hi'`, harness, harness},
-		{`orca "orchestration worker-start" --run r`, ws, ws},
-		{`orca terminal create --title "a b" --command "claude --model x"`, "terminal create --command <harness>", "terminal create --command <harness>"},
-		{`echo "$(case x in a) jitso build save x;; esac)"`, save, save},
+		// live text
+		{"bash <<'EOF'\nclaude -p hi\nEOF", harness, harness},
+		{"bash /dev/stdin <<EOF\nclaude\nEOF", harness, harness},
+		{". /dev/stdin <<EOF\nclaude\nEOF", harness, harness},
+		{"sudo -s <<EOF\nclaude\nEOF", harness, harness},
+		{"bash -o pipefail <<EOF\nclaude\nEOF", harness, harness},
+		{`source <(echo "claude -p hi")`, harness, ""},
+		{`eval "$(echo 'claude -p hi')"`, harness, ""},
+		{`echo "claude -p hi" | env bash`, harness, ""},
+		{"read X <<< 'claude -p hi'; ${X}", harness, ""},
+		{"bash x.sh <<EOF\nclaude\nEOF", "", harness},
+		{"bash -c 'cat' <<EOF\nclaude\nEOF", "", harness},
 		{"cat <<EOF\nclaude\n", harness, harness},
-		{"jitso setup hook --dry-run", "", ""},
+		// open: a script the line writes and then runs
+		{`echo "orca orchestration worker-start" > a.sh && sh a.sh`, "", ws},
+		{`echo "case x in a) claude;; esac"`, "", harness},
+		// a case statement inside a substitution does not lex
+		{`echo "$(case x in a) claude;; esac)"`, harness, harness},
 	}
 	for _, tt := range tests {
 		t.Run(tt.command, func(t *testing.T) {
@@ -197,6 +223,8 @@ func TestLexLongInput(t *testing.T) {
 		strings.Repeat("cat <<A ", 18000) + "\n" + strings.Repeat("A\n", 18000) + "claude",
 		strings.Repeat("eval ", 30000) + "claude",
 		strings.Repeat("sh -c ", 25000) + "claude",
+		strings.Repeat(`echo "a b" | sh; `, 9000) + "claude",
+		strings.Repeat(`sh -c "$(`, maxNest/2) + "ls" + strings.Repeat(`)"`, maxNest/2) + "; claude",
 		strings.Repeat("`", 150001),
 		"cat <<EOF\n" + strings.Repeat("$(a) ", 30000) + "\nEOF\nclaude",
 	} {

@@ -1,0 +1,45 @@
+{
+  "id": "hooks/guard/allows-adoption-commands",
+  "title": "the guard stays silent for jitso setup, jitso install and jitso init in every form, dry run or not: they start no agent",
+  "source": [
+    "intended: docs/decisions.md, section \"Only launches are blocked, and launches into other repositories\" (the guard denies only what starts an agent)"
+  ],
+  "intent": "The guard blocks only what starts an agent, so the commands that change the JITSO setup pass: the word jitso, bun run jitso, this binary's own path, after NAME=value words or a separator, and inside sh -c.",
+  "for_each": {
+    "var": "command",
+    "values": [
+      "jitso setup hook --remove --yes",
+      "bun run jitso setup hook",
+      "{{JITSO}} install skill --scope user --yes",
+      "FOO=1 jitso setup instructions --yes",
+      "cd x && jitso install skill --scope project --yes",
+      "sh -c 'jitso setup hook --remove'",
+      "sh -c 'jitso setup hook --yes' --dry-run",
+      "jitso init --yes",
+      "bun run jitso init --remove --yes",
+      "cd x && jitso init --project-only --yes"
+    ]
+  },
+  "steps": [
+    {
+      "hook": "guard",
+      "input": {
+        "hook_event_name": "PreToolUse",
+        "tool_name": "Bash",
+        "tool_input": {
+          "command": "{{command}}"
+        },
+        "cwd": "{{PROJECT}}"
+      },
+      "expect": {
+        "exit": 0,
+        "decision": "none",
+        "stdout": [
+          {
+            "empty": true
+          }
+        ]
+      }
+    }
+  ]
+}

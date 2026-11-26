@@ -1,11 +1,12 @@
 {
   "id": "brief/pointer/two-lines-is-not-a-pointer",
-  "title": "a file with the Brief: line and a second non-blank line is an ordinary brief and fails the section check",
+  "title": "a file with the Brief: line and a second non-blank line is an ordinary brief and gets the section warning",
   "tags": [
     "posix"
   ],
   "source": [
-    "intended: docs/decisions.md, Pre-release fixes (pointer brief)"
+    "intended: docs/decisions.md, Pre-release fixes (pointer brief)",
+    "intended: docs/decisions.md, \"Only launches are blocked, and launches into other repositories\": the brief checks are warnings on stderr and the launch goes on"
   ],
   "project": {
     "files": {
@@ -24,17 +25,21 @@
         "--brief",
         "{{PROJECT}}/.jitso/briefs/pointer.md",
         "--mode",
-        "direct"
+        "direct",
+        "--dry-run"
       ],
       "expect": {
-        "exit": 2,
+        "exit": 0,
         "stdout": [
           {
-            "empty": true
-          }
+            "regex": "^JITSO L\\d{8}T\\d{6}-[0-9a-f]{4} \\|"
+          },
+          "dry run: nothing was written and Orca was not called"
         ],
         "stderr": [
-          "JITSO REJECTED: brief failed: sections (missing section: Goal, Scope, Done when, Report format)"
+          {
+            "equals": "jitso: warning: brief sections: missing section: Goal, Scope, Done when, Report format\njitso: warning: brief length: 5 words, expected 40 to 800\n"
+          }
         ],
         "orca_calls": {
           "empty": true

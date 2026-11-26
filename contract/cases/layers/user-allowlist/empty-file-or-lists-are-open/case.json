@@ -1,0 +1,137 @@
+{
+  "id": "layers/user-allowlist/empty-file-or-lists-are-open",
+  "title": "an empty ~/.jitso/jitso.yaml, or one whose lists are absent or empty, is as open as no file",
+  "source": [
+    "intended: docs/decisions.md, Only launches are blocked, and launches into other repositories (allowlists are open unless a list restricts)"
+  ],
+  "intent": "The user layer is open like the project's: the skill needs its SKILL.md and the server its definition. A literal value, OAuth, a cloud: name and the name of a project skill or server are still refused.",
+  "project": {
+    "files": {
+      ".jitso/briefs/brief.md": "## Goal\n\nFind where the sync entry point of this project is defined and explain in a few sentences how it is wired to the rest of the code.\n\n## Scope\n\nRead only. Do not change any file and do not leave the repository.\n\n## Done when\n\nYou can name the file and the line that defines the entry point, and you have checked it by reading the file.\n\n## Report format\n\nOne short paragraph with the file path, the line number and a one line summary of what it does.\n",
+      ".agents/skills/local-skill/SKILL.md": "---\nname: local-skill\ndescription: A project skill.\n---\n",
+      ".claude/skills/claude-only/SKILL.md": "---\nname: claude-only\ndescription: A skill only Claude Code holds.\n---\n",
+      "jitso/jitso.yaml": "version: 1\n",
+      "jitso/builds": null,
+      ".jitso/drafts/named.yaml": "id: named\nversion: 1\nstatus: draft\nrole: operator\ntype: scanner\ndescription: Scan the repo.\nharness: claude\nmodel: any-vendor/any-model\neffort: extreme\nskills_first: ['user:humanizer']\nmcp: ['user:engram']\n",
+      ".jitso/drafts/refused.yaml": "id: refused\nversion: 1\nstatus: draft\nrole: operator\ntype: scanner\ndescription: Scan the repo.\nharness: claude\nmodel: any-vendor/any-model\neffort: extreme\nskills_first: ['user:ghost', 'user:local-skill']\nmcp: ['user:ghost', 'user:dbhub', 'user:literal', 'user:login', 'cloud:Slack']\n"
+    }
+  },
+  "home": {
+    "files": {
+      ".claude/skills/humanizer/SKILL.md": "---\nname: humanizer\ndescription: A user skill.\n---\n",
+      ".claude/skills/local-skill/SKILL.md": "---\nname: local-skill\ndescription: A user skill.\n---\n",
+      ".claude.json": "{\n  \"mcpServers\": {\n    \"engram\": {\n      \"command\": \"engram-cmd\"\n    },\n    \"dbhub\": {\n      \"command\": \"user-dbhub\"\n    },\n    \"literal\": {\n      \"command\": \"x\",\n      \"env\": {\n        \"TOKEN\": \"literal-value-0001\"\n      }\n    },\n    \"login\": {\n      \"type\": \"http\",\n      \"url\": \"https://login.example.invalid/mcp\",\n      \"oauth\": {}\n    }\n  }\n}\n",
+      ".jitso/jitso.yaml": "{{config}}"
+    }
+  },
+  "for_each": {
+    "vars": [
+      "config"
+    ],
+    "ids": [
+      "empty-file",
+      "comment-only",
+      "no-lists",
+      "empty-lists"
+    ],
+    "rows": [
+      [
+        ""
+      ],
+      [
+        "# nothing yet\n"
+      ],
+      [
+        "version: 1\n"
+      ],
+      [
+        "version: 1\nskills: []\nmcp: []\n"
+      ]
+    ]
+  },
+  "tags": [
+    "posix"
+  ],
+  "steps": [
+    {
+      "run": [
+        "build",
+        "validate",
+        "named"
+      ],
+      "expect": {
+        "exit": 0,
+        "stderr": [
+          {
+            "empty": true
+          }
+        ],
+        "stdout": [
+          {
+            "equals": "ok named draft .jitso/drafts/named.yaml\nchecked 1 builds: 1 ok, 0 invalid\n"
+          }
+        ]
+      }
+    },
+    {
+      "run": [
+        "launch",
+        "--build",
+        "named",
+        "--brief",
+        "{{PROJECT}}/.jitso/briefs/brief.md",
+        "--mode",
+        "direct",
+        "--dry-run"
+      ],
+      "expect": {
+        "exit": 0,
+        "stderr": [
+          {
+            "empty": true
+          }
+        ],
+        "stdout": [
+          {
+            "contains": "user:engram"
+          },
+          {
+            "contains": "user:humanizer"
+          },
+          {
+            "contains": "dry run: nothing was written"
+          }
+        ],
+        "orca_calls": {
+          "empty": true
+        },
+        "files": [
+          {
+            "path": ".jitso/launches",
+            "exists": false
+          }
+        ]
+      }
+    },
+    {
+      "run": [
+        "build",
+        "validate",
+        "refused"
+      ],
+      "expect": {
+        "exit": 2,
+        "stderr": [
+          {
+            "empty": true
+          }
+        ],
+        "stdout": [
+          {
+            "equals": "invalid refused draft .jitso/drafts/refused.yaml\n  user skill \"ghost\" has no SKILL.md under ~/.claude/skills/ghost\n  user skill \"local-skill\" has the name of a project skill\n  user mcp \"ghost\" is not defined in ~/.claude.json\n  user mcp \"dbhub\" has the name of a project mcp server\n  user mcp \"literal\" has a literal value in env TOKEN: use ${VAR}, or list literal/TOKEN in literal_env of ~/.jitso/jitso.yaml\n  user mcp \"login\" uses OAuth, which a launch cannot carry\n  mcp \"cloud:Slack\": cloud connectors cannot be given to a launched session yet\nchecked 1 builds: 0 ok, 1 invalid\n"
+          }
+        ]
+      }
+    }
+  ]
+}

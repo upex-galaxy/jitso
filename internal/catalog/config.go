@@ -3,6 +3,7 @@ package catalog
 import (
 	"math"
 	"regexp"
+	"slices"
 	"strconv"
 	"strings"
 	"unicode"
@@ -10,8 +11,12 @@ import (
 	"github.com/upex-galaxy/jitso/internal/jsconv"
 )
 
-// Config is jitso/jitso.yaml: the allowlists every build and every request
-// override is checked against.
+// Config is jitso/jitso.yaml: the allowlists every build is checked against,
+// plus what the project holds, which an open list is checked against.
+//
+// A list is open when it is nil: its key is absent, null or [] (and every list
+// is open when the file is missing). An open list restricts nothing, but what
+// a build names must still exist. Any other list restricts to what it holds.
 type Config struct {
 	// Version is Number(version): NaN when it is missing or not a number.
 	Version float64
@@ -25,11 +30,59 @@ type Config struct {
 	Fields []FieldRule
 	// User is the user allowlist that user:<name> items resolve in.
 	User User
-	// ProjectSkillDirs are the skill folders the project holds under
-	// .claude/skills and .agents/skills: a user skill may not take one of
-	// these names.
+	// ProjectSkillDirs are the names of the skill folders the project holds
+	// under .agents/skills and .claude/skills, sorted: what an open skills
+	// list allows, and names a user skill may not take.
 	ProjectSkillDirs []string
+	// ProjectServers is the mcpServers table of the project's .mcp.json: what
+	// an open mcp list allows.
+	ProjectServers map[string]map[string]any
 }
+
+// Open reports whether the allowlist restricts nothing.
+func Open(list []string) bool { return list == nil }
+
+// allowsValue reports whether a model, effort or tool name is allowed: one of
+// a restricting list, or any usable text when the list is open.
+func allowsValue(list []string, v string) bool {
+	if Open(list) {
+		return usableText(v)
+	}
+	return slices.Contains(list, v)
+}
+
+// usableText is a text an open list accepts: not blank and with no control
+// character.
+func usableText(v string) bool {
+	return strings.TrimSpace(v) != "" && !HasControl(v)
+}
+
+// AllowsModel reports whether a build may name the model.
+func (c Config) AllowsModel(v string) bool { return allowsValue(c.Models, v) }
+
+// AllowsEffort reports whether a build may name the effort.
+func (c Config) AllowsEffort(v string) bool { return allowsValue(c.Efforts, v) }
+
+// AllowsMCP reports whether a build may name the project server: one of the
+// mcp list, or, when it is open, one .mcp.json defines.
+func (c Config) AllowsMCP(name string) bool {
+	if Open(c.MCP) {
+		_, ok := c.ProjectServers[name]
+		return ok
+	}
+	return slices.Contains(c.MCP, name)
+}
+
+// OwnsSkill reports whether name is a skill of the project, so that no user
+// skill may take it: one the skills list names or a skill folder it holds.
+func (c Config) OwnsSkill(name string) bool {
+	return slices.Contains(c.Skills, name) || slices.Contains(c.ProjectSkillDirs, name)
+}
+
+// OwnsMCP reports whether name is a server of the project, so that no user
+// server may take it: one of the mcp list, or, when it is open, one .mcp.json
+// defines.
+func (c Config) OwnsMCP(name string) bool { return c.AllowsMCP(name) }
 
 // FieldRule is one entry of the fields key: a field name and the pattern its
 // value must match, compiled to match the whole value.
@@ -70,10 +123,28 @@ func HasControl(v string) bool {
 	return false
 }
 
+// allowlist reads one list key. Absent, null and [] are open (nil). A list
+// with items is read through String(). Any other value restricts to nothing,
+// so a mistake never lifts a restriction.
+func allowlist(v any) []string {
+	switch x := v.(type) {
+	case nil:
+		return nil
+	case []any:
+		if len(x) == 0 {
+			return nil
+		}
+		return jsconv.Strings(x)
+	}
+	if v == jsconv.Undefined {
+		return nil
+	}
+	return []string{}
+}
+
 // configFrom reads the allowlists from a decoded jitso.yaml the way
-// JavaScript's String() reads them: each list through String(), anything that
-// is not a list is an empty list. A top level that is not a mapping is an
-// error. The second result lists every problem of the fields
+// JavaScript's String() reads them (see allowlist). A top level that is not a
+// mapping is an error. The second result lists every problem of the fields
 // key, in key order.
 func configFrom(raw any) (Config, []string, bool) {
 	m, ok := raw.(*Map)
@@ -83,11 +154,11 @@ func configFrom(raw any) (Config, []string, bool) {
 	fields, problems := fieldsFrom(m)
 	return Config{
 		Version: jsNumber(m.Value("version")),
-		Models:  jsconv.Strings(m.Value("models")),
-		Efforts: jsconv.Strings(m.Value("efforts")),
-		MCP:     jsconv.Strings(m.Value("mcp")),
-		Skills:  jsconv.Strings(m.Value("skills")),
-		Tools:   jsconv.Strings(m.Value("tools")),
+		Models:  allowlist(m.Value("models")),
+		Efforts: allowlist(m.Value("efforts")),
+		MCP:     allowlist(m.Value("mcp")),
+		Skills:  allowlist(m.Value("skills")),
+		Tools:   allowlist(m.Value("tools")),
 		Fields:  fields,
 	}, problems, true
 }

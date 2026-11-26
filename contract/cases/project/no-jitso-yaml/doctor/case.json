@@ -1,0 +1,71 @@
+{
+  "id": "project/no-jitso-yaml/doctor",
+  "title": "jitso doctor in a project without jitso/jitso.yaml warns that the lists are open and the guard is off, and fails nothing",
+  "source": [
+    "intended: docs/decisions.md, Only launches are blocked, and launches into other repositories (allowlists are open unless a list restricts)"
+  ],
+  "intent": "A missing file is a choice, not an error. The warning says what it costs: the guard acts only in a project that has the file.",
+  "project": {
+    "files": {
+      "jitso/jitso.yaml": null,
+      ".agents/skills/orca-orchestration/SKILL.md": "---\nname: orca-orchestration\ndescription: A project skill.\n---\n",
+      ".agents/skills/sprint-testing/SKILL.md": "---\nname: sprint-testing\ndescription: A project skill.\n---\n",
+      ".agents/skills/test-automation/SKILL.md": "---\nname: test-automation\ndescription: A project skill.\n---\n"
+    }
+  },
+  "steps": [
+    {
+      "run": [
+        "doctor"
+      ],
+      "expect": {
+        "exit": 0,
+        "stderr": [
+          {
+            "empty": true
+          }
+        ],
+        "stdout": [
+          {
+            "regex": "(?m)^warn catalog: no jitso/jitso\\.yaml: every allowlist is open and the guard stays off in this project \\(run jitso init\\); [0-9]+ builds, [0-9]+ launchable$"
+          },
+          {
+            "regex": "(?m)^ok   mcp: "
+          },
+          {
+            "not_regex": "(?m)^fail "
+          }
+        ],
+        "files": [
+          {
+            "path": "jitso/jitso.yaml",
+            "exists": false
+          }
+        ]
+      }
+    },
+    {
+      "write": {
+        "project": {
+          "jitso": null
+        }
+      }
+    },
+    {
+      "run": [
+        "doctor"
+      ],
+      "expect": {
+        "exit": 0,
+        "stdout": [
+          {
+            "regex": "(?m)^warn catalog: no jitso/jitso\\.yaml: every allowlist is open and the guard stays off in this project \\(run jitso init\\); 0 builds, 0 launchable$"
+          },
+          {
+            "not_regex": "(?m)^fail "
+          }
+        ]
+      }
+    }
+  ]
+}

@@ -65,14 +65,14 @@ func Resolve(req Request, cat *catalog.Catalog) (Profile, error) {
 		return Profile{}, fail.Rejectedf(`build "%s" has tier subagent: it is not launched alone, a worker lists it in its subagents`, b.ID)
 	}
 	cfg := cat.Config
-	if !slices.Contains(cfg.Models, b.Model) {
+	if !cfg.AllowsModel(b.Model) {
 		return Profile{}, fail.Rejectedf(`model "%s" is not an allowlisted full id`, b.Model)
 	}
-	if !slices.Contains(cfg.Efforts, b.Effort) {
+	if !cfg.AllowsEffort(b.Effort) {
 		return Profile{}, fail.Rejectedf(`effort "%s" is not allowed`, b.Effort)
 	}
 	for _, name := range b.MCP {
-		if !catalog.IsScoped(name) && !slices.Contains(cfg.MCP, name) {
+		if !catalog.IsScoped(name) && !cfg.AllowsMCP(name) {
 			return Profile{}, fail.Rejectedf(`unknown mcp "%s"`, name)
 		}
 	}

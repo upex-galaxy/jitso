@@ -2,7 +2,7 @@
   "id": "build/save/confirm-flag-is-gone",
   "title": "build save has no --confirm: the flag is an unknown argument, with or without a value, even next to --yes; nothing is shown or saved",
   "source": [
-    "intended: docs/decisions.md \"The v0.1.0 cut\" (build save asks on a terminal or takes --yes): a draft becomes a build only with the owner's OK, which is a terminal answer or --yes; the guard denies the agent"
+    "intended: docs/decisions.md, \"Only launches are blocked, and launches into other repositories\": build save writes with no owner gate; --yes is accepted and changes nothing"
   ],
   "defect": "N-15",
   "intent": "INTENDED behavior (defect N-15, drafts; docs/decisions.md \"The v0.1.0 cut\"). The confirmation token is gone, so `--confirm` is a flag `build save` does not take: `JITSO REJECTED: unknown argument \"--confirm\"`, exit 2, with nothing on stdout, nothing written and the draft kept. It is refused before the draft is read, so it is the same with a value, without one, and next to `--yes`.",

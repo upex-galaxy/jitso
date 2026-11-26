@@ -119,6 +119,81 @@ func TestHarnessProgramDepth(t *testing.T) {
 	}
 }
 
+// The table of the invocations that start no session, deny by default.
+func TestStartsSession(t *testing.T) {
+	tests := []struct {
+		command string
+		starts  bool
+	}{
+		{"claude", true},
+		{"claude -v", false},
+		{"claude --version", false},
+		{"claude -h", false},
+		{"claude --help", false},
+		{"claude --help 2>&1", false},
+		{"claude --help > out.txt", false},
+		{"claude --help <<< x", false},
+		{"claude --help x", true},
+		{"claude --version -p x", true},
+		{"claude -p x --help", true},
+		{"claude --help > out -p x", true},
+		{"claude --help >(tee x)", true},
+		{"claude mcp", false},
+		{"claude mcp serve", false},
+		{"claude doctor", false},
+		{"claude update", false},
+		{"claude install latest", false},
+		{"claude setup-token", false},
+		{"claude auth login", false},
+		{"claude plugin list", false},
+		{"claude plugin install eval@market", false},
+		{"claude plugin eval x", true},
+		{"claude plugin -h eval", true},
+		{"claude config list", true},
+		{"claude upgrade", true},
+		{"claude plugins list", true},
+		{"claude MCP", true},
+		{"claude hello", true},
+		{"codex --version", false},
+		{"codex --help", false},
+		{"codex login", false},
+		{"codex logout", false},
+		{"codex mcp list", false},
+		{"codex completion zsh", false},
+		{"codex exec x", true},
+		{"codex -V", true},
+		{"codex doctor", true},
+		{"opencode --version", false},
+		{"opencode --help", false},
+		{"opencode auth list", false},
+		{"opencode mcp list", false},
+		{"opencode models", false},
+		{"opencode stats --days 1", false},
+		{"opencode upgrade", false},
+		{"opencode", true},
+		{"opencode run x", true},
+		{"opencode serve", true},
+		{"opencode mini", true},
+		{"pi --version", false},
+		{"pi --help", false},
+		{"pi mcp list", true},
+		{"pi -p hi", true},
+	}
+	for _, tt := range tests {
+		t.Run(tt.command, func(t *testing.T) {
+			w := words(tt.command)
+			if got := startsSession(w[0], w[1:]); got != tt.starts {
+				t.Errorf("startsSession(%q) = %v, want %v", tt.command, got, tt.starts)
+			}
+		})
+	}
+	for prog := range noSession {
+		if !directHarnesses[prog] {
+			t.Errorf("noSession lists %q, which is no harness", prog)
+		}
+	}
+}
+
 // The evasion matrix of the design: every input and the harness the guard
 // names ("" when the line passes). The open rows are
 // pinned too, so a change that closes one shows up here.
@@ -133,12 +208,13 @@ var harnessMatrixTests = []struct {
 	{"env pi", "pi"},
 	{"PI", "pi"},
 	{"./claude", "claude"},
-	{"/usr/local/bin/claude --version", "claude"},
+	{"/usr/local/bin/claude --version", ""},
 	{"../x/claude", "claude"},
 	{"~/bin/claude", "claude"},
-	{"claude --version", "claude"},
-	{"claude mcp list", "claude"},
-	{"codex --help", "codex"},
+	{"claude --version", ""},
+	{"claude mcp list", ""},
+	{"codex --help", ""},
+	{"claude -p x --help", "claude"},
 	{"sh -c 'claude -p x'", "claude"},
 	{`bash -lc "claude"`, "claude"},
 	{"env claude", "claude"},
@@ -233,13 +309,14 @@ func TestHarnessReason(t *testing.T) {
 	}
 }
 
-// BuildSave, adoption and the launch verbs are judged before a harness program.
+// The commands of a line are judged in order, and in one command the launch
+// verbs come before the harness program.
 var harnessOrderTests = map[string]string{
-	"jitso build save claude && claude":     VerbBuildSave,
-	"jitso setup hook; claude":              VerbSetup,
-	"orca agent launch claude":              "agent launch",
-	"orca terminal create --command claude": "terminal create --command <harness>",
-	"ls && claude && jitso setup hook":      "claude",
+	"jitso build save claude && claude":             "claude",
+	"orca agent launch claude":                      "agent launch",
+	"orca terminal create --command claude":         "terminal create --command <harness>",
+	"ls && claude && orca agent launch":             "claude",
+	"orca orchestration worker-start; claude -p hi": "orchestration worker-start",
 }
 
 func TestHarnessDenialOrder(t *testing.T) {

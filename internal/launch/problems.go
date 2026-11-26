@@ -7,9 +7,12 @@ import (
 )
 
 // adapterOf is the adapter of the build's harness, the one lookup launch and
-// validate share.
+// validate share. A build with no harness key takes the default one.
 func adapterOf(b *catalog.Build) (harness.Adapter, string, bool) {
-	name := jsString(b, "harness")
+	name := catalog.DefaultHarness
+	if _, written := b.Raw.Get("harness"); written {
+		name = jsString(b, "harness")
+	}
 	a, ok := Adapters[name]
 	return a, name, ok
 }

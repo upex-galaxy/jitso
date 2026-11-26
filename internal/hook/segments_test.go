@@ -123,192 +123,24 @@ func TestBashVerbLongInput(t *testing.T) {
 	}
 }
 
-var buildSaveTests = []struct {
-	name, command string
-	wantID        string
-	want          bool
-}{
-	{"bare word", "jitso build save x", "x", true},
-	{"bun run", "bun run jitso build save x", "x", true},
-	{"a path ending in jitso", "/usr/local/bin/jitso build save x", "x", true},
-	{"a relative path", "./jitso build save x", "x", true},
-	{"after assignments", "FOO=1 BAR=2 jitso build save x", "x", true},
-	{"env prefix", "env FOO=1 jitso build save x", "x", true},
-	{"after cd", "cd a && jitso build save x", "x", true},
-	{"after a semicolon", "ls; jitso build save x", "x", true},
-	{"after a newline", "echo ok\njitso build save x", "x", true},
-	{"in a subshell", "(jitso build save x)", "x", true},
-	{"in a command substitution", "echo $(jitso build save x)", "x", true},
-	{"inside sh -c single quotes", "sh -c 'jitso build save x'", "x", true},
-	{"inside bash -c double quotes", `bash -c "jitso build save x"`, "x", true},
-	{"padded", "jitso   build    save x", "x", true},
-	{"tabs", "jitso\tbuild\tsave\tx", "x", true},
-	{"with --yes", "jitso build save my-build --yes", "my-build", true},
-	{"--yes first", "jitso build save --yes my-build", "my-build", true},
-	{"no id", "jitso build save", "<id>", true},
-	{"only flags", "jitso build save --yes", "<id>", true},
-	{"an id that is not an id is not echoed", "jitso build save 'Evil Name'", "<id>", true},
-	{"a path is not echoed", "jitso build save ../x", "<id>", true},
-	{"own path, another name", "/opt/tools/jitso-go build save x", "x", true},
-	{"own path after assignments", "A=1 /opt/tools/jitso-go build save y", "y", true},
-	{"own path inside sh -c", "sh -c '/opt/tools/jitso-go build save y'", "y", true},
-	{"a commit message that holds the words is denied", `git commit -m "jitso build save"`, "<id>", true},
-	{"echo of the words is denied", "echo jitso build save x", "x", true},
-	{"build draft", "jitso build draft x.yaml", "", false},
-	{"build list", "jitso build list", "", false},
-	{"build validate", "jitso build validate x", "", false},
-	{"build discard", "jitso build discard --all", "", false},
-	{"build new", "jitso build new x", "", false},
-	{"launch", "jitso launch --build x", "", false},
-	{"another word that ends with save", "jitso build saved x", "", false},
-	{"a longer word ends in jitso", "my-jitso build save x", "", false},
-	{"a file named save", "cat jitso/builds/save.yaml", "", false},
-	{"the words in another order", "jitso save build x", "", false},
-	{"build with a flag between", "jitso build --x save", "", false},
-	{"another program with the own name inside a word", "/opt/tools/jitso-go-x build save x", "", false},
-	{"only build save", "echo build save", "", false},
-	{"empty", "", "", false},
-}
-
-func TestBuildSave(t *testing.T) {
-	l := Launcher{IsOwn: isOwnAt("/opt/tools/jitso-go")}
-	// The command goes through Segments first, as the fallback of the guard does.
-	tests := buildSaveTests
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			var id string
-			var got bool
-			for _, s := range Segments(tt.command) {
-				if i, ok := l.BuildSave(s); ok {
-					id, got = i, true
-					break
-				}
-			}
-			if got != tt.want || id != tt.wantID {
-				t.Errorf("BuildSave(%q) = %q, %v; want %q, %v", tt.command, id, got, tt.wantID, tt.want)
-			}
-		})
-	}
-}
-
-var adoptionTests = []struct {
-	name, command, want string
-}{
-	{"after cd", "cd a && jitso install skill --yes", "jitso install"},
-	{"after a semicolon", "ls; jitso setup hook --remove", "jitso setup"},
-	{"after a newline", "echo ok\njitso setup hook", "jitso setup"},
-	{"in a subshell", "(jitso setup hook --yes)", "jitso setup"},
-	{"in a command substitution", "echo $(jitso install skill --yes)", "jitso install"},
-	{"inside sh -c single quotes", "sh -c 'jitso setup hook --remove'", "jitso setup"},
-	{"inside bash -c double quotes", `bash -c "jitso install skill --scope user"`, "jitso install"},
-	{"padded and tabbed", "jitso \t setup\thook", "jitso setup"},
-	{"the verb alone", "jitso setup", "jitso setup"},
-	{"own path inside sh -c", "sh -c '/opt/tools/jitso-go install skill --yes'", "jitso install"},
-	{"a commit message that holds the words is denied", `git commit -m "jitso setup hook"`, "jitso setup"},
-	{"echo of the words is denied", "echo jitso install skill", "jitso install"},
-	{"a dry run that comes after the command", "jitso setup hook --dry-run", ""},
-	{"a dry run among other flags", "jitso install skill --scope user --dry-run --yes", ""},
-	{"a dry run of the own path", "/opt/tools/jitso-go setup hook --dry-run", ""},
-	{"a dry run after assignments", "FOO=1 jitso install skill --dry-run", ""},
-	{"a dry run word before the command does not exempt", "--dry-run jitso setup hook --yes", "jitso setup"},
-	{"a dry run in another segment does not exempt", "echo --dry-run; jitso setup hook --yes", "jitso setup"},
-	{"a dry run in a quoted argument of another command does not exempt", `echo '--dry-run' && jitso install skill --yes`, "jitso install"},
-	{"a dry run behind sh -c does not exempt", "sh -c 'jitso setup hook --yes' --dry-run", "jitso setup"},
-	{"a dry run behind eval does not exempt", "eval jitso install skill --yes --dry-run", "jitso install"},
-	{"a dry run behind bun run exempts", "bun run jitso setup hook --dry-run", ""},
-	{"a dry run of a path exempts", "/usr/local/bin/jitso setup hook --dry-run", ""},
-	{"a dry run inside a longer word does not exempt", "jitso setup hook --dry-run=false --yes", "jitso setup"},
-	{"a dry run after a hyphen does not exempt", "jitso setup hook --no--dry-run", "jitso setup"},
-	{"doctor", "jitso doctor", ""},
-	{"version", "jitso version", ""},
-	{"the version flag", "jitso --version", ""},
-	{"build list", "jitso build list", ""},
-	{"build new", "jitso build new x", ""},
-	{"launch", "jitso launch --build x", ""},
-	{"setup as a flag value", "jitso launch --build setup", ""},
-	{"another word that starts with setup", "jitso setup-x", ""},
-	{"another word that starts with install", "jitso installer", ""},
-	{"a longer word ends in jitso", "my-jitso setup hook", ""},
-	{"the words in another order", "jitso hook setup", ""},
-	{"a file named setup", "cat jitso/setup.yaml", ""},
-	{"only the verb", "echo setup install", ""},
-	{"another program with the own name inside a word", "/opt/tools/jitso-go-x setup hook", ""},
-	{"empty", "", ""},
-}
-
-var adoptionForms = []struct{ name, launcher string }{
-	{"bare word", "jitso"},
-	{"bun run", "bun run jitso"},
-	{"a path ending in jitso", "/usr/local/bin/jitso"},
-	{"a relative path", "./jitso"},
-	{"after assignments", "FOO=1 BAR=2 jitso"},
-	{"env prefix", "env FOO=1 jitso"},
-	{"own path", "/opt/tools/jitso-go"},
-	{"own path after assignments", "A=1 /opt/tools/jitso-go"},
-}
-
-func TestAdoption(t *testing.T) {
-	l := Launcher{IsOwn: isOwnAt("/opt/tools/jitso-go")}
-	// The command goes through Segments first, as the fallback of the guard does.
-	verbs := []string{"setup", "install"}
-	forms := adoptionForms
-	for _, verb := range verbs {
-		for _, f := range forms {
-			t.Run(verb+" "+f.name, func(t *testing.T) {
-				command := f.launcher + " " + verb + " hook --yes"
-				if got, ok := firstAdoption(l, command); !ok || got != "jitso "+verb {
-					t.Errorf("Adoption(%q) = %q, %v; want %q, true", command, got, ok, "jitso "+verb)
-				}
-			})
-		}
-	}
-	tests := adoptionTests
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			got, ok := firstAdoption(l, tt.command)
-			if got != tt.want || ok != (tt.want != "") {
-				t.Errorf("Adoption(%q) = %q, %v; want %q", tt.command, got, ok, tt.want)
-			}
-		})
-	}
-}
-
-// firstAdoption is the first segment of command that Adoption reports.
-func firstAdoption(l Launcher, command string) (string, bool) {
-	for _, s := range Segments(command) {
-		if verb, ok := l.Adoption(s); ok {
-			return verb, true
-		}
-	}
-	return "", false
-}
-
 var bashDenialTests = []struct {
 	name, command string
 	want          Denial
 }{
-	{"save", "jitso build save x", Denial{Verb: VerbBuildSave, SaveID: "x"}},
-	{"save after a launch segment", "jitso launch --build b && jitso build save y", Denial{Verb: VerbBuildSave, SaveID: "y"}},
-	{"launch before save in another order", "orca orchestration worker-start; jitso build save y", Denial{Verb: "orchestration worker-start"}},
+	{"build save", "jitso build save x", Denial{}},
+	{"own build save", "/opt/jitso build save z", Denial{}},
+	{"setup", "jitso setup hook --yes", Denial{}},
+	{"install", "bun run jitso install skill --scope user --yes", Denial{}},
+	{"init inside sh -c", "sh -c 'jitso init --yes'", Denial{}},
 	{"own launch is allowed", "/opt/jitso launch --build b", Denial{}},
-	{"own save is denied", "/opt/jitso build save z", Denial{Verb: VerbBuildSave, SaveID: "z"}},
-	{"setup", "jitso setup hook --yes", Denial{Verb: VerbSetup}},
-	{"install", "bun run jitso install skill --scope user --yes", Denial{Verb: VerbInstall}},
-	{"own setup", "/opt/jitso setup hook --remove", Denial{Verb: VerbSetup}},
-	{"setup dry run is allowed", "jitso setup hook --dry-run", Denial{}},
-	{"install dry run is allowed", "jitso install skill --scope user --dry-run", Denial{}},
-	{"doctor and version are allowed", "jitso doctor && jitso version", Denial{}},
-	{"setup after a launch segment", "jitso launch --build b && jitso setup hook --yes", Denial{Verb: VerbSetup}},
-	{"launch before setup in another order", "orca orchestration worker-start; jitso setup hook", Denial{Verb: "orchestration worker-start"}},
-	{"save before setup", "jitso setup hook --yes; jitso build save x", Denial{Verb: VerbSetup}},
-	{"a dry run does not hide a save in the same line", "jitso setup hook --dry-run && jitso build save x", Denial{Verb: VerbBuildSave, SaveID: "x"}},
+	{"a launch after an owner command", "jitso setup hook; orca orchestration worker-start", Denial{Verb: "orchestration worker-start"}},
+	{"a launch segment does not shield the next", "jitso launch --build b && claude -p hi", Denial{Verb: "claude"}},
 	{"nothing", "ls", Denial{}},
 }
 
 func TestBashDenial(t *testing.T) {
 	l := Launcher{IsOwn: isOwnAt("/opt/jitso")}
-	tests := bashDenialTests
-	for _, tt := range tests {
+	for _, tt := range bashDenialTests {
 		t.Run(tt.name, func(t *testing.T) {
 			if got := l.BashDenial(tt.command); got != tt.want {
 				t.Errorf("BashDenial(%q) = %+v, want %+v", tt.command, got, tt.want)
@@ -317,19 +149,17 @@ func TestBashDenial(t *testing.T) {
 	}
 }
 
-// movedVerdicts are the rows of the tables above (written for the old
-// splitter) whose verdict the lexer changes, with the new verdict. Each is
-// text in quotes or a heredoc body (J41); every other row keeps its verdict.
+// movedVerdicts are the rows of the tables above whose verdict the lexer
+// changes, with the new verdict: text in quotes or a heredoc body that no shell
+// reads. Every other row keeps the verdict of the old splitter.
 var movedVerdicts = map[string]Denial{
-	`git commit -m "jitso build save"`:  {},
-	`git commit -m "jitso setup hook"`:  {},
 	"git commit -m 'fix (claude) bug'":  {},
 	"git commit -m 'see `claude` docs'": {},
 	"cat <<'EOF'\nclaude rules\nEOF":    {},
 }
 
-// Every row of the old tables goes through the old splitter and through the
-// guard's judgment; only the rows of movedVerdicts may differ.
+// Every row of the tables goes through the old splitter and through the guard's
+// judgment; only the rows of movedVerdicts may differ.
 func TestMovedVerdicts(t *testing.T) {
 	type row struct {
 		l       Launcher
@@ -337,20 +167,9 @@ func TestMovedVerdicts(t *testing.T) {
 	}
 	var rows []row
 	add := func(l Launcher, c string) { rows = append(rows, row{l, c}) }
-	opt, tools, none := Launcher{IsOwn: isOwnAt("/opt/jitso")}, Launcher{IsOwn: isOwnAt("/opt/tools/jitso-go")}, Launcher{}
+	opt, none := Launcher{IsOwn: isOwnAt("/opt/jitso")}, Launcher{}
 	for _, tt := range bashVerbTests {
 		add(opt, tt.command)
-	}
-	for _, tt := range buildSaveTests {
-		add(tools, tt.command)
-	}
-	for _, verb := range []string{"setup", "install"} {
-		for _, f := range adoptionForms {
-			add(tools, f.launcher+" "+verb+" hook --yes")
-		}
-	}
-	for _, tt := range adoptionTests {
-		add(tools, tt.command)
 	}
 	for _, tt := range bashDenialTests {
 		add(opt, tt.command)

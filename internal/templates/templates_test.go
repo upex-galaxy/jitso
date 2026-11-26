@@ -189,7 +189,7 @@ func TestBuildRefusesWhatCannotRender(t *testing.T) {
 }
 
 // TestConfigSkeleton decodes the jitso.yaml skeleton with the catalog's own
-// loader: a mapping at version 1 whose five allowlists are empty.
+// loader: a mapping at version 1 that writes no list, so every one is open.
 func TestConfigSkeleton(t *testing.T) {
 	cfg, err := catalog.LoadConfig(fstest.MapFS{catalog.ConfigPath: &fstest.MapFile{Data: []byte(Config())}})
 	if err != nil {
@@ -198,18 +198,18 @@ func TestConfigSkeleton(t *testing.T) {
 	if cfg.Version != 1 {
 		t.Errorf("version = %v, want 1", cfg.Version)
 	}
-	if n := len(cfg.Models) + len(cfg.Efforts) + len(cfg.MCP) + len(cfg.Skills) + len(cfg.Tools); n != 0 {
-		t.Errorf("the skeleton lists %d allowlist entries, want none", n)
-	}
-	for _, key := range []string{"version:", "models:", "efforts:", "mcp:", "skills:", "tools:"} {
+	for name, list := range map[string][]string{"models": cfg.Models, "efforts": cfg.Efforts, "mcp": cfg.MCP, "skills": cfg.Skills, "tools": cfg.Tools} {
+		if !catalog.Open(list) {
+			t.Errorf("the skeleton restricts %s", name)
+		}
 		found := false
 		for _, l := range lines(Config()) {
-			if strings.HasPrefix(l, key) {
+			if strings.HasPrefix(l, "# "+name+": [") {
 				found = true
 			}
 		}
 		if !found {
-			t.Errorf("no top-level key %q", key)
+			t.Errorf("no comment shows how to restrict %q", name)
 		}
 	}
 }

@@ -1,0 +1,71 @@
+{
+  "id": "hooks/guard/allows-harness-commands-without-a-session",
+  "title": "a harness subcommand or flag that starts no session passes: version, help, mcp, auth and the rest of one table, per harness",
+  "source": [
+    "intended: docs/decisions.md, section \"Only launches are blocked, and launches into other repositories\" (the guard denies only what starts an agent)"
+  ],
+  "intent": "One table lists, per harness, the first word of an invocation that starts no session. A flag of the table passes only when nothing but redirections follows it; a subcommand passes with any arguments. Everything else of a harness is denied.",
+  "for_each": {
+    "var": "command",
+    "values": [
+      "claude -v",
+      "claude --version",
+      "claude -h",
+      "claude --help",
+      "claude mcp list",
+      "claude mcp serve",
+      "claude doctor",
+      "claude update",
+      "claude install stable",
+      "claude plugin list",
+      "claude plugin install x@y",
+      "claude setup-token",
+      "claude auth status",
+      "codex --version",
+      "codex --help",
+      "codex login",
+      "codex logout",
+      "codex mcp list",
+      "codex completion zsh",
+      "opencode --version",
+      "opencode --help",
+      "opencode auth list",
+      "opencode mcp list",
+      "opencode models",
+      "opencode stats",
+      "opencode upgrade",
+      "pi --version",
+      "pi --help",
+      "/usr/local/bin/claude --version",
+      "claude --help | grep print",
+      "claude --version 2>&1",
+      "claude --version > v.txt 2>/dev/null",
+      "claude mcp list && claude --version",
+      "sh -c 'claude --version'",
+      "env FOO=1 claude mcp list",
+      "echo \"$(claude --version)\""
+    ]
+  },
+  "steps": [
+    {
+      "hook": "guard",
+      "input": {
+        "hook_event_name": "PreToolUse",
+        "tool_name": "Bash",
+        "tool_input": {
+          "command": "{{command}}"
+        },
+        "cwd": "{{PROJECT}}"
+      },
+      "expect": {
+        "exit": 0,
+        "decision": "none",
+        "stdout": [
+          {
+            "empty": true
+          }
+        ]
+      }
+    }
+  ]
+}

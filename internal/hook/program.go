@@ -2,6 +2,7 @@ package hook
 
 import (
 	"path"
+	"slices"
 	"strings"
 )
 
@@ -10,6 +11,64 @@ import (
 // codex, opencode, pi). It holds the same names as `harnesses`, the agents of
 // `orca terminal create --command`, but the two rules are judged apart.
 var directHarnesses = map[string]bool{"claude": true, "codex": true, "opencode": true, "pi": true}
+
+// noSession is the one table of the harness invocations that start no agent
+// session, by the first word after the program; every other invocation is
+// denied. A word that starts with - is a flag: it passes only when nothing but
+// redirections follows it. A subcommand passes with any arguments, unless one
+// of them is the word named here, which does start sessions (`claude plugin
+// eval` runs agents).
+var noSession = map[string]map[string]string{
+	"claude": {
+		"-v": "", "--version": "", "-h": "", "--help": "",
+		"mcp": "", "doctor": "", "update": "", "install": "", "plugin": "eval", "setup-token": "", "auth": "",
+	},
+	"codex":    {"--version": "", "--help": "", "login": "", "logout": "", "mcp": "", "completion": ""},
+	"opencode": {"--version": "", "--help": "", "auth": "", "mcp": "", "models": "", "stats": "", "upgrade": ""},
+	"pi":       {"--version": "", "--help": ""},
+}
+
+// startsSession reports whether the harness prog, run with args, can start an
+// agent session: its first argument is not in noSession, or what follows takes
+// it out of the table.
+func startsSession(prog string, args []string) bool {
+	if len(args) == 0 {
+		return true
+	}
+	except, listed := noSession[prog][args[0]]
+	switch {
+	case !listed:
+		return true
+	case strings.HasPrefix(args[0], "-"):
+		return len(withoutRedirects(args[1:])) > 0
+	}
+	return except != "" && slices.Contains(args[1:], except)
+}
+
+// redirect reports whether word is a redirection; bare is true when its target
+// is the next word. A process substitution is not one.
+func redirect(word string) (is, bare bool) {
+	w := strings.TrimLeft(word, "0123456789")
+	if w == "" || w[0] != '<' && w[0] != '>' || len(w) > 1 && w[1] == '(' {
+		return false, false
+	}
+	return true, strings.Trim(w, "<>&|") == ""
+}
+
+// withoutRedirects is words without the redirections and their targets.
+func withoutRedirects(words []string) []string {
+	var out []string
+	for i := 0; i < len(words); i++ {
+		is, bare := redirect(words[i])
+		switch {
+		case !is:
+			out = append(out, words[i])
+		case bare:
+			i++
+		}
+	}
+	return out
+}
 
 // maxInnerDepth is how many -c, eval or env -S levels HarnessProgram follows.
 const maxInnerDepth = 8
@@ -160,18 +219,22 @@ func skipWrapper(name string, words []string) (next, cmd []string, lookup bool) 
 	return nil, nil, false
 }
 
-// HarnessProgram is the harness a segment runs as a program of its own: the
-// program of its words, or of an inner -c, eval or env -S command up to
-// maxInnerDepth levels deep, when it is claude, codex, opencode or pi. name is
-// that program as Name reads it.
+// HarnessProgram is the harness a segment of the old splitter runs as a program
+// of its own: the program of its words, or of an inner -c, eval or env -S
+// command up to maxInnerDepth levels deep, when it is claude, codex, opencode
+// or pi and the invocation can start a session (startsSession). name is that
+// program as Name reads it.
 func HarnessProgram(words []string) (name string, ok bool) {
 	return harnessAt(words, 0)
 }
 
 func harnessAt(words []string, depth int) (string, bool) {
-	prog, _, inner := Program(words)
+	prog, args, inner := Program(words)
 	if directHarnesses[prog] {
-		return prog, true
+		if startsSession(prog, args) {
+			return prog, true
+		}
+		return "", false
 	}
 	if depth >= maxInnerDepth {
 		return "", false

@@ -132,13 +132,3 @@ func CheckTarget(text, language string) []Failure {
 	}
 	return failures
 }
-
-// TargetReason is the rejection text for the failures of CheckTarget:
-// `brief target failed: <check> (<message>); ...`.
-func TargetReason(failures []Failure) string {
-	parts := make([]string, len(failures))
-	for i, f := range failures {
-		parts[i] = f.Check + " (" + f.Message + ")"
-	}
-	return "brief target failed: " + strings.Join(parts, "; ")
-}

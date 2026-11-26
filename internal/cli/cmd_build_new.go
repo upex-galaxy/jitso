@@ -21,12 +21,9 @@ import (
 // the catalog, so a new draft never breaks the project; the owner promotes it
 // with `build save`. Nothing is written to jitso/builds/.
 //
-// In a fresh project (no jitso/jitso.yaml and no *.yaml in jitso/builds/) it
-// first writes the jitso/jitso.yaml skeleton with empty allowlists. A project
-// that has builds and no allowlists is broken, not new: that is the missing
-// allowlists error, exit 3, like every catalog command. It never overwrites,
-// and refuses the id of a saved build and the id of an existing
-// draft, before anything is written.
+// In a project without jitso/jitso.yaml it also writes the skeleton, which
+// restricts nothing. It never overwrites, and refuses the id of a saved build
+// and the id of an existing draft, before anything is written.
 //
 //	build new <id> [--tier worker|conductor|subagent]
 //
@@ -82,18 +79,11 @@ func runBuildNew(ctx *Context, args []string) error {
 	if err != nil {
 		return err
 	}
-	fresh := isFreshProject(root.Primary)
-	var res *catalog.Result
-	if fresh {
-		// No allowlists to validate against yet: the folders are scanned only
-		// for the ids they hold.
-		res, err = scanIDs(root.Primary)
-	} else {
-		// The whole-catalog rule, and the missing allowlists error.
-		if _, err = ctx.Catalog(); err == nil {
-			res, err = ctx.Scan()
-		}
+	// The whole-catalog rule, as for every catalog command.
+	if _, err := ctx.Catalog(); err != nil {
+		return err
 	}
+	res, err := ctx.Scan()
 	if err != nil {
 		return err
 	}
@@ -108,11 +98,12 @@ func runBuildNew(ctx *Context, args []string) error {
 		return err
 	}
 
-	if fresh {
-		if err := writeSkeleton(root.Primary); err != nil {
-			return err
-		}
-		ctx.Println("wrote " + catalog.ConfigPath + " (empty allowlists: fill them first)")
+	wrote, err := writeSkeleton(root.Primary)
+	if err != nil {
+		return err
+	}
+	if wrote {
+		ctx.Println("wrote " + catalog.ConfigPath + " (every allowlist is open: add a list there to restrict builds)")
 	}
 	if err := drafts.Put(root.Primary, id, []byte(text)); err != nil {
 		return err
@@ -121,46 +112,26 @@ func runBuildNew(ctx *Context, args []string) error {
 	return nil
 }
 
-// isFreshProject reports whether the project has neither jitso/jitso.yaml nor
-// a build file in jitso/builds/: the one case where build new writes the
-// allowlists skeleton.
-func isFreshProject(primary string) bool {
-	if _, err := os.Stat(filepath.Join(primary, filepath.FromSlash(catalog.ConfigPath))); err == nil || !errors.Is(err, fs.ErrNotExist) {
-		return false
-	}
-	entries, err := os.ReadDir(filepath.Join(primary, filepath.FromSlash(catalog.BuildsDir)))
-	if err != nil {
-		return errors.Is(err, fs.ErrNotExist)
-	}
-	for _, e := range entries {
-		if !e.IsDir() && strings.HasSuffix(e.Name(), drafts.ExtensionYAML) {
-			return false
-		}
-	}
-	return true
-}
-
-// scanIDs scans the build folders of the project with no allowlists, which is enough
-// to know which ids its saved builds hold.
-func scanIDs(primary string) (*catalog.Result, error) {
-	return catalog.ScanSources(catalog.Config{}, nil, catalog.Sources(primary))
-}
-
-// writeSkeleton writes jitso/jitso.yaml from the template, never over a file
-// that is there.
-func writeSkeleton(primary string) error {
+// writeSkeleton writes jitso/jitso.yaml from the template when nothing is at
+// that path, and reports whether it did. It never writes over a file.
+func writeSkeleton(primary string) (bool, error) {
 	path := filepath.Join(primary, filepath.FromSlash(catalog.ConfigPath))
+	if _, err := os.Lstat(path); err == nil {
+		return false, nil
+	} else if !errors.Is(err, fs.ErrNotExist) {
+		return false, err
+	}
 	if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
-		return err
+		return false, err
 	}
 	f, err := os.OpenFile(path, os.O_WRONLY|os.O_CREATE|os.O_EXCL, 0o644)
 	if err != nil {
-		return err
+		return false, err
 	}
 	if _, err := f.WriteString(templates.Config()); err != nil {
 		f.Close()
 		os.Remove(path)
-		return err
+		return false, err
 	}
-	return f.Close()
+	return true, f.Close()
 }

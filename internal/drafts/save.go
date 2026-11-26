@@ -43,7 +43,7 @@ func SaveContent(draft []byte) ([]byte, error) {
 	return append(out, draft[end:]...), nil
 }
 
-// Show is how content is shown to the person who approves it: every line
+// Show is how the content of a save is shown to whoever runs it: every line
 // prefixed with `+ `, each ended by a newline. A control character other than
 // a tab, and a Unicode line or paragraph separator, is shown as \xNN (the code
 // point in hex), so content cannot hide text with a terminal escape sequence or

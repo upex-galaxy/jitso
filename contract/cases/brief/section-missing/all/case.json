@@ -1,11 +1,12 @@
 {
   "id": "brief/section-missing/all",
-  "title": "a brief with no section lists all four missing names in order",
+  "title": "a brief with no section lists all four missing names, in order, in one warning",
   "tags": [
     "posix"
   ],
   "source": [
-    "cli/jitso/launch.test.ts: 'a brief that fails the quality checks is rejected with the failing check named' (text: 'just do it')"
+    "cli/jitso/launch.test.ts: 'a brief that fails the quality checks is rejected with the failing check named' (text: 'just do it')",
+    "intended: docs/decisions.md, \"Only launches are blocked, and launches into other repositories\": the brief checks are warnings on stderr and the launch goes on"
   ],
   "project": {
     "files": {
@@ -23,17 +24,21 @@
         "--brief",
         "{{PROJECT}}/.jitso/briefs/brief.md",
         "--mode",
-        "direct"
+        "direct",
+        "--dry-run"
       ],
       "expect": {
-        "exit": 2,
+        "exit": 0,
         "stdout": [
           {
-            "empty": true
-          }
+            "regex": "^JITSO L\\d{8}T\\d{6}-[0-9a-f]{4} \\|"
+          },
+          "dry run: nothing was written and Orca was not called"
         ],
         "stderr": [
-          "sections (missing section: Goal, Scope, Done when, Report format)"
+          {
+            "equals": "jitso: warning: brief sections: missing section: Goal, Scope, Done when, Report format\njitso: warning: brief length: 3 words, expected 40 to 800\n"
+          }
         ],
         "orca_calls": {
           "empty": true

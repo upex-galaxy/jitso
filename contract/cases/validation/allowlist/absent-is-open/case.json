@@ -1,0 +1,118 @@
+{
+  "id": "validation/allowlist/absent-is-open",
+  "title": "an allowlist key that is absent or null restricts nothing: any model, effort and tool, and any skill folder and .mcp.json server that exists",
+  "source": [
+    "intended: docs/decisions.md, Only launches are blocked, and launches into other repositories (allowlists are open unless a list restricts)"
+  ],
+  "intent": "A project can compose and launch a build before it writes any allowlist. An open list still needs a value: a model, effort or tool that is empty is a problem that names the rule, never the value.",
+  "project": {
+    "files": {
+      ".jitso/briefs/brief.md": "## Goal\n\nFind where the sync entry point of this project is defined and explain in a few sentences how it is wired to the rest of the code.\n\n## Scope\n\nRead only. Do not change any file and do not leave the repository.\n\n## Done when\n\nYou can name the file and the line that defines the entry point, and you have checked it by reading the file.\n\n## Report format\n\nOne short paragraph with the file path, the line number and a one line summary of what it does.\n",
+      ".agents/skills/local-skill/SKILL.md": "---\nname: local-skill\ndescription: A project skill.\n---\n",
+      ".claude/skills/claude-only/SKILL.md": "---\nname: claude-only\ndescription: A skill only Claude Code holds.\n---\n",
+      "jitso/jitso.yaml": "{{config}}",
+      "jitso/builds": null,
+      ".jitso/drafts/anything.yaml": "id: anything\nversion: 1\nstatus: draft\nrole: operator\ntype: scanner\ndescription: Scan the repo.\nharness: claude\nmodel: any-vendor/any-model\neffort: extreme\nskills_first: [local-skill, claude-only, jitso]\nmcp: [dbhub, unlisted]\ntools: [AnyTool, Read]\n",
+      ".jitso/drafts/unfilled.yaml": "id: unfilled\nversion: 1\nstatus: draft\nrole: operator\ntype: scanner\ndescription: Scan the repo.\nharness: claude\nmodel: \neffort: ''\nskills_first: []\nmcp: []\ntools: ['']\n"
+    }
+  },
+  "for_each": {
+    "vars": [
+      "config"
+    ],
+    "ids": [
+      "absent",
+      "null"
+    ],
+    "rows": [
+      [
+        "version: 1\n"
+      ],
+      [
+        "version: 1\nmodels:\nefforts:\nmcp:\nskills:\ntools:\n"
+      ]
+    ]
+  },
+  "tags": [
+    "posix"
+  ],
+  "steps": [
+    {
+      "run": [
+        "build",
+        "validate",
+        "anything"
+      ],
+      "expect": {
+        "exit": 0,
+        "stderr": [
+          {
+            "empty": true
+          }
+        ],
+        "stdout": [
+          {
+            "equals": "ok anything draft .jitso/drafts/anything.yaml\nchecked 1 builds: 1 ok, 0 invalid\n"
+          }
+        ]
+      }
+    },
+    {
+      "run": [
+        "launch",
+        "--build",
+        "anything",
+        "--brief",
+        "{{PROJECT}}/.jitso/briefs/brief.md",
+        "--mode",
+        "direct",
+        "--dry-run"
+      ],
+      "expect": {
+        "exit": 0,
+        "stderr": [
+          {
+            "empty": true
+          }
+        ],
+        "stdout": [
+          {
+            "contains": "model any-vendor/any-model effort extreme"
+          },
+          {
+            "contains": "dry run: nothing was written"
+          }
+        ],
+        "orca_calls": {
+          "empty": true
+        },
+        "files": [
+          {
+            "path": ".jitso/launches",
+            "exists": false
+          }
+        ]
+      }
+    },
+    {
+      "run": [
+        "build",
+        "validate",
+        "unfilled"
+      ],
+      "expect": {
+        "exit": 2,
+        "stderr": [
+          {
+            "empty": true
+          }
+        ],
+        "stdout": [
+          {
+            "equals": "invalid unfilled draft .jitso/drafts/unfilled.yaml\n  model must be a non-empty value with no control character\n  effort must be a non-empty value with no control character\n  tools must hold non-empty values with no control character\nchecked 1 builds: 0 ok, 1 invalid\n"
+          }
+        ]
+      }
+    }
+  ]
+}

@@ -286,7 +286,7 @@ func TestLoadErrors(t *testing.T) {
 			"o.yaml": strings.Replace(validBuild, "id: haiku-explorer", "id: other", 1)},
 			`build jitso/builds/w.yaml is invalid: subagent "other" is not a subagent-tier build`},
 		{"subagent with mcp", map[string]string{"p.yaml": strings.Replace(sub("plan"), "route_scope:", "mcp: [dbhub]\nroute_scope:", 1)},
-			`build jitso/builds/p.yaml is invalid: mcp "dbhub" is not in the allowlist; mcp must be empty in a subagent-tier build`},
+			`build jitso/builds/p.yaml is invalid: mcp "dbhub" is not defined in .mcp.json; mcp must be empty in a subagent-tier build`},
 		{"bad yaml", map[string]string{"y.yaml": "a: [1\n"}, "build jitso/builds/y.yaml is invalid: "},
 	}
 	for _, tt := range tests {
@@ -306,8 +306,12 @@ func TestLoadErrors(t *testing.T) {
 func TestLoadMissingFiles(t *testing.T) {
 	fsys := testFS(nil)
 	delete(fsys, "jitso/jitso.yaml")
-	if _, err := Load(fsys); err == nil {
-		t.Error("missing jitso.yaml must fail")
+	cat, err := Load(fsys)
+	if err != nil {
+		t.Fatalf("a project without jitso.yaml loads: %v", err)
+	}
+	if c := cat.Config; c.Version != 1 || !Open(c.Models) || !Open(c.Efforts) || !Open(c.MCP) || !Open(c.Skills) || !Open(c.Tools) {
+		t.Errorf("without jitso.yaml every list is open: %+v", c)
 	}
 	fsys = testFS(nil)
 	fsys["jitso/jitso.yaml"] = &fstest.MapFile{Data: []byte("- a\n")}
@@ -321,6 +325,51 @@ func TestConfigCoercion(t *testing.T) {
 	cfg, _, ok := configFrom(raw)
 	if !ok || cfg.Version != 1 || !reflect.DeepEqual(cfg.Models, []string{"123", "a"}) || len(cfg.Efforts) != 0 {
 		t.Errorf("config %+v", cfg)
+	}
+}
+
+func TestConfigOpenLists(t *testing.T) {
+	tests := []struct {
+		name, yaml string
+		open       bool
+	}{
+		{"absent", "version: 1\n", true},
+		{"null", "models:\n", true},
+		{"empty", "models: []\n", true},
+		{"listed", "models: [a]\n", false},
+		{"a word", "models: a\n", false},
+		{"a mapping", "models: {a: 1}\n", false},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			raw, err := decodeYAML([]byte(tt.yaml))
+			if err != nil {
+				t.Fatal(err)
+			}
+			cfg, _, ok := configFrom(raw)
+			if !ok || Open(cfg.Models) != tt.open {
+				t.Errorf("open = %v, want %v (%#v)", Open(cfg.Models), tt.open, cfg.Models)
+			}
+			if got := cfg.AllowsModel("other"); got != tt.open {
+				t.Errorf("AllowsModel(other) = %v, want %v", got, tt.open)
+			}
+		})
+	}
+}
+
+// An open list takes any usable text; what it refuses is never repeated in the
+// problem.
+func TestOpenValueProblems(t *testing.T) {
+	const want = "model must be a non-empty value with no control character"
+	for _, v := range []any{nil, "", "  ", "a\nb", "a\x7f", true, []any{"a"}} {
+		if got := valueProblem("model", v, nil); got != want {
+			t.Errorf("valueProblem(%#v) = %q", v, got)
+		}
+	}
+	for _, v := range []any{"any-vendor/any-model", 3, 1.5} {
+		if got := valueProblem("model", v, nil); got != "" {
+			t.Errorf("valueProblem(%#v) = %q, want none", v, got)
+		}
 	}
 }
 

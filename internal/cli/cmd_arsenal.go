@@ -8,11 +8,13 @@ import (
 )
 
 // arsenal prints what a build may name in this project, one line per item:
-// the allowlisted models, efforts, tools, skills (the project's, JITSO's own
-// and the user allowlist's user:<name>), MCP servers, approved subagent-tier
-// builds, route ids and field patterns. --all adds what this machine holds
-// that no allowlist names. It reads only, prints names and key names, never
-// a value, and exits 0 unless the project has no jitso/jitso.yaml.
+// the models, efforts, tools, skills (the project's, JITSO's own and the
+// user's user:<name>), MCP servers, approved subagent-tier builds, route ids
+// and field patterns. An allowlist that restricts is printed as it is; an open
+// one gets a line that says so, then what exists. --all adds what this machine
+// holds that a restricting allowlist does not name. It reads only and prints
+// names and key names, never a value. A project without jitso/jitso.yaml has
+// every list open.
 func init() {
 	Register(Command{
 		Name:    "arsenal",

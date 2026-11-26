@@ -1,0 +1,252 @@
+{
+  "id": "build/draft/status-may-be-absent",
+  "title": "a draft needs no status: absent means draft, any other value than draft is rejected, and a saved build still needs one",
+  "source": [
+    "intended: docs/decisions.md, Only launches are blocked, and launches into other repositories (allowlists are open unless a list restricts)"
+  ],
+  "intent": "The folder already says a file is a draft. A written status that says something else, or nothing after the key, would let a draft pass as a saved build, so it stays a problem.",
+  "project": {
+    "files": {
+      ".jitso/briefs/brief.md": "## Goal\n\nFind where the sync entry point of this project is defined and explain in a few sentences how it is wired to the rest of the code.\n\n## Scope\n\nRead only. Do not change any file and do not leave the repository.\n\n## Done when\n\nYou can name the file and the line that defines the entry point, and you have checked it by reading the file.\n\n## Report format\n\nOne short paragraph with the file path, the line number and a one line summary of what it does.\n"
+    }
+  },
+  "defect": "N-15",
+  "tags": [
+    "posix"
+  ],
+  "steps": [
+    {
+      "run": [
+        "build",
+        "draft",
+        "-"
+      ],
+      "stdin": "id: scout\nversion: 1\nstatus: approved\nrole: operator\ntype: scanner\ndescription: Scan the repo.\nharness: claude\nmodel: claude-haiku-5-5\neffort: low\nskills_first: []\nmcp: []\n",
+      "expect": {
+        "exit": 2,
+        "stderr": [
+          {
+            "equals": "JITSO REJECTED: draft stdin is invalid: status must be draft in a draft\n"
+          }
+        ],
+        "files": [
+          {
+            "path": ".jitso/drafts",
+            "exists": false
+          }
+        ]
+      }
+    },
+    {
+      "run": [
+        "build",
+        "draft",
+        "-"
+      ],
+      "stdin": "id: scout\nversion: 1\nstatus: candidate\nrole: operator\ntype: scanner\ndescription: Scan the repo.\nharness: claude\nmodel: claude-haiku-5-5\neffort: low\nskills_first: []\nmcp: []\n",
+      "expect": {
+        "exit": 2,
+        "stderr": [
+          {
+            "equals": "JITSO REJECTED: draft stdin is invalid: status must be draft in a draft\n"
+          }
+        ],
+        "files": [
+          {
+            "path": ".jitso/drafts",
+            "exists": false
+          }
+        ]
+      }
+    },
+    {
+      "run": [
+        "build",
+        "draft",
+        "-"
+      ],
+      "stdin": "id: scout\nversion: 1\nstatus: retired\nrole: operator\ntype: scanner\ndescription: Scan the repo.\nharness: claude\nmodel: claude-haiku-5-5\neffort: low\nskills_first: []\nmcp: []\n",
+      "expect": {
+        "exit": 2,
+        "stderr": [
+          {
+            "equals": "JITSO REJECTED: draft stdin is invalid: status must be draft in a draft\n"
+          }
+        ],
+        "files": [
+          {
+            "path": ".jitso/drafts",
+            "exists": false
+          }
+        ]
+      }
+    },
+    {
+      "run": [
+        "build",
+        "draft",
+        "-"
+      ],
+      "stdin": "id: scout\nversion: 1\nstatus: Draft\nrole: operator\ntype: scanner\ndescription: Scan the repo.\nharness: claude\nmodel: claude-haiku-5-5\neffort: low\nskills_first: []\nmcp: []\n",
+      "expect": {
+        "exit": 2,
+        "stderr": [
+          {
+            "equals": "JITSO REJECTED: draft stdin is invalid: status must be draft in a draft\n"
+          }
+        ],
+        "files": [
+          {
+            "path": ".jitso/drafts",
+            "exists": false
+          }
+        ]
+      }
+    },
+    {
+      "run": [
+        "build",
+        "draft",
+        "-"
+      ],
+      "stdin": "id: scout\nversion: 1\nstatus: ''\nrole: operator\ntype: scanner\ndescription: Scan the repo.\nharness: claude\nmodel: claude-haiku-5-5\neffort: low\nskills_first: []\nmcp: []\n",
+      "expect": {
+        "exit": 2,
+        "stderr": [
+          {
+            "equals": "JITSO REJECTED: draft stdin is invalid: status must be draft in a draft\n"
+          }
+        ],
+        "files": [
+          {
+            "path": ".jitso/drafts",
+            "exists": false
+          }
+        ]
+      }
+    },
+    {
+      "run": [
+        "build",
+        "draft",
+        "-"
+      ],
+      "stdin": "id: scout\nversion: 1\nstatus:\nrole: operator\ntype: scanner\ndescription: Scan the repo.\nharness: claude\nmodel: claude-haiku-5-5\neffort: low\nskills_first: []\nmcp: []\n",
+      "expect": {
+        "exit": 2,
+        "stderr": [
+          {
+            "equals": "JITSO REJECTED: draft stdin is invalid: status must be draft in a draft\n"
+          }
+        ],
+        "files": [
+          {
+            "path": ".jitso/drafts",
+            "exists": false
+          }
+        ]
+      }
+    },
+    {
+      "run": [
+        "build",
+        "draft",
+        "-"
+      ],
+      "stdin": "id: scout\nversion: 1\nrole: operator\ntype: scanner\ndescription: Scan the repo.\nharness: claude\nmodel: claude-haiku-5-5\neffort: low\nskills_first: []\nmcp: []\n",
+      "expect": {
+        "exit": 0,
+        "stdout": [
+          {
+            "equals": "drafted scout: .jitso/drafts/scout.yaml (launch it with --build scout; only the owner can save it)\n"
+          }
+        ],
+        "files": [
+          {
+            "path": ".jitso/drafts/scout.yaml",
+            "equals": "id: scout\nversion: 1\nrole: operator\ntype: scanner\ndescription: Scan the repo.\nharness: claude\nmodel: claude-haiku-5-5\neffort: low\nskills_first: []\nmcp: []\n"
+          }
+        ]
+      }
+    },
+    {
+      "run": [
+        "build",
+        "validate",
+        "scout"
+      ],
+      "expect": {
+        "exit": 0,
+        "stderr": [
+          {
+            "empty": true
+          }
+        ],
+        "stdout": [
+          {
+            "equals": "ok scout draft .jitso/drafts/scout.yaml\nchecked 1 builds: 1 ok, 0 invalid\n"
+          }
+        ]
+      }
+    },
+    {
+      "run": [
+        "launch",
+        "--build",
+        "scout",
+        "--brief",
+        "{{PROJECT}}/.jitso/briefs/brief.md",
+        "--mode",
+        "direct",
+        "--dry-run"
+      ],
+      "expect": {
+        "exit": 0,
+        "stderr": [
+          {
+            "empty": true
+          }
+        ],
+        "stdout": [
+          {
+            "contains": "| build scout v1 (draft)\n"
+          },
+          {
+            "contains": "dry run: nothing was written"
+          }
+        ],
+        "orca_calls": {
+          "empty": true
+        },
+        "files": [
+          {
+            "path": ".jitso/launches",
+            "exists": false
+          }
+        ]
+      }
+    },
+    {
+      "write": {
+        "project": {
+          "jitso/builds/early.yaml": "id: early\nversion: 1\nrole: operator\ntype: scanner\ndescription: Scan the repo.\nharness: claude\nmodel: claude-haiku-5-5\neffort: low\nskills_first: []\nmcp: []\n"
+        }
+      }
+    },
+    {
+      "run": [
+        "build",
+        "validate",
+        "early"
+      ],
+      "expect": {
+        "exit": 2,
+        "stdout": [
+          {
+            "equals": "invalid early repo jitso/builds/early.yaml\n  status must be one of candidate, approved, retired\nchecked 1 builds: 0 ok, 1 invalid\n"
+          }
+        ]
+      }
+    }
+  ]
+}

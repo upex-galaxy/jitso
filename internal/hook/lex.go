@@ -46,22 +46,24 @@ type lexer struct {
 	nest    int
 	pending []heredoc
 	out     *[]lexCommand
+	docs    *[]string
 }
 
 // lex reads a Bash line the way the shell splits it: words with their quotes
 // removed, commands cut at ; & && | || newline ( and ) outside quotes, the
 // commands of every $( ), backtick and process substitution as commands of
-// their own, and heredoc bodies kept out of the commands (their substitutions
-// are read when the delimiter is not quoted). ok is false when the line does
-// not parse: an unbalanced quote, parenthesis or backtick, a heredoc without
-// its delimiter line, or nesting deeper than maxNest.
-func lex(line string) (cmds []lexCommand, ok bool) {
-	lx := &lexer{s: line, out: &cmds}
+// their own, and heredoc bodies kept out of the commands and returned as docs
+// (their substitutions are read when the delimiter is not quoted). ok is false
+// when the line does not parse: an unbalanced quote, parenthesis or backtick, a
+// heredoc without its delimiter line, a case statement inside a substitution,
+// or nesting deeper than maxNest.
+func lex(line string) (cmds []lexCommand, docs []string, ok bool) {
+	lx := &lexer{s: line, out: &cmds, docs: &docs}
 	if !lx.list(false) || len(lx.pending) > 0 {
-		return nil, false
+		return nil, nil, false
 	}
 	sort.SliceStable(cmds, func(i, j int) bool { return cmds[i].start < cmds[j].start })
-	return cmds, true
+	return cmds, docs, true
 }
 
 // sub lexes s, a part of the line at offset base, into the same commands.
@@ -69,7 +71,7 @@ func (lx *lexer) sub(s string, base int) bool {
 	if lx.nest >= maxNest {
 		return false
 	}
-	in := &lexer{s: s, base: base, nest: lx.nest + 1, out: lx.out}
+	in := &lexer{s: s, base: base, nest: lx.nest + 1, out: lx.out, docs: lx.docs}
 	return in.list(false) && len(in.pending) == 0
 }
 
@@ -81,6 +83,9 @@ func (lx *lexer) list(inSub bool) bool {
 	inWord, expand := false, false
 	start := lx.pos
 	depth := 0
+	// isCase is true once a case statement starts: its patterns close with a )
+	// the lexer cannot tell from the one that ends a substitution.
+	isCase := false
 	endWord := func() {
 		if inWord && b.Len() > 0 {
 			words = append(words, lexWord{text: b.String(), expand: expand})
@@ -91,6 +96,7 @@ func (lx *lexer) list(inSub bool) bool {
 	endCommand := func() {
 		endWord()
 		if len(words) > 0 {
+			isCase = isCase || words[0].text == "case"
 			*lx.out = append(*lx.out, lexCommand{words: words, start: lx.base + start})
 		}
 		words = nil
@@ -135,7 +141,7 @@ func (lx *lexer) list(inSub bool) bool {
 			case depth > 0:
 				depth--
 			case inSub:
-				return true
+				return !isCase
 			default:
 				return false
 			}
@@ -342,8 +348,9 @@ func (lx *lexer) heredocStart() bool {
 }
 
 // bodies reads the bodies of the queued heredocs, which start at the current
-// position. A body is data; the substitutions of a body whose delimiter is not
-// quoted are lexed, because the shell expands them.
+// position, and keeps them in docs. A body is no command of the line; the
+// substitutions of a body whose delimiter is not quoted are lexed, because the
+// shell expands them.
 func (lx *lexer) bodies() bool {
 	for _, h := range lx.pending {
 		from := lx.pos
@@ -361,6 +368,7 @@ func (lx *lexer) bodies() bool {
 			if line == h.delim {
 				body := lx.s[from:lx.pos]
 				lx.pos = next
+				*lx.docs = append(*lx.docs, body)
 				if !h.quoted && !lx.bodySubstitutions(body, lx.base+from) {
 					return false
 				}
@@ -379,7 +387,7 @@ func (lx *lexer) bodySubstitutions(body string, base int) bool {
 	if lx.nest >= maxNest {
 		return false
 	}
-	in := &lexer{s: body, base: base, nest: lx.nest + 1, out: lx.out}
+	in := &lexer{s: body, base: base, nest: lx.nest + 1, out: lx.out, docs: lx.docs}
 	var discard strings.Builder
 	for in.pos < len(body) {
 		c := body[in.pos]
@@ -428,8 +436,9 @@ var ghVerbs = map[string]bool{"create": true, "edit": true, "comment": true}
 // send`, `ask` and `reply`, `gh pr`, `issue` and `release` `create`, `edit`
 // and `comment`, echo and printf, and cat that reads a heredoc and writes to
 // its output or a > or >> file. Any other program, a NAME=value word in front,
-// a here-string, or a heredoc on another command makes the line one the
-// guard judges with the old splitter.
+// a here-string, or a heredoc on another command makes the command one the
+// guard judges by its program and its words, quotes removed and nothing
+// masked.
 func dataPositions(words []string) (data []int, ok bool) {
 	heredoc := false
 	for _, w := range words {
@@ -530,45 +539,4 @@ func matchText(words []string, data []int) string {
 		}
 	}
 	return strings.Join(parts, " ")
-}
-
-// lexedDenial is the denial of command read with the lexer. ok is false when
-// the line must be judged by the old splitter instead: it does not lex, or one
-// of its commands (each part of a list or a pipeline, and each substitution)
-// is not a data command (dataPositions).
-func (l Launcher) lexedDenial(command string) (d Denial, ok bool) {
-	cmds, ok := lex(command)
-	if !ok {
-		return Denial{}, false
-	}
-	texts := make([]string, len(cmds))
-	for i, c := range cmds {
-		words := c.texts()
-		data, ok := dataPositions(words)
-		if !ok {
-			return Denial{}, false
-		}
-		texts[i] = matchText(words, data)
-	}
-	for _, text := range texts {
-		if d := l.verdict(text); d.Verb != "" {
-			return d, true
-		}
-	}
-	return Denial{}, true
-}
-
-// verdict is the denial of one data command as the matchers read it. Its
-// program is never a harness, so only the text matchers can deny it.
-func (l Launcher) verdict(text string) Denial {
-	if id, ok := l.BuildSave(text); ok {
-		return Denial{Verb: VerbBuildSave, SaveID: id}
-	}
-	if verb, ok := l.Adoption(text); ok {
-		return Denial{Verb: verb}
-	}
-	if verb := l.LaunchVerb(text); verb != "" {
-		return Denial{Verb: verb}
-	}
-	return Denial{}
 }

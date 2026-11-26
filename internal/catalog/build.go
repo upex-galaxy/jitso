@@ -114,6 +114,9 @@ func buildFrom(file string, m *Map) Build {
 	if tier, ok := m.Value("tier").(string); ok {
 		b.Tier = tier
 	}
+	if _, ok := m.Get("harness"); !ok {
+		b.Harness = DefaultHarness
+	}
 	if tools, ok := m.Value("tools").([]any); ok {
 		b.Tools = jsconv.Strings(tools)
 		b.ToolsSet = true

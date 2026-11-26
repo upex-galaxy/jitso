@@ -1,6 +1,7 @@
 package fleet
 
 import (
+	"encoding/json"
 	"errors"
 	"os"
 	"path/filepath"
@@ -155,6 +156,91 @@ func TestRunDoesNotWrite(t *testing.T) {
 	}
 }
 
+func TestRunArranges(t *testing.T) {
+	repo := filepath.Join(t.TempDir(), "repo")
+	if err := os.Mkdir(repo, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	f := &fakeOrca{terminals: []orca.TerminalInfo{
+		{Handle: "term_o1", Worktree: "/w/other"},
+		{Handle: "term_p1", Worktree: repo},
+		{Handle: "term_none"},
+		{Handle: "term_a", Worktree: "/w/other"},
+		{Handle: "term_o2", Worktree: "/w/other"},
+		{Handle: "term_p2", Worktree: repo},
+	}}
+	asked := map[string]int{}
+	out, err := Run(Options{JSON: true}, Deps{
+		Store:     store(t, launch(idA, "", "conductor", "term_a")),
+		Orca:      f,
+		Checkouts: func() []string { return []string{repo} },
+		RepoName: func(folder string) string {
+			asked[folder]++
+			return filepath.Base(folder)
+		},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	var got struct {
+		Sessions []struct {
+			Handle string  `json:"handle"`
+			Repo   *string `json:"repo"`
+		} `json:"sessions"`
+	}
+	if err := json.Unmarshal([]byte(out), &got); err != nil {
+		t.Fatal(err)
+	}
+	var rows []string
+	for _, s := range got.Sessions {
+		name := "-"
+		if s.Repo != nil {
+			name = *s.Repo
+		}
+		rows = append(rows, s.Handle+" "+name)
+	}
+	// The launch records no repo, and the folder of its terminal names none.
+	want := []string{"term_a -", "term_p1 repo", "term_p2 repo", "term_o1 other", "term_none -", "term_o2 other"}
+	if !reflect.DeepEqual(rows, want) {
+		t.Errorf("got  %q\nwant %q", rows, want)
+	}
+	if want := map[string]int{"/w/other": 1, repo: 1}; !reflect.DeepEqual(asked, want) {
+		t.Errorf("asked %v", asked)
+	}
+}
+
+func TestInsideAny(t *testing.T) {
+	root := t.TempDir()
+	repo := filepath.Join(root, "repo")
+	sub := filepath.Join(repo, "sub")
+	if err := os.MkdirAll(sub, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	inside := InsideAny([]string{repo, filepath.Join(root, "gone")})
+	for folder, want := range map[string]bool{
+		repo:                            true,
+		repo + string(os.PathSeparator): true,
+		filepath.Join(root, "gone"):     true,
+		sub:                             false,
+		root:                            false,
+		filepath.Join(root, "other"):    false,
+	} {
+		if got := inside(folder); got != want {
+			t.Errorf("%s: %v, want %v", folder, got, want)
+		}
+	}
+}
+
+func TestRepoNameOutsideGit(t *testing.T) {
+	for folder, want := range map[string]string{
+		"/no/such/plain": "plain", "/no/such/plain/": "plain", `C:\no\such\gamma`: "gamma",
+	} {
+		if got := RepoName(folder); got != want {
+			t.Errorf("%q: %q, want %q", folder, got, want)
+		}
+	}
+}
+
 func TestRunErrors(t *testing.T) {
 	boom := errors.New("orca terminal list failed")
 	if _, err := Run(Options{}, Deps{Store: store(t, ""), Orca: &fakeOrca{err: boom}}); !errors.Is(err, boom) {
@@ -168,7 +254,7 @@ func TestRunErrors(t *testing.T) {
 
 func TestText(t *testing.T) {
 	rows := []Row{
-		{ID: idA, Role: "conductor", Type: "conductor", Harness: "claude", State: Live, Handle: "term_a", Title: "[jitso:" + idA + "] conductor"},
+		{ID: idA, Role: "conductor", Type: "conductor", Harness: "claude", State: Live, Handle: "term_a", Repo: "app", Title: "[jitso:" + idA + "] conductor"},
 		{ID: idB, Parent: idA, Role: "operator", Type: "worker", Harness: "pi", State: Gone, Handle: "term_b", Title: "a\tb\nc"},
 		{State: Unlaunched, Handle: "term_z", Title: "zsh"},
 	}
@@ -177,17 +263,17 @@ func TestText(t *testing.T) {
 		t.Fatalf("lines %q", got)
 	}
 	cols := func(line string) []string { return strings.Fields(line) }
-	if !reflect.DeepEqual(cols(got[0]), []string{"ID", "ROLE/TYPE", "HARNESS", "STATE", "HANDLE", "PARENT", "TITLE"}) {
+	if !reflect.DeepEqual(cols(got[0]), []string{"ID", "ROLE/TYPE", "HARNESS", "STATE", "HANDLE", "PARENT", "REPO", "TITLE"}) {
 		t.Errorf("header %q", got[0])
 	}
-	if want := []string{idA, "conductor/conductor", "claude", "live", "term_a", "-", "[jitso:" + idA + "]", "conductor"}; !reflect.DeepEqual(cols(got[1]), want) {
+	if want := []string{idA, "conductor/conductor", "claude", "live", "term_a", "-", "app", "[jitso:" + idA + "]", "conductor"}; !reflect.DeepEqual(cols(got[1]), want) {
 		t.Errorf("row 1 %q", got[1])
 	}
 	// Control characters of a title never break a row.
-	if want := []string{idB, "operator/worker", "pi", "gone", "term_b", idA, "a", "b", "c"}; !reflect.DeepEqual(cols(got[2]), want) {
+	if want := []string{idB, "operator/worker", "pi", "gone", "term_b", idA, "-", "a", "b", "c"}; !reflect.DeepEqual(cols(got[2]), want) {
 		t.Errorf("row 2 %q", got[2])
 	}
-	if want := []string{"-", "-", "-", "unlaunched", "term_z", "-", "zsh"}; !reflect.DeepEqual(cols(got[3]), want) {
+	if want := []string{"-", "-", "-", "unlaunched", "term_z", "-", "-", "zsh"}; !reflect.DeepEqual(cols(got[3]), want) {
 		t.Errorf("row 3 %q", got[3])
 	}
 	if got[4] != "jitso fleet: 1 live, 1 gone, 1 unlaunched" {
@@ -225,7 +311,7 @@ func TestJSON(t *testing.T) {
 	}
 	want := "{\n  \"orca\": true,\n  \"sessions\": [\n    {\n" +
 		"      \"id\": null,\n      \"parent\": null,\n      \"role\": null,\n      \"type\": null,\n      \"build\": null,\n      \"harness\": null,\n      \"mode\": null,\n" +
-		"      \"state\": \"unlaunched\",\n      \"handle\": \"term_z\",\n      \"title\": \"zsh\",\n      \"worktree\": null,\n      \"branch\": null,\n      \"ts\": null\n    }\n  ]\n}"
+		"      \"state\": \"unlaunched\",\n      \"handle\": \"term_z\",\n      \"title\": \"zsh\",\n      \"repo\": null,\n      \"worktree\": null,\n      \"branch\": null,\n      \"ts\": null\n    }\n  ]\n}"
 	if got != want {
 		t.Errorf("got\n%s\nwant\n%s", got, want)
 	}

@@ -1,10 +1,10 @@
 {
   "id": "hooks/guard/live-text-is-still-a-command",
-  "title": "text the shell or another program can run is still judged as a command: every line that holds a program outside the data commands, substitutions, and a line the lexer cannot parse",
+  "title": "text the shell or another program can run is still judged: substitutions, sh -c and eval, text fed to a shell, the words of a command that is not a data command, and a line the lexer cannot parse",
   "source": [
-    "intended: docs/decisions.md v0.1.2 fixes, J41 (the guard reads a Bash line with a shell lexer)"
+    "intended: docs/decisions.md, section \"Only launches are blocked, and launches into other repositories\" (the guard denies only what starts an agent)"
   ],
-  "intent": "Guard rows: each one is denied before and after the lexer, so they pin that judging quoted text and heredoc bodies as data opens nothing that runs. Text is masked only when every command of the line, each substitution included, is a data command (git commit or tag, orca orchestration send, ask or reply, gh pr, issue or release create, edit or comment, echo, printf, cat that reads a heredoc); a line that holds any other program (a shell, an interpreter, docker, busybox, xargs, ssh, any git subcommand but commit and tag, git -c) or does not lex is judged as before, by the old splitter with no masking, and a substitution is a command of its own.",
+  "intent": "A line that lexes is judged command by command. A substitution is a command of its own. The command string of sh -c, eval and env -S is read as a line, and so is the --command value of orca terminal create. When a command of the line reads its commands from its input (a shell with no -c and no script, source of /dev/stdin, sudo -s, a shell run by xargs), the heredoc bodies, the here-strings and the quoted text of the data commands are read as lines too; when a variable is run as the program, the heredoc bodies and here-strings are. The Orca launch verbs are looked for in the words of every command that is not a data command, so a program that runs one of its quoted words is still judged. A line that does not lex goes to the old splitter.",
   "for_each": {
     "vars": [
       "command",
@@ -14,17 +14,30 @@
       "substitution-in-double-quotes",
       "backtick-in-double-quotes",
       "substitution-in-an-unquoted-heredoc",
+      "echo-of-a-substitution",
       "heredoc-read-by-bash",
+      "heredoc-read-by-a-wrapped-shell",
+      "heredoc-after-redirections",
       "heredoc-piped-to-sh",
+      "heredoc-piped-through-tee",
+      "heredoc-in-a-process-substitution",
+      "heredoc-in-sh-c",
+      "here-string-to-bash",
+      "source-reads-a-here-string",
+      "echo-piped-to-sh",
+      "printf-piped-to-bash",
+      "a-group-piped-to-a-shell",
+      "xargs-runs-its-input",
+      "sudo-s-reads-a-pipe",
+      "heredoc-read-into-a-variable-that-runs",
       "sh-c",
+      "sh-c-two-commands",
       "eval",
       "env-S",
       "unbalanced-quote",
       "bash-c-worker-start",
-      "echo-piped-to-sh",
-      "printf-piped-to-bash",
-      "here-string-to-bash",
-      "source-reads-a-here-string",
+      "substitution-as-the-program",
+      "substitution-in-sh-c",
       "watch",
       "ssh",
       "tmux",
@@ -33,21 +46,16 @@
       "parallel",
       "script",
       "find-exec",
-      "xargs-runs-its-input",
-      "sudo-s-reads-a-pipe",
-      "a-group-piped-to-a-shell",
-      "substitution-as-the-program",
-      "substitution-in-sh-c",
-      "heredoc-read-into-a-variable-that-runs",
       "python3-c",
       "node-e",
-      "echo-piped-to-python3",
       "docker-exec-sh-c",
       "busybox-sh-c",
-      "python3-c-setup",
-      "python3-c-worker-start",
       "git-c-alias-spaced",
-      "git-rebase-exec"
+      "git-rebase-exec",
+      "quoted-harness-in-a-terminal-command",
+      "second-command-of-a-terminal-command",
+      "sh-c-after-a-double-dash",
+      "case-inside-a-substitution"
     ],
     "rows": [
       [
@@ -63,7 +71,19 @@
         "claude"
       ],
       [
+        "echo \"$(claude -p hi)\"",
+        "claude"
+      ],
+      [
         "bash <<'EOF'\nclaude -p hi\nEOF",
+        "claude"
+      ],
+      [
+        "sudo -E bash -s -- a <<EOF\nclaude -p hi\nEOF",
+        "claude"
+      ],
+      [
+        "sh 2>&1 >log <<-EOF\n\tclaude -p hi\n\tEOF",
         "claude"
       ],
       [
@@ -71,7 +91,55 @@
         "claude"
       ],
       [
+        "cat <<'EOF' | tee log | bash\nclaude -p hi\nEOF",
+        "claude"
+      ],
+      [
+        "bash <(cat <<'EOF'\nclaude -p hi\nEOF\n)",
+        "claude"
+      ],
+      [
+        "bash -c \"$(cat <<'EOF'\nclaude -p hi\nEOF\n)\"",
+        "claude"
+      ],
+      [
+        "bash <<< \"claude -p hi\"",
+        "claude"
+      ],
+      [
+        "source /dev/stdin <<< \"claude -p hi\"",
+        "claude"
+      ],
+      [
+        "echo \"claude -p hi\" | sh",
+        "claude"
+      ],
+      [
+        "printf 'orca orchestration worker-start --run r' | bash",
+        "orchestration worker-start"
+      ],
+      [
+        "{\necho \"claude -p hi\"\n} | sh",
+        "claude"
+      ],
+      [
+        "echo 'claude -p hi' | xargs -I{} sh -c '{}'",
+        "claude"
+      ],
+      [
+        "echo \"claude -p hi\" | sudo -s",
+        "claude"
+      ],
+      [
+        "read -r X <<'EOF'\nclaude -p hi\nEOF\n$X",
+        "claude"
+      ],
+      [
         "sh -c 'claude -p hi'",
+        "claude"
+      ],
+      [
+        "sh -c 'cd x; claude -p hi'",
         "claude"
       ],
       [
@@ -91,112 +159,84 @@
         "orchestration worker-start"
       ],
       [
-        "echo \"jitso build save x\" | sh",
-        "jitso build save"
-      ],
-      [
-        "printf 'orca orchestration worker-start --run r' | bash",
+        "$(echo \"orca orchestration worker-start --run r\")",
         "orchestration worker-start"
       ],
       [
-        "bash <<< \"jitso build save x\"",
-        "jitso build save"
+        "sh -c \"$(echo 'orca orchestration worker-start --run r')\"",
+        "orchestration worker-start"
       ],
       [
-        "source /dev/stdin <<< \"jitso build save x\"",
-        "jitso build save"
+        "watch \"orca orchestration worker-start --run r\"",
+        "orchestration worker-start"
       ],
       [
-        "watch \"jitso build save x\"",
-        "jitso build save"
-      ],
-      [
-        "ssh host \"jitso build save x\"",
-        "jitso build save"
+        "ssh host \"orca orchestration worker-start --run r\"",
+        "orchestration worker-start"
       ],
       [
         "tmux new \"orca orchestration worker-start --run r\"",
         "orchestration worker-start"
       ],
       [
-        "screen -dm sh -c \"jitso setup hook --yes\"",
-        "jitso setup"
+        "screen -dm sh -c \"orca orchestration worker-start --run r\"",
+        "orchestration worker-start"
       ],
       [
-        "su -c \"jitso install skill --yes\" me",
-        "jitso install"
+        "su -c \"orca orchestration worker-start --run r\" me",
+        "orchestration worker-start"
       ],
       [
-        "parallel ::: \"jitso build save x\"",
-        "jitso build save"
+        "parallel ::: \"orca orchestration worker-start --run r\"",
+        "orchestration worker-start"
       ],
       [
-        "script -q -c \"jitso build save x\" /dev/null",
-        "jitso build save"
+        "script -q -c \"orca orchestration worker-start --run r\" /dev/null",
+        "orchestration worker-start"
       ],
       [
-        "find . -exec sh -c 'jitso build save x' \\;",
-        "jitso build save"
-      ],
-      [
-        "echo 'jitso build save x' | xargs -I{} sh -c '{}'",
-        "jitso build save"
-      ],
-      [
-        "echo \"jitso build save x\" | sudo -s",
-        "jitso build save"
-      ],
-      [
-        "{\necho \"jitso build save x\"\n} | sh",
-        "jitso build save"
-      ],
-      [
-        "$(echo \"jitso build save x\")",
-        "jitso build save"
-      ],
-      [
-        "sh -c \"$(echo 'jitso build save x')\"",
-        "jitso build save"
-      ],
-      [
-        "read -r X <<'EOF'\njitso build save x\nEOF\n$X",
-        "jitso build save"
-      ],
-      [
-        "python3 -c \"jitso build save x\"",
-        "jitso build save"
-      ],
-      [
-        "node -e \"jitso build save x\"",
-        "jitso build save"
-      ],
-      [
-        "echo \"jitso build save x\" | python3",
-        "jitso build save"
-      ],
-      [
-        "docker exec c sh -c \"jitso build save x\"",
-        "jitso build save"
-      ],
-      [
-        "busybox sh -c \"jitso build save x\"",
-        "jitso build save"
-      ],
-      [
-        "python3 -c \"jitso setup hook\"",
-        "jitso setup"
+        "find . -exec sh -c 'orca orchestration worker-start --run r' \\;",
+        "orchestration worker-start"
       ],
       [
         "python3 -c \"orca orchestration worker-start --run r\"",
         "orchestration worker-start"
       ],
       [
-        "git -c alias.x='! jitso build save x' x",
-        "jitso build save"
+        "node -e \"orca orchestration worker-start --run r\"",
+        "orchestration worker-start"
       ],
       [
-        "git rebase --exec \"jitso build save x\"",
-        "jitso build save"
+        "docker exec c sh -c \"orca orchestration worker-start --run r\"",
+        "orchestration worker-start"
+      ],
+      [
+        "busybox sh -c \"orca orchestration worker-start --run r\"",
+        "orchestration worker-start"
+      ],
+      [
+        "git -c alias.x='! orca orchestration worker-start --run r' x",
+        "orchestration worker-start"
+      ],
+      [
+        "git rebase --exec \"orca orchestration worker-start --run r\"",
+        "orchestration worker-start"
+      ],
+      [
+        "orca terminal create --title \"a b\" --command \"env 'claude'\"",
+        "terminal create --command <harness>"
+      ],
+      [
+        "orca terminal create --command \"cd x && claude -p hi\"",
+        "claude"
+      ],
+      [
+        "bash -c -- \"claude -p hi\"",
+        "claude"
+      ],
+      [
+        "echo \"$(case x in a) claude -p hi;; esac)\"",
+        "claude"
       ]
     ]
   },

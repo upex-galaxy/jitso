@@ -1,11 +1,12 @@
 {
   "id": "brief/section-missing/two",
-  "title": "several missing sections are listed together, in Goal, Scope, Done when, Report format order",
+  "title": "several missing sections are listed in one warning, in Goal, Scope, Done when, Report format order",
   "tags": [
     "posix"
   ],
   "source": [
-    "cli/jitso/brief.test.ts: 'fails when the \"<section>\" section is missing' (two at once)"
+    "cli/jitso/brief.test.ts: 'fails when the \"<section>\" section is missing' (two at once)",
+    "intended: docs/decisions.md, \"Only launches are blocked, and launches into other repositories\": the brief checks are warnings on stderr and the launch goes on"
   ],
   "project": {
     "files": {
@@ -23,17 +24,21 @@
         "--brief",
         "{{PROJECT}}/.jitso/briefs/brief.md",
         "--mode",
-        "direct"
+        "direct",
+        "--dry-run"
       ],
       "expect": {
-        "exit": 2,
+        "exit": 0,
         "stdout": [
           {
-            "empty": true
-          }
+            "regex": "^JITSO L\\d{8}T\\d{6}-[0-9a-f]{4} \\|"
+          },
+          "dry run: nothing was written and Orca was not called"
         ],
         "stderr": [
-          "sections (missing section: Scope, Report format)"
+          {
+            "equals": "jitso: warning: brief sections: missing section: Scope, Report format\n"
+          }
         ],
         "orca_calls": {
           "empty": true

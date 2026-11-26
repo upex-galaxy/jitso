@@ -1,0 +1,66 @@
+{
+  "id": "project/no-jitso-yaml/arsenal",
+  "title": "jitso arsenal without jitso/jitso.yaml says each list is open and shows the skill folders and servers that exist",
+  "source": [
+    "intended: docs/decisions.md, Only launches are blocked, and launches into other repositories (allowlists are open unless a list restricts)"
+  ],
+  "intent": "An open list has no names of its own, so arsenal says it is open and prints what a build can point at: the project's skill folders and .mcp.json servers, and the user's skills and servers under their user: names. A user item with the name of a project one is left out, because no build may name it.",
+  "project": {
+    "files": {
+      ".agents/skills/local-skill/SKILL.md": "---\nname: local-skill\ndescription: A project skill.\n---\n",
+      ".claude/skills/claude-only/SKILL.md": "---\nname: claude-only\ndescription: A skill only Claude Code holds.\n---\n",
+      "jitso/jitso.yaml": null,
+      "jitso/builds": null
+    }
+  },
+  "home": {
+    "files": {
+      ".claude/skills/humanizer/SKILL.md": "---\nname: humanizer\ndescription: A user skill.\n---\n",
+      ".claude/skills/local-skill/SKILL.md": "---\nname: local-skill\ndescription: A user skill.\n---\n",
+      ".claude.json": "{\"mcpServers\": {\"engram\": {\"command\": \"engram-cmd\", \"env\": {\"TOKEN\": \"literal-value-0001\"}}, \"dbhub\": {\"command\": \"user-dbhub\"}}}\n"
+    }
+  },
+  "steps": [
+    {
+      "run": [
+        "arsenal"
+      ],
+      "expect": {
+        "exit": 0,
+        "stderr": [
+          {
+            "empty": true
+          }
+        ],
+        "stdout": [
+          {
+            "equals": "model    (open)                any model id: no models list in jitso/jitso.yaml\neffort   (open)                any effort name: no efforts list in jitso/jitso.yaml\ntool     (open)                any tool name: no tools list in jitso/jitso.yaml\nskill    (open)                any skill folder of the project: no skills list in jitso/jitso.yaml\nskill    claude-only           A skill only Claude Code holds.\nskill    local-skill           A project skill.\nskill    jitso                 built in; travels with conductor builds and builds that name it\nskill    (open)                user:<name> of any skill under ~/.claude/skills: no skills list in ~/.jitso/jitso.yaml\nskill    user:humanizer        A user skill.\nmcp      (open)                any server of .mcp.json: no mcp list in jitso/jitso.yaml\nmcp      dbhub                 stdio\nmcp      openapi               stdio\nmcp      unlisted              stdio\nmcp      (open)                user:<name> of any server of ~/.claude.json: no mcp list in ~/.jitso/jitso.yaml\nmcp      user:engram           stdio, literal env: TOKEN (refused at launch)\nroute    code-quickref\nroute    context-map\nroute    critical-rules\nroute    git\nroute    harnesses\nroute    local-context-pbi\nroute    orchestration-detail\nroute    project-variables\nroute    project\nroute    skills-and-mcps\nroute    ticket-work\nroute    tool-resolution\n"
+          }
+        ],
+        "orca_calls": {
+          "empty": true
+        }
+      }
+    },
+    {
+      "run": [
+        "arsenal",
+        "--all"
+      ],
+      "expect": {
+        "exit": 0,
+        "stdout": [
+          {
+            "not_contains": "not allowlisted"
+          },
+          {
+            "not_contains": "literal-value-0001"
+          },
+          {
+            "contains": "cloud    connectors"
+          }
+        ]
+      }
+    }
+  ]
+}

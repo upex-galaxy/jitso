@@ -1,11 +1,12 @@
 {
   "id": "brief/section-missing/report-format",
-  "title": "a brief without the \"Report format\" section is rejected naming that section, before any orca call",
+  "title": "a brief without the \"Report format\" section launches with one warning naming that section",
   "tags": [
     "posix"
   ],
   "source": [
-    "cli/jitso/brief.test.ts: 'fails when the \"Report format\" section is missing'"
+    "cli/jitso/brief.test.ts: 'fails when the \"Report format\" section is missing'",
+    "intended: docs/decisions.md, \"Only launches are blocked, and launches into other repositories\": the brief checks are warnings on stderr and the launch goes on"
   ],
   "project": {
     "files": {
@@ -23,17 +24,21 @@
         "--brief",
         "{{PROJECT}}/.jitso/briefs/brief.md",
         "--mode",
-        "direct"
+        "direct",
+        "--dry-run"
       ],
       "expect": {
-        "exit": 2,
+        "exit": 0,
         "stdout": [
           {
-            "empty": true
-          }
+            "regex": "^JITSO L\\d{8}T\\d{6}-[0-9a-f]{4} \\|"
+          },
+          "dry run: nothing was written and Orca was not called"
         ],
         "stderr": [
-          "JITSO REJECTED: brief failed: sections (missing section: Report format)"
+          {
+            "equals": "jitso: warning: brief sections: missing section: Report format\n"
+          }
         ],
         "orca_calls": {
           "empty": true

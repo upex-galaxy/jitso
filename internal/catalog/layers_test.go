@@ -10,8 +10,6 @@ import (
 	"strings"
 	"testing"
 	"testing/fstest"
-
-	"github.com/upex-galaxy/jitso/internal/fail"
 )
 
 // tree makes real folders for the layer tests, all under one temp folder whose
@@ -298,8 +296,8 @@ func TestLoadLayers(t *testing.T) {
 func TestLoadLayersMissingPieces(t *testing.T) {
 	tr := newTree(t)
 	primary := tr.mkdir("repo")
-	if _, err := LoadLayers(os.DirFS(primary), primary); err == nil || fail.Text(err) != "jitso: jitso/jitso.yaml is missing: this project has no JITSO allowlists (create it with jitso build new <id>)" || fail.Code(err) != fail.CodeEnv {
-		t.Errorf("no jitso.yaml: %v", err)
+	if cat, err := LoadLayers(os.DirFS(primary), primary); err != nil || len(cat.Builds) != 0 {
+		t.Errorf("no jitso.yaml is an empty project with open lists: %v %+v", err, cat)
 	}
 	tr.project("repo")
 	cat, err := LoadLayers(os.DirFS(primary), primary)

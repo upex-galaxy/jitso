@@ -69,16 +69,16 @@
             "regex": "^\\{\\n  \"orca\": true,\\n  \"sessions\": \\[\\n    \\{\\n"
           },
           {
-            "regex": "(?s)\"id\": \"L20261124T100000-a1a1\",\n +\"parent\": null,\n +\"role\": \"conductor\",\n +\"type\": \"conductor\",\n +\"build\": \"sonnet-conductor\",\n +\"harness\": \"claude\",\n +\"mode\": \"direct\",\n +\"state\": \"live\",\n +\"handle\": \"term_a\",\n +\"title\": \"\\[jitso:L20261124T100000-a1a1\\] sonnet-conductor\",\n +\"worktree\": \"/work/repo\",\n +\"branch\": \"main\",\n +\"ts\": \"2026-11-24T10:00:00.000Z\"\n"
+            "regex": "(?s)\"id\": \"L20261124T100000-a1a1\",\n +\"parent\": null,\n +\"role\": \"conductor\",\n +\"type\": \"conductor\",\n +\"build\": \"sonnet-conductor\",\n +\"harness\": \"claude\",\n +\"mode\": \"direct\",\n +\"state\": \"live\",\n +\"handle\": \"term_a\",\n +\"title\": \"\\[jitso:L20261124T100000-a1a1\\] sonnet-conductor\",\n +\"repo\": \"repo\",\n +\"worktree\": \"/work/repo\",\n +\"branch\": \"main\",\n +\"ts\": \"2026-11-24T10:00:00.000Z\"\n"
           },
           {
-            "regex": "(?s)\"id\": \"L20261124T100100-b2b2\",\n +\"parent\": \"L20261124T100000-a1a1\",\n +\"role\": \"operator\",\n +\"type\": \"explorer\",\n +\"build\": \"haiku-explorer\",\n +\"harness\": \"claude\",\n +\"mode\": \"fleet\",\n +\"state\": \"live\",\n +\"handle\": \"term_b\",\n +\"title\": \"\\[jitso:L20261124T100100-b2b2\\] haiku-explorer\",\n +\"worktree\": \"/work/repo\",\n +\"branch\": \"main\",\n +\"ts\": \"2026-11-24T10:01:00.000Z\"\n"
+            "regex": "(?s)\"id\": \"L20261124T100100-b2b2\",\n +\"parent\": \"L20261124T100000-a1a1\",\n +\"role\": \"operator\",\n +\"type\": \"explorer\",\n +\"build\": \"haiku-explorer\",\n +\"harness\": \"claude\",\n +\"mode\": \"fleet\",\n +\"state\": \"live\",\n +\"handle\": \"term_b\",\n +\"title\": \"\\[jitso:L20261124T100100-b2b2\\] haiku-explorer\",\n +\"repo\": \"repo\",\n +\"worktree\": \"/work/repo\",\n +\"branch\": \"main\",\n +\"ts\": \"2026-11-24T10:01:00.000Z\"\n"
           },
           {
-            "regex": "(?s)\"id\": \"L20261124T100200-c3c3\",\n +\"parent\": \"L20261124T100000-a1a1\",\n +\"role\": \"operator\",\n +\"type\": \"worker\",\n +\"build\": \"pi-worker\",\n +\"harness\": \"pi\",\n +\"mode\": \"fleet\",\n +\"state\": \"gone\",\n +\"handle\": \"term_c\",\n +\"title\": \"\\[jitso:L20261124T100200-c3c3\\] pi-worker\",\n +\"worktree\": null,\n +\"branch\": null,\n +\"ts\": \"2026-11-24T10:02:00.000Z\"\n"
+            "regex": "(?s)\"id\": \"L20261124T100200-c3c3\",\n +\"parent\": \"L20261124T100000-a1a1\",\n +\"role\": \"operator\",\n +\"type\": \"worker\",\n +\"build\": \"pi-worker\",\n +\"harness\": \"pi\",\n +\"mode\": \"fleet\",\n +\"state\": \"gone\",\n +\"handle\": \"term_c\",\n +\"title\": \"\\[jitso:L20261124T100200-c3c3\\] pi-worker\",\n +\"repo\": null,\n +\"worktree\": null,\n +\"branch\": null,\n +\"ts\": \"2026-11-24T10:02:00.000Z\"\n"
           },
           {
-            "regex": "(?s)\"id\": null,\n +\"parent\": null,\n +\"role\": null,\n +\"type\": null,\n +\"build\": null,\n +\"harness\": null,\n +\"mode\": null,\n +\"state\": \"unlaunched\",\n +\"handle\": \"term_x\",\n +\"title\": \"zsh\",\n +\"worktree\": \"/work/other\",\n +\"branch\": \"feature\",\n +\"ts\": null\n"
+            "regex": "(?s)\"id\": null,\n +\"parent\": null,\n +\"role\": null,\n +\"type\": null,\n +\"build\": null,\n +\"harness\": null,\n +\"mode\": null,\n +\"state\": \"unlaunched\",\n +\"handle\": \"term_x\",\n +\"title\": \"zsh\",\n +\"repo\": \"other\",\n +\"worktree\": \"/work/other\",\n +\"branch\": \"feature\",\n +\"ts\": null\n"
           },
           {
             "not_contains": "d4d4"

@@ -1,11 +1,12 @@
 {
   "id": "hooks/guard/text-in-quotes-or-a-heredoc-is-not-a-command",
-  "title": "a harness word or a jitso verb inside quoted text or a heredoc body is data, not a command, and passes",
+  "title": "a harness word or an Orca verb inside the quoted text or a heredoc body of a data command is data, not a command, and passes",
   "source": [
-    "intended: docs/decisions.md v0.1.2 fixes, J41 (it supersedes the known limit of N-24 and the commit-message clauses of N-19 and B3-19)"
+    "intended: docs/decisions.md v0.1.2 fixes, J41 (it supersedes the known limit of N-24 and the commit-message clauses of N-19 and B3-19)",
+    "intended: docs/decisions.md, section \"Only launches are blocked, and launches into other repositories\" (the guard denies only what starts an agent)"
   ],
   "defect": "N-24",
-  "intent": "INTENDED behavior since v0.1.2 (J41). The guard reads a Bash line with a shell lexer: separators split commands only outside quotes, a quoted word that holds whitespace is text, and a heredoc body is data unless a shell on the line reads it. So a commit message, a message body or a roster written through a heredoc no longer trips the guard. Before, the splitter cut at parentheses, backticks and newlines without reading quotes and judged the text as commands.",
+  "intent": "INTENDED behavior since v0.1.2 (J41). The guard reads a Bash line with a shell lexer: separators split commands only outside quotes, a quoted word of a data command that holds whitespace is text, and a heredoc body is data unless a shell on the line reads it. So a commit message, a message body or a roster written through a heredoc no longer trips the guard. Before, the splitter cut at parentheses, backticks and newlines without reading quotes and judged the text as commands.",
   "for_each": {
     "var": "command",
     "ids": [
