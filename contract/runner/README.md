@@ -19,7 +19,7 @@ go build -o jitso-contract-runner .
 | Flag | Meaning |
 |---|---|
 | `--impl bin` | the implementation under test (required; `bin` is the only value) |
-| `--bin <path>` | the `jitso` executable |
+| `--bin <path>` | the `jitso` executable; the runner resolves it to its real absolute path, symlinks included |
 | `--cases <dir>` | cases folder; default `contract/cases`, found by walking up from the cwd, then from the executable |
 | `--fixtures <dir>` | fixtures folder; default the sibling `fixtures` of the cases folder |
 | `--filter <regex>` | run only cases whose expanded id (`area/slug[2]`) matches |

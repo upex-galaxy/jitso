@@ -268,6 +268,16 @@ Released as v0.6.0. Synapses (who talks to whom) and `jitso graph`. The Orca cal
 | DECIDED: each node carries `folder`, the last element of its worktree path (either separator). The page shows it under the name, searches it and lists it in the details; a terminal with no title is named by its folder and keeps its handle in the details | the full path in the label; computing it in the page only | most sessions on a machine are not launches, and the folder is what says where one lives. In the snapshot it is testable and a program gets it too |
 | DECIDED: every Orca call of `graph`, the switch included, is given up after `OrcaTimeout`, and the notice says which call was late. After a late call no further one is made for that snapshot. `launch`, `close`, `reap`, `fleet` and `link` wait as before. The fake `orca` of the contract gains `delay_ms` | no limit; one limit for every command; a flag or a variable to set it | a hung `orca` froze the view without a word. The other commands act on Orca, where giving up half way is its own decision |
 
+## Release and test tooling
+
+DECIDED rows are technical calls inside the owner's plan.
+
+| Decision | Options beaten | Why |
+|---|---|---|
+| DECIDED: `scripts/verify-release.sh <tag>` checks a published release on the host platform. It downloads with `gh` from the repository of `origin` (default `upex-galaxy/jitso`), checks the SHA-256 of the host archive and of `install.sh`, and runs the downloaded `install.sh` under `env -i` with a temporary `HOME`, `JITSO_NO_MODIFY_PATH=1` and the download URL of that repository | setting `HOME` alone; pointing `install.sh` at the files already downloaded; keeping the steps by hand | a `ZDOTDIR` or a `JITSO_*` variable of the caller would reach past a temporary `HOME` into the real one. Installing from the published URL tests the download a user makes |
+| DECIDED: the contract runner resolves `--bin` to its real absolute path, symlinks included, and that path is `{{JITSO}}` | resolving paths inside the matchers or the cases; asking the caller to pass a resolved path | `jitso` writes its own path resolved into hook commands, so a path through a symlink (macOS `/var`) failed the cases that compare it |
+| DECIDED: `install.sh` and `install.ps1` print one line, after an upgrade only, that names `jitso install skill --scope user` for whoever installed the user skill | running that command from the installer; printing it on every run; printing it only when the skill's manifest is found | the installer writes the binary and the `PATH` line, and `install skill` shows a diff and asks first. The conditional wording keeps the layout of the skill out of two shell scripts |
+
 ## The contract-first rule
 
 A behavior change starts as a case under `contract/cases/`: write the case, run it against the built Go binary and see it `FAIL`, then implement the change and see it `PASS`. The Go binary must pass every case, and there is no other implementation to compare with: the TypeScript implementation is kept at the tag `jitso-oracle-1` of the original repo as history only. A case may carry a `defect` id and an `intent` saying why it exists; both are optional. The procedure is the `contract-driven-development` skill; the format is `contract/SPEC.md`.

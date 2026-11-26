@@ -329,7 +329,7 @@ A runner error (the sandbox could not be built, a step could not start, a placeh
 
 | Flag | Meaning |
 |---|---|
-| `--impl bin --bin <path>` | the `jitso` executable; steps run `<path> <argv...>` with the project dir as cwd. `{{JITSO}}` is the absolute path given in `--bin`. `--impl` has no other value |
+| `--impl bin --bin <path>` | the `jitso` executable; steps run `<path> <argv...>` with the project dir as cwd. The runner resolves `<path>` to its real absolute path, symlinks included, and `{{JITSO}}` is that path. `--impl` has no other value |
 
 Hooks run `<bin> hook <hook>` (stdin and stdout as in 6.2). Changing that subcommand name is a one-line edit in the runner adapter, not in the cases.
 

@@ -86,13 +86,20 @@ if [ "$rc" -eq 0 ] && [ -x "$bin" ] && "$bin" version | grep -q "^jitso $tag " &
 else
   fail "pinned install" "rc=$rc $(cat "$err")"
 fi
+# 1b only an upgrade says how to refresh the installed user skill
+refresh="jitso install skill --scope user"
+if has "$out" "$refresh"; then
+  fail "fresh install says nothing about the user skill" "$(cat "$out")"
+else
+  pass "fresh install says nothing about the user skill"
+fi
 
 # 2 already installed: nothing is rewritten
 touch -t 200001010000 "$bin"
 before=$(ls -l "$bin")
 run HOME="$h1" JITSO_DOWNLOAD_URL="$rel" "$sh_bin" "$install_sh" "$tag"
 after=$(ls -l "$bin")
-if [ "$rc" -eq 0 ] && has "$out" "is already installed" && [ "$before" = "$after" ]; then
+if [ "$rc" -eq 0 ] && has "$out" "is already installed" && ! has "$out" "$refresh" && [ "$before" = "$after" ]; then
   pass "already installed"
 else
   fail "already installed" "rc=$rc"
@@ -245,6 +252,11 @@ if [ "$rc" -eq 0 ] && has "$out" "upgraded" && "$bin" version | grep -q "^jitso 
   pass "upgrade"
 else
   fail "upgrade" "rc=$rc $(cat "$err")"
+fi
+if [ "$(grep -c -F -- "$refresh" "$out" || true)" -eq 1 ]; then
+  pass "upgrade says how to refresh the user skill"
+else
+  fail "upgrade says how to refresh the user skill" "$(cat "$out")"
 fi
 # version pinning: the pinned tag is exactly the one installed, and an older
 # tag installs over a newer one

@@ -211,6 +211,7 @@ mv -f "$dir/.jitso.tmp.$$" "$target" || { rm -f "$dir/.jitso.tmp.$$"; die "canno
 
 if [ -n "$old" ]; then
   say "upgraded $target: $old -> $line"
+  say "if you installed the user skill, refresh it: jitso install skill --scope user"
 else
   say "installed $line at $target"
 fi

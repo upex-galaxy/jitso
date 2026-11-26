@@ -191,7 +191,12 @@ try {
     Die "cannot replace $target (is jitso running? close it and run again)"
   }
 
-  if ($old) { Say "upgraded ${target}: $old -> $line" } else { Say "installed $line at $target" }
+  if ($old) {
+    Say "upgraded ${target}: $old -> $line"
+    Say 'if you installed the user skill, refresh it: jitso install skill --scope user'
+  } else {
+    Say "installed $line at $target"
+  }
   Add-ToUserPath
   Say 'next: run jitso init in your project to set it up (skill, AGENTS.md block, guard)'
 } finally {

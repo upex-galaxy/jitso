@@ -4,7 +4,7 @@ How a JITSO release is built, checked and published. Everything that leaves this
 
 The repository `upex-galaxy/jitso` is public (decided by the owner on 2026-11-15). Every publishing step is OWNER-GATED.
 
-What has been published is recorded by the tags and GitHub Releases of the repository. The files this procedure uses are `scripts/package.sh`, `scripts/install.sh`, `scripts/install.ps1`, `scripts/test-install.sh`, `scripts/test-install.ps1`, `.github/workflows/ci.yml` (section 9) and `.github/workflows/release.yml`, which a pushed tag runs.
+What has been published is recorded by the tags and GitHub Releases of the repository. The files this procedure uses are `scripts/package.sh`, `scripts/install.sh`, `scripts/install.ps1`, `scripts/test-install.sh`, `scripts/test-install.ps1`, `scripts/verify-release.sh`, `.github/workflows/ci.yml` (section 9) and `.github/workflows/release.yml`, which a pushed tag runs.
 
 Committed prose names the source of truth, not its value (AGENTS.md rule 12), so this file has no sizes, counts or dates: it says which file or command holds each one.
 
@@ -55,7 +55,7 @@ These steps run on this machine and change nothing outside the repository and yo
 
 ## 4. Publishing, in order
 
-Every step in this list is **OWNER-GATED**. Do not run one without the owner's say in the conversation, and stop at the first failure. His OK to push `main` for a release covers steps 3 to 6 and step 8 in one go, as AGENTS.md section 7 says: the agent pushes, waits for `ci.yml` on that commit, tags, watches the workflow, verifies the release and updates the architecture docs. Step 7 stays his.
+Every step in this list is **OWNER-GATED**. Do not run one without the owner's say in the conversation, and stop at the first failure. His OK to push `main` for a release covers steps 3 to 6 and step 8 in one go, as AGENTS.md section 7 says: the agent pushes, waits for `ci.yml` on that commit, tags, watches the workflow, verifies the release and updates the docs of step 8. Step 7 stays his.
 
 | # | Step | Notes |
 |---|---|---|
@@ -64,9 +64,9 @@ Every step in this list is **OWNER-GATED**. Do not run one without the owner's s
 | 3 | **OWNER-GATED** Push `main` | No force-push, ever. |
 | 4 | **OWNER-GATED** Create the annotated tag `v<x>` on the verified commit and push it | The tag push starts the workflow. |
 | 5 | **OWNER-GATED** Run and watch the release workflow | The workflow first runs `ci.yml` on the tagged commit (section 9); then it verifies both modules, builds the archives, runs the contract on the Linux binary, runs the install test, then the `release` job creates the GitHub Release. If anything fails, nothing is published: the `build` job needs the `ci` job and the `release` job needs the `build` job. |
-| 6 | **OWNER-GATED** Verify the published release from a clean machine or container | Download `checksums.txt` and one archive, `shasum -a 256 -c` it, run `jitso version`. Then download `install.sh` from the release, read it, and run `sh install.sh v<x>`. |
+| 6 | **OWNER-GATED** Verify the published release | Run `scripts/verify-release.sh v<x>`. With `gh` it downloads `checksums.txt`, the archive of the host OS and architecture, and `install.sh`; checks both SHA-256 sums; runs `jitso version`; runs the downloaded `install.sh` with a temporary `HOME` and checks the installed version; and deletes everything. A failure is a non-zero exit with one line. It proves only the platform it runs on: another one needs a machine or container of that platform (Windows: section 7). |
 | 7 | **OWNER-GATED** Announce | Where and what is the owner's call. |
-| 8 | Update the architecture docs to the released version | `docs/architecture.md` and the architecture artifact; its source file and link are in `.session/CONTEXTO-REPOS.md` (local). Part of the release: the OK of steps 3 to 6 covers it, but its commit and push follow AGENTS.md section 7. |
+| 8 | Update the docs that describe the released version | `docs/architecture.md` and the architecture artifact; its source file and link are in `.session/CONTEXTO-REPOS.md` (local). When behavior it describes changed, also the JITSO provider doc of the `agent-orchestration` skill: `skills/agent-orchestration/references/providers/jitso.md` in the `agentic-user-skills` repo. Part of the release: the OK of steps 3 to 6 covers the edits. The commit and push here follow AGENTS.md section 7; `agentic-user-skills` has its own push rule. |
 
 The workflow uses no configured secret: `github.token` is the automatic token, scoped by the `permissions` blocks (`contents: read` for the build job and for every CI job, `contents: write` only for the release job, which checks out no code).
 

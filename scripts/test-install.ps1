@@ -65,6 +65,17 @@ function Run-Install([string]$Shell, [hashtable]$Vars, [string[]]$Arguments = @(
 }
 
 try {
+  # An older install for the upgrade check: a small program that prints another
+  # version line, built with the C# compiler of the .NET Framework.
+  $csc = Get-ChildItem -Path (Join-Path $env:WINDIR 'Microsoft.NET\Framework*\v4*\csc.exe') |
+    Select-Object -First 1 -ExpandProperty FullName
+  if (-not $csc) { Write-Error 'no csc.exe to build the older jitso.exe' }
+  $oldSource = Join-Path $tmp 'old.cs'
+  $oldExe = Join-Path $tmp 'old.exe'
+  Set-Content -LiteralPath $oldSource -Value 'class P { static void Main() { System.Console.WriteLine("jitso v0.0.0-old (fake)"); } }'
+  & $csc /nologo "/out:$oldExe" $oldSource
+  if ($LASTEXITCODE -ne 0) { Write-Error 'cannot build the older jitso.exe' }
+
   $n = 0
   foreach ($shell in $shells) {
     $n++
@@ -82,6 +93,9 @@ try {
       if ($v -like "jitso $Tag *") { Pass "$label pinned install" } else { Fail "$label pinned install" "version line: $v" }
     }
     if ($r.Out -like "*is not on your PATH*") { Pass "$label no PATH edit says how" } else { Fail "$label no PATH edit says how" $r.Out }
+    # only an upgrade says how to refresh the installed user skill
+    $refresh = '*jitso install skill --scope user*'
+    if ($r.Out -notlike $refresh) { Pass "$label fresh install says nothing about the user skill" } else { Fail "$label fresh install says nothing about the user skill" $r.Out }
 
     # 2 the same version again changes nothing
     $r = Run-Install $shell ($base + @{ JITSO_INSTALL_DIR = $dir }) @($Tag)
@@ -121,6 +135,14 @@ try {
     if ($r.Code -eq 0 -and $r2.Code -eq 0 -and @($entries).Count -eq 1) { Pass "$label user PATH once" }
     else { Fail "$label user PATH once" "exit $($r.Code)/$($r2.Code), entries $(@($entries).Count): $($r.Out) $($r.Err)" }
     [Environment]::SetEnvironmentVariable('Path', $userPath, 'User')
+
+    # 8 an upgrade says how to refresh the installed user skill
+    $dir5 = Join-Path $tmp "upgrade $n"
+    New-Item -ItemType Directory -Path $dir5 | Out-Null
+    Copy-Item -LiteralPath $oldExe -Destination (Join-Path $dir5 'jitso.exe')
+    $r = Run-Install $shell ($base + @{ JITSO_INSTALL_DIR = $dir5 }) @($Tag)
+    if ($r.Code -eq 0 -and $r.Out -like '*upgraded*' -and $r.Out -like $refresh) { Pass "$label upgrade says how to refresh the user skill" }
+    else { Fail "$label upgrade says how to refresh the user skill" "exit $($r.Code): $($r.Out) $($r.Err)" }
   }
 } finally {
   [Environment]::SetEnvironmentVariable('Path', $userPath, 'User')
