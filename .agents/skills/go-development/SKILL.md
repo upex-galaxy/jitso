@@ -29,7 +29,7 @@ They are separate modules. A `go test ./...` at one module's root never runs the
 
 ## Testing
 
-- Table-driven tests with `t.Run`, temp files under `t.TempDir()`, no network, and never a real `orca` or `claude`: behavior is tested by the contract with its fakes; Go tests cover the units, with the ports of `docs/architecture.md` section 4 stood in by small fakes (a scripted `orca.Runner`, a fake clock, an injected terminal and reader for the commands that ask a person). The terminal path of `jitso build save` and of the adoption commands is a unit test, because the contract never has a terminal.
+- Table-driven tests with `t.Run`, temp files under `t.TempDir()`, no network, and never a real `orca` or `claude`: behavior is tested by the contract with its fakes; Go tests cover the units, with the ports of `docs/architecture.md` section 4 stood in by small fakes (a scripted `orca.Runner`, a fake clock, an injected terminal and reader for the commands that ask a person). The terminal path of the adoption commands is a unit test, because the contract never has a terminal.
 - A Go test does not replace a contract case for observable behavior.
 
 ## Checks, in this order (AGENTS.md rule 8)
