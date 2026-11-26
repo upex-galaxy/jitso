@@ -8,6 +8,7 @@ import (
 	"io/fs"
 	"os"
 	"path/filepath"
+	"runtime"
 	"strings"
 	"time"
 
@@ -150,6 +151,15 @@ func (s *FileStore) acquire(lock string) error {
 		err := os.Mkdir(lock, 0o755)
 		if err == nil {
 			return nil
+		}
+		// Windows answers "access denied" for a folder that another writer is
+		// still removing: wait for it, within the same deadline.
+		if runtime.GOOS == "windows" && errors.Is(err, fs.ErrPermission) {
+			if !now().Before(deadline) {
+				return err
+			}
+			sleep(time.Duration(min(5+attempt*2, 25)) * time.Millisecond)
+			continue
 		}
 		if !errors.Is(err, fs.ErrExist) {
 			return err
