@@ -1,0 +1,107 @@
+{
+  "id": "launch/inbound/invalid-json-warns",
+  "title": "a user settings file that is not JSON is one stderr warning that quotes nothing of it, on a dry run too; the launch goes on without the key",
+  "source": [
+    "intended: docs/decisions.md, release 3 of the communication plan"
+  ],
+  "tags": [
+    "posix"
+  ],
+  "project": {
+    "files": {
+      ".jitso/briefs/brief.md": {
+        "from": "brief.md"
+      }
+    }
+  },
+  "home": {
+    "files": {
+      ".claude/settings.json": "{\"crossSessionInbound\":\"accept\",\"env\":{\"OWNER_TOKEN\":\"sentinel-env\"},\n"
+    }
+  },
+  "steps": [
+    {
+      "run": [
+        "launch",
+        "--build",
+        "haiku-explorer",
+        "--brief",
+        "{{PROJECT}}/.jitso/briefs/brief.md",
+        "--mode",
+        "direct",
+        "--dry-run"
+      ],
+      "expect": {
+        "exit": 0,
+        "stderr": [
+          {
+            "equals": "jitso: warning: {{HOME}}/.claude/settings.json is not valid JSON, so the session gets no crossSessionInbound\n"
+          }
+        ],
+        "stdout": [
+          {
+            "not_contains": "sentinel"
+          }
+        ],
+        "orca_calls": {
+          "empty": true
+        }
+      }
+    },
+    {
+      "run": [
+        "launch",
+        "--build",
+        "haiku-explorer",
+        "--brief",
+        "{{PROJECT}}/.jitso/briefs/brief.md",
+        "--mode",
+        "direct"
+      ],
+      "capture": {
+        "LAUNCH_ID": {
+          "from": "stdout",
+          "regex": "JITSO (L\\d{8}T\\d{6}-[0-9a-f]{4})"
+        }
+      },
+      "expect": {
+        "exit": 0,
+        "stderr": [
+          {
+            "equals": "jitso: warning: {{HOME}}/.claude/settings.json is not valid JSON, so the session gets no crossSessionInbound\n"
+          }
+        ],
+        "stdout": [
+          {
+            "not_contains": "sentinel"
+          }
+        ]
+      }
+    },
+    {
+      "exec": "run_sh",
+      "launch": "{{LAUNCH_ID}}",
+      "expect": {
+        "exit": 0,
+        "claude": {
+          "ran": true,
+          "argv_count": {
+            "--settings": 1
+          },
+          "json_arg_after": {
+            "--settings": [
+              {
+                "path": "",
+                "keys_exact": [
+                  "skipDangerousModePermissionPrompt",
+                  "promptSuggestionEnabled",
+                  "hooks"
+                ]
+              }
+            ]
+          }
+        }
+      }
+    }
+  ]
+}

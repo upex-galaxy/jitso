@@ -23,18 +23,25 @@ import (
 // promptSuggestionEnabled, in that key order.
 const settings = `{"skipDangerousModePermissionPrompt":true,"promptSuggestionEnabled":false}`
 
-// Settings is the --settings JSON of a launch: the two keys, then, when the
-// launch carries the guard, the hooks object of the guard's three groups.
-// Hooks in --settings run under --setting-sources project (measured in M0-3).
-func Settings(guardCommand string) (string, error) {
-	if guardCommand == "" {
+// Settings is the --settings JSON of a launch: the two keys, then the owner's
+// crossSessionInbound when there is one, then, when the launch carries the
+// guard, the hooks object of the guard's three groups. Hooks in --settings run
+// under --setting-sources project (measured in M0-3).
+func Settings(guardCommand, inbound string) (string, error) {
+	if guardCommand == "" && inbound == "" {
 		return settings, nil
 	}
-	data, err := jsonx.Marshal(jsonx.Object{
+	object := jsonx.Object{
 		{Key: "skipDangerousModePermissionPrompt", Value: true},
 		{Key: "promptSuggestionEnabled", Value: false},
-		{Key: "hooks", Value: settingsjson.HookGroups(guardCommand)},
-	})
+	}
+	if inbound != "" {
+		object = append(object, jsonx.Field{Key: InboundKey, Value: inbound})
+	}
+	if guardCommand != "" {
+		object = append(object, jsonx.Field{Key: "hooks", Value: settingsjson.HookGroups(guardCommand)})
+	}
+	data, err := jsonx.Marshal(object)
 	return string(data), err
 }
 
@@ -113,7 +120,7 @@ func AgentsJSON(subagents []harness.Subagent) (string, error) {
 // has subagents, goes right after the session id; --tools and the initial
 // prompt, when there are any, follow it.
 func Argv(in harness.SpecInput) ([]string, error) {
-	settings, err := Settings(in.GuardCommand)
+	settings, err := Settings(in.GuardCommand, in.CrossSessionInbound)
 	if err != nil {
 		return nil, err
 	}

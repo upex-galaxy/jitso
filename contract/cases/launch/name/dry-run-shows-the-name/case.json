@@ -1,0 +1,82 @@
+{
+  "id": "launch/name/dry-run-shows-the-name",
+  "title": "a dry run prints the name the launch would take, the suffix included, and writes nothing",
+  "source": [
+    "intended: docs/decisions.md, release 3 of the communication plan"
+  ],
+  "tags": [
+    "posix"
+  ],
+  "project": {
+    "files": {
+      ".jitso/briefs/brief.md": {
+        "from": "brief.md"
+      },
+      ".jitso/launches.jsonl": {
+        "from": "launches.jsonl"
+      }
+    }
+  },
+  "steps": [
+    {
+      "run": [
+        "launch",
+        "--build",
+        "haiku-explorer",
+        "--brief",
+        "{{PROJECT}}/.jitso/briefs/brief.md",
+        "--mode",
+        "direct",
+        "--name",
+        "free",
+        "--dry-run"
+      ],
+      "expect": {
+        "exit": 0,
+        "stdout": [
+          {
+            "contains": "| name free\n"
+          }
+        ],
+        "orca_calls": {
+          "empty": true
+        },
+        "registry": {
+          "count": 1
+        }
+      }
+    },
+    {
+      "run": [
+        "launch",
+        "--build",
+        "haiku-explorer",
+        "--brief",
+        "{{PROJECT}}/.jitso/briefs/brief.md",
+        "--mode",
+        "direct",
+        "--dry-run"
+      ],
+      "capture": {
+        "SUFFIX": {
+          "from": "stdout",
+          "regex": "JITSO L\\d{8}T\\d{6}-([0-9a-f]{4})"
+        }
+      },
+      "expect": {
+        "exit": 0,
+        "stdout": [
+          {
+            "contains": "| name haiku-explorer-{{SUFFIX}}\n"
+          }
+        ],
+        "orca_calls": {
+          "empty": true
+        },
+        "registry": {
+          "count": 1
+        }
+      }
+    }
+  ]
+}

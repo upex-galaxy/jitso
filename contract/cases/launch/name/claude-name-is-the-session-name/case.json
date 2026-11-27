@@ -1,0 +1,113 @@
+{
+  "id": "launch/name/claude-name-is-the-session-name",
+  "title": "the default name is the build id: claude starts with --name <name>, the tab title is '<name> [jitso:<id>]', and the card, brief.md and the launch event carry the name",
+  "source": [
+    "intended: docs/decisions.md, release 3 of the communication plan; claude --help: -n, --name <name> sets the display name of the session, which native messaging addresses"
+  ],
+  "intent": "Claude Code strips the brackets from the name peers see and SendMessage reads a trailing ' [ref]' as syntax, so the harness session is named with the plain name alone. The tab keeps the name first and the launch mark after it, so reap, fleet and link still find the launch by its mark.",
+  "tags": [
+    "posix"
+  ],
+  "project": {
+    "files": {
+      ".jitso/briefs/brief.md": {
+        "from": "brief.md"
+      }
+    }
+  },
+  "steps": [
+    {
+      "run": [
+        "launch",
+        "--build",
+        "haiku-explorer",
+        "--brief",
+        "{{PROJECT}}/.jitso/briefs/brief.md",
+        "--mode",
+        "fleet",
+        "--run",
+        "run_1a2b"
+      ],
+      "capture": {
+        "LAUNCH_ID": {
+          "from": "stdout",
+          "regex": "JITSO (L\\d{8}T\\d{6}-[0-9a-f]{4})"
+        }
+      },
+      "expect": {
+        "exit": 0,
+        "stdout": [
+          {
+            "regex": "^JITSO {{LAUNCH_ID}} [^\\n]* \\| build haiku-explorer v1 \\| name haiku-explorer\\n"
+          }
+        ],
+        "orca_calls": {
+          "calls": [
+            {
+              "at": 0,
+              "argv": [
+                "terminal",
+                "create",
+                "--title",
+                "haiku-explorer [jitso:{{LAUNCH_ID}}]",
+                "--command",
+                {
+                  "regex": "run\\.sh'$"
+                }
+              ]
+            }
+          ]
+        },
+        "registry": {
+          "count": 1,
+          "events": [
+            {
+              "at": 0,
+              "event": "launch",
+              "fields": {
+                "name": "haiku-explorer",
+                "orca.title": "haiku-explorer [jitso:{{LAUNCH_ID}}]",
+                "flags": {
+                  "regex": "\"--name\",\"haiku-explorer\""
+                }
+              }
+            }
+          ]
+        },
+        "files": [
+          {
+            "path": ".jitso/launches/{{LAUNCH_ID}}/card.txt",
+            "contains": [
+              "| name haiku-explorer\n"
+            ]
+          },
+          {
+            "path": ".jitso/launches/{{LAUNCH_ID}}/brief.md",
+            "contains": [
+              "| name haiku-explorer\n"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "exec": "run_sh",
+      "launch": "{{LAUNCH_ID}}",
+      "expect": {
+        "exit": 0,
+        "claude": {
+          "ran": true,
+          "arg_after": {
+            "--session-id": {
+              "regex": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+            },
+            "--name": "haiku-explorer"
+          },
+          "argv_count": {
+            "--name": 1
+          }
+        }
+      }
+    }
+  ]
+}

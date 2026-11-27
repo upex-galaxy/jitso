@@ -17,6 +17,9 @@ import (
 // Input is what the card shows. Text fields are printed as given.
 type Input struct {
 	ID string
+	// Name is the session name, by which a peer addresses the session; ""
+	// leaves it out.
+	Name string
 	// Role and Type are "" for a build that names none.
 	Role string
 	Type string
@@ -50,7 +53,7 @@ type Input struct {
 // Render is the card text, six lines without a trailing newline, plus the
 // target line after the header of a launch into another repository:
 //
-//	JITSO <id> | <role>/<type> | mode <mode> (<who it asks>) | build <build> v<version>[ (<layer>)]
+//	JITSO <id> | <role>/<type> | mode <mode> (<who it asks>) | build <build> v<version>[ (<layer>)] | name <name>
 //	[target <target> | home <home>]
 //	model <model> effort <effort> | bypass | MCP <list> | skill <list>
 //	subagents <names or unrestricted>
@@ -85,6 +88,9 @@ func Render(in Input) string {
 		header += " v" + in.BuildVersion
 	}
 	header += layer
+	if in.Name != "" {
+		header += " | name " + in.Name
+	}
 	if in.Target != "" {
 		header += "\ntarget " + in.Target + " | home " + in.Home
 	}

@@ -60,7 +60,8 @@ type Deps struct {
 	// OrcaMissing says why Orca cannot be asked, nil when it can. A dry run of
 	// a launch into another repository needs it; nil means it can.
 	OrcaMissing func() error
-	// Home is $HOME: the transcripts live under it.
+	// Home is $HOME: the transcripts and the owner's user settings live under
+	// it.
 	Home string
 	// Cwd is the working directory a relative --brief is read from.
 	Cwd   string
@@ -76,7 +77,8 @@ type Deps struct {
 	// binary.
 	Executable func() (string, error)
 	// LookupEnv is os.LookupEnv: a launch checks that the variables a user
-	// MCP server refers to are set, never what they hold.
+	// MCP server refers to are set, never what they hold, and asks it where the
+	// harness keeps the user settings (harness.InboundSource).
 	LookupEnv func(string) (string, bool)
 }
 
@@ -158,6 +160,15 @@ func Run(a Args, d Deps) error {
 		return err
 	}
 	id := ID(d.Now(), random)
+	launches, err := registry.ReadLaunches(d.Registry)
+	if err != nil {
+		return err
+	}
+	base := p.Build.ID
+	if a.Name != nil {
+		base = *a.Name
+	}
+	name := SessionName(base, id, launches)
 	// The card's launch line is for the session it starts, so across
 	// repositories it follows the package.json of the folder that session is in.
 	commandRoot := d.Root.Primary
@@ -165,7 +176,7 @@ func Run(a Args, d Deps) error {
 		commandRoot = target.Checkout
 	}
 	pkg, _ := os.ReadFile(filepath.Join(commandRoot, "package.json"))
-	shown := Card(id, a.Mode, p, mcp, card.LaunchCommand(pkg))
+	shown := Card(id, name, a.Mode, p, mcp, card.LaunchCommand(pkg))
 	if target.Cross {
 		shown.Target, shown.Home = target.Primary, home
 	}
@@ -179,6 +190,15 @@ func Run(a Args, d Deps) error {
 	}
 	for _, w := range unset {
 		d.Warn(w)
+	}
+	// The session reads no user settings, so what its harness needs from the
+	// owner's travels with the launch.
+	inbound := ""
+	if source, ok := adapter.(harness.InboundSource); ok {
+		value, warning := source.OwnerInbound(d.Home, lookup)
+		if inbound = value; warning != "" {
+			d.Warn(warning)
+		}
 	}
 	asked := false
 	if target.Cross {
@@ -198,7 +218,7 @@ func Run(a Args, d Deps) error {
 		}
 		return nil
 	}
-	return execute(prepared{args: a, profile: p, adapter: adapter, mcp: mcp, briefText: briefText, id: id, card: cardText, lineage: lineage, pkg: carried, userServers: users}, d)
+	return execute(prepared{args: a, profile: p, adapter: adapter, mcp: mcp, briefText: briefText, id: id, name: name, inbound: inbound, card: cardText, lineage: lineage, pkg: carried, userServers: users}, d)
 }
 
 // checkTarget refuses a target Orca has not registered: a real launch also
@@ -278,9 +298,13 @@ type prepared struct {
 	mcp       []string
 	briefText string
 	id        string
-	card      string
-	lineage   Lineage
-	pkg       Package
+	// name is the session name.
+	name string
+	// inbound is the owner's cross-session delivery setting, "" for none.
+	inbound string
+	card    string
+	lineage Lineage
+	pkg     Package
 	// userServers are the copied definitions of the user servers in mcp.
 	userServers map[string]jsonx.Object
 }
@@ -362,7 +386,7 @@ func execute(p prepared, d Deps) (err error) {
 		repoPath, home = target.Primary, d.Root.Primary
 	}
 	event := Event(EventInput{
-		ID: p.id, Args: p.args, Profile: p.profile, MCP: p.mcp, Lineage: p.lineage,
+		ID: p.id, Name: p.name, Args: p.args, Profile: p.profile, MCP: p.mcp, Lineage: p.lineage,
 		Repo: filepath.Base(target.Primary), RepoPath: repoPath, Home: home, Harness: p.adapter.ID(), Argv: files.argv, Prompted: p.args.Mode == ModeDirect,
 		BriefPath: files.brief, BriefText: p.briefText, SessionID: files.sessionID,
 		Cwd: term.WorktreePath, Transcript: transcript, Trust: outcome, Terminal: term.Handle, Title: files.title, Now: d.Now(),

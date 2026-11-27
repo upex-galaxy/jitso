@@ -1,9 +1,8 @@
 // Package fleet is `jitso fleet`: the read-only list of the sessions Orca
 // lists, this project first. It joins the launches of the registry with those
-// terminals, so a session can find a peer: the launch id, role and type,
-// harness, the title (which is also the session name), the Orca handle, the
-// parent, the repository and the state. It writes nothing and remembers
-// nothing.
+// terminals, so a session can find a peer: the launch id, the session name,
+// role and type, harness, the tab title, the Orca handle, the parent, the
+// repository and the state. It writes nothing and remembers nothing.
 //
 // The rows come in three groups: the launches of the project in registry order,
 // the unlaunched terminals in a checkout of the project, then the other
@@ -102,7 +101,9 @@ type Deps struct {
 
 // Row is one session. A field that is not known is "".
 type Row struct {
-	ID      string
+	ID string
+	// Name is the session name the launch event records.
+	Name    string
 	Parent  string
 	Role    string
 	Type    string
@@ -158,6 +159,7 @@ func Rows(o Options, launches []registry.Launch, terminals []orca.TerminalInfo, 
 	for _, l := range launches {
 		e := l.Launch
 		r := Row{ID: l.ID}
+		r.Name, _ = e.String("name")
 		r.Parent, _ = e.String("parent")
 		r.Role, _ = e.String("role")
 		r.Type, _ = e.String("type")
@@ -268,9 +270,9 @@ func Text(rows []Row) string {
 			}
 			w.Write([]byte{'\n'})
 		}
-		cells("ID", "ROLE/TYPE", "HARNESS", "STATE", "HANDLE", "PARENT", "REPO", "TITLE")
+		cells("ID", "NAME", "ROLE/TYPE", "HARNESS", "STATE", "HANDLE", "PARENT", "REPO", "TITLE")
 		for _, r := range rows {
-			cells(r.ID, card.RoleType(r.Role, r.Type), r.Harness, r.State, r.Handle, r.Parent, r.Repo, r.Title)
+			cells(r.ID, r.Name, card.RoleType(r.Role, r.Type), r.Harness, r.State, r.Handle, r.Parent, r.Repo, r.Title)
 		}
 		w.Flush()
 	}
@@ -318,6 +320,7 @@ func JSON(rows []Row, orcaKnown bool) (string, error) {
 	for _, r := range rows {
 		sessions = append(sessions, jsonx.Object{
 			{Key: "id", Value: nullable(r.ID)},
+			{Key: "name", Value: nullable(r.Name)},
 			{Key: "parent", Value: nullable(r.Parent)},
 			{Key: "role", Value: nullable(r.Role)},
 			{Key: "type", Value: nullable(r.Type)},

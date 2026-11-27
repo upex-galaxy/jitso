@@ -6,6 +6,7 @@ import (
 	"reflect"
 	"regexp"
 	"slices"
+	"strings"
 	"testing"
 
 	"github.com/upex-galaxy/jitso/internal/harness"
@@ -190,10 +191,16 @@ func TestArgvPackageDir(t *testing.T) {
 }
 
 func TestSettings(t *testing.T) {
-	if got, _ := Settings(""); got != settings {
+	if got, _ := Settings("", ""); got != settings {
 		t.Errorf("no guard: got %s", got)
 	}
-	got, err := Settings("'/b/jitso' hook guard")
+	if got, _ := Settings("", "hold"); got != `{"skipDangerousModePermissionPrompt":true,"promptSuggestionEnabled":false,"crossSessionInbound":"hold"}` {
+		t.Errorf("inbound alone: got %s", got)
+	}
+	if got, _ := Settings("g", "accept"); !strings.HasPrefix(got, `{"skipDangerousModePermissionPrompt":true,"promptSuggestionEnabled":false,"crossSessionInbound":"accept","hooks":{`) {
+		t.Errorf("inbound and guard: got %s", got)
+	}
+	got, err := Settings("'/b/jitso' hook guard", "")
 	if err != nil {
 		t.Fatal(err)
 	}

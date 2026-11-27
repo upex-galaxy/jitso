@@ -1,0 +1,175 @@
+{
+  "id": "link/records-by-session-name",
+  "title": "link resolves a side by the session name of a launch with no end event, rejects a name two running launches hold, and still finds a launch by its mark in either title order",
+  "source": [
+    "intended: docs/decisions.md, release 3 of the communication plan"
+  ],
+  "intent": "The name is what a peer is addressed by. The name of an ended launch is free to be used again, so it names nothing here; its launch id and handle still do.",
+  "project": {
+    "files": {
+      ".jitso/launches.jsonl": {
+        "from": "launches.jsonl"
+      }
+    }
+  },
+  "orca": {
+    "responses": {
+      "terminal list": {
+        "terminals": [
+          {
+            "handle": "term_a",
+            "worktreePath": "/work/repo",
+            "title": "✳ conducting"
+          },
+          {
+            "handle": "term_b",
+            "worktreePath": "/work/repo",
+            "title": "scout [jitso:L20261127T100100-b2b2]"
+          },
+          {
+            "handle": "term_new",
+            "worktreePath": "/work/repo",
+            "title": "dup [jitso:L20261127T100200-c3c3]"
+          },
+          {
+            "handle": "term_old",
+            "worktreePath": "/work/repo",
+            "title": "[jitso:L20261127T100600-a7a7] haiku-explorer"
+          }
+        ]
+      }
+    }
+  },
+  "steps": [
+    {
+      "run": [
+        "link",
+        "conductor",
+        "scout"
+      ],
+      "expect": {
+        "exit": 0,
+        "stderr": [
+          {
+            "empty": true
+          }
+        ],
+        "stdout": [
+          {
+            "equals": "jitso link: L20261127T100000-a1a1 -> L20261127T100100-b2b2 recorded\n"
+          }
+        ],
+        "registry": {
+          "count": 10,
+          "events": [
+            {
+              "at": 9,
+              "event": "link",
+              "fields": {
+                "from.id": "L20261127T100000-a1a1",
+                "from.handle": "term_a",
+                "to.id": "L20261127T100100-b2b2",
+                "to.handle": "term_b"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "run": [
+        "link",
+        "dup",
+        "scout"
+      ],
+      "expect": {
+        "exit": 2,
+        "stdout": [
+          {
+            "empty": true
+          }
+        ],
+        "stderr": [
+          {
+            "equals": "JITSO REJECTED: \"dup\" names 2 sessions (L20261127T100200-c3c3, L20261127T100300-d4d4): use a terminal handle or a launch id\n"
+          }
+        ],
+        "registry": {
+          "count": 10
+        }
+      }
+    },
+    {
+      "run": [
+        "link",
+        "finished",
+        "scout"
+      ],
+      "expect": {
+        "exit": 2,
+        "stderr": [
+          {
+            "equals": "JITSO REJECTED: unknown session \"finished\": give a launch id, a terminal handle, a session name or a tab title (see jitso fleet)\n"
+          }
+        ],
+        "registry": {
+          "count": 10
+        }
+      }
+    },
+    {
+      "run": [
+        "link",
+        "term_new",
+        "term_old"
+      ],
+      "expect": {
+        "exit": 0,
+        "stdout": [
+          {
+            "equals": "jitso link: L20261127T100200-c3c3 -> L20261127T100600-a7a7 recorded\n"
+          }
+        ],
+        "registry": {
+          "count": 11
+        }
+      }
+    },
+    {
+      "run": [
+        "link",
+        "[jitso:L20261127T100600-a7a7] haiku-explorer",
+        "scout [jitso:L20261127T100100-b2b2]"
+      ],
+      "expect": {
+        "exit": 0,
+        "stdout": [
+          {
+            "equals": "jitso link: L20261127T100600-a7a7 -> L20261127T100100-b2b2 recorded\n"
+          }
+        ],
+        "registry": {
+          "count": 12
+        }
+      }
+    },
+    {
+      "run": [
+        "link",
+        "L20261127T100400-e5e5",
+        "scout"
+      ],
+      "expect": {
+        "exit": 0,
+        "stdout": [
+          {
+            "equals": "jitso link: L20261127T100400-e5e5 -> L20261127T100100-b2b2 recorded\n"
+          }
+        ],
+        "registry": {
+          "count": 13
+        }
+      }
+    }
+  ]
+}

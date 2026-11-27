@@ -1,0 +1,133 @@
+{
+  "id": "launch/inbound/owner-setting-travels",
+  "title": "crossSessionInbound of the owner's user settings (accept, hold or refuse) travels in the launch's --settings, and no other key or value of that file does",
+  "source": [
+    "intended: docs/decisions.md, release 3 of the communication plan; Claude Code: --setting-sources project leaves the user settings unread and --settings takes precedence over them"
+  ],
+  "intent": "A launched session does not read ~/.claude/settings.json, so without this key a message from a peer waits for a person whenever the permission modes differ. Only that one key is read out of the file.",
+  "tags": [
+    "posix"
+  ],
+  "for_each": {
+    "var": "value",
+    "values": [
+      "accept",
+      "hold",
+      "refuse"
+    ],
+    "ids": [
+      "accept",
+      "hold",
+      "refuse"
+    ]
+  },
+  "project": {
+    "files": {
+      ".jitso/briefs/brief.md": {
+        "from": "brief.md"
+      }
+    }
+  },
+  "home": {
+    "files": {
+      ".claude/settings.json": "{\"model\":\"sentinel-model\",\"env\":{\"OWNER_TOKEN\":\"sentinel-env\"},\"permissions\":{\"defaultMode\":\"sentinel-mode\"},\"hooks\":{\"sentinel-hook\":[]},\"apiKeyHelper\":\"sentinel-helper\",\"crossSessionInbound\":\"{{value}}\"}"
+    }
+  },
+  "steps": [
+    {
+      "run": [
+        "launch",
+        "--build",
+        "haiku-explorer",
+        "--brief",
+        "{{PROJECT}}/.jitso/briefs/brief.md",
+        "--mode",
+        "direct"
+      ],
+      "capture": {
+        "LAUNCH_ID": {
+          "from": "stdout",
+          "regex": "JITSO (L\\d{8}T\\d{6}-[0-9a-f]{4})"
+        }
+      },
+      "expect": {
+        "exit": 0,
+        "stderr": [
+          {
+            "empty": true
+          }
+        ],
+        "stdout": [
+          {
+            "not_contains": "sentinel"
+          }
+        ],
+        "files": [
+          {
+            "path": ".jitso/launches/{{LAUNCH_ID}}/run.sh",
+            "not_contains": [
+              "sentinel"
+            ]
+          },
+          {
+            "path": ".jitso/launches/{{LAUNCH_ID}}/brief.md",
+            "not_contains": [
+              "sentinel"
+            ]
+          },
+          {
+            "path": ".jitso/launches.jsonl",
+            "not_contains": [
+              "sentinel"
+            ],
+            "contains": [
+              "crossSessionInbound"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "exec": "run_sh",
+      "launch": "{{LAUNCH_ID}}",
+      "expect": {
+        "exit": 0,
+        "claude": {
+          "ran": true,
+          "argv_count": {
+            "--settings": 1
+          },
+          "json_arg_after": {
+            "--settings": [
+              {
+                "path": "",
+                "keys_exact": [
+                  "skipDangerousModePermissionPrompt",
+                  "promptSuggestionEnabled",
+                  "hooks",
+                  "crossSessionInbound"
+                ]
+              },
+              {
+                "path": "crossSessionInbound",
+                "equals": "{{value}}"
+              },
+              {
+                "path": "skipDangerousModePermissionPrompt",
+                "equals": true
+              },
+              {
+                "path": "promptSuggestionEnabled",
+                "equals": false
+              },
+              {
+                "path": "hooks.PreToolUse.0.matcher",
+                "equals": "Bash"
+              }
+            ]
+          }
+        }
+      }
+    }
+  ]
+}

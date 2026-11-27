@@ -50,7 +50,7 @@ It installs the `jitso` skill for every harness, writes the JITSO block into `AG
 
 `jitso init` in the project is the whole setup (see Status). What it leaves in the checkout: `jitso/jitso.yaml` (it switches the guard on, and its optional allowlists restrict builds; `init` writes none, so everything that exists is open), the JITSO block in `AGENTS.md`, `.jitso/` in `.gitignore`, and the guard files of each harness. Saved builds go in `jitso/builds/`, drafts in `.jitso/drafts/`. `launch`, `build`, `arsenal` and `doctor` also work in a project without the file.
 
-The brief of a launch is checked for sections, length, language and cited paths, and a miss is a warning. `jitso fleet` lists every session Orca knows with its repository, this project first. `jitso init --project-only` also keeps the skill in the checkout and writes nothing under the home folder.
+The brief of a launch is checked for sections, length, language and cited paths, and a miss is a warning. `jitso fleet` lists every session Orca knows with its name and repository, this project first. `jitso init --project-only` also keeps the skill in the checkout and writes nothing under the home folder.
 
 - The jitso skill and the guard are optional because they travel. A launch carries the guard in its `--settings` unless the project already registers it, and the jitso skill for a conductor build or a build that names `jitso` unless the checkout holds a copy. They live in a per-launch folder, `.jitso/launches/<id>/pkg/`, passed with `--add-dir`.
 - `jitso setup hook --scope user` guards the owner's own session, which JITSO does not launch. It registers the same guard in `~/.claude/settings.json` and prints nothing in a folder without `jitso/jitso.yaml`.
@@ -58,6 +58,11 @@ The brief of a launch is checked for sections, length, language and cited paths,
 - `jitso arsenal` lists what a build may name in the project, and `jitso arsenal --all` adds what exists on the machine but a restricting allowlist leaves out.
 - Refused for now: claude.ai connectors (`cloud:`), servers that use OAuth, and any literal secret value of a user server.
 - `jitso install skill --scope project`, `jitso setup hook` and `jitso setup instructions` stay available for a project that wants the files in its own checkout. [`docs/build-schema.md`](docs/build-schema.md) has the user allowlist and its texts.
+
+## Names and messages between sessions
+
+- Each launch has a session name: `jitso launch --name <name>`, else the build id, with a suffix when a running launch already has it. Claude Code and Pi sessions start with that name, the card shows it, `jitso fleet` lists it, `jitso link` takes it, and the Orca tab is titled `<name> [jitso:<id>]`.
+- A launched Claude Code session reads no user settings. The launch copies one of them, `crossSessionInbound` (`accept`, `hold` or `refuse`), from the owner's `~/.claude/settings.json` (or the folder `CLAUDE_CONFIG_DIR` names) into the session's `--settings`, so the owner's choice about messages from other sessions holds there too. Nothing else of that file travels.
 
 ## Launch into another repository
 

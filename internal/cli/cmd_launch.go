@@ -42,6 +42,7 @@ Launches a worker from a build (saved, or a draft) and a brief file: prints its 
   --mode direct|fleet          direct: the session reports to you; fleet: a worker of an Orca run (required)
   --run <run>                  the Orca run (fleet mode, required there; JITSO creates the Task from the brief)
   --parent <launch_id>         the launch that starts this one
+  --name <name>                the session name peers address (default: the build id); a name in use gets a suffix
   --worktree <selector>        the Orca worktree the terminal opens in; path:<folder> of another repository launches into it
   --repo <path>                launch into another repository: an absolute path in its checkout, registered in Orca
   --mcp-exclude <name>         leave one MCP server of the build out (repeatable)

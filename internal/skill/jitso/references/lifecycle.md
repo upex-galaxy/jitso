@@ -53,9 +53,9 @@ Orca has no verb that lists every run, so a run the log never heard of is audite
 Read only: it writes nothing to the log and makes one Orca call, `terminal list`. It joins the launches of this project's log with every terminal Orca lists, to answer who else is running and how to reach them. This project comes first: its launches, then the unlaunched terminals of its checkouts, then those of other folders.
 
 ```
-ID                     ROLE/TYPE            HARNESS  STATE       HANDLE  PARENT  REPO       TITLE
-L20261124T100000-a1a1  conductor/conductor  claude   live        term_a  -       my-app     [jitso:L20261124T100000-a1a1] sonnet-conductor
--                      -                    -        unlaunched  term_x  -       other-app  zsh
+ID                     NAME  ROLE/TYPE            HARNESS  STATE       HANDLE  PARENT  REPO       TITLE
+L20261124T100000-a1a1  lead  conductor/conductor  claude   live        term_a  -       my-app     lead [jitso:L20261124T100000-a1a1]
+-                      -     -                    -        unlaunched  term_x  -       other-app  zsh
 jitso fleet: 1 live, 1 unlaunched
 ```
 
@@ -67,7 +67,7 @@ jitso fleet: 1 live, 1 unlaunched
 | `closed` | the launch has an end event; shown only with `--all` |
 | `unlaunched` | a listed terminal that no launch explains, by handle or by the `[jitso:<id>]` mark in its title |
 
-Orca lists every terminal it manages, shells included, so an `unlaunched` row is a terminal to look at, not proof of an agent session. Your own row is the one whose id is in your card. The title is also the name of a Claude Code or Pi session (they start with `--name`); Codex and OpenCode have no launch flag for a name, so address those by handle. `REPO` is the repository a launch recorded, or that of an unlaunched terminal's folder. `--json` prints `{"orca": <bool>, "sessions": [...]}`, with `null` for what is not known. A truncated terminal list is exit 3 and prints nothing. With no `orca` on PATH the registry rows still print, with state `unknown`, and the command exits 3 with the install line.
+Orca lists every terminal it manages, shells included, so an `unlaunched` row is a terminal to look at, not proof of an agent session. Your own row is the one whose id is in your card. `NAME` is the session name of a Claude Code or Pi session (they start with `--name`); a launch written by an older binary shows `-`. Codex and OpenCode have no launch flag for a name, so send to those by handle. `REPO` is the repository a launch recorded, or that of an unlaunched terminal's folder. `--json` prints `{"orca": <bool>, "sessions": [...]}`, with `null` for what is not known. A truncated terminal list is exit 3 and prints nothing. With no `orca` on PATH the registry rows still print, with state `unknown`, and the command exits 3 with the install line.
 
 ## `jitso link <from> <to>`
 
@@ -77,7 +77,7 @@ Records that one session talked to another, from the first to the second. Run it
 jitso link: L20261124T100000-a1a1 -> term_x recorded
 ```
 
-Each side is a launch id, an Orca terminal handle or an exact session title (the title the launch gave, or the tab title Orca shows now). Launch ids and recorded handles need no Orca call. A title, or a handle the log does not hold, asks Orca for the terminal list; without Orca only what the log holds resolves, and the rest is exit 3 with the install line. Rejected (exit 2), with nothing written: an unknown reference, a title that names several sessions (the text lists them), two references to one session.
+Each side is a launch id, an Orca terminal handle, the session name of a launch with no end line, or an exact tab title (the one the launch gave, or the one Orca shows now). Launch ids and recorded handles need no Orca call. A name, a title, or a handle the log does not hold, asks Orca for the terminal list; without Orca only what the log holds resolves, and the rest is exit 3 with the install line. Rejected (exit 2), with nothing written: an unknown reference, a name or title that fits several sessions (the text lists them), two references to one session.
 
 ## `jitso graph [--json] [--port <n>]`
 

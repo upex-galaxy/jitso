@@ -41,7 +41,7 @@
         "exit": 0,
         "stdout": [
           {
-            "contains": "| build shared-scan v1\n"
+            "contains": "| build shared-scan v1 | name shared-scan\n"
           },
           {
             "not_contains": "| build shared-scan v1 ("
@@ -51,7 +51,7 @@
           {
             "path": ".jitso/launches/{{LAUNCH_ID}}/card.txt",
             "contains": [
-              "| build shared-scan v1\n"
+              "| build shared-scan v1 | name shared-scan\n"
             ]
           }
         ],

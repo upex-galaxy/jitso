@@ -92,7 +92,7 @@
         "exit": 0,
         "stdout": [
           {
-            "regex": "^JITSO L\\d{8}T\\d{6}-[0-9a-f]{4} \\| {{head}}mode direct \\(asks you\\) \\| build probe{{version}} \\(draft\\)\\n"
+            "regex": "^JITSO L\\d{8}T\\d{6}-[0-9a-f]{4} \\| {{head}}mode direct \\(asks you\\) \\| build probe{{version}} \\(draft\\) \\| name probe\\n"
           },
           {
             "not_regex": "undefined|null"
@@ -127,7 +127,7 @@
         "exit": 0,
         "stdout": [
           {
-            "regex": "(?m)^L\\d{8}T\\d{6}-[0-9a-f]{4} +{{cell}} +claude +live +term_fake "
+            "regex": "(?m)^L\\d{8}T\\d{6}-[0-9a-f]{4} +probe +{{cell}} +claude +live +term_fake "
           },
           {
             "not_contains": "undefined"

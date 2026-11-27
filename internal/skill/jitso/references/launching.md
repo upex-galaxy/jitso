@@ -5,7 +5,7 @@ Read this when you are about to build a `jitso launch` line. The card line `laun
 ## The line
 
 ```
-jitso launch --build <id> --brief <file> --mode direct|fleet [--run <run>] [--worktree <sel>] [--repo <path>] [--field name=value]... [--parent <launch id>] [--mcp-exclude <server>]... [--brief-language en|es|any] [--dry-run]
+jitso launch --build <id> --brief <file> --mode direct|fleet [--run <run>] [--worktree <sel>] [--repo <path>] [--field name=value]... [--parent <launch id>] [--name <name>] [--mcp-exclude <server>]... [--brief-language en|es|any] [--dry-run]
 ```
 
 | Flag | Meaning |
@@ -19,6 +19,7 @@ jitso launch --build <id> --brief <file> --mode direct|fleet [--run <run>] [--wo
 | `--repo` | launch into another repository: an absolute path (spaces allowed, at most 1024 bytes) inside one of its checkouts. Without `--worktree` the terminal opens at its primary checkout |
 | `--field` | a value for a field the build `requires`, as `name=value`; repeat for more. The values reach the worker in the `## Fields` block of its `brief.md` and the `fields` object of the launch line in the log |
 | `--parent` | the launch id of the launcher, so the registry records the tree (an unknown id is rejected, also on a dry run) |
+| `--name` | the session name peers address: 1 to 64 letters, digits, `.`, `_` or `-`, starting with a letter or digit. Default: the build id. When a launch with no end line already has it, the name gets `-` and the four last characters of the new launch id; read the name on the card |
 | `--mcp-exclude` | drop one of the build's MCP servers for this launch, by the name the build wrote (`user:<name>` for a user server); repeat for more |
 | `--brief-language` | `en` (default), `es` or `any`. Only change it when the project's briefs are not in English |
 | `--dry-run` | validate and print the card, write nothing; Orca is not called, except to ask whether the target of another repository is registered |
@@ -35,7 +36,7 @@ Example from a test fixture project (your builds, ids and numbers differ):
 
 ```
 $ jitso launch --build sonnet-automator --brief .jitso/briefs/ok.md --mode direct --dry-run --field ticket_key=PROJ-12
-JITSO L<yyyymmdd>T<hhmmss>-<hex> | operator/automator | mode direct (asks you) | build sonnet-automator v1
+JITSO L<yyyymmdd>T<hhmmss>-<hex> | operator/automator | mode direct (asks you) | build sonnet-automator v1 | name sonnet-automator
 model claude-sonnet-5-5 effort medium | bypass | MCP dbhub,openapi | skill test-automation
 subagents plan,code,verifier (suggested; others allowed)
 ROUTE-SCOPE: code-quickref,ticket-work
@@ -88,13 +89,17 @@ In this order (read from the launch code, then seen with a fake Orca on a scratc
 
 1. Resolves the build and reads the brief. Any rejection stops here with exit 2; a failed brief check is only a warning. A `--worktree` that names a path (`path:<path>` or `id:<id>::<path>`) must be an absolute path of a worktree of the target repository (yours, unless it is another one), or the launch is rejected here, before anything is written. A selector with no path (a worktree name) is not checked here.
 2. Creates `.jitso/launches/<id>/` and writes into it `brief.md` (the card, the skills to load first, your brief, a `## Fields` block when you gave `--field` values, then JITSO's rules), `mcp.json`, `card.txt` and `run.sh`.
-3. Opens an Orca terminal titled `[jitso:<id>] <build>` running `run.sh`. The harness session gets the same text as its name where the harness has a launch flag for one (`--name` for Claude Code and Pi; Codex and OpenCode have none for their interactive session). Right away, before it waits for anything, it checks the folder Orca reports for that terminal, on every launch, with or without the trust dialog: it must be a worktree of the target repository, and the path `--worktree` names when it names one. A wrong or unknown folder closes the terminal and rejects the launch (exit 2). Then it waits for the harness prompt and answers the trust dialog.
+3. Opens an Orca terminal titled `<name> [jitso:<id>]` running `run.sh`. The harness session is named `<name>` alone where the harness has a launch flag for one (`--name` for Claude Code and Pi; Codex and OpenCode have none for their interactive session). Right away, before it waits for anything, it checks the folder Orca reports for that terminal, on every launch, with or without the trust dialog: it must be a worktree of the target repository, and the path `--worktree` names when it names one. A wrong or unknown folder closes the terminal and rejects the launch (exit 2). Then it waits for the harness prompt and answers the trust dialog.
 4. In fleet mode, creates the Task from `brief.md` and adopts the terminal into the run.
 5. Appends the launch line to `.jitso/launches.jsonl` and prints the card.
 
 If anything fails before step 5, the launcher closes the terminal it opened and removes the launch folder, so nothing half-made stays. After step 5 nothing is removed.
 
-`run.sh` starts the harness of the build (`harness:` is `claude`, `codex`, `opencode` or `pi`). For Claude Code: the build's model and effort, bypassed permissions, project settings only (`--setting-sources project`), the session name (`--name`, the terminal title), a strict MCP file that holds only the servers the build names, and the build's subagents as `--agents`; user settings, user hooks and any user skill or server the build does not name do not reach the session. The other harnesses honor less, and a build that asks for what its harness cannot give is rejected by `jitso build validate` and `launch` with a text that names the harness: codex keeps the owner's own Codex MCP servers (a note line after the card says so) and loads no package skills, so install the jitso skill with `jitso init`; opencode runs with its own config folder; pi gets no MCP server at all. Only a Claude launch records tokens at `jitso close`.
+`run.sh` starts the harness of the build (`harness:` is `claude`, `codex`, `opencode` or `pi`). For Claude Code: the build's model and effort, bypassed permissions, project settings only (`--setting-sources project`), the session name (`--name`), the owner's `crossSessionInbound` in `--settings` (below), a strict MCP file that holds only the servers the build names, and the build's subagents as `--agents`; user settings, user hooks and any user skill or server the build does not name do not reach the session. The other harnesses honor less, and a build that asks for what its harness cannot give is rejected by `jitso build validate` and `launch` with a text that names the harness: codex keeps the owner's own Codex MCP servers (a note line after the card says so) and loads no package skills, so install the jitso skill with `jitso init`; opencode runs with its own config folder; pi gets no MCP server at all. Only a Claude launch records tokens at `jitso close`.
+
+## Messages from other sessions
+
+A launched Claude Code session reads no user settings, so a message from a peer would wait for a person whenever the two permission modes differ. The launch reads one key, `crossSessionInbound`, from the owner's user settings (`settings.json` of `CLAUDE_CONFIG_DIR`, else of `~/.claude`) and puts it into `--settings` when it is `accept`, `hold` or `refuse`. No file, an unreadable one or another value adds nothing; a file that is not JSON also prints one warning. Nothing else of the file is read into the launch, and `jitso` sets no default: the choice is the owner's, made in that file.
 
 ## The package folder
 

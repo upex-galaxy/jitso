@@ -1,0 +1,64 @@
+{
+  "id": "fleet/mark-explains-a-terminal",
+  "title": "a terminal that carries the mark of a launch in its title is not unlaunched, whether the mark follows the name or leads the title",
+  "source": [
+    "intended: docs/decisions.md, release 3 of the communication plan"
+  ],
+  "project": {
+    "files": {
+      ".jitso/launches.jsonl": {
+        "from": "launches.jsonl"
+      }
+    }
+  },
+  "orca": {
+    "responses": {
+      "terminal list": {
+        "terminals": [
+          {
+            "handle": "term_new",
+            "worktreePath": "/work/repo",
+            "title": "scout [jitso:L20261127T100000-a1a1]"
+          },
+          {
+            "handle": "term_old",
+            "worktreePath": "/work/repo",
+            "title": "[jitso:L20261127T100100-b2b2] haiku-explorer"
+          },
+          {
+            "handle": "term_x",
+            "worktreePath": "/work/repo",
+            "title": "scout"
+          }
+        ]
+      }
+    }
+  },
+  "steps": [
+    {
+      "run": [
+        "fleet"
+      ],
+      "expect": {
+        "exit": 0,
+        "stdout": [
+          {
+            "regex": "(?m)^L20261127T100000-a1a1 +scout +operator/explorer +claude +gone +term_a "
+          },
+          {
+            "regex": "(?m)^L20261127T100100-b2b2 +- +operator/explorer +claude +gone +term_b "
+          },
+          {
+            "regex": "(?m)^jitso fleet: 2 gone, 1 unlaunched$"
+          },
+          {
+            "not_contains": "term_new"
+          },
+          {
+            "not_contains": "term_old"
+          }
+        ]
+      }
+    }
+  ]
+}

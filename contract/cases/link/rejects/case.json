@@ -170,7 +170,7 @@
         ],
         "stderr": [
           {
-            "equals": "JITSO REJECTED: unknown session \"nobody\": give a launch id, a terminal handle or a session title (see jitso fleet)\n"
+            "equals": "JITSO REJECTED: unknown session \"nobody\": give a launch id, a terminal handle, a session name or a tab title (see jitso fleet)\n"
           }
         ],
         "registry": {

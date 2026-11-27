@@ -57,11 +57,11 @@ func TestCommandFor(t *testing.T) {
 }
 
 func TestTerminalTitle(t *testing.T) {
-	if got, err := TerminalTitle("L20261113T142233-a3f9"); err != nil || got != "[jitso:L20261113T142233-a3f9]" {
+	if got, err := TerminalTitle("scout", "L20261113T142233-a3f9"); err != nil || got != "scout [jitso:L20261113T142233-a3f9]" {
 		t.Errorf("got %q, %v", got, err)
 	}
 	for _, bad := range []string{"", "L20261113T142233-A3F9", "x] evil", "L20261113T142233-a3f9\n"} {
-		if _, err := TerminalTitle(bad); err == nil {
+		if _, err := TerminalTitle("scout", bad); err == nil {
 			t.Errorf("%q must fail", bad)
 		}
 	}

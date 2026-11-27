@@ -105,7 +105,7 @@
         "exit": 0,
         "stdout": [
           {
-            "contains": "| build haiku-explorer v1\n"
+            "contains": "| build haiku-explorer v1 | name haiku-explorer\n"
           }
         ]
       }

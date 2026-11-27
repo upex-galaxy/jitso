@@ -81,7 +81,7 @@
         "exit": 0,
         "stdout": [
           {
-            "regex": "(?m)\\A.*\\n{{LAUNCH_ID}} +operator/explorer +claude +live +term_fake +- +target +worker\\n- +- +- +unlaunched +term_h +- +project +zsh\\n"
+            "regex": "(?m)\\A.*\\n{{LAUNCH_ID}} +haiku-explorer +operator/explorer +claude +live +term_fake +- +target +worker\\n- +- +- +- +unlaunched +term_h +- +project +zsh\\n"
           }
         ]
       }

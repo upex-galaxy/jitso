@@ -125,7 +125,7 @@
         "exit": 0,
         "stdout": [
           {
-            "regex": "^JITSO L\\d{8}T\\d{6}-[0-9a-f]{4} \\| mode direct \\(asks you\\) \\| build probe\\n"
+            "regex": "^JITSO L\\d{8}T\\d{6}-[0-9a-f]{4} \\| mode direct \\(asks you\\) \\| build probe \\| name probe\\n"
           }
         ],
         "registry": {

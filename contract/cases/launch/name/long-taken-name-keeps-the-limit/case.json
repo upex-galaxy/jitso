@@ -1,0 +1,61 @@
+{
+  "id": "launch/name/long-taken-name-keeps-the-limit",
+  "title": "a taken name of the full length is cut so that the name with the suffix still fits 64 characters",
+  "source": [
+    "intended: docs/decisions.md, release 3 of the communication plan"
+  ],
+  "tags": [
+    "posix"
+  ],
+  "project": {
+    "files": {
+      ".jitso/briefs/brief.md": {
+        "from": "brief.md"
+      },
+      ".jitso/launches.jsonl": {
+        "from": "launches.jsonl"
+      }
+    }
+  },
+  "steps": [
+    {
+      "run": [
+        "launch",
+        "--build",
+        "haiku-explorer",
+        "--brief",
+        "{{PROJECT}}/.jitso/briefs/brief.md",
+        "--mode",
+        "direct",
+        "--name",
+        "n234567890123456789012345678901234567890123456789012345678901234"
+      ],
+      "capture": {
+        "SUFFIX": {
+          "from": "stdout",
+          "regex": "JITSO L\\d{8}T\\d{6}-([0-9a-f]{4})"
+        }
+      },
+      "expect": {
+        "exit": 0,
+        "stdout": [
+          {
+            "contains": "| name n2345678901234567890123456789012345678901234567890123456789-{{SUFFIX}}\n"
+          }
+        ],
+        "registry": {
+          "count": 2,
+          "events": [
+            {
+              "at": 1,
+              "event": "launch",
+              "fields": {
+                "name": "n2345678901234567890123456789012345678901234567890123456789-{{SUFFIX}}"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ]
+}

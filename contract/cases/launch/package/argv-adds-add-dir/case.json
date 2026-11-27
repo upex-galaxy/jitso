@@ -71,7 +71,7 @@
               "regex": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
             },
             "--name",
-            "[jitso:{{LAUNCH_ID}}] user-skill-worker",
+            "user-skill-worker",
             {
               "regex": "^Read .+/brief\\.md and follow it exactly\\.\\nROUTE-SCOPE: none$"
             }

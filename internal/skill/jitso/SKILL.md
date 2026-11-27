@@ -16,7 +16,7 @@ JITSO launches every agent session from a **build** (model, effort, MCP servers,
 3. Preview, always: `jitso launch --build <id> --brief .jitso/briefs/<name>.md --mode direct --dry-run`. It validates, prints the card and any brief warning, and does not touch Orca.
 4. Run it again without `--dry-run`. A real launch opens a paid session, so tell the human which build and brief before you do it, unless they already asked for exactly that.
 
-`--mode` is required (a build's `mode_default` is not used). Fleet adds `--run <run>`: the Orca Run must exist before the launch (create it once with `orca orchestration run-create --objective <text> --json`). JITSO creates the Orca Task itself from `brief.md`, so there is no `--task`. `--worktree <sel>` picks the Orca worktree. A build that `requires` a field needs `--field name=value`. Full flag list in `references/launching.md`.
+`--mode` is required (a build's `mode_default` is not used). Fleet adds `--run <run>`: the Orca Run must exist before the launch (create it once with `orca orchestration run-create --objective <text> --json`). JITSO creates the Orca Task itself from `brief.md`, so there is no `--task`. `--worktree <sel>` picks the Orca worktree. `--name <name>` sets the session name peers address (default: the build id). A build that `requires` a field needs `--field name=value`. Full flag list in `references/launching.md`.
 
 ## Compose a build just in time
 
@@ -64,7 +64,7 @@ Conductor, worker and subagent are tiers of one build (`tier:` in its file, work
 
 ## Read the card
 
-Six lines: header (launch id, role/type when the build names them, mode, build), model line (model, effort, MCP servers, skills to load first), subagents (a suggestion, not a limit), `ROUTE-SCOPE:`, the `launch:` command, the budget (only when the build has one) and who it reports to. Line by line in `references/card.md`.
+Six lines: header (launch id, role/type when the build names them, mode, build, session name), model line (model, effort, MCP servers, skills to load first), subagents (a suggestion, not a limit), `ROUTE-SCOPE:`, the `launch:` command, the budget (only when the build has one) and who it reports to. Line by line in `references/card.md`.
 
 ## Briefs
 
@@ -78,15 +78,15 @@ Aim for headings `Goal`, `Scope`, `Done when` and `Report format`, English, a le
 
 ## Find the other sessions
 
-`jitso fleet` is read only: it lists every session Orca lists, this project first (its launches count wherever they run), one row each with launch id, role/type, harness, state, Orca handle, parent, `REPO` and title. The title is also the name of the session (`[jitso:<id>] <build>`), so a peer can be addressed by it. `--all` adds closed launches, `--json` prints an object for a program. A row marked `unlaunched` is a terminal no launch of this project explains; `gone` is a launch whose terminal Orca no longer lists. Without Orca it prints the registry rows, with state `unknown`, and exits 3.
+`jitso fleet` is read only: it lists every session Orca lists, this project first (its launches count wherever they run), one row each with launch id, `NAME`, role/type, harness, state, Orca handle, parent, `REPO` and title. Address a peer by its `NAME`, which is its Claude Code or Pi session name; the tab title is `<name> [jitso:<id>]` and is not the name. `--all` adds closed launches, `--json` prints an object for a program. A row marked `unlaunched` is a terminal no launch of this project explains; `gone` is a launch whose terminal Orca no longer lists. Without Orca it prints the registry rows, with state `unknown`, and exits 3.
 
 ## Record who you talked to
 
-An Orca message leaves a trace; a Claude Code `SendMessage` does not. After each `SendMessage`, run `jitso link <your launch id> <peer>`, where the peer is its launch id, its Orca handle or its exact session title in quotes. It records who and when, never what. A reference that names no session or several is rejected: take the id or the handle from `jitso fleet`. The human sees the result with `jitso graph`, a page on `127.0.0.1` that runs until Ctrl-C; `jitso graph --json` prints one snapshot for a program.
+An Orca message leaves a trace; a Claude Code `SendMessage` does not. After each `SendMessage`, run `jitso link <your launch id> <peer>`, where the peer is its launch id, its Orca handle, its session name or its exact tab title in quotes. It records who and when, never what. A reference that names no session or several is rejected: take the id or the handle from `jitso fleet`. The human sees the result with `jitso graph`, a page on `127.0.0.1` that runs until Ctrl-C; `jitso graph --json` prints one snapshot for a program.
 
 ## The rules at the end of brief.md
 
-They say: start other sessions only with the card's `launch:` line; when the build has a budget it is your ceiling, so near it stop and report; load the card's skills before any other work; a direct session may ask the human, a fleet worker never does and sends its questions and final report to the session that launched it; never hand-edit `.jitso/launches.jsonl` or `.jitso/launches/`. Three more lines say how to reach another session: find it with `jitso fleet`, use `SendMessage` then `jitso link` between two Claude Code sessions, or `orca orchestration send --to <handle>` otherwise, put your own handle and name in every message, and answer with `orca orchestration reply`.
+They say: start other sessions only with the card's `launch:` line; when the build has a budget it is your ceiling, so near it stop and report; load the card's skills before any other work; a direct session may ask the human, a fleet worker never does and sends its questions and final report to the session that launched it; never hand-edit `.jitso/launches.jsonl` or `.jitso/launches/`. Three more lines say how to reach another session: find it with `jitso fleet`, use `SendMessage` then `jitso link` between two Claude Code sessions, or `orca orchestration send --to <handle>` otherwise, and also when a `SendMessage` is held, declined or not delivered, put your own handle and name in every message, and answer with `orca orchestration reply`.
 
 ## Ask before you change the setup
 

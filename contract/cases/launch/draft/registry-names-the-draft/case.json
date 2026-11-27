@@ -37,14 +37,14 @@
         "exit": 0,
         "stdout": [
           {
-            "contains": "| build scout v1 (draft)\n"
+            "contains": "| build scout v1 (draft) | name scout\n"
           }
         ],
         "files": [
           {
             "path": ".jitso/launches/{{LAUNCH_ID}}/card.txt",
             "contains": [
-              "| build scout v1 (draft)\n"
+              "| build scout v1 (draft) | name scout\n"
             ]
           }
         ],

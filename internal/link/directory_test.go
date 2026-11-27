@@ -35,6 +35,33 @@ func TestDirectory(t *testing.T) {
 			{Handle: "term_y", Title: "zsh"},
 		},
 	)
+	named := func(id, handle, name string, ended bool) registry.Launch {
+		l := launch(id, handle, name+" [jitso:"+id+"]", ended)
+		l.Launch["name"] = name
+		return l
+	}
+	byName := NewDirectory(
+		[]registry.Launch{
+			named("L1", "term_a", "scout", false),
+			named("L2", "term_b", "twin", false),
+			named("L3", "term_c", "twin", false),
+			named("L4", "term_d", "scout", true),
+			named("L5", "term_e", "finished", true),
+		},
+		// A tab that shows the name of its own session adds nothing.
+		[]orca.TerminalInfo{{Handle: "term_a", Title: "scout"}},
+	)
+	for ref, want := range map[string][]Session{
+		"scout":               {{"L1", "term_a"}},
+		"twin":                {{"L2", "term_b"}, {"L3", "term_c"}},
+		"finished":            nil,
+		"scout [jitso:L4]":    {{"L4", "term_d"}},
+		"finished [jitso:L5]": {{"L5", "term_e"}},
+	} {
+		if got := byName.Match(ref); !reflect.DeepEqual(got, want) {
+			t.Errorf("%q: %v, want %v", ref, got, want)
+		}
+	}
 	tests := []struct {
 		ref  string
 		want []Session

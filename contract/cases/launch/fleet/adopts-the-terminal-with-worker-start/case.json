@@ -61,7 +61,7 @@
                 "terminal",
                 "create",
                 "--title",
-                "[jitso:{{LAUNCH_ID}}] haiku-explorer",
+                "haiku-explorer [jitso:{{LAUNCH_ID}}]",
                 "--command",
                 "'{{PROJECT}}/.jitso/launches/{{LAUNCH_ID}}/run.sh'"
               ]
@@ -115,7 +115,7 @@
                 "orca.run": "run_1",
                 "orca.task": "task_1",
                 "orca.terminal": "term_fake",
-                "orca.title": "[jitso:{{LAUNCH_ID}}] haiku-explorer"
+                "orca.title": "haiku-explorer [jitso:{{LAUNCH_ID}}]"
               }
             }
           ]

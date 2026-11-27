@@ -1,0 +1,49 @@
+{
+  "id": "link/names-resolve-without-orca",
+  "title": "with no orca on PATH link resolves session names from the registry alone",
+  "source": [
+    "intended: docs/decisions.md, release 3 of the communication plan"
+  ],
+  "tags": [
+    "posix"
+  ],
+  "project": {
+    "files": {
+      ".jitso/launches.jsonl": {
+        "from": "launches.jsonl"
+      }
+    }
+  },
+  "steps": [
+    {
+      "run": [
+        "link",
+        "conductor",
+        "scout"
+      ],
+      "env": {
+        "ORCA_CLI_COMMAND": "",
+        "PATH": "/usr/bin:/bin"
+      },
+      "expect": {
+        "exit": 0,
+        "stderr": [
+          {
+            "empty": true
+          }
+        ],
+        "stdout": [
+          {
+            "equals": "jitso link: L20261127T100000-a1a1 -> L20261127T100100-b2b2 recorded\n"
+          }
+        ],
+        "orca_calls": {
+          "empty": true
+        },
+        "registry": {
+          "count": 3
+        }
+      }
+    }
+  ]
+}

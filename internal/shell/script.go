@@ -60,11 +60,12 @@ func CommandFor(runSh string) (string, error) {
 	return Quote(runSh)
 }
 
-// TerminalTitle is the mark a launch's Orca terminal carries so the launch
-// can be found again: [jitso:<id>]. It fails on a value that is not a launch id.
-func TerminalTitle(id string) (string, error) {
+// TerminalTitle is the title of a launch's Orca terminal: the session name,
+// then the mark that finds the launch again, "<name> [jitso:<id>]". It fails
+// on a value that is not a launch id.
+func TerminalTitle(name, id string) (string, error) {
 	if !launchID.MatchString(id) {
 		return "", errors.New("not a launch id")
 	}
-	return "[jitso:" + id + "]", nil
+	return name + " [jitso:" + id + "]", nil
 }

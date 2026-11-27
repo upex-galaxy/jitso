@@ -57,7 +57,7 @@
         "exit": 0,
         "stdout": [
           {
-            "contains": "| build draft-team v1 (draft)\n"
+            "contains": "| build draft-team v1 (draft) | name draft-team\n"
           },
           {
             "regex": "(?m)^subagents .*scratch-helper"

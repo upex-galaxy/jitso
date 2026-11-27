@@ -140,6 +140,8 @@ func (s *sandbox) run(t *testing.T, argv ...string) error {
 		Rand:  bytes.NewReader(bytes.Repeat([]byte{0xab}, 64)),
 		Out:   func(l string) { s.out = append(s.out, l) },
 		Warn:  func(l string) { s.warn = append(s.warn, l) },
+		// No variable of this machine, so no user settings but the sandbox's.
+		LookupEnv: func(string) (string, bool) { return "", false },
 	})
 }
 
@@ -197,7 +199,7 @@ func TestRunDirect(t *testing.T) {
 	}
 	e := events[0]
 	for path, want := range map[string]any{"id": id, "root": id, "mode": "direct", "trust_dialog": "absent", "worktree": "primary",
-		"cwd": s.root, "orca.terminal": "term_fake", "orca.title": "[jitso:" + id + "] haiku-explorer", "ts": "2026-11-15T01:02:03.004Z"} {
+		"cwd": s.root, "orca.terminal": "term_fake", "name": "haiku-explorer", "orca.title": "haiku-explorer [jitso:" + id + "]", "ts": "2026-11-15T01:02:03.004Z"} {
 		if got, _ := e.Get(path); got != want {
 			t.Errorf("%s = %v, want %v", path, got, want)
 		}

@@ -209,7 +209,7 @@
         ],
         "stdout": [
           {
-            "contains": "| build scout v1 (draft)\n"
+            "contains": "| build scout v1 (draft) | name scout\n"
           },
           {
             "contains": "dry run: nothing was written"

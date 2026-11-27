@@ -30,7 +30,7 @@
         "exit": 0,
         "stdout": [
           {
-            "contains": "| build scout v1 (draft)\n"
+            "contains": "| build scout v1 (draft) | name scout\n"
           },
           {
             "contains": "model claude-haiku-5-5 effort low"
@@ -70,7 +70,7 @@
         "exit": 0,
         "stdout": [
           {
-            "regex": "\\| build haiku-explorer v1\\n"
+            "regex": "\\| build haiku-explorer v1 \\| name haiku-explorer\\n"
           },
           {
             "contains": "model claude-haiku-5-5 effort low"

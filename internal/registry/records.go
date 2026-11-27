@@ -42,6 +42,9 @@ type LaunchEvent struct {
 	// BuildVersion its version, as the build file spells it.
 	Build        string `json:"build"`
 	BuildVersion any    `json:"build_version"`
+	// Name is the session name, by which a peer addresses the session. A line
+	// of an older binary has none.
+	Name string `json:"name,omitempty"`
 	// BuildLayer, BuildFile and BuildSHA256 name the file the session was
 	// launched from: its layer (repo or draft), its real absolute path
 	// and the SHA-256 of its bytes.

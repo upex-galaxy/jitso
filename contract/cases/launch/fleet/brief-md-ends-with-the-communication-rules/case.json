@@ -1,6 +1,6 @@
 {
   "id": "launch/fleet/brief-md-ends-with-the-communication-rules",
-  "title": "the JITSO rules of brief.md end with three communication lines: find a peer with jitso fleet, SendMessage between Claude Code sessions followed by jitso link, or orca orchestration send otherwise, and reply with orca orchestration reply",
+  "title": "the JITSO rules of brief.md end with three communication lines: find a peer with jitso fleet, SendMessage between Claude Code sessions followed by jitso link, or orca orchestration send otherwise, and reply with orca orchestration reply; a SendMessage that is held, declined or not delivered is sent again with orca orchestration send",
   "source": [
     "intended: docs/decisions.md, release 1 of the communication plan; orca orchestration send --help and reply --help (send needs --subject, reply needs --id and --body); release 2 of the communication plan for the jitso link step"
   ],
@@ -41,7 +41,7 @@
           {
             "path": ".jitso/launches/{{LAUNCH_ID}}/brief.md",
             "contains": [
-              "Never hand-edit `.jitso/launches.jsonl` or `.jitso/launches/`.\nFind another session with `jitso fleet` (read only); your own row is the one with your launch id.\nBetween two Claude Code sessions use `SendMessage` to the session name, then run `jitso link <your launch id> <peer>`; otherwise use `orca orchestration send --to <handle> --from <your handle> --subject <s> --body <b>`.\nPut your own handle and session name in every message, so the peer can answer with `orca orchestration reply --id <msg_id> --body <b>`.\n"
+              "Never hand-edit `.jitso/launches.jsonl` or `.jitso/launches/`.\nFind another session with `jitso fleet` (read only); your own row is the one with your launch id.\nBetween two Claude Code sessions use `SendMessage` to the session name, then run `jitso link <your launch id> <peer>`; otherwise use `orca orchestration send --to <handle> --from <your handle> --subject <s> --body <b>`. If a `SendMessage` is held, declined or not delivered, send it again with `orca orchestration send`.\nPut your own handle and session name in every message, so the peer can answer with `orca orchestration reply --id <msg_id> --body <b>`.\n"
             ],
             "regex": [
               "(?s)\\n\\n## JITSO rules\\n(?:[^\\n]+\\n){6}$"

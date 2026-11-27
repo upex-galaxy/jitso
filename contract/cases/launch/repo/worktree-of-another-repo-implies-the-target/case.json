@@ -81,7 +81,7 @@
                 "--worktree",
                 "path:{{HOME}}/target",
                 "--title",
-                "[jitso:{{LAUNCH_ID}}] t-worker",
+                "t-worker [jitso:{{LAUNCH_ID}}]",
                 "--command",
                 "'{{PROJECT}}/.jitso/launches/{{LAUNCH_ID}}/run.sh'"
               ]

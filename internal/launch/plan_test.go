@@ -1,9 +1,11 @@
 package launch
 
 import (
+	"strings"
 	"testing"
 
 	"github.com/upex-galaxy/jitso/internal/profile"
+	"github.com/upex-galaxy/jitso/internal/registry"
 )
 
 func TestBriefFile(t *testing.T) {
@@ -26,6 +28,31 @@ func TestBriefFile(t *testing.T) {
 				t.Errorf("got %q, want %q", got, tt.want)
 			}
 		})
+	}
+}
+
+func TestSessionName(t *testing.T) {
+	holds := func(name string, ended bool) registry.Launch {
+		l := registry.Launch{Launch: registry.Event{"name": name}}
+		if ended {
+			l.End = registry.Event{}
+		}
+		return l
+	}
+	long := strings.Repeat("n", MaxNameBytes)
+	launches := []registry.Launch{holds("taken", false), holds("done", true), holds(long, false),
+		{Launch: registry.Event{"orca": map[string]any{"title": "old"}}}}
+	for base, want := range map[string]string{
+		"free":  "free",
+		"taken": "taken-ab12",
+		"Taken": "Taken",
+		"done":  "done",
+		"old":   "old",
+		long:    long[:MaxNameBytes-5] + "-ab12",
+	} {
+		if got := SessionName(base, "L20261115T010203-ab12", launches); got != want {
+			t.Errorf("%q: got %q, want %q", base, got, want)
+		}
 	}
 }
 

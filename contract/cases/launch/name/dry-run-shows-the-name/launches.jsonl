@@ -1,0 +1,1 @@
+{"v":2,"event":"launch","id":"L20261127T100000-a1a1","parent":null,"root":"L20261127T100000-a1a1","depth":0,"ts":"2026-11-27T10:00:00.000Z","repo":"repo","mode":"direct","role":"operator","type":"explorer","build":"haiku-explorer","name":"haiku-explorer","harness":"claude","orca":{"run":null,"task":null,"terminal":"term_a","title":"haiku-explorer [jitso:L20261127T100000-a1a1]"}}

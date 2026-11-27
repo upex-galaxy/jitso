@@ -9,7 +9,7 @@ func init() {
 	Register(Command{
 		Name:    "link",
 		Order:   36,
-		Summary: "record that one session talked to another: <from> <to> (launch id, terminal handle or session title)",
+		Summary: "record that one session talked to another: <from> <to> (launch id, terminal handle, session name or tab title)",
 		Run: func(ctx *Context, args []string) error {
 			if len(args) == 1 && (args[0] == "--help" || args[0] == "-h") {
 				ctx.Println(link.Usage)

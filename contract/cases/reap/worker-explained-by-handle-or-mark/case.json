@@ -34,6 +34,10 @@
             "title": "a [jitso:L20261113T142233-a3f9]"
           },
           {
+            "agentTerminalHandle": "term_z",
+            "title": "[jitso:L20261113T142233-a3f9] haiku-explorer"
+          },
+          {
             "agentTerminalHandle": "term_y",
             "meta": {
               "tags": [

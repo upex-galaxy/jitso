@@ -1,0 +1,84 @@
+{
+  "id": "launch/name/bad-name-is-rejected",
+  "title": "a name outside ^[A-Za-z0-9][A-Za-z0-9._-]{0,63}$ is exit 2 and nothing is written or called",
+  "source": [
+    "intended: docs/decisions.md, release 3 of the communication plan"
+  ],
+  "for_each": {
+    "var": "name",
+    "values": [
+      "",
+      "-x",
+      ".x",
+      "_x",
+      "a b",
+      "a[1]",
+      "scout [jitso:x]",
+      "a/b",
+      "a:b",
+      "a'b",
+      "café",
+      "a\nb",
+      "n2345678901234567890123456789012345678901234567890123456789012345"
+    ],
+    "ids": [
+      "empty",
+      "dash-first",
+      "dot-first",
+      "underscore-first",
+      "space",
+      "brackets",
+      "mark",
+      "slash",
+      "colon",
+      "quote",
+      "non-ascii",
+      "line-break",
+      "sixty-five"
+    ]
+  },
+  "project": {
+    "files": {
+      ".jitso/briefs/brief.md": {
+        "from": "brief.md"
+      }
+    }
+  },
+  "steps": [
+    {
+      "run": [
+        "launch",
+        "--build",
+        "haiku-explorer",
+        "--brief",
+        "{{PROJECT}}/.jitso/briefs/brief.md",
+        "--mode",
+        "direct",
+        "--name",
+        "{{name}}"
+      ],
+      "expect": {
+        "exit": 2,
+        "stdout": [
+          {
+            "empty": true
+          }
+        ],
+        "stderr": [
+          {
+            "equals": "JITSO REJECTED: invalid value for --name\n"
+          }
+        ],
+        "orca_calls": {
+          "empty": true
+        },
+        "files": [
+          {
+            "path": ".jitso/launches",
+            "exists": false
+          }
+        ]
+      }
+    }
+  ]
+}

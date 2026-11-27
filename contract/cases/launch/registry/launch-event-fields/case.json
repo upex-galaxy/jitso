@@ -87,7 +87,8 @@
                 "orca.run": null,
                 "orca.task": null,
                 "orca.terminal": "term_fake",
-                "orca.title": "[jitso:{{LAUNCH_ID}}] haiku-explorer",
+                "name": "haiku-explorer",
+                "orca.title": "haiku-explorer [jitso:{{LAUNCH_ID}}]",
                 "budget.tokens": 250000,
                 "budget.usd_list_cap": 0.5,
                 "flags": {

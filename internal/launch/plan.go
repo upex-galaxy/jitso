@@ -43,8 +43,27 @@ func ID(now time.Time, random [2]byte) string {
 	return "L" + now.UTC().Format("20060102T150405") + "-" + hex.EncodeToString(random[:])
 }
 
-// Card is the card input of a resolved profile.
-func Card(id, mode string, p profile.Profile, mcp []string, launchCommand string) card.Input {
+// MaxNameBytes is the longest session name (the --name allowlist of package
+// shell, whose characters are all one byte).
+const MaxNameBytes = 64
+
+// SessionName is the name of the session of launch id: base (--name, else the
+// build id), or, when a launch with no end event already has base, base, "-"
+// and the four hex characters that end id, with base cut so that the result
+// still fits MaxNameBytes. A launch line without a name holds none.
+func SessionName(base, id string, launches []registry.Launch) string {
+	for _, l := range launches {
+		if name, _ := l.Launch.String("name"); name != base || l.Ended() {
+			continue
+		}
+		suffix := id[strings.LastIndexByte(id, '-'):]
+		return base[:min(len(base), MaxNameBytes-len(suffix))] + suffix
+	}
+	return base
+}
+
+// Card is the card input of a resolved profile for the session called name.
+func Card(id, name, mode string, p profile.Profile, mcp []string, launchCommand string) card.Input {
 	b := p.Build
 	version := ""
 	if b.Version != nil {
@@ -52,6 +71,7 @@ func Card(id, mode string, p profile.Profile, mcp []string, launchCommand string
 	}
 	return card.Input{
 		ID:            id,
+		Name:          name,
 		Role:          b.Role,
 		Type:          b.Type,
 		Mode:          mode,
@@ -187,7 +207,9 @@ type Lineage struct {
 
 // EventInput is everything the launch event records.
 type EventInput struct {
-	ID      string
+	ID string
+	// Name is the session name (SessionName).
+	Name    string
 	Args    Args
 	Profile profile.Profile
 	MCP     []string
@@ -245,6 +267,7 @@ func Event(in EventInput) *registry.LaunchEvent {
 		Type:           b.Type,
 		Build:          b.ID,
 		BuildVersion:   b.Version,
+		Name:           in.Name,
 		BuildLayer:     string(b.LayerWord()),
 		BuildFile:      b.Path,
 		BuildSHA256:    b.SHA256,

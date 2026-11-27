@@ -1,0 +1,170 @@
+{
+  "id": "launch/name/taken-name-gets-the-id-suffix",
+  "title": "a name a launch with no end event holds gets '-' and the four hex characters of the new launch id, for the default and for --name; the name of an ended launch is free",
+  "source": [
+    "intended: docs/decisions.md, release 3 of the communication plan"
+  ],
+  "intent": "Two running sessions never share a name, so a peer addressed by name is one session. A line without a name (an older binary) holds none.",
+  "tags": [
+    "posix"
+  ],
+  "project": {
+    "files": {
+      ".jitso/briefs/brief.md": {
+        "from": "brief.md"
+      },
+      ".jitso/launches.jsonl": {
+        "from": "launches.jsonl"
+      }
+    }
+  },
+  "steps": [
+    {
+      "run": [
+        "launch",
+        "--build",
+        "haiku-explorer",
+        "--brief",
+        "{{PROJECT}}/.jitso/briefs/brief.md",
+        "--mode",
+        "direct"
+      ],
+      "capture": {
+        "FIRST": {
+          "from": "stdout",
+          "regex": "JITSO (L\\d{8}T\\d{6}-[0-9a-f]{4})"
+        },
+        "FIRST_SUFFIX": {
+          "from": "stdout",
+          "regex": "JITSO L\\d{8}T\\d{6}-([0-9a-f]{4})"
+        }
+      },
+      "expect": {
+        "exit": 0,
+        "stderr": [
+          {
+            "empty": true
+          }
+        ],
+        "stdout": [
+          {
+            "contains": "| name haiku-explorer-{{FIRST_SUFFIX}}\n"
+          }
+        ],
+        "orca_calls": {
+          "calls": [
+            {
+              "at": 0,
+              "argv": [
+                "terminal",
+                "create",
+                "--title",
+                "haiku-explorer-{{FIRST_SUFFIX}} [jitso:{{FIRST}}]",
+                "--command",
+                {
+                  "regex": "run\\.sh'$"
+                }
+              ]
+            }
+          ]
+        },
+        "registry": {
+          "count": 5,
+          "events": [
+            {
+              "at": 4,
+              "event": "launch",
+              "fields": {
+                "name": "haiku-explorer-{{FIRST_SUFFIX}}"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "exec": "run_sh",
+      "launch": "{{FIRST}}",
+      "expect": {
+        "exit": 0,
+        "claude": {
+          "arg_after": {
+            "--name": "haiku-explorer-{{FIRST_SUFFIX}}"
+          }
+        }
+      }
+    },
+    {
+      "run": [
+        "launch",
+        "--build",
+        "haiku-explorer",
+        "--brief",
+        "{{PROJECT}}/.jitso/briefs/brief.md",
+        "--mode",
+        "direct",
+        "--name",
+        "scout"
+      ],
+      "expect": {
+        "exit": 0,
+        "stdout": [
+          {
+            "contains": "| name scout\n"
+          }
+        ],
+        "registry": {
+          "count": 6,
+          "events": [
+            {
+              "at": 5,
+              "event": "launch",
+              "fields": {
+                "name": "scout"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "run": [
+        "launch",
+        "--build",
+        "haiku-explorer",
+        "--brief",
+        "{{PROJECT}}/.jitso/briefs/brief.md",
+        "--mode",
+        "direct",
+        "--name",
+        "scout"
+      ],
+      "capture": {
+        "THIRD_SUFFIX": {
+          "from": "stdout",
+          "regex": "JITSO L\\d{8}T\\d{6}-([0-9a-f]{4})"
+        }
+      },
+      "expect": {
+        "exit": 0,
+        "stdout": [
+          {
+            "contains": "| name scout-{{THIRD_SUFFIX}}\n"
+          }
+        ],
+        "registry": {
+          "count": 7,
+          "events": [
+            {
+              "at": 6,
+              "event": "launch",
+              "fields": {
+                "name": "scout-{{THIRD_SUFFIX}}"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ]
+}

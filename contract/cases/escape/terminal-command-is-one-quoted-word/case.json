@@ -46,7 +46,7 @@
                 "create",
                 "--title",
                 {
-                  "regex": "^\\[jitso:{{LAUNCH_ID}}\\] haiku-explorer$"
+                  "regex": "^haiku-explorer \\[jitso:{{LAUNCH_ID}}\\]$"
                 },
                 "--command",
                 "'{{PROJECT}}/.jitso/launches/{{LAUNCH_ID}}/run.sh'"

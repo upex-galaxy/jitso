@@ -1,0 +1,63 @@
+{
+  "id": "launch/name/name-needs-a-value",
+  "title": "--name without a value is exit 2",
+  "source": [
+    "intended: docs/decisions.md, release 3 of the communication plan"
+  ],
+  "project": {
+    "files": {
+      ".jitso/briefs/brief.md": {
+        "from": "brief.md"
+      }
+    }
+  },
+  "steps": [
+    {
+      "run": [
+        "launch",
+        "--build",
+        "haiku-explorer",
+        "--brief",
+        "{{PROJECT}}/.jitso/briefs/brief.md",
+        "--mode",
+        "direct",
+        "--name"
+      ],
+      "expect": {
+        "exit": 2,
+        "stderr": [
+          {
+            "equals": "JITSO REJECTED: --name needs a value\n"
+          }
+        ],
+        "orca_calls": {
+          "empty": true
+        }
+      }
+    },
+    {
+      "run": [
+        "launch",
+        "--build",
+        "haiku-explorer",
+        "--brief",
+        "{{PROJECT}}/.jitso/briefs/brief.md",
+        "--mode",
+        "direct",
+        "--name",
+        "--dry-run"
+      ],
+      "expect": {
+        "exit": 2,
+        "stderr": [
+          {
+            "equals": "JITSO REJECTED: --name needs a value\n"
+          }
+        ],
+        "orca_calls": {
+          "empty": true
+        }
+      }
+    }
+  ]
+}

@@ -59,6 +59,16 @@ func TestRender(t *testing.T) {
 			"subagents unrestricted (harness default)\nROUTE-SCOPE: none\nlaunch: jitso launch\n" +
 			"reports to: you | log .jitso/launches.jsonl"})
 	}
+	named := base
+	named.Layer, named.Name = "draft", "scout"
+	tests = append(tests, struct {
+		name string
+		in   Input
+		want string
+	}{"session name", named, "JITSO L1 | operator/explorer | mode direct (asks you) | build b v1 (draft) | name scout\n" +
+		"model m effort low | bypass | MCP none | skill none\n" +
+		"subagents unrestricted (harness default)\nROUTE-SCOPE: none\nlaunch: jitso launch\n" +
+		"reports to: you | log .jitso/launches.jsonl"})
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			if got := Render(tt.in); got != tt.want {

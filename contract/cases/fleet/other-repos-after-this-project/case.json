@@ -73,7 +73,7 @@
         "exit": 0,
         "stdout": [
           {
-            "regex": "^ID +ROLE/TYPE +HARNESS +STATE +HANDLE +PARENT +REPO +TITLE\\nL20261124T100000-a1a1 +conductor/conductor +claude +live +term_a +- +target-app +\\[jitso:L20261124T100000-a1a1\\] sonnet-conductor\\nL20261124T100200-c3c3 +operator/worker +pi +gone +term_c +L20261124T100000-a1a1 +project +\\[jitso:L20261124T100200-c3c3\\] pi-worker\\n- +- +- +unlaunched +term_w +- +project +worktree session\\n- +- +- +unlaunched +term_p +- +project +primary session\\n- +- +- +unlaunched +term_o +- +other-repo +other session\\n- +- +- +unlaunched +term_plain +- +plain +plain folder\\n- +- +- +unlaunched +term_none +- +- +no folder\\njitso fleet: 1 live, 1 gone, 5 unlaunched\\n$"
+            "regex": "^ID +NAME +ROLE/TYPE +HARNESS +STATE +HANDLE +PARENT +REPO +TITLE\\nL20261124T100000-a1a1 +- +conductor/conductor +claude +live +term_a +- +target-app +\\[jitso:L20261124T100000-a1a1\\] sonnet-conductor\\nL20261124T100200-c3c3 +- +operator/worker +pi +gone +term_c +L20261124T100000-a1a1 +project +\\[jitso:L20261124T100200-c3c3\\] pi-worker\\n- +- +- +- +unlaunched +term_w +- +project +worktree session\\n- +- +- +- +unlaunched +term_p +- +project +primary session\\n- +- +- +- +unlaunched +term_o +- +other-repo +other session\\n- +- +- +- +unlaunched +term_plain +- +plain +plain folder\\n- +- +- +- +unlaunched +term_none +- +- +no folder\\njitso fleet: 1 live, 1 gone, 5 unlaunched\\n$"
           }
         ],
         "stderr": [

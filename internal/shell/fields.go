@@ -13,6 +13,9 @@ import (
 var (
 	launchID = regexp.MustCompile(`^L[0-9]{8}T[0-9]{6}-[0-9a-f]{4}$`)
 	orcaID   = regexp.MustCompile(`^[A-Za-z0-9][A-Za-z0-9_.:-]{0,63}$`)
+	// sessionName has no space, bracket or colon: a harness may rewrite them
+	// in the name its peers see, and SendMessage reads a trailing " [ref]".
+	sessionName = regexp.MustCompile(`^[A-Za-z0-9][A-Za-z0-9._-]{0,63}$`)
 )
 
 // launchFields is the allowlist per launcher field (a launcher
@@ -22,6 +25,7 @@ var launchFields = map[string]*regexp.Regexp{
 	"run":         orcaID,
 	"task":        orcaID,
 	"parent":      launchID,
+	"name":        sessionName,
 	"worktree":    regexp.MustCompile(`^[A-Za-z0-9][A-Za-z0-9_.:/-]{0,511}$`),
 	"mcp-exclude": regexp.MustCompile(`^[A-Za-z0-9][A-Za-z0-9_:-]{0,63}$`),
 }
@@ -40,7 +44,7 @@ func checkRepo(value string) bool {
 // name (without its "--"), otherwise the reason it is not:
 // `unknown launcher field "<name>"` or `invalid value for --<name>`.
 // A value holding ".." is always invalid, except in repo, whose path is
-// cleaned.
+// cleaned, and in name, which is never part of a path.
 func CheckLaunchField(name, value string) string {
 	if name == "repo" {
 		if !checkRepo(value) {
@@ -52,7 +56,7 @@ func CheckLaunchField(name, value string) string {
 	if !ok {
 		return `unknown launcher field "` + name + `"`
 	}
-	if !pattern.MatchString(value) || strings.Contains(value, "..") {
+	if !pattern.MatchString(value) || name != "name" && strings.Contains(value, "..") {
 		return "invalid value for --" + name
 	}
 	return ""

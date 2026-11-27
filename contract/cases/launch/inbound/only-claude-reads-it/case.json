@@ -1,0 +1,57 @@
+{
+  "id": "launch/inbound/only-claude-reads-it",
+  "title": "a launch of another harness does not read the Claude Code user settings: no warning for a broken file",
+  "source": [
+    "intended: docs/decisions.md, release 3 of the communication plan"
+  ],
+  "tags": [
+    "posix"
+  ],
+  "project": {
+    "files": {
+      ".jitso/briefs/brief.md": {
+        "from": "brief.md"
+      },
+      "jitso/jitso.yaml": {
+        "from": "jitso.yaml"
+      },
+      "jitso/builds/pi-worker.yaml": {
+        "from": "pi-worker.yaml"
+      }
+    }
+  },
+  "home": {
+    "files": {
+      ".claude/settings.json": "{not json"
+    }
+  },
+  "steps": [
+    {
+      "run": [
+        "launch",
+        "--build",
+        "pi-worker",
+        "--brief",
+        "{{PROJECT}}/.jitso/briefs/brief.md",
+        "--mode",
+        "direct"
+      ],
+      "expect": {
+        "exit": 0,
+        "stderr": [
+          {
+            "empty": true
+          }
+        ],
+        "files": [
+          {
+            "path": ".jitso/launches.jsonl",
+            "not_contains": [
+              "crossSessionInbound"
+            ]
+          }
+        ]
+      }
+    }
+  ]
+}

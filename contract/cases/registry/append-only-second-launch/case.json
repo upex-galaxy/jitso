@@ -63,7 +63,8 @@
               "fields": {
                 "id": "{{FIRST_ID}}",
                 "build": "haiku-explorer",
-                "orca.title": "[jitso:{{FIRST_ID}}] haiku-explorer"
+                "name": "haiku-explorer",
+                "orca.title": "haiku-explorer [jitso:{{FIRST_ID}}]"
               }
             },
             {
@@ -71,7 +72,10 @@
               "event": "launch",
               "fields": {
                 "id": "{{SECOND_ID}}",
-                "build": "haiku-explorer"
+                "build": "haiku-explorer",
+                "name": {
+                  "regex": "^haiku-explorer-[0-9a-f]{4}$"
+                }
               }
             }
           ]

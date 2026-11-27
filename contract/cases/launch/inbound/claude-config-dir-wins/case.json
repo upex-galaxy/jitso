@@ -1,0 +1,234 @@
+{
+  "id": "launch/inbound/claude-config-dir-wins",
+  "title": "with CLAUDE_CONFIG_DIR set the user settings are its settings.json, with no fallback to ~/.claude; an empty value is unset",
+  "source": [
+    "intended: docs/decisions.md, release 3 of the communication plan; code.claude.com/docs/en/env-vars: CLAUDE_CONFIG_DIR overrides the configuration folder"
+  ],
+  "tags": [
+    "posix"
+  ],
+  "project": {
+    "files": {
+      ".jitso/briefs/brief.md": {
+        "from": "brief.md"
+      }
+    }
+  },
+  "home": {
+    "files": {
+      ".claude/settings.json": "{\"crossSessionInbound\":\"accept\"}",
+      "cfg/settings.json": "{\"crossSessionInbound\":\"hold\"}",
+      "bare/keep": ""
+    }
+  },
+  "steps": [
+    {
+      "run": [
+        "launch",
+        "--build",
+        "haiku-explorer",
+        "--brief",
+        "{{PROJECT}}/.jitso/briefs/brief.md",
+        "--mode",
+        "direct"
+      ],
+      "capture": {
+        "ONE": {
+          "from": "stdout",
+          "regex": "JITSO (L\\d{8}T\\d{6}-[0-9a-f]{4})"
+        }
+      },
+      "expect": {
+        "exit": 0,
+        "stderr": [
+          {
+            "empty": true
+          }
+        ],
+        "stdout": [
+          {
+            "not_contains": "sentinel"
+          }
+        ]
+      },
+      "env": {
+        "CLAUDE_CONFIG_DIR": "{{HOME}}/cfg"
+      }
+    },
+    {
+      "exec": "run_sh",
+      "launch": "{{ONE}}",
+      "expect": {
+        "exit": 0,
+        "claude": {
+          "ran": true,
+          "argv_count": {
+            "--settings": 1
+          },
+          "json_arg_after": {
+            "--settings": [
+              {
+                "path": "",
+                "keys_exact": [
+                  "skipDangerousModePermissionPrompt",
+                  "promptSuggestionEnabled",
+                  "hooks",
+                  "crossSessionInbound"
+                ]
+              },
+              {
+                "path": "crossSessionInbound",
+                "equals": "hold"
+              },
+              {
+                "path": "skipDangerousModePermissionPrompt",
+                "equals": true
+              },
+              {
+                "path": "promptSuggestionEnabled",
+                "equals": false
+              },
+              {
+                "path": "hooks.PreToolUse.0.matcher",
+                "equals": "Bash"
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "run": [
+        "launch",
+        "--build",
+        "haiku-explorer",
+        "--brief",
+        "{{PROJECT}}/.jitso/briefs/brief.md",
+        "--mode",
+        "direct"
+      ],
+      "capture": {
+        "TWO": {
+          "from": "stdout",
+          "regex": "JITSO (L\\d{8}T\\d{6}-[0-9a-f]{4})"
+        }
+      },
+      "expect": {
+        "exit": 0,
+        "stderr": [
+          {
+            "empty": true
+          }
+        ],
+        "stdout": [
+          {
+            "not_contains": "sentinel"
+          }
+        ]
+      },
+      "env": {
+        "CLAUDE_CONFIG_DIR": "{{HOME}}/bare"
+      }
+    },
+    {
+      "exec": "run_sh",
+      "launch": "{{TWO}}",
+      "expect": {
+        "exit": 0,
+        "claude": {
+          "ran": true,
+          "argv_count": {
+            "--settings": 1
+          },
+          "json_arg_after": {
+            "--settings": [
+              {
+                "path": "",
+                "keys_exact": [
+                  "skipDangerousModePermissionPrompt",
+                  "promptSuggestionEnabled",
+                  "hooks"
+                ]
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "run": [
+        "launch",
+        "--build",
+        "haiku-explorer",
+        "--brief",
+        "{{PROJECT}}/.jitso/briefs/brief.md",
+        "--mode",
+        "direct"
+      ],
+      "capture": {
+        "THREE": {
+          "from": "stdout",
+          "regex": "JITSO (L\\d{8}T\\d{6}-[0-9a-f]{4})"
+        }
+      },
+      "expect": {
+        "exit": 0,
+        "stderr": [
+          {
+            "empty": true
+          }
+        ],
+        "stdout": [
+          {
+            "not_contains": "sentinel"
+          }
+        ]
+      },
+      "env": {
+        "CLAUDE_CONFIG_DIR": ""
+      }
+    },
+    {
+      "exec": "run_sh",
+      "launch": "{{THREE}}",
+      "expect": {
+        "exit": 0,
+        "claude": {
+          "ran": true,
+          "argv_count": {
+            "--settings": 1
+          },
+          "json_arg_after": {
+            "--settings": [
+              {
+                "path": "",
+                "keys_exact": [
+                  "skipDangerousModePermissionPrompt",
+                  "promptSuggestionEnabled",
+                  "hooks",
+                  "crossSessionInbound"
+                ]
+              },
+              {
+                "path": "crossSessionInbound",
+                "equals": "accept"
+              },
+              {
+                "path": "skipDangerousModePermissionPrompt",
+                "equals": true
+              },
+              {
+                "path": "promptSuggestionEnabled",
+                "equals": false
+              },
+              {
+                "path": "hooks.PreToolUse.0.matcher",
+                "equals": "Bash"
+              }
+            ]
+          }
+        }
+      }
+    }
+  ]
+}

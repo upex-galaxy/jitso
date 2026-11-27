@@ -51,7 +51,7 @@
     return chars.length > max ? chars.slice(0, max - 1).join("") + "…" : s;
   };
 
-  const titleOf = (n) => (n.id !== null ? n.build || n.name || n.id : n.title || n.name || n.folder || n.handle || n.key);
+  const titleOf = (n) => (n.id !== null ? (n.name && !n.name.includes("[jitso:") ? n.name : n.build || n.name || n.id) : n.title || n.name || n.folder || n.handle || n.key);
 
   // The lines of a label: what the session is, then the folder it lives in and,
   // for a launch, its role and id. The last one may carry the state's color.

@@ -28,13 +28,13 @@
         "exit": 3,
         "stdout": [
           {
-            "regex": "(?m)^ID +ROLE/TYPE +HARNESS +STATE +HANDLE +PARENT +REPO +TITLE$"
+            "regex": "(?m)^ID +NAME +ROLE/TYPE +HARNESS +STATE +HANDLE +PARENT +REPO +TITLE$"
           },
           {
-            "regex": "(?m)^L20261124T100000-a1a1 +conductor/conductor +claude +unknown +term_a +- +"
+            "regex": "(?m)^L20261124T100000-a1a1 +- +conductor/conductor +claude +unknown +term_a +- +"
           },
           {
-            "regex": "(?m)^L20261124T100200-c3c3 +operator/worker +pi +unknown +term_c +"
+            "regex": "(?m)^L20261124T100200-c3c3 +- +operator/worker +pi +unknown +term_c +"
           },
           {
             "regex": "(?m)^jitso fleet: 3 unknown$"

@@ -1,0 +1,74 @@
+{
+  "id": "launch/inbound/no-file-adds-nothing",
+  "title": "with no user settings file the --settings of a launch are the launch's own keys",
+  "source": [
+    "intended: docs/decisions.md, release 3 of the communication plan"
+  ],
+  "tags": [
+    "posix"
+  ],
+  "project": {
+    "files": {
+      ".jitso/briefs/brief.md": {
+        "from": "brief.md"
+      }
+    }
+  },
+  "steps": [
+    {
+      "run": [
+        "launch",
+        "--build",
+        "haiku-explorer",
+        "--brief",
+        "{{PROJECT}}/.jitso/briefs/brief.md",
+        "--mode",
+        "direct"
+      ],
+      "capture": {
+        "LAUNCH_ID": {
+          "from": "stdout",
+          "regex": "JITSO (L\\d{8}T\\d{6}-[0-9a-f]{4})"
+        }
+      },
+      "expect": {
+        "exit": 0,
+        "stderr": [
+          {
+            "empty": true
+          }
+        ],
+        "stdout": [
+          {
+            "not_contains": "sentinel"
+          }
+        ]
+      }
+    },
+    {
+      "exec": "run_sh",
+      "launch": "{{LAUNCH_ID}}",
+      "expect": {
+        "exit": 0,
+        "claude": {
+          "ran": true,
+          "argv_count": {
+            "--settings": 1
+          },
+          "json_arg_after": {
+            "--settings": [
+              {
+                "path": "",
+                "keys_exact": [
+                  "skipDangerousModePermissionPrompt",
+                  "promptSuggestionEnabled",
+                  "hooks"
+                ]
+              }
+            ]
+          }
+        }
+      }
+    }
+  ]
+}

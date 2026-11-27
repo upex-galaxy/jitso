@@ -106,7 +106,7 @@
               "regex": "^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
             },
             "--name",
-            "[jitso:{{LAUNCH_ID}}] pi-conductor",
+            "pi-conductor",
             "--skill",
             "{{PROJECT}}/.jitso/launches/{{LAUNCH_ID}}/pkg/.claude/skills/jitso",
             "-e",

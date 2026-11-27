@@ -46,10 +46,11 @@ type Deps struct {
 // stdout. Nothing is written when a reference cannot be resolved.
 //
 // A launch id or a recorded terminal handle is resolved by the registry alone.
-// A title, or a handle the registry does not hold, needs Orca's terminal list,
-// because a title is accepted only when it names one session. Without Orca the
-// titles of the registry still resolve, and a reference they do not hold is the
-// error that says Orca is missing.
+// A session name, a title, or a handle the registry does not hold, needs Orca's
+// terminal list, because a name or a title is accepted only when it names one
+// session and a tab may show it too. Without Orca the names and titles of the
+// registry still resolve, and a reference they do not hold is the error that
+// says Orca is missing.
 func Run(from, to string, d Deps) (string, error) {
 	launches, err := registry.ReadLaunches(d.Store)
 	if err != nil {
@@ -100,7 +101,7 @@ func resolve(dir *Directory, ref string, missing error) (Session, error) {
 	case missing != nil:
 		return Session{}, missing
 	}
-	return Session{}, fail.Rejected(`unknown session "` + ref + `": give a launch id, a terminal handle or a session title (see jitso fleet)`)
+	return Session{}, fail.Rejected(`unknown session "` + ref + `": give a launch id, a terminal handle, a session name or a tab title (see jitso fleet)`)
 }
 
 func end(s Session) registry.LinkEnd {

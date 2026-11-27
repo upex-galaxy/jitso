@@ -4,7 +4,7 @@
   "source": [
     "intended: docs/decisions.md, release 2 of the communication plan"
   ],
-  "intent": "The nodes carry the state of jitso fleet plus the session name (the title the launch gave) apart from the tab title Orca shows now, the folder name of its worktree, and a project flag: every launch, and a terminal in a checkout of this project. Without a message or a recorded link there is no synapse at all.",
+  "intent": "The nodes carry the state of jitso fleet plus the session name (the name of the launch event, else the title the launch gave) apart from the tab title Orca shows now, the folder name of its worktree, and a project flag: every launch, and a terminal in a checkout of this project. Without a message or a recorded link there is no synapse at all.",
   "project": {
     "files": {
       ".jitso/launches.jsonl": {
@@ -67,7 +67,7 @@
             "regex": "(?s)\"key\": \"L20261125T090000-d4d4\",.*?\"state\": \"closed\",\\n +\"listed\": false,.*?\"key\": \"L20261125T100000-a1a1\",.*?\"key\": \"L20261125T100100-b2b2\",.*?\"key\": \"L20261125T100200-c3c3\",.*?\"key\": \"L20261125T100300-e5e5\",.*?\"key\": \"term_x\",.*?\"key\": \"term_y\","
           },
           {
-            "regex": "(?s)\"key\": \"L20261125T100000-a1a1\",\\n +\"id\": \"L20261125T100000-a1a1\",\\n +\"name\": \"\\[jitso:L20261125T100000-a1a1\\] sonnet-conductor\",\\n +\"title\": \"✳ conducting\",\\n +\"handle\": \"term_a\",\\n +\"role\": \"conductor\",\\n +\"type\": \"conductor\",\\n +\"build\": \"sonnet-conductor\",\\n +\"harness\": \"claude\",\\n +\"mode\": \"direct\",\\n +\"state\": \"live\",\\n +\"listed\": true,\\n +\"worktree\": \"[^\"]+\",\\n +\"folder\": \"project\",\\n +\"branch\": \"main\",\\n +\"parent\": null,\\n +\"project\": true\\n"
+            "regex": "(?s)\"key\": \"L20261125T100000-a1a1\",\\n +\"id\": \"L20261125T100000-a1a1\",\\n +\"name\": \"lead\",\\n +\"title\": \"✳ conducting\",\\n +\"handle\": \"term_a\",\\n +\"role\": \"conductor\",\\n +\"type\": \"conductor\",\\n +\"build\": \"sonnet-conductor\",\\n +\"harness\": \"claude\",\\n +\"mode\": \"direct\",\\n +\"state\": \"live\",\\n +\"listed\": true,\\n +\"worktree\": \"[^\"]+\",\\n +\"folder\": \"project\",\\n +\"branch\": \"main\",\\n +\"parent\": null,\\n +\"project\": true\\n"
           },
           {
             "regex": "(?s)\"key\": \"L20261125T100200-c3c3\",\\n +\"id\": \"L20261125T100200-c3c3\",\\n +\"name\": \"\\[jitso:L20261125T100200-c3c3\\] pi-worker\",\\n +\"title\": null,\\n +\"handle\": \"term_c\",\\n +\"role\": \"operator\",\\n +\"type\": \"worker\",\\n +\"build\": \"pi-worker\",\\n +\"harness\": \"pi\",\\n +\"mode\": \"fleet\",\\n +\"state\": \"gone\",\\n +\"listed\": false,\\n +\"worktree\": null,\\n +\"folder\": null,\\n +\"branch\": null,\\n +\"parent\": \"L20261125T100000-a1a1\",\\n +\"project\": true\\n"

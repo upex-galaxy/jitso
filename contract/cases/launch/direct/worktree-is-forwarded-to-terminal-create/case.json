@@ -51,7 +51,7 @@
                 "--worktree",
                 "id:fake-uuid::{{PROJECT}}",
                 "--title",
-                "[jitso:{{LAUNCH_ID}}] haiku-explorer",
+                "haiku-explorer [jitso:{{LAUNCH_ID}}]",
                 "--command",
                 "'{{PROJECT}}/.jitso/launches/{{LAUNCH_ID}}/run.sh'"
               ]

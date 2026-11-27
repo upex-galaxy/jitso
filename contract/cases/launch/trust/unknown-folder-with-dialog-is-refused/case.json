@@ -62,7 +62,7 @@
                 "create",
                 "--title",
                 {
-                  "regex": "^\\[jitso:L\\d{8}T\\d{6}-[0-9a-f]{4}\\] haiku-explorer$"
+                  "regex": "^haiku-explorer \\[jitso:L\\d{8}T\\d{6}-[0-9a-f]{4}\\]$"
                 },
                 "--command",
                 {

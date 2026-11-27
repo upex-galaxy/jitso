@@ -169,7 +169,7 @@ A step holds exactly one of `run`, `hook`, `exec`, `write`, `git_worktree`, `git
 |---|---|
 | `stdout`, `stderr` | the step's output |
 | `file` | the content of `path` (required with this source, only there): relative to the project dir, or an absolute placeholder path |
-| `orca_log` | the raw fake `orca` call log (JSON lines), for example to take a failed launch's id from the `--title [jitso:<id>]` of its recorded `terminal create` |
+| `orca_log` | the raw fake `orca` call log (JSON lines), for example to take a failed launch's id from the `--title <name> [jitso:<id>]` of its recorded `terminal create` |
 
 A missing file or log is empty text. A capture whose regex does not match is a failure of its step; the step's other expectations are still evaluated.
 

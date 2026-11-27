@@ -37,6 +37,15 @@ type Adapter interface {
 	Support() Support
 }
 
+// InboundSource is the optional part of an adapter whose launched session
+// reads none of the owner's user settings, so the owner's choice about messages
+// from other sessions has to travel with the launch.
+type InboundSource interface {
+	// OwnerInbound is that choice from the owner's user settings, "" for none,
+	// and a warning line for stderr, "" for none. It never fails a launch.
+	OwnerInbound(home string, lookupEnv func(string) (string, bool)) (value, warning string)
+}
+
 // Support is what one harness can give a session.
 type Support struct {
 	// Subagents: the session can get the build's subagents.
@@ -70,11 +79,14 @@ type SpecInput struct {
 	Model     string
 	Effort    string
 	SessionID string
-	// Name is the display name of the session, the same text as the Orca
-	// terminal title. An adapter passes it only when its harness has a launch
-	// flag for a session name (claude and pi do; codex and opencode have none
-	// for their interactive session); "" passes nothing.
+	// Name is the session name, plain characters only (the --name allowlist).
+	// An adapter passes it only when its harness has a launch flag for a
+	// session name (claude and pi do; codex and opencode have none for their
+	// interactive session); "" passes nothing.
 	Name string
+	// CrossSessionInbound is what InboundSource returned for this launch, ""
+	// for none.
+	CrossSessionInbound string
 	// MCPConfigPath is the strict MCP file written for this launch.
 	MCPConfigPath string
 	// MCPNames are the servers the session gets, in order.

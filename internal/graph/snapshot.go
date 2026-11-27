@@ -53,8 +53,9 @@ type Node struct {
 	// Key identifies the node in the edges: the launch id, else the handle.
 	Key string `json:"key"`
 	ID  Text   `json:"id"`
-	// Name is the session name: the title the launch gave the session, else
-	// the tab title of a terminal no launch explains.
+	// Name is the session name: the name of the launch event, else, for a line
+	// without one, the title the launch gave the session, and for a terminal no
+	// launch explains its tab title.
 	Name Text `json:"name"`
 	// Title is the tab title Orca shows now, unknown when it lists no
 	// terminal for the session.
@@ -191,6 +192,9 @@ func newBuilder(launches []registry.Launch, terminals []orca.TerminalInfo, orcaK
 			l := byID[r.ID]
 			if title, _ := l.Launch.String("orca.title"); title != "" {
 				n.Name = Text(title)
+			}
+			if r.Name != "" {
+				n.Name = Text(r.Name)
 			}
 			if path, _ := l.Launch.String("repo_path"); path != "" {
 				n.Repo = Text(r.Repo)

@@ -14,7 +14,7 @@ func TestRules(t *testing.T) {
 		fleet  = "Load the card's skills before any other work. Never ask a human: send your questions and your final report (a count of done, failed, open) to the session that launched you."
 		last   = "Never hand-edit `.jitso/launches.jsonl` or `.jitso/launches/`." +
 			"\nFind another session with `jitso fleet` (read only); your own row is the one with your launch id." +
-			"\nBetween two Claude Code sessions use `SendMessage` to the session name, then run `jitso link <your launch id> <peer>`; otherwise use `orca orchestration send --to <handle> --from <your handle> --subject <s> --body <b>`." +
+			"\nBetween two Claude Code sessions use `SendMessage` to the session name, then run `jitso link <your launch id> <peer>`; otherwise use `orca orchestration send --to <handle> --from <your handle> --subject <s> --body <b>`. If a `SendMessage` is held, declined or not delivered, send it again with `orca orchestration send`." +
 			"\nPut your own handle and session name in every message, so the peer can answer with `orca orchestration reply --id <msg_id> --body <b>`."
 	)
 	tests := []struct {

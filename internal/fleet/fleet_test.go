@@ -254,7 +254,7 @@ func TestRunErrors(t *testing.T) {
 
 func TestText(t *testing.T) {
 	rows := []Row{
-		{ID: idA, Role: "conductor", Type: "conductor", Harness: "claude", State: Live, Handle: "term_a", Repo: "app", Title: "[jitso:" + idA + "] conductor"},
+		{ID: idA, Name: "lead", Role: "conductor", Type: "conductor", Harness: "claude", State: Live, Handle: "term_a", Repo: "app", Title: "[jitso:" + idA + "] conductor"},
 		{ID: idB, Parent: idA, Role: "operator", Type: "worker", Harness: "pi", State: Gone, Handle: "term_b", Title: "a\tb\nc"},
 		{State: Unlaunched, Handle: "term_z", Title: "zsh"},
 	}
@@ -263,17 +263,17 @@ func TestText(t *testing.T) {
 		t.Fatalf("lines %q", got)
 	}
 	cols := func(line string) []string { return strings.Fields(line) }
-	if !reflect.DeepEqual(cols(got[0]), []string{"ID", "ROLE/TYPE", "HARNESS", "STATE", "HANDLE", "PARENT", "REPO", "TITLE"}) {
+	if !reflect.DeepEqual(cols(got[0]), []string{"ID", "NAME", "ROLE/TYPE", "HARNESS", "STATE", "HANDLE", "PARENT", "REPO", "TITLE"}) {
 		t.Errorf("header %q", got[0])
 	}
-	if want := []string{idA, "conductor/conductor", "claude", "live", "term_a", "-", "app", "[jitso:" + idA + "]", "conductor"}; !reflect.DeepEqual(cols(got[1]), want) {
+	if want := []string{idA, "lead", "conductor/conductor", "claude", "live", "term_a", "-", "app", "[jitso:" + idA + "]", "conductor"}; !reflect.DeepEqual(cols(got[1]), want) {
 		t.Errorf("row 1 %q", got[1])
 	}
 	// Control characters of a title never break a row.
-	if want := []string{idB, "operator/worker", "pi", "gone", "term_b", idA, "-", "a", "b", "c"}; !reflect.DeepEqual(cols(got[2]), want) {
+	if want := []string{idB, "-", "operator/worker", "pi", "gone", "term_b", idA, "-", "a", "b", "c"}; !reflect.DeepEqual(cols(got[2]), want) {
 		t.Errorf("row 2 %q", got[2])
 	}
-	if want := []string{"-", "-", "-", "unlaunched", "term_z", "-", "-", "zsh"}; !reflect.DeepEqual(cols(got[3]), want) {
+	if want := []string{"-", "-", "-", "-", "unlaunched", "term_z", "-", "-", "zsh"}; !reflect.DeepEqual(cols(got[3]), want) {
 		t.Errorf("row 3 %q", got[3])
 	}
 	if got[4] != "jitso fleet: 1 live, 1 gone, 1 unlaunched" {
@@ -310,7 +310,7 @@ func TestJSON(t *testing.T) {
 		t.Fatal(err)
 	}
 	want := "{\n  \"orca\": true,\n  \"sessions\": [\n    {\n" +
-		"      \"id\": null,\n      \"parent\": null,\n      \"role\": null,\n      \"type\": null,\n      \"build\": null,\n      \"harness\": null,\n      \"mode\": null,\n" +
+		"      \"id\": null,\n      \"name\": null,\n      \"parent\": null,\n      \"role\": null,\n      \"type\": null,\n      \"build\": null,\n      \"harness\": null,\n      \"mode\": null,\n" +
 		"      \"state\": \"unlaunched\",\n      \"handle\": \"term_z\",\n      \"title\": \"zsh\",\n      \"repo\": null,\n      \"worktree\": null,\n      \"branch\": null,\n      \"ts\": null\n    }\n  ]\n}"
 	if got != want {
 		t.Errorf("got\n%s\nwant\n%s", got, want)

@@ -40,9 +40,10 @@ type Directory struct {
 // does: a terminal is a launch's by the launch's handle, else by the
 // [jitso:<id>] mark in its title; any other terminal is a session of its own.
 //
-// A session's names are the title its launch gave it (which is also the
-// harness session name) and the title its tab shows now. The tab of a launch
-// that ended is not one of its names, because something else may run there.
+// A session's names are the session name of its launch, the title its launch
+// gave it and the title its tab shows now. The session name and the tab of a
+// launch that ended are not among them: another session may take the name, and
+// something else may run in the tab.
 func NewDirectory(launches []registry.Launch, terminals []orca.TerminalInfo) *Directory {
 	d := &Directory{ids: map[string]Session{}, handles: map[string]Session{}, names: map[string][]Session{}}
 	ended := map[string]bool{}
@@ -61,6 +62,9 @@ func NewDirectory(launches []registry.Launch, terminals []orca.TerminalInfo) *Di
 		}
 	}
 	for _, l := range launches {
+		if name, _ := l.Launch.String("name"); name != "" && !l.Ended() {
+			d.name(name, d.ids[l.ID])
+		}
 		if title, _ := l.Launch.String("orca.title"); title != "" {
 			d.name(title, d.ids[l.ID])
 		}

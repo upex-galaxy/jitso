@@ -28,11 +28,13 @@ Two prefixes tell you whose problem it is. `JITSO REJECTED: <reason>` (exit 2) m
 | `brief target ...` (path empty, does not exist, not a regular file, outside the project, must be a .md file, is a protected path) | the brief file is a pointer (`Brief: <path>`) and its target was refused: `briefs.md`, "Pointing at a card you already have" |
 | `brief file does not exist`, `brief path is not a regular file`, `brief path is empty or contains a NUL byte` | the `--brief` path is wrong |
 | `brief file is outside the allowed folders` | move the brief to `.jitso/briefs/` of the project |
+| `invalid value for --name` | 1 to 64 letters, digits, `.`, `_` or `-`, starting with a letter or digit |
+| `jitso: warning: <path> is not valid JSON, so the session gets no crossSessionInbound` | exit 0: the owner's Claude Code settings file is broken. Tell the human; the launch goes on without the key |
 | `unknown parent launch <id>` | `--parent` names an id that is not in `.jitso/launches.jsonl` |
 | `unknown launch <id>` (close) | the id is not in this project's log. Check the primary checkout's `.jitso/launches.jsonl` |
 | `usage: jitso close <launch_id>`, `usage: jitso reap [--run <run_id>]...`, `usage: jitso fleet [--json] [--all]`, `usage: jitso link <from> <to>`, `usage: jitso graph [--json] [--port <n>]` | the arguments are wrong. `close` and `reap` have no `--help`; `fleet`, `link` and `graph` print their usage line for it |
-| `unknown session "<ref>": give a launch id, a terminal handle or a session title (see jitso fleet)` | `link` found no session by that word. Take the id or the handle from `jitso fleet` |
-| `"<ref>" names <n> sessions (...): use a terminal handle or a launch id` | the title is shared. Use one of the ids or handles the line lists |
+| `unknown session "<ref>": give a launch id, a terminal handle, a session name or a tab title (see jitso fleet)` | `link` found no session by that word (the name of an ended launch names nothing). Take the id or the handle from `jitso fleet` |
+| `"<ref>" names <n> sessions (...): use a terminal handle or a launch id` | the name or title is shared. Use one of the ids or handles the line lists |
 | `"<from>" and "<to>" are the same session` | a synapse joins two sessions. Check which side is the peer |
 | `cannot listen on 127.0.0.1 port <n>: ...` (exit 3, `graph`) | the port is taken. Drop `--port` or name another |
 | `orca <verb> did not answer within 10 s` (exit 3, `graph --json`; a notice on the page) | Orca is busy or hung. Check the Orca app; `graph` printed what it could |

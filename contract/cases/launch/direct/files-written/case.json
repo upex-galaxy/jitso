@@ -59,7 +59,7 @@
           {
             "path": ".jitso/launches/{{LAUNCH_ID}}/brief.md",
             "regex": [
-              "^JITSO {{LAUNCH_ID}} \\| operator/explorer \\| mode direct \\(asks you\\) \\| build haiku-explorer v1\\n"
+              "^JITSO {{LAUNCH_ID}} \\| operator/explorer \\| mode direct \\(asks you\\) \\| build haiku-explorer v1 \\| name haiku-explorer\\n"
             ],
             "contains": [
               "{{CARD}}\n\n## Goal",
