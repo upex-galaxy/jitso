@@ -34,7 +34,7 @@ func TestArgvName(t *testing.T) {
 
 func TestArgv(t *testing.T) {
 	base := harness.SpecInput{Model: "claude-haiku-5-5", Effort: "low", SessionID: "sid", MCPConfigPath: "/l/mcp.json", LaunchDir: "/l"}
-	head := []string{"claude", "--dangerously-skip-permissions", "--setting-sources", "project", "--settings", "/l/settings.json",
+	head := []string{"claude", "--dangerously-skip-permissions", "--setting-sources", "project", "--settings", filepath.Join("/l", "settings.json"),
 		"--strict-mcp-config", "--mcp-config", "/l/mcp.json", "--model", "claude-haiku-5-5", "--effort", "low",
 		"--session-id", "sid"}
 	tests := []struct {
@@ -145,7 +145,7 @@ func TestArgvAgents(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	want := []string{"claude", "--dangerously-skip-permissions", "--setting-sources", "project", "--settings", "/l/settings.json",
+	want := []string{"claude", "--dangerously-skip-permissions", "--setting-sources", "project", "--settings", filepath.Join("/l", "settings.json"),
 		"--strict-mcp-config", "--mcp-config", "/l/mcp.json", "--model", "m", "--effort", "low", "--session-id", "sid",
 		"--agents", `{"plan":{"description":"Plans <a> & b.","prompt":"You plan.","model":"claude-haiku-5-5","tools":["Read"]},` +
 			`"code":{"description":"Codes.","prompt":"You code."},"none":{"description":"d","prompt":"p","tools":[]}}`}
@@ -179,7 +179,7 @@ func TestSpecEnv(t *testing.T) {
 
 func TestArgvPackageDir(t *testing.T) {
 	in := harness.SpecInput{Model: "m", Effort: "low", SessionID: "sid", MCPConfigPath: "/l/mcp.json", LaunchDir: "/l", PackageDir: "/l/pkg", InitialPrompt: "Read it."}
-	want := []string{"claude", "--dangerously-skip-permissions", "--setting-sources", "project", "--settings", "/l/settings.json",
+	want := []string{"claude", "--dangerously-skip-permissions", "--setting-sources", "project", "--settings", filepath.Join("/l", "settings.json"),
 		"--strict-mcp-config", "--mcp-config", "/l/mcp.json", "--add-dir", "/l/pkg", "--model", "m", "--effort", "low",
 		"--session-id", "sid", "Read it."}
 	got, err := Argv(in)
@@ -238,7 +238,7 @@ func TestSpecWritesTheSettingsFile(t *testing.T) {
 	if len(spec.Files) != 1 || spec.Files[0].Name != "settings.json" || spec.Files[0].Mode != 0o600 || !strings.Contains(string(spec.Files[0].Data), "TOKEN") {
 		t.Errorf("files: %+v", spec.Files)
 	}
-	if i := slices.Index(spec.Argv, "--settings"); i < 0 || spec.Argv[i+1] != "/l/settings.json" {
+	if i := slices.Index(spec.Argv, "--settings"); i < 0 || spec.Argv[i+1] != filepath.Join("/l", "settings.json") {
 		t.Errorf("argv: %q", spec.Argv)
 	}
 	for _, word := range spec.Argv {
