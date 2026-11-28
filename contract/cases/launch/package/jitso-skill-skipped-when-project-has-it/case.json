@@ -32,7 +32,7 @@
             "path": ".jitso/launches/{{LAUNCH_ID}}",
             "entries": [
               {
-                "equals": "brief.md\ncard.txt\nmcp.json\nrun.sh"
+                "equals": "brief.md\ncard.txt\nmcp.json\nrun.sh\nsettings.json"
               }
             ]
           }

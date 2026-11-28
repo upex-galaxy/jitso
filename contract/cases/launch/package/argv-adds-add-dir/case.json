@@ -56,7 +56,7 @@
             "--setting-sources",
             "project",
             "--settings",
-            "{\"skipDangerousModePermissionPrompt\":true,\"promptSuggestionEnabled\":false}",
+            "{{PROJECT}}/.jitso/launches/{{LAUNCH_ID}}/settings.json",
             "--strict-mcp-config",
             "--mcp-config",
             "{{PROJECT}}/.jitso/launches/{{LAUNCH_ID}}/mcp.json",
@@ -78,6 +78,25 @@
           ],
           "argv_count": {
             "--add-dir": 1
+          },
+          "json_file_after": {
+            "--settings": [
+              {
+                "path": "",
+                "keys_exact": [
+                  "skipDangerousModePermissionPrompt",
+                  "promptSuggestionEnabled"
+                ]
+              },
+              {
+                "path": "skipDangerousModePermissionPrompt",
+                "equals": true
+              },
+              {
+                "path": "promptSuggestionEnabled",
+                "equals": false
+              }
+            ]
           }
         }
       }

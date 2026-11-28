@@ -1,8 +1,8 @@
 {
-  "id": "launch/inbound/claude-config-dir-wins",
+  "id": "launch/settings/claude-config-dir-wins",
   "title": "with CLAUDE_CONFIG_DIR set the user settings are its settings.json, with no fallback to ~/.claude; an empty value is unset",
   "source": [
-    "intended: docs/decisions.md, release 3 of the communication plan; code.claude.com/docs/en/env-vars: CLAUDE_CONFIG_DIR overrides the configuration folder"
+    "intended: docs/decisions.md, section Meant for v0.10.0"
   ],
   "tags": [
     "posix"
@@ -16,8 +16,8 @@
   },
   "home": {
     "files": {
-      ".claude/settings.json": "{\"crossSessionInbound\":\"accept\"}",
-      "cfg/settings.json": "{\"crossSessionInbound\":\"hold\"}",
+      ".claude/settings.json": "{\"theme\":\"home\"}",
+      "cfg/settings.json": "{\"theme\":\"cfg\"}",
       "bare/keep": ""
     }
   },
@@ -38,6 +38,9 @@
           "regex": "JITSO (L\\d{8}T\\d{6}-[0-9a-f]{4})"
         }
       },
+      "env": {
+        "CLAUDE_CONFIG_DIR": "{{HOME}}/cfg"
+      },
       "expect": {
         "exit": 0,
         "stderr": [
@@ -50,9 +53,6 @@
             "not_contains": "sentinel"
           }
         ]
-      },
-      "env": {
-        "CLAUDE_CONFIG_DIR": "{{HOME}}/cfg"
       }
     },
     {
@@ -65,7 +65,10 @@
           "argv_count": {
             "--settings": 1
           },
-          "json_arg_after": {
+          "arg_after": {
+            "--settings": "{{PROJECT}}/.jitso/launches/{{ONE}}/settings.json"
+          },
+          "json_file_after": {
             "--settings": [
               {
                 "path": "",
@@ -73,12 +76,12 @@
                   "skipDangerousModePermissionPrompt",
                   "promptSuggestionEnabled",
                   "hooks",
-                  "crossSessionInbound"
+                  "theme"
                 ]
               },
               {
-                "path": "crossSessionInbound",
-                "equals": "hold"
+                "path": "theme",
+                "equals": "cfg"
               },
               {
                 "path": "skipDangerousModePermissionPrompt",
@@ -113,6 +116,9 @@
           "regex": "JITSO (L\\d{8}T\\d{6}-[0-9a-f]{4})"
         }
       },
+      "env": {
+        "CLAUDE_CONFIG_DIR": "{{HOME}}/bare"
+      },
       "expect": {
         "exit": 0,
         "stderr": [
@@ -125,9 +131,6 @@
             "not_contains": "sentinel"
           }
         ]
-      },
-      "env": {
-        "CLAUDE_CONFIG_DIR": "{{HOME}}/bare"
       }
     },
     {
@@ -140,7 +143,10 @@
           "argv_count": {
             "--settings": 1
           },
-          "json_arg_after": {
+          "arg_after": {
+            "--settings": "{{PROJECT}}/.jitso/launches/{{TWO}}/settings.json"
+          },
+          "json_file_after": {
             "--settings": [
               {
                 "path": "",
@@ -149,6 +155,18 @@
                   "promptSuggestionEnabled",
                   "hooks"
                 ]
+              },
+              {
+                "path": "skipDangerousModePermissionPrompt",
+                "equals": true
+              },
+              {
+                "path": "promptSuggestionEnabled",
+                "equals": false
+              },
+              {
+                "path": "hooks.PreToolUse.0.matcher",
+                "equals": "Bash"
               }
             ]
           }
@@ -171,6 +189,9 @@
           "regex": "JITSO (L\\d{8}T\\d{6}-[0-9a-f]{4})"
         }
       },
+      "env": {
+        "CLAUDE_CONFIG_DIR": ""
+      },
       "expect": {
         "exit": 0,
         "stderr": [
@@ -183,9 +204,6 @@
             "not_contains": "sentinel"
           }
         ]
-      },
-      "env": {
-        "CLAUDE_CONFIG_DIR": ""
       }
     },
     {
@@ -198,7 +216,10 @@
           "argv_count": {
             "--settings": 1
           },
-          "json_arg_after": {
+          "arg_after": {
+            "--settings": "{{PROJECT}}/.jitso/launches/{{THREE}}/settings.json"
+          },
+          "json_file_after": {
             "--settings": [
               {
                 "path": "",
@@ -206,12 +227,12 @@
                   "skipDangerousModePermissionPrompt",
                   "promptSuggestionEnabled",
                   "hooks",
-                  "crossSessionInbound"
+                  "theme"
                 ]
               },
               {
-                "path": "crossSessionInbound",
-                "equals": "accept"
+                "path": "theme",
+                "equals": "home"
               },
               {
                 "path": "skipDangerousModePermissionPrompt",

@@ -1,0 +1,170 @@
+{
+  "id": "launch/settings/context-keys-are-cut",
+  "title": "the keys that pick the worker context (plugins, marketplaces, skill overrides, project MCP approval and MCP server lists) never travel, and only their name is logged",
+  "source": [
+    "intended: docs/decisions.md, section Meant for v0.10.0"
+  ],
+  "intent": "A worker gets its context from its build, so the owner context keys stay home.",
+  "tags": [
+    "posix"
+  ],
+  "for_each": {
+    "var": "key",
+    "values": [
+      "enabledPlugins",
+      "extraKnownMarketplaces",
+      "pluginConfigs",
+      "skillOverrides",
+      "enableAllProjectMcpServers",
+      "enabledMcpjsonServers",
+      "disabledMcpjsonServers",
+      "allowedMcpServers",
+      "deniedMcpServers"
+    ],
+    "ids": [
+      "enabledPlugins",
+      "extraKnownMarketplaces",
+      "pluginConfigs",
+      "skillOverrides",
+      "enableAllProjectMcpServers",
+      "enabledMcpjsonServers",
+      "disabledMcpjsonServers",
+      "allowedMcpServers",
+      "deniedMcpServers"
+    ]
+  },
+  "project": {
+    "files": {
+      ".jitso/briefs/brief.md": {
+        "from": "brief.md"
+      }
+    }
+  },
+  "home": {
+    "files": {
+      ".claude/settings.json": "{\"{{key}}\":{\"sentinel-ctx\":true}}"
+    }
+  },
+  "steps": [
+    {
+      "run": [
+        "launch",
+        "--build",
+        "haiku-explorer",
+        "--brief",
+        "{{PROJECT}}/.jitso/briefs/brief.md",
+        "--mode",
+        "direct"
+      ],
+      "capture": {
+        "LAUNCH_ID": {
+          "from": "stdout",
+          "regex": "JITSO (L\\d{8}T\\d{6}-[0-9a-f]{4})"
+        }
+      },
+      "expect": {
+        "exit": 0,
+        "stderr": [
+          {
+            "empty": true
+          }
+        ],
+        "stdout": [
+          {
+            "not_contains": "sentinel"
+          },
+          {
+            "contains": "settings copied: none | cut: {{key}}"
+          }
+        ],
+        "files": [
+          {
+            "path": ".jitso/launches/{{LAUNCH_ID}}/run.sh",
+            "not_contains": [
+              "sentinel"
+            ]
+          },
+          {
+            "path": ".jitso/launches/{{LAUNCH_ID}}/brief.md",
+            "not_contains": [
+              "sentinel"
+            ]
+          },
+          {
+            "path": ".jitso/launches/{{LAUNCH_ID}}/card.txt",
+            "not_contains": [
+              "sentinel"
+            ]
+          },
+          {
+            "path": ".jitso/launches.jsonl",
+            "not_contains": [
+              "sentinel"
+            ]
+          },
+          {
+            "path": ".jitso/launches/{{LAUNCH_ID}}/settings.json",
+            "not_contains": [
+              "sentinel"
+            ]
+          }
+        ],
+        "registry": {
+          "count": 1,
+          "events": [
+            {
+              "at": 0,
+              "event": "launch",
+              "fields": {
+                "settings.copied": [],
+                "settings.cut": [
+                  "{{key}}"
+                ]
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "exec": "run_sh",
+      "launch": "{{LAUNCH_ID}}",
+      "expect": {
+        "exit": 0,
+        "claude": {
+          "ran": true,
+          "argv_count": {
+            "--settings": 1
+          },
+          "arg_after": {
+            "--settings": "{{PROJECT}}/.jitso/launches/{{LAUNCH_ID}}/settings.json"
+          },
+          "json_file_after": {
+            "--settings": [
+              {
+                "path": "",
+                "keys_exact": [
+                  "skipDangerousModePermissionPrompt",
+                  "promptSuggestionEnabled",
+                  "hooks"
+                ]
+              },
+              {
+                "path": "skipDangerousModePermissionPrompt",
+                "equals": true
+              },
+              {
+                "path": "promptSuggestionEnabled",
+                "equals": false
+              },
+              {
+                "path": "hooks.PreToolUse.0.matcher",
+                "equals": "Bash"
+              }
+            ]
+          }
+        }
+      }
+    }
+  ]
+}

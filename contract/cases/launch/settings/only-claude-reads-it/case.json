@@ -1,6 +1,6 @@
 {
-  "id": "launch/inbound/only-claude-reads-it",
-  "title": "a launch of another harness does not read the Claude Code user settings: no warning for a broken file",
+  "id": "launch/settings/only-claude-reads-it",
+  "title": "a launch of another harness does not read the Claude Code user settings: no warning for a broken file, no settings file and no settings key in the registry",
   "source": [
     "intended: docs/decisions.md, release 3 of the communication plan"
   ],
@@ -47,7 +47,7 @@
           {
             "path": ".jitso/launches.jsonl",
             "not_contains": [
-              "crossSessionInbound"
+              "\"settings\":"
             ]
           }
         ]

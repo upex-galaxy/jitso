@@ -2,6 +2,7 @@ package claude
 
 import (
 	"bytes"
+	"encoding/json"
 	"path/filepath"
 	"reflect"
 	"regexp"
@@ -32,8 +33,8 @@ func TestArgvName(t *testing.T) {
 }
 
 func TestArgv(t *testing.T) {
-	base := harness.SpecInput{Model: "claude-haiku-5-5", Effort: "low", SessionID: "sid", MCPConfigPath: "/l/mcp.json"}
-	head := []string{"claude", "--dangerously-skip-permissions", "--setting-sources", "project", "--settings", settings,
+	base := harness.SpecInput{Model: "claude-haiku-5-5", Effort: "low", SessionID: "sid", MCPConfigPath: "/l/mcp.json", LaunchDir: "/l"}
+	head := []string{"claude", "--dangerously-skip-permissions", "--setting-sources", "project", "--settings", "/l/settings.json",
 		"--strict-mcp-config", "--mcp-config", "/l/mcp.json", "--model", "claude-haiku-5-5", "--effort", "low",
 		"--session-id", "sid"}
 	tests := []struct {
@@ -134,7 +135,7 @@ func TestTrustDialog(t *testing.T) {
 }
 
 func TestArgvAgents(t *testing.T) {
-	in := harness.SpecInput{Model: "m", Effort: "low", SessionID: "sid", MCPConfigPath: "/l/mcp.json",
+	in := harness.SpecInput{Model: "m", Effort: "low", SessionID: "sid", MCPConfigPath: "/l/mcp.json", LaunchDir: "/l",
 		Subagents: []harness.Subagent{
 			{Name: "plan", Description: "Plans <a> & b.", Prompt: "You plan.", Model: "claude-haiku-5-5", Tools: []string{"Read"}, ToolsSet: true},
 			{Name: "code", Description: "Codes.", Prompt: "You code."},
@@ -144,7 +145,7 @@ func TestArgvAgents(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	want := []string{"claude", "--dangerously-skip-permissions", "--setting-sources", "project", "--settings", settings,
+	want := []string{"claude", "--dangerously-skip-permissions", "--setting-sources", "project", "--settings", "/l/settings.json",
 		"--strict-mcp-config", "--mcp-config", "/l/mcp.json", "--model", "m", "--effort", "low", "--session-id", "sid",
 		"--agents", `{"plan":{"description":"Plans <a> & b.","prompt":"You plan.","model":"claude-haiku-5-5","tools":["Read"]},` +
 			`"code":{"description":"Codes.","prompt":"You code."},"none":{"description":"d","prompt":"p","tools":[]}}`}
@@ -177,8 +178,8 @@ func TestSpecEnv(t *testing.T) {
 }
 
 func TestArgvPackageDir(t *testing.T) {
-	in := harness.SpecInput{Model: "m", Effort: "low", SessionID: "sid", MCPConfigPath: "/l/mcp.json", PackageDir: "/l/pkg", InitialPrompt: "Read it."}
-	want := []string{"claude", "--dangerously-skip-permissions", "--setting-sources", "project", "--settings", settings,
+	in := harness.SpecInput{Model: "m", Effort: "low", SessionID: "sid", MCPConfigPath: "/l/mcp.json", LaunchDir: "/l", PackageDir: "/l/pkg", InitialPrompt: "Read it."}
+	want := []string{"claude", "--dangerously-skip-permissions", "--setting-sources", "project", "--settings", "/l/settings.json",
 		"--strict-mcp-config", "--mcp-config", "/l/mcp.json", "--add-dir", "/l/pkg", "--model", "m", "--effort", "low",
 		"--session-id", "sid", "Read it."}
 	got, err := Argv(in)
@@ -191,23 +192,58 @@ func TestArgvPackageDir(t *testing.T) {
 }
 
 func TestSettings(t *testing.T) {
-	if got, _ := Settings("", ""); got != settings {
-		t.Errorf("no guard: got %s", got)
+	own := "{\n  \"skipDangerousModePermissionPrompt\": true,\n  \"promptSuggestionEnabled\": false"
+	got, err := Settings("", nil)
+	if err != nil || string(got) != own+"\n}\n" {
+		t.Errorf("nothing else: got %s, %v", got, err)
 	}
-	if got, _ := Settings("", "hold"); got != `{"skipDangerousModePermissionPrompt":true,"promptSuggestionEnabled":false,"crossSessionInbound":"hold"}` {
-		t.Errorf("inbound alone: got %s", got)
+	owner := map[string]any{"theme": "dark", "skipDangerousModePermissionPrompt": false, "env": map[string]any{"A": "1"}}
+	got, _ = Settings("", owner)
+	if want := own + ",\n  \"env\": {\n    \"A\": \"1\"\n  },\n  \"theme\": \"dark\"\n}\n"; string(got) != want {
+		t.Errorf("owner keys: got %s\nwant %s", got, want)
 	}
-	if got, _ := Settings("g", "accept"); !strings.HasPrefix(got, `{"skipDangerousModePermissionPrompt":true,"promptSuggestionEnabled":false,"crossSessionInbound":"accept","hooks":{`) {
-		t.Errorf("inbound and guard: got %s", got)
-	}
-	got, err := Settings("'/b/jitso' hook guard", "")
+	// The guard groups follow the owner's, in the owner's events and in new ones.
+	hooks := map[string]any{"PreToolUse": []any{map[string]any{"matcher": "Edit"}}, "Stop": []any{map[string]any{"hooks": []any{}}}}
+	got, err = Settings("'/b/jitso' hook guard", map[string]any{"hooks": hooks})
 	if err != nil {
 		t.Fatal(err)
 	}
-	h := `[{"type":"command","command":"'/b/jitso' hook guard"}]`
-	want := `{"skipDangerousModePermissionPrompt":true,"promptSuggestionEnabled":false,"hooks":{"PreToolUse":[{"matcher":"Bash","hooks":` + h +
-		`},{"matcher":"mcp__.*orca.*__.*","hooks":` + h + `}],"SessionEnd":[{"hooks":` + h + `}]}}`
-	if got != want {
-		t.Errorf("got  %s\nwant %s", got, want)
+	var parsed struct {
+		Hooks map[string][]map[string]any `json:"hooks"`
+	}
+	if err := json.Unmarshal(got, &parsed); err != nil {
+		t.Fatal(err)
+	}
+	pre := parsed.Hooks["PreToolUse"]
+	if len(pre) != 3 || pre[0]["matcher"] != "Edit" || pre[1]["matcher"] != "Bash" || pre[2]["matcher"] != "mcp__.*orca.*__.*" {
+		t.Errorf("PreToolUse: %v", pre)
+	}
+	if len(parsed.Hooks["SessionEnd"]) != 1 || len(parsed.Hooks["Stop"]) != 1 {
+		t.Errorf("SessionEnd and Stop: %v", parsed.Hooks)
+	}
+	if len(hooks["PreToolUse"].([]any)) != 1 {
+		t.Error("the owner's hooks must not be changed in place")
+	}
+	if !strings.Contains(string(got), "'/b/jitso' hook guard") {
+		t.Errorf("the guard command is missing: %s", got)
+	}
+}
+
+func TestSpecWritesTheSettingsFile(t *testing.T) {
+	in := harness.SpecInput{LaunchDir: "/l", OwnerSettings: harness.OwnerSettings{Doc: map[string]any{"env": map[string]any{"TOKEN": "x"}}}}
+	spec, err := Adapter{}.Spec(in)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(spec.Files) != 1 || spec.Files[0].Name != "settings.json" || spec.Files[0].Mode != 0o600 || !strings.Contains(string(spec.Files[0].Data), "TOKEN") {
+		t.Errorf("files: %+v", spec.Files)
+	}
+	if i := slices.Index(spec.Argv, "--settings"); i < 0 || spec.Argv[i+1] != "/l/settings.json" {
+		t.Errorf("argv: %q", spec.Argv)
+	}
+	for _, word := range spec.Argv {
+		if strings.Contains(word, "TOKEN") {
+			t.Errorf("a value reached the argv: %q", word)
+		}
 	}
 }

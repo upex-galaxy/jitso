@@ -93,7 +93,7 @@
           "env": {
             "JITSO_PROJECT": "{{PROJECT}}"
           },
-          "json_arg_after": {
+          "json_file_after": {
             "--settings": [
               {
                 "path": "hooks.PreToolUse.0.hooks.0.command",

@@ -1,0 +1,160 @@
+{
+  "id": "launch/settings/build-decided-keys-are-cut",
+  "title": "model, effortLevel and permissions.defaultMode never travel, the build and JITSO decide them, while the rest of permissions (allow, deny, ask) does",
+  "source": [
+    "intended: docs/decisions.md, section Meant for v0.10.0"
+  ],
+  "intent": "The build picks the model and effort, and JITSO runs the worker in bypass mode.",
+  "tags": [
+    "posix"
+  ],
+  "project": {
+    "files": {
+      ".jitso/briefs/brief.md": {
+        "from": "brief.md"
+      }
+    }
+  },
+  "home": {
+    "files": {
+      ".claude/settings.json": "{\"model\":\"sentinel-model\",\"effortLevel\":\"sentinel-effort\",\"permissions\":{\"defaultMode\":\"sentinel-mode\",\"allow\":[\"Read\"],\"deny\":[\"Bash(rm:*)\"],\"ask\":[\"Edit\"]}}"
+    }
+  },
+  "steps": [
+    {
+      "run": [
+        "launch",
+        "--build",
+        "haiku-explorer",
+        "--brief",
+        "{{PROJECT}}/.jitso/briefs/brief.md",
+        "--mode",
+        "direct"
+      ],
+      "capture": {
+        "LAUNCH_ID": {
+          "from": "stdout",
+          "regex": "JITSO (L\\d{8}T\\d{6}-[0-9a-f]{4})"
+        }
+      },
+      "expect": {
+        "exit": 0,
+        "stderr": [
+          {
+            "empty": true
+          }
+        ],
+        "stdout": [
+          {
+            "not_contains": "sentinel"
+          }
+        ],
+        "files": [
+          {
+            "path": ".jitso/launches/{{LAUNCH_ID}}/run.sh",
+            "not_contains": [
+              "sentinel"
+            ]
+          },
+          {
+            "path": ".jitso/launches/{{LAUNCH_ID}}/brief.md",
+            "not_contains": [
+              "sentinel"
+            ]
+          },
+          {
+            "path": ".jitso/launches/{{LAUNCH_ID}}/card.txt",
+            "not_contains": [
+              "sentinel"
+            ]
+          },
+          {
+            "path": ".jitso/launches.jsonl",
+            "not_contains": [
+              "sentinel"
+            ]
+          },
+          {
+            "path": ".jitso/launches/{{LAUNCH_ID}}/settings.json",
+            "not_contains": [
+              "sentinel"
+            ]
+          }
+        ],
+        "registry": {
+          "count": 1,
+          "events": [
+            {
+              "at": 0,
+              "event": "launch",
+              "fields": {
+                "settings.copied": [
+                  "permissions"
+                ],
+                "settings.cut": [
+                  "effortLevel",
+                  "model"
+                ]
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "exec": "run_sh",
+      "launch": "{{LAUNCH_ID}}",
+      "expect": {
+        "exit": 0,
+        "claude": {
+          "ran": true,
+          "argv_count": {
+            "--settings": 1
+          },
+          "arg_after": {
+            "--settings": "{{PROJECT}}/.jitso/launches/{{LAUNCH_ID}}/settings.json",
+            "--model": "claude-haiku-5-5",
+            "--effort": "low"
+          },
+          "json_file_after": {
+            "--settings": [
+              {
+                "path": "",
+                "keys_exact": [
+                  "skipDangerousModePermissionPrompt",
+                  "promptSuggestionEnabled",
+                  "hooks",
+                  "permissions"
+                ]
+              },
+              {
+                "path": "permissions",
+                "keys_exact": [
+                  "allow",
+                  "deny",
+                  "ask"
+                ]
+              },
+              {
+                "path": "permissions.deny.0",
+                "equals": "Bash(rm:*)"
+              },
+              {
+                "path": "skipDangerousModePermissionPrompt",
+                "equals": true
+              },
+              {
+                "path": "promptSuggestionEnabled",
+                "equals": false
+              },
+              {
+                "path": "hooks.PreToolUse.0.matcher",
+                "equals": "Bash"
+              }
+            ]
+          }
+        }
+      }
+    }
+  ]
+}

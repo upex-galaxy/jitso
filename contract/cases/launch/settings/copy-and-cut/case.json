@@ -1,0 +1,206 @@
+{
+  "id": "launch/settings/copy-and-cut",
+  "title": "a launch copies every top-level key of the owner user settings except the cut ones, writes them to settings.json, and no value of that file reaches the output, run.sh, the brief, the card or the registry",
+  "source": [
+    "intended: docs/decisions.md, section Meant for v0.10.0"
+  ],
+  "intent": "The worker runs with --setting-sources project, so it never reads the owner user settings. The launch copies them into its own settings file: every key travels (unknown ones, env with its values, hooks, crossSessionInbound) except the context keys and the keys the build decides. Only key names are ever printed or logged.",
+  "tags": [
+    "posix"
+  ],
+  "project": {
+    "files": {
+      ".jitso/briefs/brief.md": {
+        "from": "brief.md"
+      }
+    }
+  },
+  "home": {
+    "files": {
+      ".claude/settings.json": "{\"model\":\"sentinel-model\",\"effortLevel\":\"sentinel-effort\",\"enabledPlugins\":{\"p@m\":\"sentinel-plugin\"},\"language\":\"sentinel-lang\",\"statusLine\":{\"type\":\"command\",\"command\":\"sentinel-status\"},\"outputStyle\":\"sentinel-style\",\"env\":{\"OWNER_TOKEN\":\"sentinel-env\"},\"permissions\":{\"defaultMode\":\"sentinel-mode\",\"allow\":[\"Bash(sentinel:*)\"]},\"hooks\":{\"Stop\":[{\"hooks\":[{\"type\":\"command\",\"command\":\"sentinel-hook\"}]}]},\"futureKey\":{\"x\":\"sentinel-future\"},\"crossSessionInbound\":\"sentinel-inbound\"}"
+    }
+  },
+  "steps": [
+    {
+      "run": [
+        "launch",
+        "--build",
+        "haiku-explorer",
+        "--brief",
+        "{{PROJECT}}/.jitso/briefs/brief.md",
+        "--mode",
+        "direct"
+      ],
+      "capture": {
+        "LAUNCH_ID": {
+          "from": "stdout",
+          "regex": "JITSO (L\\d{8}T\\d{6}-[0-9a-f]{4})"
+        }
+      },
+      "expect": {
+        "exit": 0,
+        "stderr": [
+          {
+            "empty": true
+          }
+        ],
+        "stdout": [
+          {
+            "not_contains": "sentinel"
+          },
+          {
+            "contains": "settings copied: crossSessionInbound,env,futureKey,hooks,outputStyle,permissions,statusLine | cut: effortLevel,enabledPlugins,language,model"
+          }
+        ],
+        "files": [
+          {
+            "path": ".jitso/launches/{{LAUNCH_ID}}/run.sh",
+            "not_contains": [
+              "sentinel"
+            ]
+          },
+          {
+            "path": ".jitso/launches/{{LAUNCH_ID}}/brief.md",
+            "not_contains": [
+              "sentinel"
+            ]
+          },
+          {
+            "path": ".jitso/launches/{{LAUNCH_ID}}/card.txt",
+            "not_contains": [
+              "sentinel"
+            ]
+          },
+          {
+            "path": ".jitso/launches.jsonl",
+            "not_contains": [
+              "sentinel"
+            ]
+          },
+          {
+            "path": ".jitso/launches/{{LAUNCH_ID}}/settings.json",
+            "mode": "0600",
+            "contains": [
+              "sentinel-env",
+              "sentinel-future",
+              "sentinel-hook",
+              "sentinel-inbound",
+              "sentinel-status",
+              "sentinel-style",
+              "Bash(sentinel:*)"
+            ],
+            "not_contains": [
+              "sentinel-model",
+              "sentinel-effort",
+              "sentinel-plugin",
+              "sentinel-lang",
+              "sentinel-mode"
+            ]
+          }
+        ],
+        "registry": {
+          "count": 1,
+          "events": [
+            {
+              "at": 0,
+              "event": "launch",
+              "fields": {
+                "settings.copied": [
+                  "crossSessionInbound",
+                  "env",
+                  "futureKey",
+                  "hooks",
+                  "outputStyle",
+                  "permissions",
+                  "statusLine"
+                ],
+                "settings.cut": [
+                  "effortLevel",
+                  "enabledPlugins",
+                  "language",
+                  "model"
+                ]
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "exec": "run_sh",
+      "launch": "{{LAUNCH_ID}}",
+      "expect": {
+        "exit": 0,
+        "claude": {
+          "ran": true,
+          "argv_count": {
+            "--settings": 1
+          },
+          "arg_after": {
+            "--settings": "{{PROJECT}}/.jitso/launches/{{LAUNCH_ID}}/settings.json"
+          },
+          "json_file_after": {
+            "--settings": [
+              {
+                "path": "",
+                "keys_exact": [
+                  "skipDangerousModePermissionPrompt",
+                  "promptSuggestionEnabled",
+                  "hooks",
+                  "env",
+                  "permissions",
+                  "statusLine",
+                  "outputStyle",
+                  "futureKey",
+                  "crossSessionInbound"
+                ]
+              },
+              {
+                "path": "env.OWNER_TOKEN",
+                "equals": "sentinel-env"
+              },
+              {
+                "path": "permissions.allow.0",
+                "equals": "Bash(sentinel:*)"
+              },
+              {
+                "path": "permissions",
+                "keys_exact": [
+                  "allow"
+                ]
+              },
+              {
+                "path": "futureKey.x",
+                "equals": "sentinel-future"
+              },
+              {
+                "path": "statusLine.command",
+                "equals": "sentinel-status"
+              },
+              {
+                "path": "crossSessionInbound",
+                "equals": "sentinel-inbound"
+              },
+              {
+                "path": "hooks.Stop.0.hooks.0.command",
+                "equals": "sentinel-hook"
+              },
+              {
+                "path": "skipDangerousModePermissionPrompt",
+                "equals": true
+              },
+              {
+                "path": "promptSuggestionEnabled",
+                "equals": false
+              },
+              {
+                "path": "hooks.PreToolUse.0.matcher",
+                "equals": "Bash"
+              }
+            ]
+          }
+        }
+      }
+    }
+  ]
+}

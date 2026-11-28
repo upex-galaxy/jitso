@@ -1,0 +1,168 @@
+{
+  "id": "launch/settings/config-include-and-exclude",
+  "title": "settings.exclude in ~/.jitso/jitso.yaml cuts more keys, settings.include lets cut context or per-worker keys travel; include never overrides the build keys, the project keys or the keys JITSO sets, and exclude beats include",
+  "source": [
+    "intended: docs/decisions.md, section Meant for v0.10.0"
+  ],
+  "intent": "The owner escape valve in both directions, without a build field.",
+  "tags": [
+    "posix"
+  ],
+  "project": {
+    "files": {
+      ".jitso/briefs/brief.md": {
+        "from": "brief.md"
+      },
+      ".claude/settings.json": "{\"outputStyle\":\"project\"}"
+    }
+  },
+  "home": {
+    "files": {
+      ".jitso/jitso.yaml": "settings:\n  exclude: [statusLine, futureKey, theme]\n  include: [language, enabledPlugins, model, outputStyle, theme, skipDangerousModePermissionPrompt, promptSuggestionEnabled, neverDefined]\n",
+      ".claude/settings.json": "{\"model\":\"sentinel-model\",\"enabledPlugins\":{\"p@m\":\"sentinel-plugin\"},\"language\":\"sentinel-lang\",\"statusLine\":{\"type\":\"command\",\"command\":\"sentinel-status\"},\"futureKey\":\"sentinel-future\",\"theme\":\"sentinel-theme\",\"outputStyle\":\"sentinel-style\",\"skipDangerousModePermissionPrompt\":false,\"promptSuggestionEnabled\":true,\"skillOverrides\":{\"s\":\"sentinel-skill\"},\"keep\":\"sentinel-keep\"}"
+    }
+  },
+  "steps": [
+    {
+      "run": [
+        "launch",
+        "--build",
+        "haiku-explorer",
+        "--brief",
+        "{{PROJECT}}/.jitso/briefs/brief.md",
+        "--mode",
+        "direct"
+      ],
+      "capture": {
+        "LAUNCH_ID": {
+          "from": "stdout",
+          "regex": "JITSO (L\\d{8}T\\d{6}-[0-9a-f]{4})"
+        }
+      },
+      "expect": {
+        "exit": 0,
+        "stderr": [
+          {
+            "empty": true
+          }
+        ],
+        "stdout": [
+          {
+            "not_contains": "sentinel"
+          }
+        ],
+        "files": [
+          {
+            "path": ".jitso/launches/{{LAUNCH_ID}}/run.sh",
+            "not_contains": [
+              "sentinel"
+            ]
+          },
+          {
+            "path": ".jitso/launches/{{LAUNCH_ID}}/brief.md",
+            "not_contains": [
+              "sentinel"
+            ]
+          },
+          {
+            "path": ".jitso/launches/{{LAUNCH_ID}}/card.txt",
+            "not_contains": [
+              "sentinel"
+            ]
+          },
+          {
+            "path": ".jitso/launches.jsonl",
+            "not_contains": [
+              "sentinel"
+            ]
+          },
+          {
+            "path": ".jitso/launches/{{LAUNCH_ID}}/settings.json",
+            "contains": [
+              "sentinel-plugin",
+              "sentinel-lang",
+              "sentinel-keep"
+            ],
+            "not_contains": [
+              "sentinel-model",
+              "sentinel-status",
+              "sentinel-future",
+              "sentinel-theme",
+              "sentinel-style",
+              "sentinel-skill"
+            ]
+          }
+        ],
+        "registry": {
+          "count": 1,
+          "events": [
+            {
+              "at": 0,
+              "event": "launch",
+              "fields": {
+                "settings.copied": [
+                  "enabledPlugins",
+                  "keep",
+                  "language"
+                ],
+                "settings.cut": [
+                  "futureKey",
+                  "model",
+                  "outputStyle",
+                  "promptSuggestionEnabled",
+                  "skillOverrides",
+                  "skipDangerousModePermissionPrompt",
+                  "statusLine",
+                  "theme"
+                ]
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "exec": "run_sh",
+      "launch": "{{LAUNCH_ID}}",
+      "expect": {
+        "exit": 0,
+        "claude": {
+          "ran": true,
+          "argv_count": {
+            "--settings": 1
+          },
+          "arg_after": {
+            "--settings": "{{PROJECT}}/.jitso/launches/{{LAUNCH_ID}}/settings.json"
+          },
+          "json_file_after": {
+            "--settings": [
+              {
+                "path": "",
+                "keys_exact": [
+                  "skipDangerousModePermissionPrompt",
+                  "promptSuggestionEnabled",
+                  "hooks",
+                  "enabledPlugins",
+                  "language",
+                  "keep"
+                ]
+              },
+              {
+                "path": "skipDangerousModePermissionPrompt",
+                "equals": true
+              },
+              {
+                "path": "promptSuggestionEnabled",
+                "equals": false
+              },
+              {
+                "path": "hooks.PreToolUse.0.matcher",
+                "equals": "Bash"
+              }
+            ]
+          }
+        }
+      }
+    }
+  ]
+}

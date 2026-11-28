@@ -1,0 +1,65 @@
+{
+  "id": "launch/settings/dry-run-prints-key-names-only",
+  "title": "a dry run prints one line with the names of the copied and the cut keys, never a value, and writes nothing",
+  "source": [
+    "intended: docs/decisions.md, section Meant for v0.10.0"
+  ],
+  "tags": [
+    "posix"
+  ],
+  "project": {
+    "files": {
+      ".jitso/briefs/brief.md": {
+        "from": "brief.md"
+      }
+    }
+  },
+  "home": {
+    "files": {
+      ".claude/settings.json": "{\"model\":\"sentinel-model\",\"env\":{\"A\":\"sentinel-env\"},\"crossSessionInbound\":\"sentinel-inbound\"}"
+    }
+  },
+  "steps": [
+    {
+      "run": [
+        "launch",
+        "--build",
+        "haiku-explorer",
+        "--brief",
+        "{{PROJECT}}/.jitso/briefs/brief.md",
+        "--mode",
+        "direct",
+        "--dry-run"
+      ],
+      "expect": {
+        "exit": 0,
+        "stderr": [
+          {
+            "empty": true
+          }
+        ],
+        "stdout": [
+          {
+            "not_contains": "sentinel"
+          },
+          {
+            "contains": "\nsettings copied: crossSessionInbound,env | cut: model\n"
+          }
+        ],
+        "files": [
+          {
+            "path": ".jitso/launches",
+            "exists": false
+          },
+          {
+            "path": ".jitso/launches.jsonl",
+            "exists": false
+          }
+        ],
+        "orca_calls": {
+          "empty": true
+        }
+      }
+    }
+  ]
+}

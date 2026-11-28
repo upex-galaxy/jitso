@@ -1,0 +1,131 @@
+{
+  "id": "launch/settings/bad-config-block-fails-the-launch",
+  "title": "a settings block of ~/.jitso/jitso.yaml with a wrong type or an unknown key fails a claude launch, a dry run too, with exit 3 naming the file and the problem, and writes nothing",
+  "source": [
+    "intended: docs/decisions.md, section Meant for v0.10.0"
+  ],
+  "intent": "Like any invalid user file, only a command that needs the layer fails, and a claude launch needs it for the cuts: a typo must never let a key through.",
+  "tags": [
+    "posix"
+  ],
+  "for_each": {
+    "vars": [
+      "yaml",
+      "message"
+    ],
+    "rows": [
+      [
+        "settings:\n  exclude: nope\n",
+        "settings.exclude must be a list of key names"
+      ],
+      [
+        "settings:\n  include: {a: b}\n",
+        "settings.include must be a list of key names"
+      ],
+      [
+        "settings:\n  exclude: [1]\n",
+        "settings.exclude must be a list of key names"
+      ],
+      [
+        "settings: [a]\n",
+        "settings must be a mapping with exclude and include lists"
+      ],
+      [
+        "settings:\n  exlcude: [a]\n",
+        "settings has an unknown key exlcude (use exclude or include)"
+      ],
+      [
+        "settings: nope\n",
+        "settings must be a mapping with exclude and include lists"
+      ]
+    ],
+    "ids": [
+      "exclude-not-a-list",
+      "include-not-a-list",
+      "item-not-text",
+      "block-is-a-list",
+      "unknown-key",
+      "block-is-text"
+    ]
+  },
+  "project": {
+    "files": {
+      ".jitso/briefs/brief.md": {
+        "from": "brief.md"
+      }
+    }
+  },
+  "home": {
+    "files": {
+      ".jitso/jitso.yaml": "{{yaml}}",
+      ".claude/settings.json": "{\"theme\":\"sentinel-theme\"}"
+    }
+  },
+  "steps": [
+    {
+      "run": [
+        "launch",
+        "--build",
+        "haiku-explorer",
+        "--brief",
+        "{{PROJECT}}/.jitso/briefs/brief.md",
+        "--mode",
+        "direct",
+        "--dry-run"
+      ],
+      "expect": {
+        "exit": 3,
+        "stdout": [
+          {
+            "empty": true
+          }
+        ],
+        "stderr": [
+          {
+            "equals": "jitso: ~/.jitso/jitso.yaml is invalid: {{message}}\n"
+          }
+        ]
+      }
+    },
+    {
+      "run": [
+        "launch",
+        "--build",
+        "haiku-explorer",
+        "--brief",
+        "{{PROJECT}}/.jitso/briefs/brief.md",
+        "--mode",
+        "direct"
+      ],
+      "expect": {
+        "exit": 3,
+        "stdout": [
+          {
+            "empty": true
+          }
+        ],
+        "stderr": [
+          {
+            "not_contains": "sentinel"
+          },
+          {
+            "contains": "~/.jitso/jitso.yaml is invalid: {{message}}"
+          }
+        ],
+        "files": [
+          {
+            "path": ".jitso/launches",
+            "exists": false
+          },
+          {
+            "path": ".jitso/launches.jsonl",
+            "exists": false
+          }
+        ],
+        "orca_calls": {
+          "empty": true
+        }
+      }
+    }
+  ]
+}

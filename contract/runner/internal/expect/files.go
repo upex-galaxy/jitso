@@ -5,6 +5,7 @@ import (
 	"os"
 	"path/filepath"
 	"runtime"
+	"strconv"
 	"strings"
 
 	"jitso-contract-runner/internal/jsonx"
@@ -39,8 +40,10 @@ type fileCheck struct {
 	path       string
 	exists     bool
 	executable *bool
-	text       []TextMatcher
-	json       []JSONCheck
+	// mode is the exact permission bits ("0600"), POSIX only.
+	mode string
+	text []TextMatcher
+	json []JSONCheck
 	// entries, when set, checks a directory: its entry count, or text matchers on the
 	// sorted entry names joined by newlines.
 	hasEntries   bool
@@ -53,7 +56,7 @@ func parseFileCheck(v any, what string) (fileCheck, error) {
 	if err != nil {
 		return fileCheck{}, err
 	}
-	if err := jsonx.Keys(obj, what, "path", "exists", "executable", "contains", "not_contains", "regex", "equals", "text", "json", "entries"); err != nil {
+	if err := jsonx.Keys(obj, what, "path", "exists", "executable", "mode", "contains", "not_contains", "regex", "equals", "text", "json", "entries"); err != nil {
 		return fileCheck{}, err
 	}
 	fc := fileCheck{exists: true}
@@ -71,6 +74,16 @@ func parseFileCheck(v any, what string) (fileCheck, error) {
 			return fileCheck{}, err
 		}
 		fc.executable = &b
+	}
+	if raw, ok := obj["mode"]; ok {
+		s, err := jsonx.String(raw, what+".mode")
+		if err != nil {
+			return fileCheck{}, err
+		}
+		if _, perr := strconv.ParseUint(s, 8, 32); perr != nil || len(s) != 4 {
+			return fileCheck{}, fmt.Errorf("%s.mode: want four octal digits such as \"0600\", got %q", what, s)
+		}
+		fc.mode = s
 	}
 	// contains / not_contains / regex are lists of strings; equals is one string.
 	for _, key := range []string{"contains", "not_contains", "regex"} {
@@ -117,7 +130,7 @@ func parseFileCheck(v any, what string) (fileCheck, error) {
 			return fileCheck{}, fmt.Errorf("%s: entries checks a directory and takes no content check", what)
 		}
 	}
-	if !fc.exists && (fc.executable != nil || len(fc.text) > 0 || len(fc.json) > 0 || fc.hasEntries) {
+	if !fc.exists && (fc.executable != nil || fc.mode != "" || len(fc.text) > 0 || len(fc.json) > 0 || fc.hasEntries) {
 		return fileCheck{}, fmt.Errorf("%s: exists:false takes no other check", what)
 	}
 	return fc, nil
@@ -149,6 +162,11 @@ func (fc fileCheck) eval(project string) []Failure {
 		isExec := err == nil && st.Mode()&0o100 != 0
 		if isExec != *fc.executable {
 			out = append(out, Failure{What: label + " executable", Expected: fmt.Sprint(*fc.executable), Actual: fmt.Sprintf("%v (mode %v)", isExec, info.Mode())})
+		}
+	}
+	if fc.mode != "" && runtime.GOOS != "windows" {
+		if got := fmt.Sprintf("%04o", info.Mode().Perm()); got != fc.mode {
+			out = append(out, Failure{What: label + " mode", Expected: fc.mode, Actual: got})
 		}
 	}
 	if len(fc.text) == 0 && len(fc.json) == 0 {

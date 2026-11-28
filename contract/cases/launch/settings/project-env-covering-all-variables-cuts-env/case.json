@@ -1,36 +1,23 @@
 {
-  "id": "launch/inbound/owner-setting-travels",
-  "title": "crossSessionInbound of the owner's user settings (accept, hold or refuse) travels in the launch's --settings, and no other key or value of that file does",
+  "id": "launch/settings/project-env-covering-all-variables-cuts-env",
+  "title": "when the project env defines every variable of the owner env, the env key is cut, not sent empty",
   "source": [
-    "intended: docs/decisions.md, release 3 of the communication plan; Claude Code: --setting-sources project leaves the user settings unread and --settings takes precedence over them"
+    "intended: docs/decisions.md, section Meant for v0.10.0"
   ],
-  "intent": "A launched session does not read ~/.claude/settings.json, so without this key a message from a peer waits for a person whenever the permission modes differ. Only that one key is read out of the file.",
   "tags": [
     "posix"
   ],
-  "for_each": {
-    "var": "value",
-    "values": [
-      "accept",
-      "hold",
-      "refuse"
-    ],
-    "ids": [
-      "accept",
-      "hold",
-      "refuse"
-    ]
-  },
   "project": {
     "files": {
       ".jitso/briefs/brief.md": {
         "from": "brief.md"
-      }
+      },
+      ".claude/settings.json": "{\"env\":{\"A\":\"p\",\"B\":\"p\"}}"
     }
   },
   "home": {
     "files": {
-      ".claude/settings.json": "{\"model\":\"sentinel-model\",\"env\":{\"OWNER_TOKEN\":\"sentinel-env\"},\"permissions\":{\"defaultMode\":\"sentinel-mode\"},\"hooks\":{\"sentinel-hook\":[]},\"apiKeyHelper\":\"sentinel-helper\",\"crossSessionInbound\":\"{{value}}\"}"
+      ".claude/settings.json": "{\"env\":{\"A\":\"sentinel-a\",\"B\":\"sentinel-b\"}}"
     }
   },
   "steps": [
@@ -76,15 +63,33 @@
             ]
           },
           {
+            "path": ".jitso/launches/{{LAUNCH_ID}}/card.txt",
+            "not_contains": [
+              "sentinel"
+            ]
+          },
+          {
             "path": ".jitso/launches.jsonl",
             "not_contains": [
               "sentinel"
-            ],
-            "contains": [
-              "crossSessionInbound"
             ]
           }
-        ]
+        ],
+        "registry": {
+          "count": 1,
+          "events": [
+            {
+              "at": 0,
+              "event": "launch",
+              "fields": {
+                "settings.copied": [],
+                "settings.cut": [
+                  "env"
+                ]
+              }
+            }
+          ]
+        }
       }
     },
     {
@@ -97,20 +102,18 @@
           "argv_count": {
             "--settings": 1
           },
-          "json_arg_after": {
+          "arg_after": {
+            "--settings": "{{PROJECT}}/.jitso/launches/{{LAUNCH_ID}}/settings.json"
+          },
+          "json_file_after": {
             "--settings": [
               {
                 "path": "",
                 "keys_exact": [
                   "skipDangerousModePermissionPrompt",
                   "promptSuggestionEnabled",
-                  "hooks",
-                  "crossSessionInbound"
+                  "hooks"
                 ]
-              },
-              {
-                "path": "crossSessionInbound",
-                "equals": "{{value}}"
               },
               {
                 "path": "skipDangerousModePermissionPrompt",

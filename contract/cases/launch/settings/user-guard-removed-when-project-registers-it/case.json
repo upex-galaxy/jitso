@@ -1,8 +1,8 @@
 {
-  "id": "launch/inbound/unreadable-file-adds-nothing",
-  "title": "a user settings path that cannot be read as a file adds nothing and never fails the launch",
+  "id": "launch/settings/user-guard-removed-when-project-registers-it",
+  "title": "when the project registers the guard itself the launch carries none, and the guard handlers of the owner hooks are still removed, so hooks is left out when nothing else is in it",
   "source": [
-    "intended: docs/decisions.md, release 3 of the communication plan"
+    "intended: docs/decisions.md, section Meant for v0.10.0"
   ],
   "tags": [
     "posix"
@@ -11,12 +11,15 @@
     "files": {
       ".jitso/briefs/brief.md": {
         "from": "brief.md"
+      },
+      ".claude/settings.json": {
+        "from": "settings.json"
       }
     }
   },
   "home": {
     "files": {
-      ".claude/settings.json/inside": "a folder where the file should be"
+      ".claude/settings.json": "{\"hooks\":{\"SessionEnd\":[{\"hooks\":[{\"type\":\"command\",\"command\":\"jitso hook guard\"}]}]}}"
     }
   },
   "steps": [
@@ -43,11 +46,22 @@
             "empty": true
           }
         ],
-        "stdout": [
-          {
-            "not_contains": "sentinel"
-          }
-        ]
+        "files": [],
+        "registry": {
+          "count": 1,
+          "events": [
+            {
+              "at": 0,
+              "event": "launch",
+              "fields": {
+                "settings.copied": [],
+                "settings.cut": [
+                  "hooks"
+                ]
+              }
+            }
+          ]
+        }
       }
     },
     {
@@ -60,14 +74,16 @@
           "argv_count": {
             "--settings": 1
           },
-          "json_arg_after": {
+          "arg_after": {
+            "--settings": "{{PROJECT}}/.jitso/launches/{{LAUNCH_ID}}/settings.json"
+          },
+          "json_file_after": {
             "--settings": [
               {
                 "path": "",
                 "keys_exact": [
                   "skipDangerousModePermissionPrompt",
-                  "promptSuggestionEnabled",
-                  "hooks"
+                  "promptSuggestionEnabled"
                 ]
               }
             ]

@@ -55,7 +55,7 @@
         "exit": 0,
         "claude": {
           "ran": true,
-          "json_arg_after": {
+          "json_file_after": {
             "--settings": [
               {
                 "path": "hooks",

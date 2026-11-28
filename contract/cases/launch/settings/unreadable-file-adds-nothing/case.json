@@ -1,8 +1,8 @@
 {
-  "id": "launch/inbound/no-file-adds-nothing",
-  "title": "with no user settings file the --settings of a launch are the launch's own keys",
+  "id": "launch/settings/unreadable-file-adds-nothing",
+  "title": "a user settings path that cannot be read as a file adds nothing and never fails the launch",
   "source": [
-    "intended: docs/decisions.md, release 3 of the communication plan"
+    "intended: docs/decisions.md, section Meant for v0.10.0"
   ],
   "tags": [
     "posix"
@@ -12,6 +12,11 @@
       ".jitso/briefs/brief.md": {
         "from": "brief.md"
       }
+    }
+  },
+  "home": {
+    "files": {
+      ".claude/settings.json/inside": "a folder where the file should be"
     }
   },
   "steps": [
@@ -55,7 +60,10 @@
           "argv_count": {
             "--settings": 1
           },
-          "json_arg_after": {
+          "arg_after": {
+            "--settings": "{{PROJECT}}/.jitso/launches/{{LAUNCH_ID}}/settings.json"
+          },
+          "json_file_after": {
             "--settings": [
               {
                 "path": "",
@@ -64,6 +72,18 @@
                   "promptSuggestionEnabled",
                   "hooks"
                 ]
+              },
+              {
+                "path": "skipDangerousModePermissionPrompt",
+                "equals": true
+              },
+              {
+                "path": "promptSuggestionEnabled",
+                "equals": false
+              },
+              {
+                "path": "hooks.PreToolUse.0.matcher",
+                "equals": "Bash"
               }
             ]
           }

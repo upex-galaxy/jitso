@@ -78,7 +78,7 @@ type Deps struct {
 	Executable func() (string, error)
 	// LookupEnv is os.LookupEnv: a launch checks that the variables a user
 	// MCP server refers to are set, never what they hold, and asks it where the
-	// harness keeps the user settings (harness.InboundSource).
+	// harness keeps the user settings (harness.SettingsSource).
 	LookupEnv func(string) (string, bool)
 }
 
@@ -191,14 +191,21 @@ func Run(a Args, d Deps) error {
 	for _, w := range unset {
 		d.Warn(w)
 	}
-	// The session reads no user settings, so what its harness needs from the
-	// owner's travels with the launch.
-	inbound := ""
-	if source, ok := adapter.(harness.InboundSource); ok {
-		value, warning := source.OwnerInbound(d.Home, lookup)
-		if inbound = value; warning != "" {
-			d.Warn(warning)
+	// The session reads no user settings, so what its harness takes from the
+	// owner's travels with the launch. A config of the owner's that cannot be
+	// read fails the launch, because the cuts in it could not be applied.
+	var settings *harness.OwnerSettings
+	settingsLine := ""
+	if source, ok := adapter.(harness.SettingsSource); ok {
+		user := d.Catalog.Config.User
+		if user.Err != nil {
+			return user.Err
 		}
+		owner := source.OwnerSettings(harness.OwnerSettingsInput{Home: d.Home, LookupEnv: lookup, Checkout: target.Checkout, Exclude: user.SettingsExclude, Include: user.SettingsInclude})
+		if owner.Warning != "" {
+			d.Warn(owner.Warning)
+		}
+		settings, settingsLine = &owner, SettingsLine(owner)
 	}
 	asked := false
 	if target.Cross {
@@ -211,6 +218,9 @@ func Run(a Args, d Deps) error {
 		if note := adapter.Support().Note; note != "" {
 			d.Out(note)
 		}
+		if settingsLine != "" {
+			d.Out(settingsLine)
+		}
 		if asked {
 			d.Out(DryRunAskedLine)
 		} else {
@@ -218,7 +228,7 @@ func Run(a Args, d Deps) error {
 		}
 		return nil
 	}
-	return execute(prepared{args: a, profile: p, adapter: adapter, mcp: mcp, briefText: briefText, id: id, name: name, inbound: inbound, card: cardText, lineage: lineage, pkg: carried, userServers: users}, d)
+	return execute(prepared{args: a, profile: p, adapter: adapter, mcp: mcp, briefText: briefText, id: id, name: name, settings: settings, settingsLine: settingsLine, card: cardText, lineage: lineage, pkg: carried, userServers: users}, d)
 }
 
 // checkTarget refuses a target Orca has not registered: a real launch also
@@ -300,11 +310,13 @@ type prepared struct {
 	id        string
 	// name is the session name.
 	name string
-	// inbound is the owner's cross-session delivery setting, "" for none.
-	inbound string
-	card    string
-	lineage Lineage
-	pkg     Package
+	// settings is what travels from the owner's user settings, nil when the
+	// harness takes none; settingsLine is the line that names the keys.
+	settings     *harness.OwnerSettings
+	settingsLine string
+	card         string
+	lineage      Lineage
+	pkg          Package
 	// userServers are the copied definitions of the user servers in mcp.
 	userServers map[string]jsonx.Object
 }
@@ -390,7 +402,8 @@ func execute(p prepared, d Deps) (err error) {
 		Repo: filepath.Base(target.Primary), RepoPath: repoPath, Home: home, Harness: p.adapter.ID(), Argv: files.argv, Prompted: p.args.Mode == ModeDirect,
 		BriefPath: files.brief, BriefText: p.briefText, SessionID: files.sessionID,
 		Cwd: term.WorktreePath, Transcript: transcript, Trust: outcome, Terminal: term.Handle, Title: files.title, Now: d.Now(),
-		Package: p.pkg.Ref(),
+		Package:  p.pkg.Ref(),
+		Settings: settingsRef(p.settings),
 	})
 	if err := d.Registry.Append(event); err != nil {
 		abandon()
@@ -401,6 +414,9 @@ func execute(p prepared, d Deps) (err error) {
 	d.Out(p.card)
 	if note := p.adapter.Support().Note; note != "" {
 		d.Out(note)
+	}
+	if p.settingsLine != "" {
+		d.Out(p.settingsLine)
 	}
 	if outcome == trust.Timeout {
 		d.Warn("jitso: the trust dialog of terminal " + term.Handle + " did not clear in 10 s; the launch is registered")

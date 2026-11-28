@@ -101,6 +101,27 @@ func TestFileChecks(t *testing.T) {
 	expectFailures(t, "four break", build(t, bad, KindWrite).Eval(obs), wantBreaks)
 }
 
+func TestFileMode(t *testing.T) {
+	if runtime.GOOS == "windows" {
+		t.Skip("no permission bits")
+	}
+	dir := t.TempDir()
+	path := filepath.Join(dir, "settings.json")
+	write(t, path, "{}", 0o600)
+	if err := os.Chmod(path, 0o600); err != nil {
+		t.Fatal(err)
+	}
+	obs := &Observation{Project: dir}
+	expectFailures(t, "mode holds", build(t, `{"files":[{"path":"settings.json","mode":"0600"}]}`, KindWrite).Eval(obs), 0)
+	expectFailures(t, "mode breaks", build(t, `{"files":[{"path":"settings.json","mode":"0644"}]}`, KindWrite).Eval(obs), 1)
+	if _, err := Build(map[string]any{"files": []any{map[string]any{"path": "x", "mode": "600"}}}, KindWrite); err == nil {
+		t.Error("a mode is four octal digits")
+	}
+	if _, err := Build(map[string]any{"files": []any{map[string]any{"path": "x", "exists": false, "mode": "0600"}}}, KindWrite); err == nil {
+		t.Error("exists:false takes no mode")
+	}
+}
+
 func TestRegistryChecks(t *testing.T) {
 	dir := t.TempDir()
 	obs := &Observation{Project: dir}
@@ -142,6 +163,14 @@ func TestClaudeChecks(t *testing.T) {
 		Env:  map[string]string{"CLAUDE_CODE_DISABLE_CLAUDE_MDS": "1", "PATH": "/b:/usr/bin"},
 	})
 	write(t, dump, string(data), 0o644)
+	settingsPath := filepath.Join(dir, "settings.json")
+	write(t, settingsPath, `{"a":1,"b":{"c":true}}`, 0o600)
+	withFile, _ := json.Marshal(ClaudeDump{Argv: []string{"--settings", settingsPath}})
+	fileDump := filepath.Join(dir, "file-dump.json")
+	write(t, fileDump, string(withFile), 0o644)
+	fileObs := &Observation{ClaudeDump: fileDump}
+	expectFailures(t, "json_file_after holds", build(t, `{"claude":{"json_file_after":{"--settings":[{"path":"a","equals":1},{"path":"b.c","equals":true},{"path":"d","absent":true}]}}}`, KindExec).Eval(fileObs), 0)
+	expectFailures(t, "json_file_after breaks", build(t, `{"claude":{"json_file_after":{"--settings":[{"path":"a","equals":2}],"--missing":[{"path":"a","equals":1}]}}}`, KindExec).Eval(fileObs), 2)
 	ok := `{"claude":{"ran":true,"argv_contains":["--agents"],"argv_not_contains":["--evil"],"last_arg":[{"route_scope":["a"]}],
 		"cwd":"/p","env":{"CLAUDE_CODE_DISABLE_CLAUDE_MDS":"1","JITSO_X":{"absent":true},"PATH":{"regex":"^/b:"}},
 		"arg_after":{"--model":"claude-haiku-5-5"},"json_arg_after":{"--agents":[{"path":"plan.description","regex":".+"},{"path":"code","absent":true}]}}}`

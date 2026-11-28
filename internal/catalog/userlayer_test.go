@@ -57,6 +57,35 @@ func TestLoadUser(t *testing.T) {
 	}
 }
 
+func TestLoadUserSettingsBlock(t *testing.T) {
+	load := func(text string) User {
+		return LoadUser(writeHome(t, map[string]string{".jitso/jitso.yaml": text}))
+	}
+	u := load("settings:\n  exclude: [a, b]\n  include: [c]\n")
+	if u.Err != nil || !reflect.DeepEqual(u.SettingsExclude, []string{"a", "b"}) || !reflect.DeepEqual(u.SettingsInclude, []string{"c"}) {
+		t.Errorf("got %+v", u)
+	}
+	for _, text := range []string{"", "settings:\n", "settings: null\n", "settings: {}\n", "settings:\n  exclude:\n  include: []\n"} {
+		if u := load(text); u.Err != nil || len(u.SettingsExclude)+len(u.SettingsInclude) != 0 {
+			t.Errorf("%q: got %+v", text, u)
+		}
+	}
+	for text, problem := range map[string]string{
+		"settings: nope\n":                 "settings must be a mapping with exclude and include lists",
+		"settings: [a]\n":                  "settings must be a mapping with exclude and include lists",
+		"settings:\n  exclude: a\n":        "settings.exclude must be a list of key names",
+		"settings:\n  include: {a: b}\n":   "settings.include must be a list of key names",
+		"settings:\n  exclude: [1]\n":      "settings.exclude must be a list of key names",
+		"settings:\n  include: [a, [b]]\n": "settings.include must be a list of key names",
+		"settings:\n  exlcude: [a]\n":      "settings has an unknown key exlcude (use exclude or include)",
+	} {
+		u := load(text)
+		if fail.Code(u.Err) != fail.CodeEnv || fail.Text(u.Err) != "jitso: ~/.jitso/jitso.yaml is invalid: "+problem {
+			t.Errorf("%q: got %v", text, u.Err)
+		}
+	}
+}
+
 func TestSplitScope(t *testing.T) {
 	for in, want := range map[string][3]string{
 		"humanizer":      {"", "humanizer", "false"},

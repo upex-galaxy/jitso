@@ -1,5 +1,6 @@
 // Package claude is the Claude Code adapter. It builds the argv as a
-// list: bypass, project-only settings, the two dialog suppression keys, a
+// list: bypass, project-only settings, the settings file of the launch (the
+// two dialog suppression keys and the owner's user settings that travel), a
 // strict MCP file, explicit model and effort, a fixed session id and the rules
 // file, then the tool list and the first prompt.
 //
@@ -12,6 +13,8 @@ import (
 	"io"
 	"path/filepath"
 	"regexp"
+	"slices"
+	"sort"
 	"strings"
 
 	"github.com/upex-galaxy/jitso/internal/harness"
@@ -19,30 +22,49 @@ import (
 	"github.com/upex-galaxy/jitso/internal/settingsjson"
 )
 
-// settings are the --settings JSON: skipDangerousModePermissionPrompt and
-// promptSuggestionEnabled, in that key order.
-const settings = `{"skipDangerousModePermissionPrompt":true,"promptSuggestionEnabled":false}`
+// SettingsFile is the name of the settings file of a launch, in its folder.
+const SettingsFile = "settings.json"
 
-// Settings is the --settings JSON of a launch: the two keys, then the owner's
-// crossSessionInbound when there is one, then, when the launch carries the
-// guard, the hooks object of the guard's three groups. Hooks in --settings run
-// under --setting-sources project (measured in M0-3).
-func Settings(guardCommand, inbound string) (string, error) {
-	if guardCommand == "" && inbound == "" {
-		return settings, nil
+// Settings is the content of the settings file of a launch: the two keys of
+// JITSO (skipDangerousModePermissionPrompt true, promptSuggestionEnabled
+// false), then the owner's keys that travel (OwnerSettings) in key order, with
+// the guard's three hook groups appended after the owner's when the launch
+// carries the guard. Hooks in --settings run under --setting-sources project
+// (measured in M0-3). The owner keys are the Doc of harness.OwnerSettings; a
+// key of JITSO in it is replaced.
+func Settings(guardCommand string, owner map[string]any) ([]byte, error) {
+	rest := map[string]any{}
+	for k, v := range owner {
+		if !slices.Contains(ownKeys, k) {
+			rest[k] = v
+		}
 	}
+	if guardCommand != "" {
+		hooks, _ := rest["hooks"].(map[string]any)
+		merged := map[string]any{}
+		for event, groups := range hooks {
+			merged[event] = groups
+		}
+		for _, field := range settingsjson.HookGroups(guardCommand) {
+			list, _ := merged[field.Key].([]any)
+			merged[field.Key] = append(slices.Clone(list), field.Value.([]any)...)
+		}
+		rest["hooks"] = merged
+	}
+	keys := make([]string, 0, len(rest))
+	for k := range rest {
+		keys = append(keys, k)
+	}
+	sort.Strings(keys)
 	object := jsonx.Object{
 		{Key: "skipDangerousModePermissionPrompt", Value: true},
 		{Key: "promptSuggestionEnabled", Value: false},
 	}
-	if inbound != "" {
-		object = append(object, jsonx.Field{Key: InboundKey, Value: inbound})
+	for _, k := range keys {
+		object = append(object, jsonx.Field{Key: k, Value: rest[k]})
 	}
-	if guardCommand != "" {
-		object = append(object, jsonx.Field{Key: "hooks", Value: settingsjson.HookGroups(guardCommand)})
-	}
-	data, err := jsonx.Marshal(object)
-	return string(data), err
+	data, err := jsonx.MarshalIndent(object, "  ")
+	return append(data, '\n'), err
 }
 
 // Adapter is the Claude Code adapter.
@@ -74,7 +96,13 @@ func (a Adapter) Spec(in harness.SpecInput) (harness.Spec, error) {
 	if err != nil {
 		return harness.Spec{}, err
 	}
-	return harness.Spec{Argv: argv, Env: Env(in), MCPConfig: mcp}, nil
+	settings, err := Settings(in.GuardCommand, in.OwnerSettings.Doc)
+	if err != nil {
+		return harness.Spec{}, err
+	}
+	// The file holds the owner's env values: only the owner may read it.
+	file := harness.File{Name: SettingsFile, Data: settings, Mode: 0o600}
+	return harness.Spec{Argv: argv, Env: Env(in), MCPConfig: mcp, Files: []harness.File{file}}, nil
 }
 
 // DisableClaudeMDs is the variable that keeps Claude Code from loading its
@@ -120,15 +148,11 @@ func AgentsJSON(subagents []harness.Subagent) (string, error) {
 // has subagents, goes right after the session id; --tools and the initial
 // prompt, when there are any, follow it.
 func Argv(in harness.SpecInput) ([]string, error) {
-	settings, err := Settings(in.GuardCommand, in.CrossSessionInbound)
-	if err != nil {
-		return nil, err
-	}
 	argv := []string{
 		"claude",
 		"--dangerously-skip-permissions",
 		"--setting-sources", "project",
-		"--settings", settings,
+		"--settings", filepath.Join(in.LaunchDir, SettingsFile),
 		"--strict-mcp-config",
 		"--mcp-config", in.MCPConfigPath,
 	}

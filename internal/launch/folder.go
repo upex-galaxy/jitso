@@ -68,7 +68,7 @@ func writeFolder(p prepared, d Deps, dir string) (folder, error) {
 		AgentsMD:      b.AgentsMD,
 		Subagents:     subagentsOf(p.profile.Subagents),
 
-		CrossSessionInbound: p.inbound,
+		OwnerSettings: ownerSettings(p.settings),
 	}
 	if p.args.Mode == ModeDirect {
 		in.InitialPrompt = FirstPrompt(f.brief, p.profile.RouteScope)
@@ -104,24 +104,36 @@ func writeFolder(p prepared, d Deps, dir string) (folder, error) {
 		return folder{}, err
 	}
 	runSh := filepath.Join(dir, FileRunSh)
-	writes := []struct {
+	type write struct {
 		path, text string
-	}{
-		{f.brief, BriefFile(p.card, SessionSkillNames(b.SkillsFirst), p.briefText, FieldsBlock(p.profile.Fields), card.Rules(string(p.args.Mode), b.Budget.Set))},
-		{in.MCPConfigPath, string(mcpJSON) + "\n"},
-		{filepath.Join(dir, FileCard), p.card + "\n"},
+		mode       os.FileMode
+	}
+	writes := []write{
+		{f.brief, BriefFile(p.card, SessionSkillNames(b.SkillsFirst), p.briefText, FieldsBlock(p.profile.Fields), card.Rules(string(p.args.Mode), b.Budget.Set)), 0o644},
+		{in.MCPConfigPath, string(mcpJSON) + "\n", 0o644},
+		{filepath.Join(dir, FileCard), p.card + "\n", 0o644},
 	}
 	for _, f := range spec.Files {
 		path := filepath.Join(dir, filepath.FromSlash(f.Name))
 		if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
 			return folder{}, err
 		}
-		writes = append(writes, struct{ path, text string }{path, string(f.Data)})
+		mode := f.Mode
+		if mode == 0 {
+			mode = 0o644
+		}
+		writes = append(writes, write{path, string(f.Data), mode})
 	}
-	writes = append(writes, struct{ path, text string }{runSh, script})
+	writes = append(writes, write{runSh, script, 0o644})
 	for _, w := range writes {
-		if err := os.WriteFile(w.path, []byte(w.text), 0o644); err != nil {
+		if err := os.WriteFile(w.path, []byte(w.text), w.mode); err != nil {
 			return folder{}, err
+		}
+		// A private file keeps its bits whatever the umask says.
+		if w.mode != 0o644 {
+			if err := os.Chmod(w.path, w.mode); err != nil {
+				return folder{}, err
+			}
 		}
 	}
 	if err := os.Chmod(runSh, 0o755); err != nil {

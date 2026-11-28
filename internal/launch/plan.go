@@ -233,6 +233,8 @@ type EventInput struct {
 	Now        time.Time
 	// Package is the package key, nil when nothing travelled.
 	Package *registry.Package
+	// Settings is the settings key, nil for a harness that takes none.
+	Settings *registry.Settings
 }
 
 // Event is the launch event of in. flags is the argv without the program and,
@@ -293,6 +295,7 @@ func Event(in EventInput) *registry.LaunchEvent {
 		e.Budget = &registry.Budget{Tokens: b.Budget.Tokens, USDListCap: b.Budget.USDListCap}
 	}
 	e.Package = in.Package
+	e.Settings = in.Settings
 	if f := in.Profile.Fields; f.Len() > 0 {
 		e.Fields = make(map[string]string, f.Len())
 		for _, k := range f.Keys() {
@@ -300,6 +303,40 @@ func Event(in EventInput) *registry.LaunchEvent {
 		}
 	}
 	return e
+}
+
+// SettingsLine is the line a launch prints after its card to name the keys of
+// the owner's user settings that travel and the ones that do not: names only,
+// never a value. It is "" when the owner has no key to name.
+func SettingsLine(s harness.OwnerSettings) string {
+	if len(s.Copied) == 0 && len(s.Cut) == 0 {
+		return ""
+	}
+	return "settings copied: " + namesOrNone(s.Copied) + " | cut: " + namesOrNone(s.Cut)
+}
+
+func namesOrNone(names []string) string {
+	if len(names) == 0 {
+		return "none"
+	}
+	return strings.Join(names, ",")
+}
+
+// settingsRef is the settings key of the launch event, nil for a harness that
+// takes no owner settings.
+func settingsRef(s *harness.OwnerSettings) *registry.Settings {
+	if s == nil {
+		return nil
+	}
+	return &registry.Settings{Copied: append([]string{}, s.Copied...), Cut: append([]string{}, s.Cut...)}
+}
+
+// ownerSettings is what the harness gets in its SpecInput.
+func ownerSettings(s *harness.OwnerSettings) harness.OwnerSettings {
+	if s == nil {
+		return harness.OwnerSettings{}
+	}
+	return *s
 }
 
 // AllowedBriefDirs are the folders a brief may be read from: the project's

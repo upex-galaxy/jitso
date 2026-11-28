@@ -1,0 +1,183 @@
+{
+  "id": "launch/settings/project-defined-keys-do-not-travel",
+  "title": "a top-level key the checkout .claude/settings.json defines does not travel (the project wins, as in a normal session), except hooks and permissions, which Claude merges, and env, which loses only the variables the project also defines; settings.local.json is never read",
+  "source": [
+    "intended: docs/decisions.md, section Meant for v0.10.0"
+  ],
+  "intent": "In a normal session the project scope beats the user scope for a key; the copy keeps that order without opening the project local file.",
+  "tags": [
+    "posix"
+  ],
+  "project": {
+    "files": {
+      ".jitso/briefs/brief.md": {
+        "from": "brief.md"
+      },
+      ".claude/settings.json": "{\"outputStyle\":\"project\",\"statusLine\":{\"type\":\"command\",\"command\":\"proj\"},\"env\":{\"PROJ_VAR\":\"p\",\"SHARED\":\"p\"},\"permissions\":{\"allow\":[\"Bash(p:*)\"]},\"hooks\":{\"Stop\":[{\"hooks\":[{\"type\":\"command\",\"command\":\"proj-hook\"}]}]}}",
+      ".claude/settings.local.json": "{\"theme\":\"local\"}"
+    }
+  },
+  "home": {
+    "files": {
+      ".claude/settings.json": "{\"outputStyle\":\"sentinel-user-style\",\"statusLine\":{\"type\":\"command\",\"command\":\"sentinel-user-status\"},\"env\":{\"PROJ_VAR\":\"sentinel-a\",\"SHARED\":\"sentinel-b\",\"OWN\":\"sentinel-own\"},\"permissions\":{\"allow\":[\"Bash(sentinel:*)\"]},\"hooks\":{\"Stop\":[{\"hooks\":[{\"type\":\"command\",\"command\":\"sentinel-user-hook\"}]}]},\"theme\":\"sentinel-theme\"}"
+    }
+  },
+  "steps": [
+    {
+      "run": [
+        "launch",
+        "--build",
+        "haiku-explorer",
+        "--brief",
+        "{{PROJECT}}/.jitso/briefs/brief.md",
+        "--mode",
+        "direct"
+      ],
+      "capture": {
+        "LAUNCH_ID": {
+          "from": "stdout",
+          "regex": "JITSO (L\\d{8}T\\d{6}-[0-9a-f]{4})"
+        }
+      },
+      "expect": {
+        "exit": 0,
+        "stderr": [
+          {
+            "empty": true
+          }
+        ],
+        "stdout": [
+          {
+            "not_contains": "sentinel"
+          },
+          {
+            "contains": "settings copied: env,hooks,permissions,theme | cut: outputStyle,statusLine"
+          }
+        ],
+        "files": [
+          {
+            "path": ".jitso/launches/{{LAUNCH_ID}}/run.sh",
+            "not_contains": [
+              "sentinel"
+            ]
+          },
+          {
+            "path": ".jitso/launches/{{LAUNCH_ID}}/brief.md",
+            "not_contains": [
+              "sentinel"
+            ]
+          },
+          {
+            "path": ".jitso/launches/{{LAUNCH_ID}}/card.txt",
+            "not_contains": [
+              "sentinel"
+            ]
+          },
+          {
+            "path": ".jitso/launches.jsonl",
+            "not_contains": [
+              "sentinel"
+            ]
+          },
+          {
+            "path": ".jitso/launches/{{LAUNCH_ID}}/settings.json",
+            "mode": "0600",
+            "not_contains": [
+              "sentinel-user-style",
+              "sentinel-user-status",
+              "sentinel-a",
+              "sentinel-b"
+            ],
+            "contains": [
+              "sentinel-own",
+              "sentinel-user-hook",
+              "sentinel-theme"
+            ]
+          }
+        ],
+        "registry": {
+          "count": 1,
+          "events": [
+            {
+              "at": 0,
+              "event": "launch",
+              "fields": {
+                "settings.copied": [
+                  "env",
+                  "hooks",
+                  "permissions",
+                  "theme"
+                ],
+                "settings.cut": [
+                  "outputStyle",
+                  "statusLine"
+                ]
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "exec": "run_sh",
+      "launch": "{{LAUNCH_ID}}",
+      "expect": {
+        "exit": 0,
+        "claude": {
+          "ran": true,
+          "argv_count": {
+            "--settings": 1
+          },
+          "arg_after": {
+            "--settings": "{{PROJECT}}/.jitso/launches/{{LAUNCH_ID}}/settings.json"
+          },
+          "json_file_after": {
+            "--settings": [
+              {
+                "path": "",
+                "keys_exact": [
+                  "skipDangerousModePermissionPrompt",
+                  "promptSuggestionEnabled",
+                  "hooks",
+                  "env",
+                  "permissions",
+                  "theme"
+                ]
+              },
+              {
+                "path": "env",
+                "keys_exact": [
+                  "OWN"
+                ]
+              },
+              {
+                "path": "permissions.allow.0",
+                "equals": "Bash(sentinel:*)"
+              },
+              {
+                "path": "hooks.Stop.0.hooks.0.command",
+                "equals": "sentinel-user-hook"
+              },
+              {
+                "path": "theme",
+                "equals": "sentinel-theme"
+              },
+              {
+                "path": "skipDangerousModePermissionPrompt",
+                "equals": true
+              },
+              {
+                "path": "promptSuggestionEnabled",
+                "equals": false
+              },
+              {
+                "path": "hooks.PreToolUse.0.matcher",
+                "equals": "Bash"
+              }
+            ]
+          }
+        }
+      }
+    }
+  ]
+}

@@ -266,7 +266,7 @@ A matcher object has exactly one key. A plain string in a matcher list is shorth
 ### 7.2 File checks
 
 ```json
-{ "path": ".jitso/launches/{{LAUNCH_ID}}/run.sh", "exists": true, "executable": true,
+{ "path": ".jitso/launches/{{LAUNCH_ID}}/run.sh", "exists": true, "executable": true, "mode": "0755",
   "contains": ["exec claude"], "not_contains": ["secret"], "regex": ["..."], "equals": "...",
   "text": [ { "route_scope": ["code-quickref"] }, { "line_count": 5 } ],
   "json": [ { "path": "mcpServers.dbhub.command", "equals": "fixture-dbhub" }, { "path": "mcpServers.dbhub.env", "absent": true },
@@ -275,7 +275,7 @@ A matcher object has exactly one key. A plain string in a matcher list is shorth
 { "path": ".jitso/launches/{{LAUNCH_ID}}", "entries": [ { "equals": "brief.md\ncard.txt\nmcp.json\nrun.sh" } ] }
 ```
 
-`path` is relative to the project dir, or starts with `{{HOME}}`/`{{PROJECT}}`. `exists` defaults to `true` (a dangling symlink exists); `exists: false` takes no other check. `executable` checks the owner execute bit (POSIX). `contains`, `not_contains` and `regex` are lists of strings; `equals` is one string, the whole content. `text` is a list of text matchers (section 7.1) on the whole content, so `route_scope`, `line_count` and the rest work on a file. `json` paths are dot paths (`a.b.0.c`, a numeric segment indexes a list; the empty path `""` is the document root); each entry holds `path` and exactly one of:
+`path` is relative to the project dir, or starts with `{{HOME}}`/`{{PROJECT}}`. `exists` defaults to `true` (a dangling symlink exists); `exists: false` takes no other check. `executable` checks the owner execute bit (POSIX). `mode` is four octal digits and checks the exact permission bits of the file (POSIX; it is not checked on Windows), for example `"0600"` for a file that holds values the owner keeps private. `contains`, `not_contains` and `regex` are lists of strings; `equals` is one string, the whole content. `text` is a list of text matchers (section 7.1) on the whole content, so `route_scope`, `line_count` and the rest work on a file. `json` paths are dot paths (`a.b.0.c`, a numeric segment indexes a list; the empty path `""` is the document root); each entry holds `path` and exactly one of:
 
 | Key | The value at `path` |
 |---|---|
@@ -314,10 +314,11 @@ Reads `.jitso/launches.jsonl` (one JSON event per line). A missing file is zero 
   "env": { "CLAUDE_CODE_DISABLE_CLAUDE_MDS": "1", "JITSO_X": {"absent": true} },
   "arg_after": { "--model": "claude-haiku-5-5", "--session-id": { "regex": "^[0-9a-f]{8}-[0-9a-f]{4}-" } },
   "argv_count": { "--dangerously-skip-permissions": 1 },
-  "json_arg_after": { "--agents": [ { "path": "plan.description", "regex": ".+" } ] } }
+  "json_arg_after": { "--agents": [ { "path": "plan.description", "regex": ".+" } ] },
+  "json_file_after": { "--settings": [ { "path": "env.TOKEN", "equals": "x" } ] } }
 ```
 
-`ran: false` means the dump file does not exist, and takes no other check; `program` is the exact name the fake was started as (`claude`, `codex`, `opencode` or `pi`); any other check requires that the fake ran in this step (section 5.2). `argv` compares the whole list element by element, each element an argument pattern (a literal string is exact, an object is a text matcher of section 7.1). `argv_contains` and `argv_not_contains` test whole elements (an element equal to the string), not substrings. `last_arg` is a list of text matchers on the last element. `argv_count` maps an element to the exact number of times it occurs as a whole element (`0` forbids it). `arg_after` maps a flag to an argument pattern that the argument after its first occurrence must match. `json_arg_after` parses the argument that follows a flag as JSON and applies the `json` checks of section 7.2 to it. `env` values: a string (exact), `{"absent": true}`, or `{"regex": "re"}`.
+`ran: false` means the dump file does not exist, and takes no other check; `program` is the exact name the fake was started as (`claude`, `codex`, `opencode` or `pi`); any other check requires that the fake ran in this step (section 5.2). `argv` compares the whole list element by element, each element an argument pattern (a literal string is exact, an object is a text matcher of section 7.1). `argv_contains` and `argv_not_contains` test whole elements (an element equal to the string), not substrings. `last_arg` is a list of text matchers on the last element. `argv_count` maps an element to the exact number of times it occurs as a whole element (`0` forbids it). `arg_after` maps a flag to an argument pattern that the argument after its first occurrence must match. `json_arg_after` parses the argument that follows a flag as JSON and applies the `json` checks of section 7.2 to it. `json_file_after` reads the argument that follows a flag as a file path (absolute, as run.sh passes it), parses that file as JSON and applies the same checks; an unreadable file or a missing flag fails. `env` values: a string (exact), `{"absent": true}`, or `{"regex": "re"}`.
 
 ## 8. Reporting
 

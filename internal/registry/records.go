@@ -75,6 +75,16 @@ type LaunchEvent struct {
 	// Package is what travelled with the launch beyond its own files; the key
 	// is left out when nothing did.
 	Package *Package `json:"package,omitempty"`
+	// Settings names the keys of the owner's user settings a claude launch
+	// copied and cut; the key is left out for a harness that takes none.
+	Settings *Settings `json:"settings,omitempty"`
+}
+
+// Settings is the settings key of a launch event: top-level key names only,
+// sorted, never a value.
+type Settings struct {
+	Copied []string `json:"copied"`
+	Cut    []string `json:"cut"`
 }
 
 // Package is the package key of a launch event.

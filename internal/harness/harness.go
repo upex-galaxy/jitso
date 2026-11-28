@@ -7,6 +7,7 @@ package harness
 import (
 	"fmt"
 	"io"
+	"io/fs"
 	"strings"
 
 	"github.com/upex-galaxy/jitso/internal/jsconv"
@@ -37,13 +38,39 @@ type Adapter interface {
 	Support() Support
 }
 
-// InboundSource is the optional part of an adapter whose launched session
-// reads none of the owner's user settings, so the owner's choice about messages
-// from other sessions has to travel with the launch.
-type InboundSource interface {
-	// OwnerInbound is that choice from the owner's user settings, "" for none,
-	// and a warning line for stderr, "" for none. It never fails a launch.
-	OwnerInbound(home string, lookupEnv func(string) (string, bool)) (value, warning string)
+// SettingsSource is the optional part of an adapter whose launched session
+// reads none of the owner's user settings, so what the owner chose there has
+// to travel with the launch.
+type SettingsSource interface {
+	// OwnerSettings reads the owner's user settings and returns what travels.
+	// It never fails a launch: a file it cannot use is an empty result, and a
+	// file that is not JSON also a warning line for stderr.
+	OwnerSettings(OwnerSettingsInput) OwnerSettings
+}
+
+// OwnerSettingsInput is where and how an adapter reads the owner's settings.
+type OwnerSettingsInput struct {
+	// Home is $HOME; LookupEnv is os.LookupEnv.
+	Home      string
+	LookupEnv func(string) (string, bool)
+	// Checkout is the checkout the worker goes into: the keys its own
+	// project settings define are the project's.
+	Checkout string
+	// Exclude and Include are the settings block of the owner's JITSO config:
+	// extra keys to cut, and cut keys to let travel.
+	Exclude, Include []string
+}
+
+// OwnerSettings is what travels from the owner's settings, as the adapter
+// writes it.
+type OwnerSettings struct {
+	// Doc is the top-level keys that travel, each with its value.
+	Doc map[string]any
+	// Copied and Cut are key names only, sorted: the keys of the owner's file
+	// that travel and the ones that do not. Never a value.
+	Copied, Cut []string
+	// Warning is one line for stderr, "" for none.
+	Warning string
 }
 
 // Support is what one harness can give a session.
@@ -84,9 +111,9 @@ type SpecInput struct {
 	// session name (claude and pi do; codex and opencode have none for their
 	// interactive session); "" passes nothing.
 	Name string
-	// CrossSessionInbound is what InboundSource returned for this launch, ""
-	// for none.
-	CrossSessionInbound string
+	// OwnerSettings is what SettingsSource returned for this launch, the
+	// zero value for none.
+	OwnerSettings OwnerSettings
 	// MCPConfigPath is the strict MCP file written for this launch.
 	MCPConfigPath string
 	// MCPNames are the servers the session gets, in order.
@@ -158,6 +185,8 @@ type File struct {
 	// Name is the path under the launch folder, with / separators.
 	Name string
 	Data []byte
+	// Mode is the permission bits of the file, 0 for 0644.
+	Mode fs.FileMode
 }
 
 // EnvVar is one exported variable.

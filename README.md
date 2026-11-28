@@ -62,7 +62,7 @@ The brief of a launch is checked for sections, length, language and cited paths,
 ## Names and messages between sessions
 
 - Each launch has a session name: `jitso launch --name <name>`, else the build id, with a suffix when a running launch already has it. Claude Code and Pi sessions start with that name, the card shows it, `jitso fleet` lists it, `jitso link` takes it, and the Orca tab is titled `<name> [jitso:<id>]`.
-- A launched Claude Code session reads no user settings. The launch copies one of them, `crossSessionInbound` (`accept`, `hold` or `refuse`), from the owner's `~/.claude/settings.json` (or the folder `CLAUDE_CONFIG_DIR` names) into the session's `--settings`, so the owner's choice about messages from other sessions holds there too. Nothing else of that file travels.
+- A launched Claude Code session reads project settings only. The launch copies the owner's `~/.claude/settings.json` (or the folder `CLAUDE_CONFIG_DIR` names) into a `settings.json` of its launch folder (mode `0600`) and passes it as `--settings`. Every top-level key travels except plugins and the other context keys, the model and effort, `permissions.defaultMode`, a few per-worker keys and the keys the project defines; the card line `settings copied: ... | cut: ...` and the registry list key names only, never a value. `~/.jitso/jitso.yaml` can cut more or let a key through (`docs/decisions.md`, Release 4).
 
 ## Launch into another repository
 

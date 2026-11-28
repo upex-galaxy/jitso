@@ -38,7 +38,7 @@
             "path": ".jitso/launches/{{LAUNCH_ID}}",
             "entries": [
               {
-                "equals": "brief.md\ncard.txt\nmcp.json\nrun.sh"
+                "equals": "brief.md\ncard.txt\nmcp.json\nrun.sh\nsettings.json"
               }
             ]
           }
@@ -75,7 +75,7 @@
           "argv_count": {
             "--add-dir": 0
           },
-          "json_arg_after": {
+          "json_file_after": {
             "--settings": [
               {
                 "path": "",

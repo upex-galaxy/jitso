@@ -46,6 +46,12 @@ type User struct {
 	// LiteralEnv are the <server>/<KEY> entries whose literal env or header
 	// value the owner declared not secret.
 	LiteralEnv []string
+	// SettingsExclude and SettingsInclude are the settings block of the
+	// file: extra top-level keys of the owner's Claude Code settings that
+	// never travel with a launch, and keys that travel although the launch
+	// would cut them. Names are not checked against any list of keys.
+	SettingsExclude []string
+	SettingsInclude []string
 	// Err is why the file is invalid. It fails only a command that needs the
 	// layer: one whose builds name a user-scope item.
 	Err error
@@ -88,7 +94,61 @@ func LoadUser(home string) User {
 	u.Skills = allowlist(m.Value("skills"))
 	u.MCP = allowlist(m.Value("mcp"))
 	u.LiteralEnv = jsconv.Strings(m.Value("literal_env"))
+	if problem := u.readSettings(m); problem != "" {
+		u.Err = userInvalid(problem)
+	}
 	return u
+}
+
+// readSettings reads the optional settings block: a mapping that holds only
+// exclude and include, each a list of text names. An absent or null block, and
+// an absent or null list, are empty. It returns the problem text, "" for none.
+func (u *User) readSettings(m *Map) string {
+	v, present := m.Get("settings")
+	if !present || v == nil {
+		return ""
+	}
+	block, ok := v.(*Map)
+	if !ok {
+		return "settings must be a mapping with exclude and include lists"
+	}
+	for _, key := range block.Keys() {
+		if key != "exclude" && key != "include" {
+			return "settings has an unknown key " + key + " (use exclude or include)"
+		}
+	}
+	for _, key := range []string{"exclude", "include"} {
+		names, ok := keyNames(block.Value(key))
+		if !ok {
+			return "settings." + key + " must be a list of key names"
+		}
+		if key == "exclude" {
+			u.SettingsExclude = names
+		} else {
+			u.SettingsInclude = names
+		}
+	}
+	return ""
+}
+
+// keyNames reads a list of text names; null and an absent key are no names.
+func keyNames(v any) ([]string, bool) {
+	if v == nil || v == jsconv.Undefined {
+		return nil, true
+	}
+	list, ok := v.([]any)
+	if !ok {
+		return nil, false
+	}
+	names := make([]string, 0, len(list))
+	for _, item := range list {
+		s, isText := item.(string)
+		if !isText {
+			return nil, false
+		}
+		names = append(names, s)
+	}
+	return names, true
 }
 
 func userInvalid(problem string) error {

@@ -37,6 +37,8 @@ type claudeCheck struct {
 	env          map[string]ValueMatcher
 	argAfter     map[string]TextMatcher
 	jsonArgAfter map[string][]JSONCheck
+	// jsonFileAfter checks the JSON file the argument after a flag names.
+	jsonFileAfter map[string][]JSONCheck
 }
 
 func parseClaudeCheck(v any, what string) (Check, error) {
@@ -44,10 +46,10 @@ func parseClaudeCheck(v any, what string) (Check, error) {
 	if err != nil {
 		return nil, err
 	}
-	if err := jsonx.Keys(obj, what, "ran", "program", "argv", "argv_contains", "argv_not_contains", "argv_count", "last_arg", "cwd", "env", "arg_after", "json_arg_after"); err != nil {
+	if err := jsonx.Keys(obj, what, "ran", "program", "argv", "argv_contains", "argv_not_contains", "argv_count", "last_arg", "cwd", "env", "arg_after", "json_arg_after", "json_file_after"); err != nil {
 		return nil, err
 	}
-	cc := claudeCheck{env: map[string]ValueMatcher{}, argAfter: map[string]TextMatcher{}, argvCount: map[string]int{}, jsonArgAfter: map[string][]JSONCheck{}}
+	cc := claudeCheck{env: map[string]ValueMatcher{}, argAfter: map[string]TextMatcher{}, argvCount: map[string]int{}, jsonArgAfter: map[string][]JSONCheck{}, jsonFileAfter: map[string][]JSONCheck{}}
 	if raw, ok := obj["ran"]; ok {
 		b, err := jsonx.Bool(raw, what+".ran")
 		if err != nil {
@@ -142,6 +144,17 @@ func parseClaudeCheck(v any, what string) (Check, error) {
 		}
 		for _, flag := range jsonx.SortedKeys(m) {
 			if cc.jsonArgAfter[flag], err = ParseJSONChecks(m[flag], what+".json_arg_after."+flag); err != nil {
+				return nil, err
+			}
+		}
+	}
+	if raw, ok := obj["json_file_after"]; ok {
+		m, err := jsonx.Object(raw, what+".json_file_after")
+		if err != nil {
+			return nil, err
+		}
+		for _, flag := range jsonx.SortedKeys(m) {
+			if cc.jsonFileAfter[flag], err = ParseJSONChecks(m[flag], what+".json_file_after."+flag); err != nil {
 				return nil, err
 			}
 		}
@@ -243,6 +256,25 @@ func (cc claudeCheck) evalDump(d ClaudeDump) []Failure {
 			continue
 		}
 		out = append(out, evalJSON("claude json_arg_after "+flag, cc.jsonArgAfter[flag], doc)...)
+	}
+	for _, flag := range jsonx.SortedKeys(cc.jsonFileAfter) {
+		what := "claude json_file_after " + flag
+		got, ok := argAfter(d.Argv, flag)
+		if !ok {
+			out = append(out, Failure{What: what, Expected: "a file path after the flag", Actual: argvText})
+			continue
+		}
+		data, err := os.ReadFile(got)
+		if err != nil {
+			out = append(out, Failure{What: what, Expected: "a readable file", Actual: err.Error()})
+			continue
+		}
+		doc, err := jsonx.Decode(data)
+		if err != nil {
+			out = append(out, Failure{What: what, Expected: "valid JSON in " + got, Actual: err.Error()})
+			continue
+		}
+		out = append(out, evalJSON(what, cc.jsonFileAfter[flag], doc)...)
 	}
 	return out
 }

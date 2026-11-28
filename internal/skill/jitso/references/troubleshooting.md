@@ -29,7 +29,7 @@ Two prefixes tell you whose problem it is. `JITSO REJECTED: <reason>` (exit 2) m
 | `brief file does not exist`, `brief path is not a regular file`, `brief path is empty or contains a NUL byte` | the `--brief` path is wrong |
 | `brief file is outside the allowed folders` | move the brief to `.jitso/briefs/` of the project |
 | `invalid value for --name` | 1 to 64 letters, digits, `.`, `_` or `-`, starting with a letter or digit |
-| `jitso: warning: <path> is not valid JSON, so the session gets no crossSessionInbound` | exit 0: the owner's Claude Code settings file is broken. Tell the human; the launch goes on without the key |
+| `jitso: warning: <path> is not valid JSON, so the session gets none of the settings in it` | exit 0: the owner's Claude Code settings file is broken. Tell the human; the launch goes on with only its own keys |
 | `unknown parent launch <id>` | `--parent` names an id that is not in `.jitso/launches.jsonl` |
 | `unknown launch <id>` (close) | the id is not in this project's log. Check the primary checkout's `.jitso/launches.jsonl` |
 | `usage: jitso close <launch_id>`, `usage: jitso reap [--run <run_id>]...`, `usage: jitso fleet [--json] [--all]`, `usage: jitso link <from> <to>`, `usage: jitso graph [--json] [--port <n>]` | the arguments are wrong. `close` and `reap` have no `--help`; `fleet`, `link` and `graph` print their usage line for it |

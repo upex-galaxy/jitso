@@ -94,7 +94,7 @@
               "regex": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
             }
           },
-          "json_arg_after": {
+          "json_file_after": {
             "--settings": [
               {
                 "path": "skipDangerousModePermissionPrompt",

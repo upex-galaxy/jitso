@@ -1,0 +1,154 @@
+{
+  "id": "launch/settings/user-guard-handler-is-removed",
+  "title": "the owner hooks travel, but a handler that runs the JITSO guard (bare word, quoted or absolute path) is removed, groups and events it empties are dropped, and the launch own guard groups follow the owner ones, so the guard never runs twice",
+  "source": [
+    "intended: docs/decisions.md, section Meant for v0.10.0"
+  ],
+  "intent": "A user who ran jitso init at user scope has the guard in the user settings; the launch brings its own copy.",
+  "tags": [
+    "posix"
+  ],
+  "project": {
+    "files": {
+      ".jitso/briefs/brief.md": {
+        "from": "brief.md"
+      }
+    }
+  },
+  "home": {
+    "files": {
+      ".claude/settings.json": "{\"hooks\":{\"PreToolUse\":[{\"matcher\":\"Bash\",\"hooks\":[{\"type\":\"command\",\"command\":\"jitso hook guard\"}]},{\"matcher\":\"Edit\",\"hooks\":[{\"type\":\"command\",\"command\":\"user-fmt\"},{\"type\":\"command\",\"command\":\"/usr/local/bin/jitso hook guard\"}]}],\"Stop\":[{\"hooks\":[{\"type\":\"command\",\"command\":\"'/opt/my bin/jitso' hook guard\"}]}],\"Notification\":[{\"hooks\":[{\"type\":\"command\",\"command\":\"notify-user\"}]}]}}"
+    }
+  },
+  "steps": [
+    {
+      "run": [
+        "launch",
+        "--build",
+        "haiku-explorer",
+        "--brief",
+        "{{PROJECT}}/.jitso/briefs/brief.md",
+        "--mode",
+        "direct"
+      ],
+      "capture": {
+        "LAUNCH_ID": {
+          "from": "stdout",
+          "regex": "JITSO (L\\d{8}T\\d{6}-[0-9a-f]{4})"
+        }
+      },
+      "expect": {
+        "exit": 0,
+        "stderr": [
+          {
+            "empty": true
+          }
+        ],
+        "files": [
+          {
+            "path": ".jitso/launches/{{LAUNCH_ID}}/settings.json",
+            "not_contains": [
+              "/opt/my bin",
+              "/usr/local/bin/jitso"
+            ]
+          }
+        ],
+        "registry": {
+          "count": 1,
+          "events": [
+            {
+              "at": 0,
+              "event": "launch",
+              "fields": {
+                "settings.copied": [
+                  "hooks"
+                ],
+                "settings.cut": []
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "exec": "run_sh",
+      "launch": "{{LAUNCH_ID}}",
+      "expect": {
+        "exit": 0,
+        "claude": {
+          "ran": true,
+          "argv_count": {
+            "--settings": 1
+          },
+          "arg_after": {
+            "--settings": "{{PROJECT}}/.jitso/launches/{{LAUNCH_ID}}/settings.json"
+          },
+          "json_file_after": {
+            "--settings": [
+              {
+                "path": "",
+                "keys_exact": [
+                  "skipDangerousModePermissionPrompt",
+                  "promptSuggestionEnabled",
+                  "hooks"
+                ]
+              },
+              {
+                "path": "hooks.PreToolUse.0.matcher",
+                "equals": "Edit"
+              },
+              {
+                "path": "hooks.PreToolUse.0.hooks.0.command",
+                "equals": "user-fmt"
+              },
+              {
+                "path": "hooks.PreToolUse.0.hooks.1",
+                "absent": true
+              },
+              {
+                "path": "hooks.PreToolUse.1.matcher",
+                "equals": "Bash"
+              },
+              {
+                "path": "hooks.PreToolUse.1.hooks.0.command",
+                "regex": "jitso' hook guard$"
+              },
+              {
+                "path": "hooks.PreToolUse.2.matcher",
+                "equals": "mcp__.*orca.*__.*"
+              },
+              {
+                "path": "hooks.PreToolUse.3",
+                "absent": true
+              },
+              {
+                "path": "hooks.Stop",
+                "absent": true
+              },
+              {
+                "path": "hooks.Notification.0.hooks.0.command",
+                "equals": "notify-user"
+              },
+              {
+                "path": "hooks.SessionEnd.0.hooks.0.command",
+                "regex": "jitso' hook guard$"
+              },
+              {
+                "path": "hooks.SessionEnd.1",
+                "absent": true
+              },
+              {
+                "path": "skipDangerousModePermissionPrompt",
+                "equals": true
+              },
+              {
+                "path": "promptSuggestionEnabled",
+                "equals": false
+              }
+            ]
+          }
+        }
+      }
+    }
+  ]
+}
