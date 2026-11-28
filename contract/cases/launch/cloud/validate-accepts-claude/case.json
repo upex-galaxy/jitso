@@ -1,0 +1,72 @@
+{
+  "id": "launch/cloud/validate-accepts-claude",
+  "title": "a claude build may name a cloud connector as mcp cloud:<name>, with no user allowlist or one that lists it, and validate never runs claude",
+  "source": [
+    "intended: docs/decisions.md, section Release 5 (supersedes the cloud refusal)"
+  ],
+  "project": {
+    "files": {
+      "jitso/builds/cloud-worker.yaml": {
+        "from": "cloud-worker.yaml"
+      }
+    }
+  },
+  "home": {
+    "files": {}
+  },
+  "steps": [
+    {
+      "run": [
+        "build",
+        "validate",
+        "cloud-worker"
+      ],
+      "expect": {
+        "exit": 0,
+        "stderr": [
+          {
+            "empty": true
+          }
+        ],
+        "stdout": [
+          {
+            "equals": "ok cloud-worker repo jitso/builds/cloud-worker.yaml\nchecked 1 builds: 1 ok, 0 invalid\n"
+          }
+        ],
+        "claude": {
+          "ran": false
+        }
+      }
+    },
+    {
+      "write": {
+        "home": {
+          ".jitso/jitso.yaml": "version: 1\nmcp: ['cloud:Supabase']\n"
+        }
+      }
+    },
+    {
+      "run": [
+        "build",
+        "validate",
+        "cloud-worker"
+      ],
+      "expect": {
+        "exit": 0,
+        "stderr": [
+          {
+            "empty": true
+          }
+        ],
+        "stdout": [
+          {
+            "equals": "ok cloud-worker repo jitso/builds/cloud-worker.yaml\nchecked 1 builds: 1 ok, 0 invalid\n"
+          }
+        ],
+        "claude": {
+          "ran": false
+        }
+      }
+    }
+  ]
+}

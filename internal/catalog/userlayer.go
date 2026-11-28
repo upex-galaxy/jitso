@@ -223,6 +223,20 @@ func IsScoped(name string) bool {
 	return scoped
 }
 
+// ScopeCloud is the scope of a claude.ai connector, cloud:<name>, an item of
+// mcp only.
+const ScopeCloud = "cloud"
+
+// CloudName is the connector name of a cloud:<name> item, and false for any
+// other. The name may be empty: the validator reports that.
+func CloudName(name string) (string, bool) {
+	scope, rest, scoped := SplitScope(name)
+	if !scoped || scope != ScopeCloud {
+		return "", false
+	}
+	return rest, true
+}
+
 // UserName is the name of a user:<name> item, and false for any other.
 func UserName(name string) (string, bool) {
 	scope, rest, scoped := SplitScope(name)
@@ -239,15 +253,13 @@ func plainName(name string) bool {
 }
 
 // namesUser reports whether a decoded build names a user:<name> item in
-// skills_first or mcp: the builds that need the user layer.
+// skills_first or mcp, or a cloud:<name> item in mcp (it is checked against the
+// same allowlist): the builds that need the user layer.
 func namesUser(p *Map) bool {
 	isUser := func(name string) bool { _, ok := UserName(name); return ok }
-	for _, key := range []string{"skills_first", "mcp"} {
-		if slices.ContainsFunc(jsconv.Strings(p.Value(key)), isUser) {
-			return true
-		}
-	}
-	return false
+	isCloud := func(name string) bool { _, ok := CloudName(name); return ok }
+	return slices.ContainsFunc(jsconv.Strings(p.Value("skills_first")), isUser) ||
+		slices.ContainsFunc(jsconv.Strings(p.Value("mcp")), func(n string) bool { return isUser(n) || isCloud(n) })
 }
 
 // projectSkillDirs are the names of the folders under .agents/skills and
@@ -315,13 +327,31 @@ func scopedSkillProblem(item string, cfg Config) string {
 	return ""
 }
 
+// cloudMCPProblem is the problem of one cloud:<name> mcp item, "" for none. A
+// connector is not checked against the machine here (that needs claude and is
+// done at launch); the name must not be empty and, when the user allowlist
+// lists mcp, the item as written must be listed (DECIDED: with its scope, so a
+// connector never shares an entry with a user server of the same name).
+func cloudMCPProblem(item, name string, cfg Config) string {
+	u := cfg.User
+	switch {
+	case strings.TrimSpace(name) == "":
+		return `mcp "` + item + `": a claude.ai connector needs a name (cloud:<name>)`
+	case u.Err != nil:
+		return strings.TrimPrefix(u.Err.Error(), fail.EnvPrefix)
+	case !Open(u.MCP) && !slices.Contains(u.MCP, item):
+		return `mcp "` + item + `" is not in the user allowlist (` + UserConfigDisplay + `)`
+	}
+	return ""
+}
+
 // scopedMCPProblem is the problem of one scoped mcp item, "" for none.
 func scopedMCPProblem(item string, cfg Config) string {
 	scope, name, _ := SplitScope(item)
 	switch scope {
 	case ScopeUser:
-	case "cloud":
-		return `mcp "` + item + `": cloud connectors cannot be given to a launched session yet`
+	case ScopeCloud:
+		return cloudMCPProblem(item, name, cfg)
 	default:
 		return `mcp "` + item + `": unknown scope (use user:)`
 	}

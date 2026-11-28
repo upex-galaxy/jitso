@@ -73,6 +73,54 @@ type OwnerSettings struct {
 	Warning string
 }
 
+// UserLayerSource is the optional part of an adapter that can start a session
+// with its user settings layer on (Claude Code with claude.ai connectors): the
+// owner's own settings then apply as they are, so what travels with the launch
+// is a set of overrides that cuts the owner's context, never a copy.
+type UserLayerSource interface {
+	UserLayer(UserLayerInput) UserLayer
+}
+
+// CloudConnector is one claude.ai connector a launch loads.
+type CloudConnector struct {
+	// Name is the name as the build writes it after cloud:.
+	Name string
+	// URL is the address `claude mcp list` printed for it.
+	URL string
+}
+
+// UserLayerInput is what an adapter needs to cut the user layer of one launch.
+type UserLayerInput struct {
+	// Home is $HOME; LookupEnv is os.LookupEnv.
+	Home      string
+	LookupEnv func(string) (string, bool)
+	// Checkout is the checkout the worker goes into: the skills it owns stay
+	// visible.
+	Checkout string
+	// Servers are the names of the MCP servers of the launch's own mcp file,
+	// as the session sees them; Connectors the claude.ai connectors to load.
+	Servers    []string
+	Connectors []CloudConnector
+	// KeepSkills are the skills the session must keep: the ones the launch
+	// carries.
+	KeepSkills []string
+}
+
+// UserLayer is the overrides of a launch that reads the user settings layer.
+type UserLayer struct {
+	// Doc is the top-level keys of the overrides, each with its value.
+	Doc map[string]any
+	// Overrides are the key names of Doc, sorted. Never a value.
+	Overrides []string
+	// Cloud are the connector names as the build wrote them, in order.
+	Cloud []string
+	// GuardRegistered is true when the owner's user settings already register
+	// the guard on all its slots.
+	GuardRegistered bool
+	// Warning is one line for stderr, "" for none.
+	Warning string
+}
+
 // Support is what one harness can give a session.
 type Support struct {
 	// Subagents: the session can get the build's subagents.
@@ -86,6 +134,9 @@ type Support struct {
 	MCP bool
 	// UserMCP: a user:<name> server can travel.
 	UserMCP bool
+	// CloudMCP: a cloud:<name> claude.ai connector can be loaded
+	// (UserLayerSource).
+	CloudMCP bool
 	// PackageFlag is how the launch package folder reaches the session, as
 	// the package.flag of the launch event: add-dir, skill or config. "" means
 	// the harness cannot load skills from it: a user:<name> skill is
@@ -114,6 +165,10 @@ type SpecInput struct {
 	// OwnerSettings is what SettingsSource returned for this launch, the
 	// zero value for none.
 	OwnerSettings OwnerSettings
+	// UserLayer is set when the launch loads claude.ai connectors: the
+	// session reads the user settings layer and these are the overrides.
+	// OwnerSettings is then empty.
+	UserLayer *UserLayer
 	// MCPConfigPath is the strict MCP file written for this launch.
 	MCPConfigPath string
 	// MCPNames are the servers the session gets, in order.

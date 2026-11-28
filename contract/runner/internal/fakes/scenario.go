@@ -44,6 +44,10 @@ type ClaudeScenario struct {
 	Exit int `json:"exit"`
 	// Missing leaves `claude` off PATH: the runner does not install the fake.
 	Missing bool `json:"missing"`
+	// MCPList is what `claude mcp list` prints on stdout, MCPListExit the code
+	// it exits with.
+	MCPList     string `json:"mcp_list"`
+	MCPListExit int    `json:"mcp_list_exit"`
 }
 
 // ParseClaudeScenario reads the case field `claude` (nil = absent).
@@ -56,7 +60,7 @@ func ParseClaudeScenario(v any) (ClaudeScenario, error) {
 	if err != nil {
 		return cs, err
 	}
-	if err := jsonx.Keys(obj, "claude", "exit", "missing"); err != nil {
+	if err := jsonx.Keys(obj, "claude", "exit", "missing", "mcp_list", "mcp_list_exit"); err != nil {
 		return cs, err
 	}
 	if raw, ok := obj["exit"]; ok {
@@ -72,8 +76,21 @@ func ParseClaudeScenario(v any) (ClaudeScenario, error) {
 			return cs, err
 		}
 	}
-	if cs.Missing && cs.Exit != 0 {
-		return cs, fmt.Errorf("claude: missing and exit exclude each other")
+	if raw, ok := obj["mcp_list"]; ok {
+		if cs.MCPList, err = jsonx.String(raw, "claude.mcp_list"); err != nil {
+			return cs, err
+		}
+	}
+	if raw, ok := obj["mcp_list_exit"]; ok {
+		if cs.MCPListExit, err = jsonx.Int(raw, "claude.mcp_list_exit"); err != nil {
+			return cs, err
+		}
+		if cs.MCPListExit < 0 || cs.MCPListExit > 255 {
+			return cs, fmt.Errorf("claude.mcp_list_exit: want 0 to 255, got %d", cs.MCPListExit)
+		}
+	}
+	if cs.Missing && (cs.Exit != 0 || cs.MCPList != "" || cs.MCPListExit != 0) {
+		return cs, fmt.Errorf("claude: missing excludes exit, mcp_list and mcp_list_exit")
 	}
 	return cs, nil
 }

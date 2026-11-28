@@ -1,0 +1,74 @@
+{
+  "id": "launch/cloud/validate-allowlist-restricts",
+  "title": "when the user allowlist lists mcp, a cloud connector must be listed with its scope, as cloud:<name>",
+  "source": [
+    "intended: docs/decisions.md, section Release 5"
+  ],
+  "project": {
+    "files": {
+      "jitso/builds/cloud-worker.yaml": {
+        "from": "cloud-worker.yaml"
+      }
+    }
+  },
+  "home": {
+    "files": {
+      ".jitso/jitso.yaml": "version: 1\nmcp: [engram, Supabase]\n"
+    }
+  },
+  "steps": [
+    {
+      "run": [
+        "build",
+        "validate",
+        "cloud-worker"
+      ],
+      "expect": {
+        "exit": 2,
+        "stderr": [
+          {
+            "empty": true
+          }
+        ],
+        "stdout": [
+          {
+            "equals": "invalid cloud-worker repo jitso/builds/cloud-worker.yaml\n  mcp \"cloud:Supabase\" is not in the user allowlist (~/.jitso/jitso.yaml)\nchecked 1 builds: 0 ok, 1 invalid\n"
+          }
+        ],
+        "claude": {
+          "ran": false
+        }
+      }
+    },
+    {
+      "write": {
+        "home": {
+          ".jitso/jitso.yaml": "version: 1\nmcp: [engram, 'cloud:Supabase']\n"
+        }
+      }
+    },
+    {
+      "run": [
+        "build",
+        "validate",
+        "cloud-worker"
+      ],
+      "expect": {
+        "exit": 0,
+        "stderr": [
+          {
+            "empty": true
+          }
+        ],
+        "stdout": [
+          {
+            "equals": "ok cloud-worker repo jitso/builds/cloud-worker.yaml\nchecked 1 builds: 1 ok, 0 invalid\n"
+          }
+        ],
+        "claude": {
+          "ran": false
+        }
+      }
+    }
+  ]
+}

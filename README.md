@@ -56,7 +56,8 @@ The brief of a launch is checked for sections, length, language and cited paths,
 - `jitso setup hook --scope user` guards the owner's own session, which JITSO does not launch. It registers the same guard in `~/.claude/settings.json` and prints nothing in a folder without `jitso/jitso.yaml`.
 - A build names a user skill or user MCP server, one that lives outside the project, as `user:<name>`; a plain name never resolves there. `~/.jitso/jitso.yaml` is the owner's optional allowlist for them: an absent or empty list is open. A launch copies the skill into its package and the server into its `mcp.json`, with variable references only, never a literal secret.
 - `jitso arsenal` lists what a build may name in the project, and `jitso arsenal --all` adds what exists on the machine but a restricting allowlist leaves out.
-- Refused for now: claude.ai connectors (`cloud:`), servers that use OAuth, and any literal secret value of a user server.
+- A claude build may list a claude.ai connector as `cloud:<name>` in `mcp`. Only such a launch reads the owner's user settings layer and cuts the rest of the owner's context with a settings file of overrides; claude.ai skills and the MCP servers of built-in plugins cannot be cut.
+- Refused for now: servers that use OAuth, and any literal secret value of a user server.
 - `jitso install skill --scope project`, `jitso setup hook` and `jitso setup instructions` stay available for a project that wants the files in its own checkout. [`docs/build-schema.md`](docs/build-schema.md) has the user allowlist and its texts.
 
 ## Names and messages between sessions

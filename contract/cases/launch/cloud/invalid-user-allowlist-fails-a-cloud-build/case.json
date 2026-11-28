@@ -1,0 +1,36 @@
+{
+  "id": "launch/cloud/invalid-user-allowlist-fails-a-cloud-build",
+  "title": "a build that names a cloud connector needs the user allowlist like a user item: an invalid ~/.jitso/jitso.yaml fails it",
+  "source": [
+    "intended: docs/decisions.md, section Release 5"
+  ],
+  "project": {
+    "files": {
+      "jitso/builds/cloud-worker.yaml": {
+        "from": "cloud-worker.yaml"
+      }
+    }
+  },
+  "home": {
+    "files": {
+      ".jitso/jitso.yaml": "version: 1\nmcp: {not: a list\n"
+    }
+  },
+  "steps": [
+    {
+      "run": [
+        "build",
+        "validate",
+        "cloud-worker"
+      ],
+      "expect": {
+        "exit_not": 0,
+        "stderr": [
+          {
+            "contains": "~/.jitso/jitso.yaml is invalid"
+          }
+        ]
+      }
+    }
+  ]
+}

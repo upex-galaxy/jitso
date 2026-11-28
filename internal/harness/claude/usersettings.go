@@ -43,6 +43,21 @@ var (
 
 var _ harness.SettingsSource = Adapter{}
 
+// configDir is the folder Claude Code keeps the user configuration in:
+// CLAUDE_CONFIG_DIR when that is set and not empty, else <home>/.claude, and ""
+// without a home (a relative path would be the project's own file).
+func configDir(home string, lookup func(string) (string, bool)) string {
+	if lookup != nil {
+		if dir, _ := lookup(ConfigDirEnv); dir != "" {
+			return dir
+		}
+	}
+	if home == "" {
+		return ""
+	}
+	return filepath.Join(home, ".claude")
+}
+
 // OwnerSettings reads the owner's user settings (settings.json of
 // CLAUDE_CONFIG_DIR when that is set and not empty, else of <home>/.claude)
 // and the keys the checkout's own .claude/settings.json defines, and returns
@@ -52,13 +67,9 @@ var _ harness.SettingsSource = Adapter{}
 // quotes nothing of it. The checkout's .claude/settings.local.json is never
 // opened.
 func (Adapter) OwnerSettings(in harness.OwnerSettingsInput) harness.OwnerSettings {
-	dir, _ := in.LookupEnv(ConfigDirEnv)
+	dir := configDir(in.Home, in.LookupEnv)
 	if dir == "" {
-		// Without a home the relative path would be the project's own file.
-		if in.Home == "" {
-			return harness.OwnerSettings{}
-		}
-		dir = filepath.Join(in.Home, ".claude")
+		return harness.OwnerSettings{}
 	}
 	path := filepath.Join(dir, "settings.json")
 	user, valid := readObject(path)

@@ -1,0 +1,42 @@
+{
+  "id": "launch/cloud/validate-needs-a-name",
+  "title": "cloud: without a name is a validation problem",
+  "source": [
+    "intended: docs/decisions.md, section Release 5"
+  ],
+  "project": {
+    "files": {
+      "jitso/builds/cloud-worker.yaml": {
+        "from": "cloud-worker.yaml"
+      }
+    }
+  },
+  "home": {
+    "files": {}
+  },
+  "steps": [
+    {
+      "run": [
+        "build",
+        "validate",
+        "cloud-worker"
+      ],
+      "expect": {
+        "exit": 2,
+        "stderr": [
+          {
+            "empty": true
+          }
+        ],
+        "stdout": [
+          {
+            "equals": "invalid cloud-worker repo jitso/builds/cloud-worker.yaml\n  mcp \"cloud:\": a claude.ai connector needs a name (cloud:<name>)\nchecked 1 builds: 0 ok, 1 invalid\n"
+          }
+        ],
+        "claude": {
+          "ran": false
+        }
+      }
+    }
+  ]
+}

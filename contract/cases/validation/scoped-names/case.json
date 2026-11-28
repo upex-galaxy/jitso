@@ -2,7 +2,7 @@
   "id": "validation/scoped-names",
   "title": "each way a scoped name in skills_first or mcp can fail validation has its own problem text",
   "source": [
-    "intended: JITSO v0.2 plan 2.1 (validation texts of scoped names); cloud: names are out of v0.2"
+    "intended: JITSO v0.2 plan 2.1 (validation texts of scoped names)"
   ],
   "intent": "The user allowlist approves humanizer, nofile and sprint-testing as skills and engram, undefined and dbhub as servers. Only humanizer and sprint-testing have a SKILL.md, only engram and dbhub are defined in ~/.claude.json. sprint-testing and dbhub are also project names, which a user item may not take.",
   "for_each": {
@@ -20,7 +20,7 @@
       "mcp-not-allowlisted",
       "mcp-not-defined",
       "mcp-named-like-a-project-server",
-      "mcp-cloud-scope",
+      "mcp-cloud-not-allowlisted",
       "mcp-unknown-scope"
     ],
     "rows": [
@@ -67,7 +67,7 @@
       [
         "mcp",
         "cloud:Slack",
-        "mcp \"cloud:Slack\": cloud connectors cannot be given to a launched session yet"
+        "mcp \"cloud:Slack\" is not in the user allowlist (~/.jitso/jitso.yaml)"
       ],
       [
         "mcp",

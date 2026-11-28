@@ -45,7 +45,8 @@ func Problems(b *catalog.Build, cat *catalog.Catalog) []string {
 // line each, naming the harness, in this order: subagents, tools, agents_md,
 // skills_first (a user:<name> skill when the harness loads no skill from the
 // launch package), mcp (any server when it takes none, else a user:<name>
-// server when it takes no user server). An adapter never drops a field it
+// server when it takes no user server, and a cloud:<name> connector when it
+// loads no claude.ai connector). An adapter never drops a field it
 // cannot honor, so launch rejects these and build validate reports them.
 func SupportProblems(b *catalog.Build, a harness.Adapter) []string {
 	s := a.Support()
@@ -67,13 +68,15 @@ func SupportProblems(b *catalog.Build, a harness.Adapter) []string {
 			}
 		}
 	}
-	switch {
-	case !s.MCP && len(b.MCP) > 0:
+	if !s.MCP && len(b.MCP) > 0 {
 		problems = append(problems, h+" cannot give a session MCP servers")
-	case !s.UserMCP:
+	} else {
 		for _, item := range b.MCP {
-			if _, ok := catalog.UserName(item); ok {
+			if _, ok := catalog.UserName(item); ok && !s.UserMCP {
 				problems = append(problems, h+` cannot give a session the user mcp server "`+item+`"`)
+			}
+			if _, ok := catalog.CloudName(item); ok && !s.CloudMCP {
+				problems = append(problems, h+` cannot give a session the claude.ai connector "`+item+`"`)
 			}
 		}
 	}

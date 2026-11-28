@@ -165,7 +165,7 @@ func Collect(fsys fs.FS, primary, home string, target *Target) (Inventory, error
 			}
 		}
 	}
-	candidate("cloud", "connectors", "listed by your own session (/mcp); a launched session cannot get them yet")
+	candidate("cloud", "connectors", "name one cloud:<name> in a claude build; claude mcp list prints the names")
 	return inv, nil
 }
 

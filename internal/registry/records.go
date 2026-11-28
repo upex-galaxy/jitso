@@ -81,10 +81,44 @@ type LaunchEvent struct {
 }
 
 // Settings is the settings key of a launch event: top-level key names only,
-// sorted, never a value.
+// sorted, never a value. A copy launch writes {"copied", "cut"}; a launch that
+// reads the user settings layer (claude.ai connectors) writes {"mode":
+// "user-layer", "overrides", "cloud"}, set by Mode.
 type Settings struct {
-	Copied []string `json:"copied"`
-	Cut    []string `json:"cut"`
+	Copied []string
+	Cut    []string
+	// Mode is ModeUserLayer, or "" for a copy launch.
+	Mode string
+	// Overrides are the keys of the settings file of a user-layer launch, and
+	// Cloud the connector names it loads.
+	Overrides []string
+	Cloud     []string
+}
+
+// ModeUserLayer is the mode of a launch whose session reads the user settings
+// layer.
+const ModeUserLayer = "user-layer"
+
+// MarshalJSON writes the shape of the launch's mode.
+func (s Settings) MarshalJSON() ([]byte, error) {
+	if s.Mode == ModeUserLayer {
+		return json.Marshal(struct {
+			Mode      string   `json:"mode"`
+			Overrides []string `json:"overrides"`
+			Cloud     []string `json:"cloud"`
+		}{s.Mode, nonNil(s.Overrides), nonNil(s.Cloud)})
+	}
+	return json.Marshal(struct {
+		Copied []string `json:"copied"`
+		Cut    []string `json:"cut"`
+	}{nonNil(s.Copied), nonNil(s.Cut)})
+}
+
+func nonNil(list []string) []string {
+	if list == nil {
+		return []string{}
+	}
+	return list
 }
 
 // Package is the package key of a launch event.

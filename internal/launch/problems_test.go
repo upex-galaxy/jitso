@@ -48,17 +48,20 @@ func TestProblems(t *testing.T) {
 	}
 	subagent := "id: cand\nversion: 1\nstatus: candidate\ntier: subagent\ndescription: d\nprompt: p\nmodel: claude-haiku-5-5\neffort: low\n"
 	builds := map[string]string{
-		"cand.yaml":        subagent,
-		"fine.yaml":        worker(t, "fine", nil),
-		"no-budget.yaml":   worker(t, "no-budget", map[string]string{"budget:": ""}),
-		"odd-harness.yaml": worker(t, "odd-harness", map[string]string{"harness:": "harness: other"}),
-		"no-harness.yaml":  worker(t, "no-harness", map[string]string{"harness:": ""}),
-		"lists-cand.yaml":  worker(t, "lists-cand", map[string]string{"mcp:": "subagents: [cand, plan]\nmcp: []"}),
-		"every-rule.yaml":  worker(t, "every-rule", map[string]string{"harness:": "harness: other", "mcp:": "subagents: [cand]\nmcp: []"}),
-		"pi-fine.yaml":     worker(t, "pi-fine", map[string]string{"harness:": "harness: pi"}),
-		"pi-asks.yaml":     worker(t, "pi-asks", map[string]string{"harness:": "harness: pi", "mcp:": "subagents: [cand]\nmcp: [dbhub]"}),
-		"codex-asks.yaml":  worker(t, "codex-asks", map[string]string{"harness:": "harness: codex"}),
-		"opencode-ok.yaml": worker(t, "opencode-ok", map[string]string{"harness:": "harness: opencode", "agents_md:": "agents_md: full", "tools:": ""}),
+		"cand.yaml":         subagent,
+		"fine.yaml":         worker(t, "fine", nil),
+		"no-budget.yaml":    worker(t, "no-budget", map[string]string{"budget:": ""}),
+		"odd-harness.yaml":  worker(t, "odd-harness", map[string]string{"harness:": "harness: other"}),
+		"no-harness.yaml":   worker(t, "no-harness", map[string]string{"harness:": ""}),
+		"lists-cand.yaml":   worker(t, "lists-cand", map[string]string{"mcp:": "subagents: [cand, plan]\nmcp: []"}),
+		"every-rule.yaml":   worker(t, "every-rule", map[string]string{"harness:": "harness: other", "mcp:": "subagents: [cand]\nmcp: []"}),
+		"pi-fine.yaml":      worker(t, "pi-fine", map[string]string{"harness:": "harness: pi"}),
+		"pi-asks.yaml":      worker(t, "pi-asks", map[string]string{"harness:": "harness: pi", "mcp:": "subagents: [cand]\nmcp: [dbhub]"}),
+		"codex-asks.yaml":   worker(t, "codex-asks", map[string]string{"harness:": "harness: codex"}),
+		"codex-cloud.yaml":  worker(t, "codex-cloud", map[string]string{"harness:": "harness: codex", "tools:": "", "mcp:": "mcp: [dbhub, 'cloud:Atlas']"}),
+		"pi-cloud.yaml":     worker(t, "pi-cloud", map[string]string{"harness:": "harness: pi", "mcp:": "mcp: ['cloud:Atlas']"}),
+		"claude-cloud.yaml": worker(t, "claude-cloud", map[string]string{"mcp:": "mcp: [dbhub, 'cloud:Atlas']"}),
+		"opencode-ok.yaml":  worker(t, "opencode-ok", map[string]string{"harness:": "harness: opencode", "agents_md:": "agents_md: full", "tools:": ""}),
 	}
 	for name, text := range builds {
 		if err := os.WriteFile(filepath.Join(root, "jitso", "builds", name), []byte(text), 0o644); err != nil {
@@ -97,6 +100,9 @@ func TestProblems(t *testing.T) {
 		}},
 		{"codex-asks", []string{`harness "codex" cannot limit the tools of a session`}},
 		{"opencode-ok", nil},
+		{"claude-cloud", nil},
+		{"codex-cloud", []string{`harness "codex" cannot give a session the claude.ai connector "cloud:Atlas"`}},
+		{"pi-cloud", []string{`harness "pi" cannot give a session MCP servers`}},
 	}
 	for _, tt := range tests {
 		t.Run(tt.id, func(t *testing.T) {

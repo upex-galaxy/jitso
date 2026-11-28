@@ -322,9 +322,23 @@ func namesOrNone(names []string) string {
 	return strings.Join(names, ",")
 }
 
+// UserLayerNote is the line a launch that reads the user settings layer
+// prints after its settings line.
+const UserLayerNote = "jitso: note: this session reads your user settings layer; claude.ai skills and MCP servers of built-in plugins cannot be cut"
+
+// UserLayerLine is the settings line of a launch that loads claude.ai
+// connectors: the connectors and the names of the keys its settings file
+// overrides, never a value.
+func UserLayerLine(cloud, overrides []string) string {
+	return "settings: user layer (cloud connectors: " + namesOrNone(cloud) + "); overrides: " + namesOrNone(overrides)
+}
+
 // settingsRef is the settings key of the launch event, nil for a harness that
 // takes no owner settings.
-func settingsRef(s *harness.OwnerSettings) *registry.Settings {
+func settingsRef(s *harness.OwnerSettings, layer *harness.UserLayer) *registry.Settings {
+	if layer != nil {
+		return &registry.Settings{Mode: registry.ModeUserLayer, Overrides: append([]string{}, layer.Overrides...), Cloud: append([]string{}, layer.Cloud...)}
+	}
 	if s == nil {
 		return nil
 	}

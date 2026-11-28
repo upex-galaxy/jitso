@@ -77,6 +77,18 @@ func Rejectedf(format string, args ...any) *Error {
 	return Rejected(fmt.Sprintf(format, args...))
 }
 
+// RejectedEnv is a rejection of something the machine decides, not the build
+// or the command line: the text of a rejection ("JITSO REJECTED: <reason>"),
+// the exit code of an environment error (3).
+func RejectedEnv(reason string) *Error {
+	return &Error{Kind: KindRejected, Msg: reason, code: CodeEnv}
+}
+
+// RejectedEnvf is RejectedEnv with a format.
+func RejectedEnvf(format string, args ...any) *Error {
+	return RejectedEnv(fmt.Sprintf(format, args...))
+}
+
 // Usage is a usage error: exit 2, the text printed as is.
 func Usage(text string) *Error {
 	return &Error{Kind: KindUsage, Msg: text, code: CodeRejected}

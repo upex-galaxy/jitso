@@ -1,0 +1,127 @@
+{
+  "id": "launch/cloud/argv-user-layer",
+  "title": "a launch with a cloud connector starts claude with the user layer as a setting source, no strict MCP config, the build's own servers in the MCP file and the overrides in the settings file",
+  "source": [
+    "intended: docs/decisions.md, section Release 5"
+  ],
+  "intent": "Measured: claude.ai connectors load only when --setting-sources includes user, and --strict-mcp-config would cut them. mcp.json keeps the build's own servers and never names the connector. Asking claude for its connector list is the only call claude gets from jitso itself.",
+  "tags": [
+    "posix"
+  ],
+  "project": {
+    "files": {
+      ".jitso/briefs/brief.md": {
+        "from": "brief.md"
+      },
+      "jitso/builds/cloud-worker.yaml": {
+        "from": "cloud-worker.yaml"
+      }
+    }
+  },
+  "home": {
+    "files": {
+      ".claude/settings.json": "{\"enabledPlugins\":{\"plug-one@market\":true,\"plug-two@market\":false},\"env\":{\"OWNER_TOKEN\":\"sentinel-env\"},\"hooks\":{\"Stop\":[{\"hooks\":[{\"type\":\"command\",\"command\":\"sentinel-hook\"}]}]},\"language\":\"sentinel-lang\",\"askUserQuestionTimeout\":\"sentinel-timeout\",\"permissions\":{\"allow\":[\"Bash(sentinel:*)\"]}}",
+      ".claude/CLAUDE.md": "# Owner notes\n\nsentinel-claude-md\n@~/notes/extra.md\n@rules/style.md\n@missing.md\nSee `@not-an-import.md` here.\n```\n@in-fence.md\n```\n",
+      "notes/extra.md": "imported, absolute through ~\n",
+      ".claude/rules/style.md": "imported, relative\n",
+      ".claude/in-fence.md": "not an import\n",
+      ".claude/not-an-import.md": "not an import\n",
+      ".claude/skills/alpha/SKILL.md": "---\nname: alpha\ndescription: Alpha.\n---\n\nBody.\n",
+      ".claude/skills/humanizer/SKILL.md": "---\nname: humanizer\ndescription: Make text read human.\n---\n\nBody.\n",
+      ".agents/skills/beta/SKILL.md": "---\nname: beta\ndescription: Beta.\n---\n\nBody.\n",
+      ".claude/agents/planner.md": "---\nname: plan-boss\ndescription: Plans.\n---\n\nsentinel-agent-body\n",
+      ".claude/agents/reviewer.md": "Reviews things.\n"
+    }
+  },
+  "claude": {
+    "mcp_list": "Checking MCP server health...\n\nplugin:easel:easel: easel-sentinel-cmd --serve - ✓ Connected\nclaude.ai Supabase: https://mcp.supabase.com/mcp - ✓ Connected\nclaude.ai Slack: https://mcp.slack.invalid/mcp - ! Needs authentication\nclaude.ai Google Drive: https://drivemcp.invalid/mcp - ✓ Connected\ndbhub: fixture-dbhub-sentinel-cmd --token sentinel-arg - ✓ Connected\n"
+  },
+  "steps": [
+    {
+      "run": [
+        "launch",
+        "--build",
+        "cloud-worker",
+        "--brief",
+        "{{PROJECT}}/.jitso/briefs/brief.md",
+        "--mode",
+        "direct"
+      ],
+      "capture": {
+        "LAUNCH_ID": {
+          "from": "stdout",
+          "regex": "JITSO (L\\d{8}T\\d{6}-[0-9a-f]{4})"
+        }
+      },
+      "expect": {
+        "exit": 0,
+        "stderr": [
+          {
+            "empty": true
+          }
+        ],
+        "claude": {
+          "ran": true,
+          "program": "claude",
+          "argv": [
+            "mcp",
+            "list"
+          ]
+        }
+      }
+    },
+    {
+      "exec": "run_sh",
+      "launch": "{{LAUNCH_ID}}",
+      "expect": {
+        "exit": 0,
+        "claude": {
+          "ran": true,
+          "argv": [
+            "--dangerously-skip-permissions",
+            "--setting-sources",
+            "user,project",
+            "--settings",
+            "{{PROJECT}}/.jitso/launches/{{LAUNCH_ID}}/settings.json",
+            "--mcp-config",
+            "{{PROJECT}}/.jitso/launches/{{LAUNCH_ID}}/mcp.json",
+            "--model",
+            "claude-haiku-5-5",
+            "--effort",
+            "low",
+            "--session-id",
+            {
+              "regex": "^[0-9a-f]{8}-[0-9a-f]{4}-"
+            },
+            "--name",
+            {
+              "regex": "^cloud-worker"
+            },
+            {
+              "regex": "^Read .+/brief\\.md and follow it exactly\\.\\nROUTE-SCOPE: none$"
+            }
+          ],
+          "argv_not_contains": [
+            "--strict-mcp-config"
+          ],
+          "json_file_after": {
+            "--mcp-config": [
+              {
+                "path": "",
+                "keys_exact": [
+                  "mcpServers"
+                ]
+              },
+              {
+                "path": "mcpServers",
+                "keys_exact": [
+                  "dbhub"
+                ]
+              }
+            ]
+          }
+        }
+      }
+    }
+  ]
+}

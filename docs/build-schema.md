@@ -111,10 +111,14 @@ Same YAML subset as `jitso/jitso.yaml`. A build names an item of this file with 
 | `user:<n>` server not under `mcpServers` of `~/.claude.json` | `user mcp "<n>" is not defined in ~/.claude.json` |
 | `user:<n>` server with a literal `env` or `headers` value whose `<n>/<KEY>` is not in `literal_env` | `user mcp "<n>" has a literal value in env <KEY>: use ${VAR}, or list <n>/<KEY> in literal_env of ~/.jitso/jitso.yaml` (`in headers <KEY>` for a header) |
 | `user:<n>` server with an `oauth` key | `user mcp "<n>" uses OAuth, which a launch cannot carry` |
-| `cloud:<n>` server | `mcp "cloud:<n>": cloud connectors cannot be given to a launched session yet` |
+| `cloud:<n>` with no name | `mcp "cloud:": a claude.ai connector needs a name (cloud:<name>)` |
+| `cloud:<n>` connector not in a restricting `mcp` (the entry is written `cloud:<n>`) | `mcp "cloud:<n>" is not in the user allowlist (~/.jitso/jitso.yaml)` |
+| `cloud:<n>` connector in a build whose harness is not `claude` | `harness "<id>" cannot give a session the claude.ai connector "cloud:<n>"` (`harness "<id>" cannot give a session MCP servers` for a harness with no MCP) |
 | any other scope | `skill "<scope>:<n>": unknown scope (use user:)`, `mcp "<scope>:<n>": unknown scope (use user:)` |
 
 A launch copies each `user:` skill into its own folder, `.jitso/launches/<id>/pkg/.claude/skills/<n>/`, and passes that folder to the session, which lists the skill by its plain name; a skill over 5 MiB or 500 files is `JITSO REJECTED: user skill "<n>" is larger than a launch carries`. A `user:` server is written into the launch's `mcp.json` under its plain name, with variable references only (never a literal value unless `literal_env` lists its key). A variable a server refers to that is unset in jitso's environment is one stderr warning that names the variable, never a value. The jitso skill needs no allowlist entry: it travels in the package for a conductor build or a build that names `jitso`, unless the checkout holds its own copy. `--mcp-exclude` takes the scoped name (`user:<n>`). `jitso arsenal` lists what a build may name, with these names as a build writes them.
+
+A claude build may also list a claude.ai connector as `cloud:<name>` in `mcp` (`docs/decisions.md`, Release 5). Validation checks only the name and the allowlist above; the connector itself is found at launch, a dry run too, in the output of `claude mcp list` (the line `claude.ai <name>`, any case). `JITSO REJECTED: no claude.ai connector named "<name>" (available: <names>)` (exit 3) means there is none; `jitso: could not list the claude.ai connectors: <reason>` (exit 3) means `claude mcp list` failed or took over a minute. A launch with a connector reads the owner's user settings layer and writes only overrides in its settings file; `settings.include` and `settings.exclude` do not apply to it.
 
 ## The build file
 

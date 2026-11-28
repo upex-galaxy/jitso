@@ -39,11 +39,24 @@ func userServers(names []string, user catalog.User, lookup func(string) (string,
 	return out, warnings, nil
 }
 
-// projectNames are the names that are not user:<name> servers.
+// withoutCloud is names minus the cloud:<name> connectors, which have no entry
+// in the launch's own mcp file.
+func withoutCloud(names []string) []string {
+	out := []string{}
+	for _, n := range names {
+		if _, ok := catalog.CloudName(n); !ok {
+			out = append(out, n)
+		}
+	}
+	return out
+}
+
+// projectNames are the names that are not scoped: neither user:<name> servers
+// nor cloud:<name> connectors.
 func projectNames(names []string) []string {
 	var out []string
 	for _, n := range names {
-		if _, ok := catalog.UserName(n); !ok {
+		if !catalog.IsScoped(n) {
 			out = append(out, n)
 		}
 	}

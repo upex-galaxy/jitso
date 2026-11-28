@@ -4,7 +4,7 @@
   "source": [
     "intended: docs/decisions.md, Only launches are blocked, and launches into other repositories (allowlists are open unless a list restricts)"
   ],
-  "intent": "The user layer is open like the project's: the skill needs its SKILL.md and the server its definition. A literal value, OAuth, a cloud: name and the name of a project skill or server are still refused.",
+  "intent": "The user layer is open like the project's: the skill needs its SKILL.md and the server its definition. A literal value, OAuth and the name of a project skill or server are still refused. A cloud:<name> connector is not refused by validation (it is found by name at launch).",
   "project": {
     "files": {
       ".jitso/briefs/brief.md": "## Goal\n\nFind where the sync entry point of this project is defined and explain in a few sentences how it is wired to the rest of the code.\n\n## Scope\n\nRead only. Do not change any file and do not leave the repository.\n\n## Done when\n\nYou can name the file and the line that defines the entry point, and you have checked it by reading the file.\n\n## Report format\n\nOne short paragraph with the file path, the line number and a one line summary of what it does.\n",
@@ -102,7 +102,7 @@
         ],
         "stdout": [
           {
-            "equals": "invalid refused draft .jitso/drafts/refused.yaml\n  user skill \"ghost\" has no SKILL.md under ~/.claude/skills/ghost\n  user skill \"local-skill\" has the name of a project skill\n  user mcp \"ghost\" is not defined in ~/.claude.json\n  user mcp \"dbhub\" has the name of a project mcp server\n  user mcp \"literal\" has a literal value in env TOKEN: use ${VAR}, or list literal/TOKEN in literal_env of ~/.jitso/jitso.yaml\n  user mcp \"login\" uses OAuth, which a launch cannot carry\n  mcp \"cloud:Slack\": cloud connectors cannot be given to a launched session yet\nchecked 1 builds: 0 ok, 1 invalid\n"
+            "equals": "invalid refused draft .jitso/drafts/refused.yaml\n  user skill \"ghost\" has no SKILL.md under ~/.claude/skills/ghost\n  user skill \"local-skill\" has the name of a project skill\n  user mcp \"ghost\" is not defined in ~/.claude.json\n  user mcp \"dbhub\" has the name of a project mcp server\n  user mcp \"literal\" has a literal value in env TOKEN: use ${VAR}, or list literal/TOKEN in literal_env of ~/.jitso/jitso.yaml\n  user mcp \"login\" uses OAuth, which a launch cannot carry\nchecked 1 builds: 0 ok, 1 invalid\n"
           }
         ]
       }

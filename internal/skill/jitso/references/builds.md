@@ -91,4 +91,6 @@ Statuses: `draft` (a draft, with the key written or left out; launches), `candid
 
 `skills_first` and `mcp` accept `user:<name>` for a skill under `~/.claude/skills/` or a server of `~/.claude.json`; a plain name resolves only in the project. The lists `skills` and `mcp` of `~/.jitso/jitso.yaml` restrict them the way the project's lists do. A launch copies each user skill into its package folder and writes each user server into its `mcp.json`. `--mcp-exclude user:<name>` drops one for a launch. The jitso skill needs no entry: name `jitso` in `skills_first`.
 
-Refused, with the text in `references/troubleshooting.md`: `cloud:` connectors, a user server that uses OAuth, a literal secret value in a user server's `env`, `headers` or `args` (use `${VAR}`), and a user skill over 5 MiB or 500 files.
+`mcp` also takes `cloud:<name>` in a claude build, a claude.ai connector by the name `claude mcp list` shows after `claude.ai `. A launch that has one reads the owner's user settings layer (`--setting-sources user,project`) and cuts the owner's context with a settings file of overrides; it prints `settings: user layer (...)` and a note that claude.ai skills and the MCP servers of built-in plugins cannot be cut. `--mcp-exclude cloud:<name>` drops one.
+
+Refused, with the text in `references/troubleshooting.md`: a connector that `claude mcp list` does not show, a user server that uses OAuth, a literal secret value in a user server's `env`, `headers` or `args` (use `${VAR}`), and a user skill over 5 MiB or 500 files.

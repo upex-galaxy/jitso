@@ -3,6 +3,7 @@ package fakes
 import (
 	"bytes"
 	"encoding/json"
+	"io"
 	"os"
 	"path/filepath"
 	"reflect"
@@ -139,7 +140,7 @@ func TestFakeOrcaScenario(t *testing.T) {
 func TestFakeClaude(t *testing.T) {
 	dump := filepath.Join(t.TempDir(), "dump.json")
 	var errb bytes.Buffer
-	code := Claude([]string{"--model", "m", "it's"}, []string{EnvClaudeDump + "=" + dump, "HOME=/h"}, &errb)
+	code := Claude([]string{"--model", "m", "it's"}, []string{EnvClaudeDump + "=" + dump, "HOME=/h"}, io.Discard, &errb)
 	if code != 0 || errb.Len() != 0 {
 		t.Fatalf("exit %d, stderr %q", code, errb.String())
 	}
@@ -153,7 +154,7 @@ func TestFakeClaude(t *testing.T) {
 	if !reflect.DeepEqual(d.Argv, []string{"--model", "m", "it's"}) || d.Env["HOME"] != "/h" || d.Cwd != real || d.Program != "claude" {
 		t.Errorf("dump: %+v", d)
 	}
-	if code := Claude(nil, nil, &errb); code != 1 {
+	if code := Claude(nil, nil, io.Discard, &errb); code != 1 {
 		t.Error("without the dump variable the fake must refuse")
 	}
 }
@@ -161,7 +162,7 @@ func TestFakeClaude(t *testing.T) {
 func TestFakeHarnessRecordsItsProgram(t *testing.T) {
 	dump := filepath.Join(t.TempDir(), "dump.json")
 	var errb bytes.Buffer
-	if code := Harness("codex", []string{"-m", "x"}, []string{EnvClaudeDump + "=" + dump}, &errb); code != 0 {
+	if code := Harness("codex", []string{"-m", "x"}, []string{EnvClaudeDump + "=" + dump}, io.Discard, &errb); code != 0 {
 		t.Fatalf("exit %d, stderr %q", code, errb.String())
 	}
 	var d expect.ClaudeDump
@@ -207,12 +208,46 @@ func TestFakeClaudeExitKnob(t *testing.T) {
 	}
 	dump := filepath.Join(dir, "dump.json")
 	var errb bytes.Buffer
-	code := Claude([]string{"x"}, []string{EnvClaudeDump + "=" + dump, EnvScenario + "=" + scenario}, &errb)
+	code := Claude([]string{"x"}, []string{EnvClaudeDump + "=" + dump, EnvScenario + "=" + scenario}, io.Discard, &errb)
 	if code != 7 || errb.Len() != 0 {
 		t.Errorf("exit %d, stderr %q; want 7 and nothing", code, errb.String())
 	}
 	if _, err := os.Stat(dump); err != nil {
 		t.Error("the fake writes its dump before it exits with the knob")
+	}
+}
+
+func TestFakeClaudeMCPList(t *testing.T) {
+	dir := t.TempDir()
+	scenario := filepath.Join(dir, "scenario.json")
+	data, _ := json.Marshal(Scenario{Claude: ClaudeScenario{Exit: 7, MCPList: "claude.ai X: https://x.invalid/mcp\n", MCPListExit: 4}})
+	if err := os.WriteFile(scenario, data, 0o644); err != nil {
+		t.Fatal(err)
+	}
+	dump := filepath.Join(dir, "dump.json")
+	var out, errb bytes.Buffer
+	code := Claude([]string{"mcp", "list"}, []string{EnvClaudeDump + "=" + dump, EnvScenario + "=" + scenario}, &out, &errb)
+	if code != 4 || out.String() != "claude.ai X: https://x.invalid/mcp\n" || errb.Len() != 0 {
+		t.Errorf("exit %d, stdout %q, stderr %q", code, out.String(), errb.String())
+	}
+	if _, err := os.Stat(dump); err != nil {
+		t.Error("mcp list writes the dump too")
+	}
+	out.Reset()
+	if code := Claude([]string{"mcp", "list", "--x"}, []string{EnvClaudeDump + "=" + dump, EnvScenario + "=" + scenario}, &out, &errb); code != 7 || out.Len() != 0 {
+		t.Errorf("another argv is a normal run: exit %d, stdout %q", code, out.String())
+	}
+}
+
+func TestClaudeScenarioMCPListKnobs(t *testing.T) {
+	cs, err := ParseClaudeScenario(map[string]any{"mcp_list": "a\n", "mcp_list_exit": float64(2)})
+	if err != nil || cs.MCPList != "a\n" || cs.MCPListExit != 2 {
+		t.Errorf("good knobs: %+v, %v", cs, err)
+	}
+	for _, bad := range []map[string]any{{"mcp_list_exit": float64(300)}, {"mcp_list": float64(1)}, {"missing": true, "mcp_list": "x"}} {
+		if _, err := ParseClaudeScenario(bad); err == nil {
+			t.Errorf("%v was accepted", bad)
+		}
 	}
 }
 

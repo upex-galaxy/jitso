@@ -1,0 +1,107 @@
+{
+  "id": "launch/cloud/other-harnesses-reject-cloud",
+  "title": "a build for a harness other than claude that names a cloud connector fails validation and is rejected at launch, and claude is never asked",
+  "source": [
+    "intended: docs/decisions.md, section Release 5"
+  ],
+  "tags": [
+    "posix"
+  ],
+  "for_each": {
+    "vars": [
+      "harness",
+      "text"
+    ],
+    "ids": [
+      "codex",
+      "opencode",
+      "pi"
+    ],
+    "rows": [
+      [
+        "codex",
+        "harness \"codex\" cannot give a session the claude.ai connector \"cloud:Supabase\""
+      ],
+      [
+        "opencode",
+        "harness \"opencode\" cannot give a session the claude.ai connector \"cloud:Supabase\""
+      ],
+      [
+        "pi",
+        "harness \"pi\" cannot give a session MCP servers"
+      ]
+    ]
+  },
+  "project": {
+    "files": {
+      ".jitso/briefs/brief.md": {
+        "from": "brief.md"
+      },
+      "jitso/builds/cloud-worker.yaml": {
+        "from": "cloud-worker.yaml"
+      }
+    }
+  },
+  "home": {
+    "files": {}
+  },
+  "claude": {
+    "mcp_list": "Checking MCP server health...\n\nplugin:easel:easel: easel-sentinel-cmd --serve - ✓ Connected\nclaude.ai Supabase: https://mcp.supabase.com/mcp - ✓ Connected\nclaude.ai Slack: https://mcp.slack.invalid/mcp - ! Needs authentication\nclaude.ai Google Drive: https://drivemcp.invalid/mcp - ✓ Connected\ndbhub: fixture-dbhub-sentinel-cmd --token sentinel-arg - ✓ Connected\n"
+  },
+  "steps": [
+    {
+      "run": [
+        "build",
+        "validate",
+        "cloud-worker"
+      ],
+      "expect": {
+        "exit": 2,
+        "stderr": [
+          {
+            "empty": true
+          }
+        ],
+        "stdout": [
+          {
+            "equals": "invalid cloud-worker repo jitso/builds/cloud-worker.yaml\n  {{text}}\nchecked 1 builds: 0 ok, 1 invalid\n"
+          }
+        ],
+        "claude": {
+          "ran": false
+        }
+      }
+    },
+    {
+      "run": [
+        "launch",
+        "--build",
+        "cloud-worker",
+        "--brief",
+        "{{PROJECT}}/.jitso/briefs/brief.md",
+        "--mode",
+        "direct",
+        "--dry-run"
+      ],
+      "expect": {
+        "exit": 2,
+        "stdout": [
+          {
+            "empty": true
+          }
+        ],
+        "stderr": [
+          {
+            "equals": "JITSO REJECTED: {{text}}\n"
+          }
+        ],
+        "claude": {
+          "ran": false
+        },
+        "orca_calls": {
+          "empty": true
+        }
+      }
+    }
+  ]
+}

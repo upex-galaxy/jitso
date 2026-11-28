@@ -1,0 +1,79 @@
+{
+  "id": "launch/cloud/guard-travels-when-nothing-registers-it",
+  "title": "a user-layer launch carries the guard hook groups when neither the user settings nor the project register the guard",
+  "source": [
+    "intended: docs/decisions.md, section Release 5"
+  ],
+  "tags": [
+    "posix"
+  ],
+  "project": {
+    "files": {
+      ".jitso/briefs/brief.md": {
+        "from": "brief.md"
+      },
+      "jitso/builds/cloud-worker.yaml": {
+        "from": "cloud-worker.yaml"
+      }
+    }
+  },
+  "home": {
+    "files": {
+      ".claude/settings.json": "{\"enabledPlugins\":{\"plug-one@market\":true,\"plug-two@market\":false},\"env\":{\"OWNER_TOKEN\":\"sentinel-env\"},\"hooks\":{\"Stop\":[{\"hooks\":[{\"type\":\"command\",\"command\":\"sentinel-hook\"}]}]},\"language\":\"sentinel-lang\",\"askUserQuestionTimeout\":\"sentinel-timeout\",\"permissions\":{\"allow\":[\"Bash(sentinel:*)\"]}}",
+      ".claude/CLAUDE.md": "# Owner notes\n\nsentinel-claude-md\n@~/notes/extra.md\n@rules/style.md\n@missing.md\nSee `@not-an-import.md` here.\n```\n@in-fence.md\n```\n",
+      "notes/extra.md": "imported, absolute through ~\n",
+      ".claude/rules/style.md": "imported, relative\n",
+      ".claude/in-fence.md": "not an import\n",
+      ".claude/not-an-import.md": "not an import\n",
+      ".claude/skills/alpha/SKILL.md": "---\nname: alpha\ndescription: Alpha.\n---\n\nBody.\n",
+      ".claude/skills/humanizer/SKILL.md": "---\nname: humanizer\ndescription: Make text read human.\n---\n\nBody.\n",
+      ".agents/skills/beta/SKILL.md": "---\nname: beta\ndescription: Beta.\n---\n\nBody.\n",
+      ".claude/agents/planner.md": "---\nname: plan-boss\ndescription: Plans.\n---\n\nsentinel-agent-body\n",
+      ".claude/agents/reviewer.md": "Reviews things.\n"
+    }
+  },
+  "claude": {
+    "mcp_list": "Checking MCP server health...\n\nplugin:easel:easel: easel-sentinel-cmd --serve - ✓ Connected\nclaude.ai Supabase: https://mcp.supabase.com/mcp - ✓ Connected\nclaude.ai Slack: https://mcp.slack.invalid/mcp - ! Needs authentication\nclaude.ai Google Drive: https://drivemcp.invalid/mcp - ✓ Connected\ndbhub: fixture-dbhub-sentinel-cmd --token sentinel-arg - ✓ Connected\n"
+  },
+  "steps": [
+    {
+      "run": [
+        "launch",
+        "--build",
+        "cloud-worker",
+        "--brief",
+        "{{PROJECT}}/.jitso/briefs/brief.md",
+        "--mode",
+        "direct"
+      ],
+      "capture": {
+        "LAUNCH_ID": {
+          "from": "stdout",
+          "regex": "JITSO (L\\d{8}T\\d{6}-[0-9a-f]{4})"
+        }
+      },
+      "expect": {
+        "exit": 0,
+        "stdout": [
+          {
+            "contains": "overrides: allowedMcpServers,claudeMdExcludes,enabledPlugins,hooks,permissions,remoteControlAtStartup,skillOverrides"
+          }
+        ],
+        "files": [
+          {
+            "path": ".jitso/launches/{{LAUNCH_ID}}/settings.json",
+            "json": [
+              {
+                "path": "hooks",
+                "keys_include": [
+                  "PreToolUse",
+                  "SessionEnd"
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    }
+  ]
+}

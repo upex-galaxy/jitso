@@ -28,9 +28,9 @@ func main() {
 	case "orca":
 		os.Exit(fakes.Orca(os.Args[1:], os.Getenv, os.Stdout, os.Stderr))
 	case "claude":
-		os.Exit(fakes.Claude(os.Args[1:], os.Environ(), os.Stderr))
+		os.Exit(fakes.Claude(os.Args[1:], os.Environ(), os.Stdout, os.Stderr))
 	case "codex", "opencode", "pi":
-		os.Exit(fakes.Harness(strings.TrimSuffix(filepath.Base(os.Args[0]), ".exe"), os.Args[1:], os.Environ(), os.Stderr))
+		os.Exit(fakes.Harness(strings.TrimSuffix(filepath.Base(os.Args[0]), ".exe"), os.Args[1:], os.Environ(), os.Stdout, os.Stderr))
 	}
 	os.Exit(run(os.Args[1:], os.Stdout, os.Stderr))
 }

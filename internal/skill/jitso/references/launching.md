@@ -101,6 +101,8 @@ If anything fails before step 5, the launcher closes the terminal it opened and 
 
 A launched Claude Code session reads project settings only, so the launch copies the owner's user settings (`settings.json` of `CLAUDE_CONFIG_DIR`, else of `~/.claude`) into `<launch folder>/settings.json`, readable by its owner only, and passes it as `--settings`. Every top-level key travels (env with its values, hooks, permission lists, `crossSessionInbound`, keys no release of jitso knows) except: the context keys (plugins, marketplaces, skill overrides, project MCP approval and server lists), `model`, `effortLevel` and `permissions.defaultMode` (the build and jitso decide them), `language`, `askUserQuestionTimeout`, `remoteControlAtStartup`, and any key the checkout's own `.claude/settings.json` defines (the project wins; `hooks` and `permissions` merge, and from `env` only the project's variables drop). The owner's own jitso guard handlers are removed so the guard runs once. A launch prints `settings copied: ... | cut: ...` after the card and records both lists in `settings` of its registry line: key names only, never a value.
 
+A launch that loads a claude.ai connector (`cloud:<name>` in `mcp`) does not copy: the session reads the owner's user settings layer and the settings file holds overrides only. `settings.include` and `settings.exclude` below do not apply to it.
+
 The owner can cut more or let a cut key through in `~/.jitso/jitso.yaml`: `settings:` with `exclude: [key, ...]` and `include: [key, ...]`. `include` never overrides the build's keys or the project's. A broken block is exit 3. No file, an unreadable one or a top level that is not an object travels nothing; a file that is not JSON prints one warning.
 
 ## The package folder

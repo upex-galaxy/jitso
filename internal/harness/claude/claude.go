@@ -83,7 +83,7 @@ func (Adapter) Readiness() string { return "tui-idle" }
 
 // Support is everything: Claude Code honors every field of a build.
 func (Adapter) Support() harness.Support {
-	return harness.Support{Subagents: true, Tools: true, AgentsMDExclude: true, MCP: true, UserMCP: true, PackageFlag: "add-dir", ProjectGuard: true}
+	return harness.Support{Subagents: true, Tools: true, AgentsMDExclude: true, MCP: true, UserMCP: true, CloudMCP: true, PackageFlag: "add-dir", ProjectGuard: true}
 }
 
 // Spec builds the argv and the strict MCP file of one launch.
@@ -96,7 +96,11 @@ func (a Adapter) Spec(in harness.SpecInput) (harness.Spec, error) {
 	if err != nil {
 		return harness.Spec{}, err
 	}
-	settings, err := Settings(in.GuardCommand, in.OwnerSettings.Doc)
+	owner := in.OwnerSettings.Doc
+	if in.UserLayer != nil {
+		owner = in.UserLayer.Doc
+	}
+	settings, err := Settings(in.GuardCommand, owner)
 	if err != nil {
 		return harness.Spec{}, err
 	}
@@ -148,14 +152,19 @@ func AgentsJSON(subagents []harness.Subagent) (string, error) {
 // has subagents, goes right after the session id; --tools and the initial
 // prompt, when there are any, follow it.
 func Argv(in harness.SpecInput) ([]string, error) {
-	argv := []string{
-		"claude",
-		"--dangerously-skip-permissions",
-		"--setting-sources", "project",
-		"--settings", filepath.Join(in.LaunchDir, SettingsFile),
-		"--strict-mcp-config",
-		"--mcp-config", in.MCPConfigPath,
+	argv := []string{"claude", "--dangerously-skip-permissions"}
+	if in.UserLayer != nil {
+		// claude.ai connectors load only when the user layer is a setting
+		// source, and then --strict-mcp-config would cut them (measured).
+		// settings.json holds the overrides that cut the owner's context.
+		argv = append(argv, "--setting-sources", "user,project",
+			"--settings", filepath.Join(in.LaunchDir, SettingsFile))
+	} else {
+		argv = append(argv, "--setting-sources", "project",
+			"--settings", filepath.Join(in.LaunchDir, SettingsFile),
+			"--strict-mcp-config")
 	}
+	argv = append(argv, "--mcp-config", in.MCPConfigPath)
 	// --add-dir is variadic: the flag that follows it ends its list.
 	if in.PackageDir != "" {
 		argv = append(argv, "--add-dir", in.PackageDir)

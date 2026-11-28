@@ -139,12 +139,16 @@ An executable named `claude` in `{{BIN}}`. It writes `{"program":"claude","argv"
 
 The same fake answers as another harness when it is started under that name: a link named `codex`, `opencode` or `pi` to `{{BIN}}/claude` (a `home.files` symlink, with that folder put first on the step's `PATH`) writes the same dump with `program` set to that name. The runner puts no such link on `PATH` itself, so a case that does not make one has no `codex`, `opencode` or `pi`.
 
-The case field `claude` sets two knobs, both optional, which exclude each other:
+Started as `claude mcp list` (exactly those two words) it writes its dump too, then prints the `mcp_list` text on stdout and exits with `mcp_list_exit`, so a case can stand for the connector list of an account. It prints nothing else and runs nothing.
+
+The case field `claude` sets four knobs, all optional; `missing` excludes the other three:
 
 | Key | Default | Meaning |
 |---|---|---|
 | `exit` | `0` | the code (0 to 255) the fake exits with, after it wrote its dump |
 | `missing` | `false` | `true`: the runner installs no fake `claude`, so no `claude` is on PATH at all |
+| `mcp_list` | `""` | the text `claude mcp list` prints on stdout |
+| `mcp_list_exit` | `0` | the code (0 to 255) `claude mcp list` exits with |
 
 The knobs travel in the scenario file (`JITSO_CONTRACT_SCENARIO`, key `claude`), so no extra variable appears in the environment the dump records.
 

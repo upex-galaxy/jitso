@@ -60,7 +60,7 @@ func writeFolder(p prepared, d Deps, dir string) (folder, error) {
 		Effort:        p.profile.Effort,
 		SessionID:     f.sessionID,
 		MCPConfigPath: filepath.Join(dir, FileMCP),
-		MCPNames:      p.mcp,
+		MCPNames:      withoutCloud(p.mcp),
 		RepoServers:   servers,
 		UserServers:   p.userServers,
 		Tools:         b.Tools,
@@ -69,6 +69,7 @@ func writeFolder(p prepared, d Deps, dir string) (folder, error) {
 		Subagents:     subagentsOf(p.profile.Subagents),
 
 		OwnerSettings: ownerSettings(p.settings),
+		UserLayer:     p.layer,
 	}
 	if p.args.Mode == ModeDirect {
 		in.InitialPrompt = FirstPrompt(f.brief, p.profile.RouteScope)

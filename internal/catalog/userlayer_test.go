@@ -104,11 +104,17 @@ func TestSplitScope(t *testing.T) {
 	if _, ok := UserName("cloud:Slack"); ok {
 		t.Error("cloud: is not a user name")
 	}
+	if name, ok := CloudName("cloud:Google Drive"); !ok || name != "Google Drive" {
+		t.Errorf("CloudName: %q %v", name, ok)
+	}
+	if _, ok := CloudName("user:engram"); ok {
+		t.Error("user: is not a cloud name")
+	}
 }
 
 func TestValidateScopedNames(t *testing.T) {
 	home := writeHome(t, map[string]string{
-		".jitso/jitso.yaml":                      "skills: [humanizer, nofile, sprint-testing, local]\nmcp: [engram, undefined, dbhub]\n",
+		".jitso/jitso.yaml":                      "skills: [humanizer, nofile, sprint-testing, local]\nmcp: [engram, undefined, dbhub, 'cloud:Atlas']\n",
 		".claude/skills/humanizer/SKILL.md":      "x",
 		".claude/skills/sprint-testing/SKILL.md": "x",
 		".claude/skills/local/SKILL.md":          "x",
@@ -131,7 +137,9 @@ func TestValidateScopedNames(t *testing.T) {
 		{"mcp: [user:nope]", []string{`mcp "user:nope" is not in the user allowlist (~/.jitso/jitso.yaml)`}},
 		{"mcp: [user:undefined]", []string{`user mcp "undefined" is not defined in ~/.claude.json`}},
 		{"mcp: [user:dbhub]", []string{`user mcp "dbhub" has the name of a project mcp server`}},
-		{"mcp: [cloud:Slack]", []string{`mcp "cloud:Slack": cloud connectors cannot be given to a launched session yet`}},
+		{"mcp: [cloud:Slack]", []string{`mcp "cloud:Slack" is not in the user allowlist (~/.jitso/jitso.yaml)`}},
+		{"mcp: [cloud:Atlas]", nil},
+		{"mcp: [dbhub, 'cloud:']", []string{`mcp "cloud:": a claude.ai connector needs a name (cloud:<name>)`}},
 		{"mcp: [team:x]", []string{`mcp "team:x": unknown scope (use user:)`}},
 	}
 	for _, tt := range tests {

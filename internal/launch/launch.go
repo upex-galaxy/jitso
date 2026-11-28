@@ -4,6 +4,7 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"sort"
 	"strings"
 	"time"
 
@@ -76,6 +77,9 @@ type Deps struct {
 	// Executable is os.Executable: the guard a launch carries runs this
 	// binary.
 	Executable func() (string, error)
+	// ListConnectors is the output of `claude mcp list`, for a launch that
+	// names claude.ai connectors; nil runs the real one (runMCPList) on PATH.
+	ListConnectors func() (string, error)
 	// LookupEnv is os.LookupEnv: a launch checks that the variables a user
 	// MCP server refers to are set, never what they hold, and asks it where the
 	// harness keeps the user settings (harness.SettingsSource).
@@ -125,6 +129,40 @@ func Run(a Args, d Deps) error {
 	users, unset, err := userServers(mcp, d.Catalog.Config.User, lookup)
 	if err != nil {
 		return err
+	}
+	// A claude.ai connector is found by name in `claude mcp list`; a launch
+	// that loads one reads the user settings layer (harness.UserLayerSource).
+	var layer *harness.UserLayer
+	if names := cloudItems(mcp); len(names) > 0 {
+		source, ok := adapter.(harness.UserLayerSource)
+		if !ok {
+			return fail.Rejectedf(`harness "%s" cannot give a session claude.ai connectors`, adapter.ID())
+		}
+		list := d.ListConnectors
+		if list == nil {
+			list = func() (string, error) { return runMCPList(adapter.ID(), ConnectorsTimeout) }
+		}
+		connectors, err := resolveConnectors(names, list)
+		if err != nil {
+			return err
+		}
+		l := source.UserLayer(harness.UserLayerInput{
+			Home: d.Home, LookupEnv: lookup, Checkout: target.Checkout,
+			Servers: serverNames(mcp), Connectors: connectors, KeepSkills: carried.skillNames(),
+		})
+		if l.Warning != "" {
+			d.Warn(l.Warning)
+		}
+		// The session reads the owner's hooks itself: the guard goes in only
+		// when the user layer does not register it already.
+		if l.GuardRegistered && carried.Home == "" {
+			carried.GuardCommand, carried.GuardBinary = "", ""
+		}
+		if carried.GuardCommand != "" {
+			l.Overrides = append(l.Overrides, "hooks")
+			sort.Strings(l.Overrides)
+		}
+		layer = &l
 	}
 
 	briefPath, err := brief.ResolvePath(a.Brief, d.Cwd, AllowedBriefDirs(d.Root.StateDir()))
@@ -196,7 +234,9 @@ func Run(a Args, d Deps) error {
 	// read fails the launch, because the cuts in it could not be applied.
 	var settings *harness.OwnerSettings
 	settingsLine := ""
-	if source, ok := adapter.(harness.SettingsSource); ok {
+	if layer != nil {
+		settingsLine = UserLayerLine(layer.Cloud, layer.Overrides)
+	} else if source, ok := adapter.(harness.SettingsSource); ok {
 		user := d.Catalog.Config.User
 		if user.Err != nil {
 			return user.Err
@@ -221,6 +261,9 @@ func Run(a Args, d Deps) error {
 		if settingsLine != "" {
 			d.Out(settingsLine)
 		}
+		if layer != nil {
+			d.Out(UserLayerNote)
+		}
 		if asked {
 			d.Out(DryRunAskedLine)
 		} else {
@@ -228,7 +271,7 @@ func Run(a Args, d Deps) error {
 		}
 		return nil
 	}
-	return execute(prepared{args: a, profile: p, adapter: adapter, mcp: mcp, briefText: briefText, id: id, name: name, settings: settings, settingsLine: settingsLine, card: cardText, lineage: lineage, pkg: carried, userServers: users}, d)
+	return execute(prepared{args: a, profile: p, adapter: adapter, mcp: mcp, briefText: briefText, id: id, name: name, settings: settings, settingsLine: settingsLine, layer: layer, card: cardText, lineage: lineage, pkg: carried, userServers: users}, d)
 }
 
 // checkTarget refuses a target Orca has not registered: a real launch also
@@ -314,9 +357,12 @@ type prepared struct {
 	// harness takes none; settingsLine is the line that names the keys.
 	settings     *harness.OwnerSettings
 	settingsLine string
-	card         string
-	lineage      Lineage
-	pkg          Package
+	// layer is the user settings layer of a launch that loads claude.ai
+	// connectors, nil for a copy launch.
+	layer   *harness.UserLayer
+	card    string
+	lineage Lineage
+	pkg     Package
 	// userServers are the copied definitions of the user servers in mcp.
 	userServers map[string]jsonx.Object
 }
@@ -403,7 +449,7 @@ func execute(p prepared, d Deps) (err error) {
 		BriefPath: files.brief, BriefText: p.briefText, SessionID: files.sessionID,
 		Cwd: term.WorktreePath, Transcript: transcript, Trust: outcome, Terminal: term.Handle, Title: files.title, Now: d.Now(),
 		Package:  p.pkg.Ref(),
-		Settings: settingsRef(p.settings),
+		Settings: settingsRef(p.settings, p.layer),
 	})
 	if err := d.Registry.Append(event); err != nil {
 		abandon()
@@ -417,6 +463,9 @@ func execute(p prepared, d Deps) (err error) {
 	}
 	if p.settingsLine != "" {
 		d.Out(p.settingsLine)
+	}
+	if p.layer != nil {
+		d.Out(UserLayerNote)
 	}
 	if outcome == trust.Timeout {
 		d.Warn("jitso: the trust dialog of terminal " + term.Handle + " did not clear in 10 s; the launch is registered")

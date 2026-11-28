@@ -16,6 +16,8 @@ func TestCodeAndText(t *testing.T) {
 		{"nil", nil, 0, ""},
 		{"rejected", Rejected(`unknown build "x"`), 2, `JITSO REJECTED: unknown build "x"`},
 		{"rejectedf", Rejectedf("missing %s", "ticket_key"), 2, "JITSO REJECTED: missing ticket_key"},
+		{"rejectedenv", RejectedEnv("no connector"), 3, "JITSO REJECTED: no connector"},
+		{"rejectedenvf", RejectedEnvf("no %s", "connector"), 3, "JITSO REJECTED: no connector"},
 		{"usage", Usage("jitso: unknown command \"x\"\n\nUsage"), 2, "jitso: unknown command \"x\"\n\nUsage"},
 		{"env", Env("the lock stayed busy"), 3, "jitso: the lock stayed busy"},
 		{"envf", Envf("%s is not inside a git checkout", "/tmp/x"), 3, "jitso: /tmp/x is not inside a git checkout"},
